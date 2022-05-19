@@ -30,12 +30,12 @@ def fetch_data(sgw: SgWriter):
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
     }
 
-    link = "https://www-graphql.prod.mipulse.co/prod/graphql?operationName=searchDealer&variables=%7B%22latitude%22%3A43.4200735%2C%22longitude%22%3A-79.7152727%2C%22service%22%3A%22all%22%2C%22filters%22%3Anull%2C%22radius%22%3A5000%2C%22market%22%3A%22ca%22%2C%22language%22%3A%22en%22%2C%22path%22%3A%22%2Fca%2Fen%2Fcar-dealerships-near-me%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22f7616c572bb78067379f8499a3b1ff997833b2add64464fe1bb782821f259160%22%7D%7D"
+    link = "https://www-graphql.prod.mipulse.co/prod/graphql?operationName=searchDealer&variables=%7B%22latitude%22%3A45.5590338%2C%22longitude%22%3A-73.76806979999999%2C%22service%22%3A%22all%22%2C%22filters%22%3Anull%2C%22radius%22%3A5000%2C%22market%22%3A%22ca%22%2C%22language%22%3A%22en%22%2C%22path%22%3A%22%2Fca%2Fen%2Fcar-dealerships-near-me%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22f7616c572bb78067379f8499a3b1ff997833b2add64464fe1bb782821f259160%22%7D%7D"
     json_data = session.get(link, headers=headers).json()["data"]["searchDealer"]
 
     for loc in json_data:
+        name = loc["name"]
         address = loc["address"]["addressLine1"]
-        name = loc["address"]["addressLine1"]
         city = loc["address"]["city"]
         state = loc["address"]["district"]
         zipp = loc["address"]["postalArea"].replace("OL3", "0L3")
@@ -343,6 +343,21 @@ def fetch_data(sgw: SgWriter):
                             ].stripped_strings
                         )
                     )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = (
+                        " ".join(
+                            list(
+                                soup1.find_all(class_="space-y-4")[-1].stripped_strings
+                            )
+                        )
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                    if "lundi" not in hours.lower():
+                        hours = ""
                 except:
                     pass
             if not hours:
