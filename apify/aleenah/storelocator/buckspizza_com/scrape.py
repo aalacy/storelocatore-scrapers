@@ -1,3 +1,4 @@
+import ssl
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -6,6 +7,9 @@ from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 website = "buckspizza_com"
