@@ -6,6 +6,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import time
 from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domain = "https://www.thenorthface.cl"
 base_url = "https://www.thenorthface.cl/tiendas"
