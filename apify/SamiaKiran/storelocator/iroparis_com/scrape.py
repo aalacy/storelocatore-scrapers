@@ -21,9 +21,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
-        )
+        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
         for lat, long in search:
             log.info(f"Fetching Locations for lat {lat} & long {long}")
             url = (
@@ -31,7 +29,7 @@ def fetch_data():
                 + str(lat)
                 + "&long="
                 + str(long)
-                + "&radius=300.0"
+                + "&radius=1000000000"
             )
             loclist = session.get(url, headers=headers).json()["stores"]
             if not loclist:
