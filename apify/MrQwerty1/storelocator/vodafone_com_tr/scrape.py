@@ -1,11 +1,15 @@
+import re
 import json
-from lxml import html
+import time
+from bs4 import BeautifulSoup
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
+from sgselenium import SgFirefox
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
+
+page_url = "https://www.vodafone.com.tr/YardimDestek/vodafone-magazalari"
 
 
 def get_international(line):
@@ -20,42 +24,62 @@ def get_international(line):
     return street_address, city, state, postal
 
 
+def get_locations(session, retry=0):
+    try:
+        session.get(page_url)
+        session.find_element_by_id("onetrust-accept-btn-handler").click()
+        time.sleep(10)
+        tree = BeautifulSoup(session.page_source, "html.parser")
+        text = get_data_script(tree)
+        return json.loads(text)
+    except:
+        if retry < 3:
+            return get_locations(session, retry + 1)
+
+
+def get_data_script(soup):
+    scripts = soup.find_all("script")
+    for script in scripts:
+        if script.string and "dataCities" in script.string:
+            data = re.search(r"var markers = \[(.*)\];", script.string).group(1)
+            return f"[{data}]"
+
+
 def fetch_data(sgw: SgWriter):
-    page_url = "https://www.vodafone.com.tr/YardimDestek/vodafone-magazalari"
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), ' var stores =')]/text()"))
-    text = text.split("var markers =")[1].split("var cities")[0].strip()[:-1]
-    js = json.loads(text)
+    with SgFirefox(is_headless=True).driver() as session:
+        locations = get_locations(session)
 
-    for j in js:
-        location_name = j.get("name")
-        store_number = j.get("code")
-        latitude = j.get("latitude") or ""
-        if latitude.endswith(","):
-            latitude = latitude[:-1]
-        longitude = j.get("longitude")
-        phone = j.get("phone")
-        raw_address = j.get("address") or ""
-        street_address, city, state, postal = get_international(raw_address)
+        for j in locations:
+            location_name = j.get("name")
+            store_number = j.get("code")
+            latitude = j.get("latitude") or ""
+            if latitude.endswith(","):
+                latitude = latitude[:-1]
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code="TR",
-            phone=phone,
-            store_number=store_number,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            raw_address=raw_address,
-        )
+            longitude = j.get("longitude")
+            phone = j.get("phone")
+            raw_address = j.get("address") or ""
+            street_address, city, state, postal = get_international(
+                re.sub(r"\s\n", ", ", raw_address)
+            )
 
-        sgw.write_row(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="TR",
+                phone=phone,
+                store_number=store_number,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
@@ -65,6 +89,5 @@ if __name__ == "__main__":
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
 
-    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)

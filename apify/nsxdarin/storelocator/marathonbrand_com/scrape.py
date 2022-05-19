@@ -1,3 +1,8 @@
+import os
+
+os.environ.pop("PROXY_PASSWORD", None)
+os.environ.pop("PROXY_URL", None)
+
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -30,6 +35,7 @@ def fetch_data():
             country = "US"
             phone = line.split(",")[6]
             zc = line.split(",")[5]
+            zc = f"{zc[:5]}-{zc[5:]}"
             loc = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
@@ -53,7 +59,9 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

@@ -38,10 +38,16 @@ def fetch_data():
             log.info(location_name)
             hours_of_operation = div[-1].replace("Hours:", "")
             phone = div[-2].replace("Store Phone:", "").replace("Meat Dept:", "")
-            street_address = " ".join(div[1:-2])
+            street_address = " ".join(div[1:-2]).replace(".", "#").replace("S#", "S.")
+            if "#" in street_address:
+                street_address = street_address.split("#")[0]
+            elif "-" in street_address:
+                street_address = street_address.split("-")[0]
             if "Store Phone:" in street_address:
                 street_address = street_address.split("Store Phone:")[0]
             city = location_name
+            if "SAN JOSE" in city:
+                city = "SAN JOSE"
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

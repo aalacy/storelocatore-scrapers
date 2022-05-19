@@ -2,47 +2,41 @@
 import re
 import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    start_url = "https://www.bipa.at/filialen"
+    start_url = "https://www.bipa.at/filialen?dwcont=C1344944564"
     domain = "bipa.at"
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=50
+    search = DynamicZipAndGeoSearch(
+        expected_search_radius_miles=1,
+        max_search_distance_miles=1,
+        country_codes=[SearchableCountries.AUSTRIA],
     )
-    with SgFirefox() as driver:
-        for code in all_codes:
-            driver.get(start_url)
-            try:
-                driver.find_element_by_xpath(
-                    '//button[contains(text(), "Cookies erlauben")]'
-                ).click()
-            except Exception:
-                pass
-            driver.find_element_by_id("addressstring").send_keys(code)
-            driver.find_element_by_id("findButton").click()
-            dom = etree.HTML(driver.page_source)
+
+    with SgRequests() as session:
+        headers = {
+            "Host": "www.bipa.at",
+            "Cookie": "dwsid=g-bfHLgGgRTX4rp9CDtWJUsAqCuiA7nk6kMHWOFpx3afRx43SdhAVLQhACRPFJHEvAiLTAkV79LGYBYSKYRAKg==;",
+        }
+        session.get("https://www.bipa.at/filialen")
+        for code, (lat, lng) in search:
+            data = {
+                "dwfrm_storelocator_zipcity": code,
+                "latitude": str(lat),
+                "longitude": str(lng),
+            }
+            response = session.post(start_url, data=data, headers=headers)
+            dom = etree.HTML(response.text)
 
             all_locations = dom.xpath("//@data-options")
-            try:
-                next_page = driver.find_element_by_class_name("next_link")
-            except Exception:
-                next_page = ""
-            while next_page:
-                next_page.click()
-                dom = etree.HTML(driver.page_source)
-                all_locations += dom.xpath("//@data-options")
-                next_page = driver.find_element_by_class_name("next_link")
-
             for poi in all_locations:
                 poi = poi.replace("null", '""')
                 if poi.startswith("["):
@@ -65,8 +59,6 @@ def fetch_data():
                     else:
                         hours.append(f"{d}: closed")
                 hours = ", ".join(hours)
-                page_url = re.findall('url":"(.+?)",', poi)[0][0]
-                page_url = urljoin(start_url, page_url)
                 store_number = re.findall('storeid":"(.+?)"', poi)[0]
                 latitude = re.findall('latitude":(.+?),', poi)[0]
                 longitude = re.findall('longitude":(.+?),', poi)[0]
@@ -95,7 +87,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                }
             )
         )
     ) as writer:
