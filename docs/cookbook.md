@@ -4,10 +4,9 @@
 
 ## Table of Contents
 
-### Templates
-
-- [Experimental Live Realtime Templating Engine](./cookbook/crawly_web.md)
-- [Template types and uses](./cookbook/templates.md)
+[//]: # '### Templates'
+[//]: # '- [Experimental Live Realtime Templating Engine](./cookbook/crawly_web.md)'
+[//]: # '- [Template types and uses](./cookbook/templates.md)'
 
 ### Basics
 
@@ -32,6 +31,10 @@
 ### Long-Running Crawls
 
 - [Using CrawlState to write long-running crawls](./cookbook/pause_resume.md)
+
+### Parsing Raw Addresses
+
+- [Using sgpostal](./cookbook/sgpostal.md)
 
 ### Declarative Pipeline / SimpleScraperPipeline
 

@@ -2,9 +2,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import re
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("loscucos")
 
@@ -27,31 +29,33 @@ def fetch_data():
             _hr = sp1.find("p", string=re.compile(r"^BUSINESS HOURS", re.IGNORECASE))
             hours = []
             if _hr:
-                hours = [
-                    hh.text.strip()
-                    for hh in _hr.find_parent()
+                hours = list(
+                    _hr.find_parent()
                     .find_parent()
                     .find_parent()
                     .find_next_sibling("div")
-                    .select("p")
-                ]
+                    .stripped_strings
+                )
             _addr = list(
                 sp1.select_one('div[data-widget_type="heading.default"]')
                 .find_next_sibling("div")
                 .stripped_strings
             )
-            addr = parse_address_intl(" ".join(_addr))
+            raw_address = " ".join(_addr).replace("\n", " ").replace("\r", " ")
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            phone = (
-                sp1.find("p", string=re.compile(r"Telephone"))
-                .text.split(":")[-1]
-                .replace("Telephone", "")
-                .strip()
-                .split("Fax")[0]
-                .strip()
-            )
+            phone = ""
+            if sp1.find("", string=re.compile(r"^Telephone:")):
+                phone = (
+                    sp1.find("", string=re.compile(r"^Telephone:"))
+                    .text.split(":")[-1]
+                    .replace("Telephone", "")
+                    .strip()
+                    .split("Fax")[0]
+                    .strip()
+                )
 
             yield SgRecord(
                 page_url=page_url,
@@ -64,11 +68,12 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

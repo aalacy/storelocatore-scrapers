@@ -1,45 +1,18 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("carrabbas.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://locations.carrabbas.com/"
 
@@ -91,7 +64,6 @@ def fetch_data():
                 final_link = (base_link + final_item["href"]).replace("../", "")
                 final_links.append(final_link)
 
-    data = []
     total_links = len(final_links)
     logger.info("Processing %s links .." % (total_links))
     for final_link in final_links:
@@ -100,38 +72,72 @@ def fetch_data():
 
         locator_domain = "carrabbas.com"
 
-        location_name = item.find(id="location-name").text.strip()
-        if "COMING SOON" in location_name.upper():
-            continue
-
-        street_address = item.find(class_="c-address-street-1").text.strip()
         try:
-            street_address = (
-                street_address
-                + " "
-                + item.find(class_="c-address-street-2").text.strip()
-            )
-            street_address = street_address.strip()
+            location_name = item.find(id="location-name").text.strip()
+            got_loc = True
+            if "COMING SOON" in location_name.upper():
+                continue
         except:
-            pass
+            got_loc = False
 
-        city = item.find(class_="c-address-city").text.strip()
-        state = item.find(class_="c-address-state").text.strip()
-        zip_code = item.find(class_="c-address-postal-code").text.strip()
+        if got_loc:
+            street_address = item.find(class_="c-address-street-1").text.strip()
+            try:
+                street_address = (
+                    street_address
+                    + " "
+                    + item.find(class_="c-address-street-2").text.strip()
+                )
+                street_address = street_address.strip()
+            except:
+                pass
+
+            city = item.find(class_="c-address-city").text.strip()
+            state = item.find(class_="c-address-state").text.strip()
+            zip_code = item.find(class_="c-address-postal-code").text.strip()
+
+            try:
+                phone = item.find("div", attrs={"itemprop": "telephone"}).text.strip()
+                if not phone:
+                    phone = "<MISSING>"
+            except:
+                phone = "<MISSING>"
+        else:
+            final_link = final_link[: final_link.rfind("/")]
+            final_req = session.get(final_link, headers=headers)
+            base = BeautifulSoup(final_req.text, "lxml")
+            location_name = base.find(class_="Teaser-title").text.strip()
+            street_address = base.find(class_="c-address-street-1").text.strip()
+            try:
+                street_address = (
+                    street_address
+                    + " "
+                    + base.find(class_="c-address-street-2").text.strip()
+                )
+                street_address = street_address.strip()
+            except:
+                pass
+
+            city = base.find(class_="c-address-city").text.strip()
+            state = base.find(class_="c-address-state").text.strip()
+            zip_code = base.find(class_="c-address-postal-code").text.strip()
+
+            try:
+                phone = base.find(class_="Phone-link").text.strip()
+                if not phone:
+                    phone = "<MISSING>"
+            except:
+                phone = "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-
         location_type = "<MISSING>"
 
         try:
-            phone = item.find("div", attrs={"itemprop": "telephone"}).text.strip()
-            if not phone:
-                phone = "<MISSING>"
+            latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"]
+            longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"]
         except:
-            phone = "<MISSING>"
-
-        latitude = item.find("meta", attrs={"itemprop": "latitude"})["content"]
-        longitude = item.find("meta", attrs={"itemprop": "longitude"})["content"]
+            latitude = ""
+            longitude = ""
 
         try:
             hours_of_operation = " ".join(
@@ -142,31 +148,25 @@ def fetch_data():
         except:
             hours_of_operation = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                final_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -1,123 +1,95 @@
-import csv
-from sgrequests import SgRequests
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgselenium.sgselenium import SgChrome
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+session = SgRequests()
 website = "gelsons_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        log.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://www.gelsons.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    final_data = []
     if True:
-        url = "https://www.gelsons.com/stores/store-search-results.html?displayCount=30&state=CA"
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = (
-            soup.find("div", {"id": "store-search-results"}).find("ul").findAll("li")
-        )
+        with SgChrome() as driver:
+            url = "https://www.gelsons.com/stores"
+            driver.get(url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            loclist = soup.find("ol").findAll("li")
         for loc in loclist:
-            try:
-                title = loc.find("h2", {"class": "store-display-name h6"}).text.strip()
-                store = loc["data-storeid"]
-                lat = loc["data-storelat"]
-                longt = loc["data-storelng"]
-                street = loc.find("p", {"class": "store-address"}).text
-                temp = loc.find("p", {"class": "store-city-state-zip"}).text
-                temp = temp.split(",")
-                city = temp[0]
-                temp = temp[1].split()
-                state = temp[0]
-                pcode = temp[1]
-                phone = (
-                    loc.find("p", {"class": "store-main-phone"})
-                    .find("span", {"class": "show-for-medium"})
-                    .text
-                )
-                link = loc.find("a", {"aria-label": title})["href"]
-                link = "https://www.gelsons.com" + link
-                hours = (
-                    loc.find("ul", {"class": "store-regular-hours"})
-                    .findAll("li")[1]
-                    .text.strip()
-                )
-            except:
-                pass
-            final_data.append(
-                [
-                    "https://www.gelsons.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            temp = loc.findAll("div")
+            page_url = DOMAIN + temp[3].find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            address = (
+                soup.findAll("a", {"rel": "noreferrer"})[1]
+                .get_text(separator="|", strip=True)
+                .split("|")
             )
-        return final_data
+            street_address = address[0]
+            city = address[1]
+            state = address[2].replace(",", "")
+            zip_postal = address[3]
+            loc = json.loads(r.text.split('"store":')[1].split(',"layoutProps"')[0])
+            location_name = loc["title"]
+            phone = loc["storePhone"]
+            latitude = loc["lat"]
+            longitude = loc["long"]
+            country_code = "US"
+            hours_of_operation = soup.find(
+                "h2", {"class": "font-bold flex text-2xl pb-5"}
+            ).text.replace("Hours:", "")
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

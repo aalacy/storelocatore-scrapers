@@ -6,3 +6,4 @@ sgselenium == 0.1.4
 selenium == 3.141.0
 bs4 == 0.0.1
 beautifulsoup4==4.7.1
+sgpostal==0.1.0

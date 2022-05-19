@@ -18,8 +18,8 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1[@class='mtn']/text()")).strip()
-    line = tree.xpath("//address/text()")
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//div[./a[contains(@href, 'tel:')]]/text()")
     line = list(filter(None, [l.strip() for l in line]))
     street_address = ", ".join(line[:-1])
     line = line[-1]
@@ -31,7 +31,7 @@ def get_data(page_url, sgw: SgWriter):
     if len(postal) > 5:
         country_code = "CA"
 
-    phone = "".join(tree.xpath("//a[@id='phone-number']/text()")).strip()
+    phone = "".join(tree.xpath("//a[contains(@href, 'tel:')]/text()")).strip()
     hours_of_operation = SgRecord.MISSING
     if not location_name:
         hours_of_operation = "Closed"

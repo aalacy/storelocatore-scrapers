@@ -1,0 +1,38 @@
+--ignore StreetAddressHasNumber (Conifrmed on website)
+Found 173 concerning rows. Examples:
+                                      street_address              REASON  rowNumber
+0        Level 2, Plaza Angsana, Pusat Bandar Tampoi  ADDR_HAS_NO_NUMBER          0
+1                     Jalan Putra, Taman Medan Putra  ADDR_HAS_NO_NUMBER          1
+2  No. 55 & 55-01, Jalan Pulai Makmur 5/2, Bandar...  ADDR_HAS_NO_NUMBER          2
+3       Pusat Bandar Penawar, Bandar Penawar, Desaru  ADDR_HAS_NO_NUMBER          3
+4                                         Jalan Soga  ADDR_HAS_NO_NUMBER          4
+
+
+--ignore StreetAddressHasStateName (Conifrmed on website)
+Found 5 concerning rows. Examples:
+                                        street_address                    REASON  rowNumber
+34   LG 05 & 06, Paragon Market Place, PTB 20126, J...  ADDR_CONTAINS_STATE_NAME         34
+90   Jalan Nilai 3/11, Nilai 3 Textile Walk, Kawasa...  ADDR_CONTAINS_STATE_NAME         90
+110                             Batu 2, Jalan Temerloh  ADDR_CONTAINS_STATE_NAME        110
+118    Lot 641 & 642, No 9 & 10, Persiaran Perbandaran  ADDR_CONTAINS_STATE_NAME        118
+157  Sentral i-City, Plot 1, i-City, Persiaran Mult...  ADDR_CONTAINS_STATE_NAME        157
+
+
+--ignore GeoConsistencyValidator (NOT US)
+Found 184 concerning rows. Examples:
+     zip  state                REASON  rowNumber
+0  81200  Johor  ZIPCODE_NOT_IN_STATE          0
+1  86100  Johor  ZIPCODE_NOT_IN_STATE          1
+2  81300  Johor  ZIPCODE_NOT_IN_STATE          2
+3  81930  Johor  ZIPCODE_NOT_IN_STATE          3
+4  83000  Johor  ZIPCODE_NOT_IN_STATE          4
+
+
+--ignore CountryValidator (NOT US)
+Found 184 concerning rows. Examples:
+   state           phone    zip            REASON  rowNumber
+0  Johor  +60 7 232 6875  81200  INVALID_US_STATE          0
+1  Johor  +60 7 758 2328  86100  INVALID_US_STATE          1
+2  Johor       <MISSING>  81300  INVALID_US_STATE          2
+3  Johor  +60 7 822 1135  81930  INVALID_US_STATE          3
+4  Johor  +60 7 438 2525  83000  INVALID_US_STATE          4

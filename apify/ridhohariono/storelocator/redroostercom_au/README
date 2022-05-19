@@ -1,0 +1,36 @@
+--ignore CountryCodeFillRateChecker (NOT US/CA)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 26 concerning rows. Examples:
+                                       street_address              REASON  rowNumber
+4   Shop 55 Alexander Heights Shopping Centre, Cor...  ADDR_HAS_NO_NUMBER          4
+10   Armadale Plaza Corner Third Road and Jull Street  ADDR_HAS_NO_NUMBER         10
+19   Northlands S/C Cnr Wanneroo Road & Amelia Street  ADDR_HAS_NO_NUMBER         19
+20             Stockland Baldivis SC  Safety Bay Road  ADDR_HAS_NO_NUMBER         20
+23  Ballajura Shopping Centre  Cnr. Kingfisher & I...  ADDR_HAS_NO_NUMBER         23
+
+--ignore StreetAddressHasStateName (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+               street_address                    REASON  rowNumber
+67      Shop 102  Carousel SC  ADDR_CONTAINS_STATE_NAME         67
+270  Rockingham SC  Read Road  ADDR_CONTAINS_STATE_NAME        270
+
+
+--ignore GeoConsistencyValidator (Not US)
+Found 65 concerning rows. Examples:
+     zip state                REASON  rowNumber
+2   6330    WA  ZIPCODE_NOT_IN_STATE          2
+4   6064    WA  ZIPCODE_NOT_IN_STATE          4
+10  6112    WA  ZIPCODE_NOT_IN_STATE         10
+19  6021    WA  ZIPCODE_NOT_IN_STATE         19
+20  6171    WA  ZIPCODE_NOT_IN_STATE         20
+
+
+--ignore CountryValidator (Not US)
+Found 70 concerning rows. Examples:
+   state         phone   zip                  REASON  rowNumber
+2     WA  08 9841 2033  6330          INVALID_US_ZIP          2
+4     WA  08 9342 8410  6064          INVALID_US_ZIP          4
+7     NT  08 7915 3152  0870  INVALID_CA_POSTAL_CODE          7
+10    WA  08 6157 5362  6112          INVALID_US_ZIP         10
+19    WA  08 6157 5368  6021          INVALID_US_ZIP         19
