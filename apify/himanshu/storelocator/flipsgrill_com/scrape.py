@@ -4,8 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "flipsgrill.com"
 BASE_URL = "https://www.flipsgrill.com/"
@@ -60,20 +59,13 @@ def fetch_data():
     for loc in loclist:
         location_name = loc.find("h5").text
         temp_var = loc.findAll("p")
-        raw_address = temp_var[0].get_text(separator="|", strip=True).replace("|", " ")
-        pa = parse_address_intl(raw_address)
+        raw_address = list(temp_var[0].stripped_strings)
 
-        street_address = pa.street_address_1
-        street_address = street_address if street_address else MISSING
-
-        city = pa.city
-        city = city.strip() if city else MISSING
-
-        state = pa.state
-        state = state.strip() if state else MISSING
-
-        zip_postal = pa.postcode
-        zip_postal = zip_postal.strip() if zip_postal else MISSING
+        street_address = raw_address[0].strip()
+        city_line = raw_address[-1].replace("th TX", "th, TX").strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_postal = city_line[-1].strip().split()[1].strip()
 
         country_code = "US"
         phone = loc.select_one("a[href*=tel]").text
@@ -93,10 +85,10 @@ def fetch_data():
             locator_domain=DOMAIN,
             page_url=LOCATION_URL,
             location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
             country_code=country_code,
             store_number=MISSING,
             phone=phone,
@@ -104,16 +96,13 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
