@@ -16,7 +16,10 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()
     for j in js:
+
         a = j.get("content")
+        status = a.get("status")
+
         page_url = a.get("url") or "<MISSING>"
         location_name = a.get("title") or "<MISSING>"
         street_address = (
@@ -35,6 +38,8 @@ def fetch_data(sgw: SgWriter):
         if country_code == "NL" and str(postal).find(" ") != -1:
             state = str(postal).split()[1].strip()
             postal = str(postal).split()[0].strip()
+        if str(postal).find("Singapore") != -1:
+            postal = str(postal).replace("Singapore", "").strip()
         store_number = a.get("number") or "<MISSING>"
         latitude = j.get("latitude")
         longitude = j.get("longitude")
@@ -142,6 +147,8 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             or "<MISSING>"
         )
+        if status == "1" or status == "2":
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
