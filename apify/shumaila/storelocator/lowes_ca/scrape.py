@@ -1,4 +1,3 @@
-import re
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -18,7 +17,7 @@ def fetch_data():
     mylist = static_coordinate_list(70, SearchableCountries.CANADA)
 
     for latnow, lngnow in mylist:
-        print(latnow, lngnow)
+
         url = "https://www.lowes.ca/stores/fetch/gcpToken"
         mauth = session.get(url, headers=headers).json()["access_token"]
         url = (
@@ -27,7 +26,7 @@ def fetch_data():
             + ","
             + str(lngnow)
         )
-        print(url)
+
         headers1 = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
             "authority": "api-prod.lowes.com",
