@@ -111,7 +111,7 @@ def normalize_the_store_locator_url(urls3):
         t = url.split("=")[-1]
         t2 = "=".join(url.split("=")[:-1])
         encoded_cp = t.encode("cp932")
-        print(encoded_cp)
+        logger.info(f"[{idx}] Encoded as {encoded_cp}")
         decoded_k = (
             str(encoded_cp)
             .lstrip("b")
@@ -363,7 +363,7 @@ def fetch_data(sgw: SgWriter):
         tasks = []
         task = [
             executor.submit(fetch_records, num, store_url, sgw)
-            for num, store_url in enumerate(store_urls[0:50])
+            for num, store_url in enumerate(store_urls[0:])
         ]
         tasks.extend(task)
         for future in as_completed(tasks):
