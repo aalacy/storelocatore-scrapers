@@ -25,7 +25,6 @@ def fetch_data():
                 ).json()
                 slug = poi["items"][0]["fields"]["slug"]
                 poi_url = f'https://www.thrivepetcare.com/_next/data/GLiPiItU_n7YDO6DxT-NX/locations/{state["state"].lower().replace(" ", "-")}/{city["city"].lower().replace(" ", "-")}/{slug}.json'  # slug=illinois&slug=arlington-heights&slug=northwest-highway'
-                print(poi_url)
                 poi_data = session.get(poi_url, headers=hdr).json()
                 page_url = f'https://www.thrivepetcare.com/locations/{state["state"].lower().replace(" ", "-")}/{city["city"].lower().replace(" ", "-")}/{slug}'
                 street_address = poi_data["pageProps"]["siteApiData"]["addressLine1"]
