@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from proxyfier import ProxyProviders
 from sgpostal.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -43,7 +42,6 @@ BASE_URL = "https://www.pizza-la.co.jp/"
 def get_level1_store_locator_urls():
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         # https://www.pizza-la.co.jp/paella/TenpoSelect.aspx?KC=01"
         rp = http.get(STORE_LOCATOR, headers=headers)
@@ -62,7 +60,6 @@ def get_level2_store_locator_urls(urls1):
     urls2 = []
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         for idx1, url1 in enumerate(urls1[0:]):
             rp = http.get(url1, headers=headers)
@@ -85,7 +82,6 @@ def get_level3_store_locator_urls(ret_urls2):
     urls3 = []
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         for idx1, url1 in enumerate(ret_urls2[0:]):
             rp = http.get(url1, headers=headers)
@@ -134,7 +130,6 @@ def get_level4_store_locator_urls(japanese_k_normalized):
     urls4 = []
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         for idx1, url1 in enumerate(japanese_k_normalized[0:]):
             rp = http.get(url1, headers=headers)
@@ -157,7 +152,6 @@ def get_level5_store_locator_urls(m_tk_c_urls):
     urls5 = []
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         for idx1, url1 in enumerate(m_tk_c_urls[0:]):
             rp = http.get(url1, headers=headers)
@@ -210,7 +204,6 @@ def get_level61_store_urls(m_tk_c_urls):
     urls61 = []
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         for idx1, url1 in enumerate(m_tk_c_urls[0:]):
             rp = http.get(url1, headers=headers)
@@ -232,7 +225,6 @@ def get_level6_store_urls(urls_11digits_id):
     urls6 = []
     with SgRequests(
         proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as http:
         for idx1, url1 in enumerate(urls_11digits_id[0:]):
             rp = http.get(url1, headers=headers)
