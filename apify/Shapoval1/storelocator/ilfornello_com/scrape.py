@@ -1,39 +1,13 @@
-import csv
+import re
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://ilfornello.com/"
     api_url = "https://ilfornello.com/"
@@ -43,7 +17,7 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="wpb_column vc_column_container vc_col-sm-2"]//a')
+    div = tree.xpath('//ul[@id="primary-menu"]/li[1]//ul/li/a')
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -52,12 +26,13 @@ def fetch_data():
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-
+        cms = "".join(tree.xpath('//*[contains(text(), "COMING SOON")]/text()'))
+        if cms:
+            continue
         ad = tree.xpath('//a[contains(@href, "goo")]//text()')
-        if location_name.find("BAYVIEW") != -1:
+        if location_name.find("Bayview") != -1:
             ad = tree.xpath('//a[contains(@href, "goo")]/following::p[1]//text()')
 
-        location_type = "<MISSING>"
         street_address = "".join(ad[0])
         city = "<MISSING>"
         if street_address.find(",") != -1:
@@ -65,89 +40,99 @@ def fetch_data():
             city = "".join(ad[0]).split(",")[1].strip()
         try:
             state = "".join(ad[0]).split(",")[2].split()[0].strip()
-            postal = "".join(ad[0]).split(",")[2].split()[1:]
-            postal = " ".join(postal)
+            postals = "".join(ad[0]).split(",")[2].split()[1:]
+            postal = " ".join(postals)
         except:
             state = "<MISSING>"
             postal = "<MISSING>"
+        if city == "<MISSING>":
+            city = location_name
         country_code = "CA"
-
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        phone = (
+        ad = tree.xpath("//strong//text()")
+        ad = list(filter(None, [a.strip() for a in ad]))
+        adr = " ".join(ad)
+        ph = (
+            re.findall(
+                r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})",
+                adr,
+            )
+            or "<MISSING>"
+        )
+        phone = "".join(ph[0]).strip()
+        hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h3[text()="ORDER ONLINE"]/following-sibling::p//text() | //h3[./span[text()="ORDER ONLINE"]]/following-sibling::p//text() | //h3[contains(text(), "CONTACT US")]/following-sibling::p//text() | //h3[./span[contains(text(), "CONTACT US")]]/following-sibling::p//text()'
+                    '//h3[.//span[contains(text(), "HOURS")]]/following-sibling::p//text()'
                 )
             )
             .replace("\n", "")
             .strip()
-            or "<MISSING>"
         )
-        if phone.find("order:") != -1:
-            phone = phone.split("order:")[1].strip()
-        if phone.find("[") != -1:
-            phone = phone.split("[")[0].replace("/", "").strip()
-        if phone.find("ORDER") != -1:
-            phone = phone.split("ORDER")[0].strip()
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("TAKEOUT") != -1:
+            hours_of_operation = hours_of_operation.split("TAKEOUT")[1].strip()
+        if hours_of_operation.find("DELIVERY:") != -1:
+            hours_of_operation = hours_of_operation.split("DELIVERY:")[1].strip()
+        if hours_of_operation.find("DELIVERY") != -1:
+            hours_of_operation = hours_of_operation.split("DELIVERY")[1].strip()
+        if hours_of_operation.find("Please call") != -1:
+            hours_of_operation = hours_of_operation.split("Please call")[0].strip()
+        if hours_of_operation.find("HOURS") != -1:
+            hours_of_operation = (
+                hours_of_operation.split("HOURS")[1].split("905")[0].strip()
+            )
         hours_of_operation = (
-            " ".join(
+            hours_of_operation.replace("Open for Indoor Dining", "")
+            .replace(f"{phone}", "")
+            .strip()
+        )
+        if page_url.find("https://ilfornello.com/st-catharines/") != -1:
+            street_address = (
+                "".join(tree.xpath('//a[contains(@href, "goo")]//text()'))
+                or "<MISSING>"
+            )
+            ad = "".join(
                 tree.xpath(
-                    '//b[text()="HOURS OF OPERATION:"]/following-sibling::text() | //h3[./span[text()="HOURS"]]/following-sibling::p//text() | //strong[text()="Hours:"]/following-sibling::strong//text()'
+                    '//strong[./a[contains(@href, "goo")]]/following-sibling::text()'
                 )
             )
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = " ".join(
-                tree.xpath('//span[text()="HOURS"]/following::p[1]//text()')
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+            phone = "".join(
+                tree.xpath("//p[./strong/a]/following-sibling::p[1]//text()")
             )
-        if "closed until" in hours_of_operation:
-            hours_of_operation = "Temporarily Closed"
-        if hours_of_operation.find("*") != -1 and hours_of_operation.find("**") == -1:
-            hours_of_operation = hours_of_operation.split("*")[0].strip()
-        if hours_of_operation.find(".**") != -1:
             hours_of_operation = (
-                hours_of_operation.split(".**")[1].split("*")[0].strip()
+                " ".join(tree.xpath('//p[contains(text(), "Monday")]//text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
             )
-        if hours_of_operation.find(").") != -1:
-            hours_of_operation = (
-                hours_of_operation.split(").")[1].split("Phone")[0].strip()
-            )
-        hours_of_operation = (
-            hours_of_operation.replace("Our patio is now open", "")
-            .replace("Hours:", "")
-            .strip()
+            hours_of_operation = " ".join(hours_of_operation.split())
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

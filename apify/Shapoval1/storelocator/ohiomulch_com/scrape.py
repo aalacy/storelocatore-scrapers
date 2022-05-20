@@ -39,27 +39,26 @@ def fetch_data(sgw: SgWriter):
         latitude = (
             "".join(
                 d.xpath(
-                    './/preceding::script[contains(text(), "markersCoords.push")]/text()'
+                    f'.//preceding::script[contains(text(), "{location_name}")]/text()'
                 )
             )
-            .split("markersCoords.push({")[1]
             .split(f"{location_name}")[0]
-            .split("lat:")[1]
+            .split("lat:")[-1]
             .split(",")[0]
             .strip()
         )
         longitude = (
             "".join(
                 d.xpath(
-                    './/preceding::script[contains(text(), "markersCoords.push")]/text()'
+                    f'.//preceding::script[contains(text(), "{location_name}")]/text()'
                 )
             )
-            .split("markersCoords.push({")[1]
             .split(f"{location_name}")[0]
-            .split("lng:")[1]
+            .split("lng:")[-1]
             .split(",")[0]
             .strip()
         )
+
         phone = (
             "".join(d.xpath('.//span[@class="phone"]/text()')).strip() or "<MISSING>"
         )

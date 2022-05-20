@@ -1,76 +1,60 @@
-import csv
+import json
 from bs4 import BeautifulSoup
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
+    base_link = "https://www.mitsubishicars.com/car-dealerships-near-me"
 
-def fetch_data():
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests(verify_ssl=False)
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
     base_url = "https://www.mitsubishicars.com/"
     addressess = []
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
-        max_search_results=100,
-    )
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
-    }
-    for index, zip_code in enumerate(search):
-        try:
-            link = (
-                "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="
-                + str(zip_code)
-                + "&idealer=false&ecommerce=false"
-            )
-            json_data = session.get(link, headers=headers).json()
-        except:
-            pass
-        for loc in json_data:
-            address = loc["address1"].strip()
-            if loc["address2"]:
-                address += " " + loc["address2"].strip()
-            name = loc["dealerName"].strip()
-            city = loc["city"].strip().capitalize()
-            state = loc["state"].strip()
-            zipp = loc["zipcode"]
-            phone = loc["phone"].strip()
-            country = loc["country"].replace("United States", "US").strip()
-            lat = loc["latitude"]
-            lng = loc["longitude"]
-            link = loc["dealerUrl"]
-            storeno = loc["bizId"]
-            page_url = ""
-            if link:
-                page_url = "http://" + link.lower()
+
+    fin_script = ""
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if 'addressLine1":' in str(script):
+            fin_script = str(script)
+            break
+    js = fin_script.split("__ =")[2].split("; window")[0]
+    store_data = json.loads(js)
+
+    for i in store_data:
+        if i[:7] == "Dealer_":
+            store = store_data[i]
+            phone_det = store_data["$" + i + ".phone"]
+            add_det = store_data["$" + i + ".address"]
+
+            name = store["name"]
+            address = add_det["addressLine1"]
+            city = add_det["addressLine2"]
+            try:
+                state = add_det["addressLine3"]
+            except:
+                state = ""
+            zipp = add_det["postalArea"]
+            phone = phone_det["phoneNumber"]
+            country = "US"
+            lat = add_det["latitude"]
+            lng = add_det["longitude"]
+            page_url = store["url"]
+            storeno = store["id"]
+            if page_url:
                 if (
                     "http://www.verneidemitsubishi.com" in page_url
                     or "http://www.kingautomitsubishi.com" in page_url
@@ -82,60 +66,61 @@ def fetch_data():
                 else:
                     try:
                         r1 = session.get(page_url, headers=headers)
+                        soup1 = BeautifulSoup(r1.text, "lxml")
+                        got_page = True
                     except:
-                        pass
-                    soup1 = BeautifulSoup(r1.text, "lxml")
-                    if soup1.find("div", {"class": "sales-hours"}):
-                        hours_of_operation = " ".join(
-                            list(
-                                soup1.find(
-                                    "div", {"class": "sales-hours"}
-                                ).stripped_strings
+                        got_page = False
+                    if got_page:
+                        if soup1.find("div", {"class": "sales-hours"}):
+                            hours_of_operation = " ".join(
+                                list(
+                                    soup1.find(
+                                        "div", {"class": "sales-hours"}
+                                    ).stripped_strings
+                                )
                             )
-                        )
-                    elif soup1.find(
-                        "ul", {"class": "list-unstyled line-height-condensed"}
-                    ):
-                        hours_of_operation = " ".join(
-                            list(
-                                soup1.find(
-                                    "ul",
-                                    {"class": "list-unstyled line-height-condensed"},
-                                ).stripped_strings
+                        elif soup1.find(
+                            "ul", {"class": "list-unstyled line-height-condensed"}
+                        ):
+                            hours_of_operation = " ".join(
+                                list(
+                                    soup1.find(
+                                        "ul",
+                                        {
+                                            "class": "list-unstyled line-height-condensed"
+                                        },
+                                    ).stripped_strings
+                                )
                             )
-                        )
-                    elif soup1.find("div", {"class": "well border-x"}):
-                        hours_of_operation = " ".join(
-                            list(
-                                soup1.find("div", {"class": "well border-x"})
-                                .find("table")
-                                .stripped_strings
+                        elif soup1.find("div", {"class": "well border-x"}):
+                            hours_of_operation = " ".join(
+                                list(
+                                    soup1.find("div", {"class": "well border-x"})
+                                    .find("table")
+                                    .stripped_strings
+                                )
                             )
-                        )
-                    elif soup1.find("div", {"class": "hours-block pad-2x"}):
-                        hours_of_operation = " ".join(
-                            list(
-                                soup1.find(
-                                    "div", {"class": "hours-block pad-2x"}
-                                ).stripped_strings
+                        elif soup1.find("div", {"class": "hours-block pad-2x"}):
+                            hours_of_operation = " ".join(
+                                list(
+                                    soup1.find(
+                                        "div", {"class": "hours-block pad-2x"}
+                                    ).stripped_strings
+                                )
                             )
-                        )
-                    elif soup1.find("div", {"class": "hoursBox"}):
-                        hours_of_operation = " ".join(
-                            list(
-                                soup1.find(
-                                    "div", {"class": "hoursBox"}
-                                ).stripped_strings
+                        elif soup1.find("div", {"class": "hoursBox"}):
+                            hours_of_operation = " ".join(
+                                list(
+                                    soup1.find(
+                                        "div", {"class": "hoursBox"}
+                                    ).stripped_strings
+                                )
                             )
-                        )
+                        else:
+                            hours_of_operation = "<INACCESSIBLE>"
                     else:
                         hours_of_operation = "<INACCESSIBLE>"
-            else:
-                hours_of_operation = "<MISSING>"
-                page_url = ""
 
-            if city == "Little rock" or city == "Charlottesville":
-                page_url = "<MISSING>"
             store = []
             store.append(base_url)
             store.append(name)
@@ -150,7 +135,7 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             try:
-                store.append(hours_of_operation.split("} Sales Hours ")[1])
+                store.append(hours_of_operation.split("Sales Hours")[1].strip())
             except:
                 store.append(hours_of_operation)
             store.append(page_url if page_url else "<MISSING>")
@@ -167,12 +152,25 @@ def fetch_data():
                 else "<MISSING>"
                 for x in store
             ]
-            yield store
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=store[0],
+                    location_name=store[1],
+                    street_address=store[2],
+                    city=store[3],
+                    state=store[4],
+                    zip_postal=store[5],
+                    country_code=store[6],
+                    store_number=store[7],
+                    phone=store[8],
+                    location_type=store[9],
+                    latitude=store[10],
+                    longitude=store[11],
+                    hours_of_operation=store[12],
+                    page_url=store[13],
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

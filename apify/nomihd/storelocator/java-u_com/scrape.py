@@ -3,8 +3,9 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "java-u.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -26,80 +27,95 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    api_url = "https://www.java-u.com/wp-admin/admin-ajax.php?action=store_search&lat=45.501689&lng=-73.567256&max_results=5000&radius=50&autoload=1"
-    api_res = session.get(api_url, headers=headers)
 
-    json_res = json.loads(api_res.text)
+    search_url = "https://www.java-u.com/locations"
 
-    stores_list = json_res
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
+        log.info(search_res)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    for store in stores_list:
-
-        page_url = "https://www.java-u.com/locations/"
-
-        store_number = store["id"]
-        locator_domain = website
-
-        location_name = store["store"].strip()
-        street_address = store["address"].strip()
-        if "address2" in store and store["address2"]:
-            street_address = (
-                (street_address + ", " + store["address2"]).strip(", ").strip()
+        for no in range(1, 50):
+            store_info_divs = search_sel.xpath(
+                f"//div[@data-testid][count(preceding-sibling::div[@tabindex])={no}]"
             )
 
-        if "International Airport," in street_address:
-            street_address = street_address.split("International Airport,")[1].strip()
-        city = store["city"].strip()
-        state = store["state"].strip()
+            if not store_info_divs:
+                break
 
-        zip = store["zip"].strip()
+            page_url = search_url
 
-        country_code = store["country"]
-        phone = store["phone"]
-        location_type = "<MISSING>"
+            locator_domain = website
 
-        if "hours" in store and store["hours"]:
-            hours_sel = lxml.html.fromstring(store["hours"])
+            location_name = "".join(store_info_divs[0].xpath(".//text()")).strip()
 
-            hours = list(
+            full_address = list(
                 filter(
                     str,
-                    [x.strip() for x in hours_sel.xpath("//text()")],
+                    [x.strip() for x in store_info_divs[3].xpath(".//p//text()")],
                 )
             )
+            if "Canada" not in full_address[-1]:
+                full_address = full_address[:-1]
 
-            hours_of_operation = "; ".join(hours).replace("day;", "day:")
+            street_address = " ".join(full_address[0:-1])
+            if "International Airport" in street_address:
+                street_address = street_address.split("International Airport")[
+                    -1
+                ].strip()
 
-        else:
-            hours_of_operation = "Open 24/7"
+            city_state_zip = full_address[-1]
 
-        latitude = store["lat"]
-        longitude = store["lng"]
+            city = city_state_zip.split(",")[0].strip()
+            state = city_state_zip.split(",")[1].strip()
+            zip = city_state_zip.split(",")[-1].strip().replace("Canada", "").strip()
+            country_code = "CA"
 
-        raw_address = "<MISSING>"
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            store_number = "<MISSING>"
+
+            phone = (
+                "".join(store_info_divs[1].xpath(".//text()"))
+                .strip()
+                .replace("Phone:", "")
+                .strip()
+            )
+
+            location_type = "<MISSING>"
+
+            hours = store_info_divs[-1].xpath("p")
+            hours_list = []
+            for hour in hours:
+                hours_list.append("".join(hour.xpath(".//text()")).strip())
+
+            hours_of_operation = "; ".join(hours_list)
+            latitude, longitude = "<MISSING>", "<MISSING>"
+            raw_address = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

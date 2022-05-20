@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 import time
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("libertytaxcanada_ca")
 
@@ -11,158 +14,95 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    states = []
-    Found = False
-    url = "https://www.libertytaxcanada.ca/office-directory/"
+    url = "https://www.libertytaxcanada.ca/api/franchise/getAllFranchise/get-all-franchise"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if "<h2>Provinces</h2>" in line:
-            Found = True
-        if Found and "<!-- FOOTER -->" in line:
-            Found = False
-        if Found and '-tax-preparation-locations.html">' in line:
-            states.append(
-                "https://www.libertytaxcanada.ca"
-                + line.split('href="')[1].split('"')[0]
-            )
-    for state in states:
-        time.sleep(5)
-        logger.info(("Pulling Province %s..." % state))
-        r2 = session.get(state, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if "More detail</a>" in line2:
-                locs.append(
-                    "https://www.libertytaxcanada.ca"
-                    + line2.split('href="')[1].split('"')[0]
-                )
+    for line in r.iter_lines():
+        if '{"officeCode":"' in line:
+            items = line.split('{"officeCode":"')
+            for item in items:
+                if '"label":"' in item:
+                    locs.append(
+                        "https://www.libertytaxcanada.ca/income-tax-preparation-locations/"
+                        + item.split('"')[0]
+                    )
     for loc in locs:
-        if "s/bc-vancouver-2190-west-broadway" not in loc:
-            time.sleep(5)
-            logger.info(("Pulling Location %s..." % loc))
-            website = "libertytaxcanada.ca"
-            typ = "<MISSING>"
-            hours = ""
-            name = ""
-            add = ""
-            city = ""
-            state = ""
-            country = "CA"
-            zc = ""
-            phone = ""
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-            store = ""
-            HFound = False
-            r2 = session.get(loc, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
-                if "<h1>" in line2:
-                    name = line2.split("<h1>")[1].split("<")[0]
-                if "streetAddress" in line2:
-                    add = line2.split("streetAddress")[1].split(">")[1].split("<")[0]
-                if "addressLocality" in line2:
-                    city = line2.split("addressLocality")[1].split(">")[1].split("<")[0]
-                if "addressRegion" in line2:
-                    state = line2.split("addressRegion")[1].split(">")[1].split("<")[0]
-                if "postalCode" in line2:
-                    zc = line2.split("postalCode")[1].split(">")[1].split("<")[0]
-                if "id=office-number" in line2:
-                    phone = line2.split("tel:")[1].split('"')[0]
-                if "OfficeId" in line2:
-                    store = (
-                        line2.split("value=")[1].split(" ")[0].replace('"', "").strip()
-                    )
-                if "office-hours-week" in line2 and hours == "":
-                    HFound = True
-                if HFound and "</section>" in line2:
-                    HFound = False
-                if HFound and "office-day-name" in line2:
-                    day = line2.split("office-day-name")[1].split(">")[1].split("<")[0]
-                if HFound and "office-day-hours" in line2:
-                    hrs = (
-                        day
-                        + ": "
-                        + line2.split("office-day-hours")[1].split(">")[1].split("<")[0]
-                    )
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-                if '<span itemprop="telephone" class="hidden">' in line2:
-                    phone = line2.split('<span itemprop="telephone" class="hidden">')[
-                        1
-                    ].split("<")[0]
-            if phone == "":
-                phone = "<MISSING>"
-            if hours == "":
-                hours = "<MISSING>"
-            hours = (
-                hours.replace("\t", "")
-                .replace("  ", " ")
-                .replace("  ", " ")
-                .replace("  ", " ")
-                .replace("  ", " ")
-                .replace("  ", " ")
-                .replace("  ", " ")
-                .replace("  ", " ")
-                .replace("  ", " ")
+        lurl = (
+            "https://www.libertytaxcanada.ca/api/franchise/getFranchise/"
+            + loc.rsplit("/", 1)[1]
+        )
+        time.sleep(5)
+        logger.info(("Pulling Location %s..." % loc))
+        website = "libertytaxcanada.ca"
+        typ = "<MISSING>"
+        hours = ""
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        country = "CA"
+        zc = ""
+        phone = ""
+        lat = "<MISSING>"
+        lng = "<MISSING>"
+        store = ""
+        r2 = session.get(lurl, headers=headers)
+        for line2 in r2.iter_lines():
+            if "officeCode" in line2 and '"active":"true"' in line2:
+                store = line2.split('"officeCode":"')[1].split('"')[0]
+                name = line2.split('"label":"')[1].split('"')[0]
+                add = line2.split('"street":"')[1].split('"')[0]
+                city = line2.split('"city":"')[1].split('"')[0]
+                zc = line2.split('"zip":"')[1].split('"')[0]
+                state = line2.split('"state":"')[1].split('"')[0]
+                try:
+                    phone = line2.split('"phone":"')[1].split('"')[0]
+                except:
+                    phone = "<MISSING>"
+                days = line2.split('{"day":"')
+                for day in days:
+                    if '"open":"' in day:
+                        if '"closed":"00:00"' in day:
+                            hrs = day.split('"')[0] + ": Closed"
+                        else:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"open":"')[1].split('"')[0]
+                                + "-"
+                                + day.split('"closed":"')[1].split('"')[0]
+                            )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
+        if store != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
             )
-            if add != "":
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,66 +1,81 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-import re
-import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.bathstore.com/stores"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "bathstore.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    data = (
-        dom.xpath('//script[contains(text(), "initialStockists")]/text()')[0]
-        .split("initialStockists =")[-1]
-        .strip()
-    )
+    all_locations = dom.xpath('//li[@class="storesList_locations"]/a/@href')
 
-    all_locations = json.loads(data)
-    for poi in all_locations:
-        page_url = f'https://www.bathstore.com/stores/{poi["alias"]}'
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath('//div[@class="stockist-hours"]//table//text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo)
-        city = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
-        if city:
-            city = city[0].strip()
-        if not city:
-            city = (
-                loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[0]
-                .split(",")[1]
-                .strip()
-            )
-        if city.endswith(","):
-            city = city[:-1]
+        location_name = loc_dom.xpath(
+            '//h3[@class="storeDetailMap_locationName_title"]/text()'
+        )
+        if not location_name:
+            continue
+        location_name = location_name[0]
+        raw_address = loc_dom.xpath('//div[@class="storeDetailMap_address"]/p/text()')
+        raw_address = " ".join([e.strip() for e in raw_address if e.strip()]).replace(
+            ", ,", ","
+        )
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if street_address and addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        else:
+            street_address = addr.street_address_2
+        if not street_address:
+            street_address = loc_dom.xpath(
+                '//div[@class="storeDetailMap_address"]/p/text()'
+            )[0]
+        if street_address and street_address.endswith(","):
+            street_address = street_address[:-1]
+        phone = loc_dom.xpath(
+            '//div[@class="storeDetailMap_locationInformation"]//a[contains(@href, "tel")]/text()'
+        )
+        phone = phone[0] if phone else ""
+        geo = loc_dom.xpath("//@data-latlong")[0].split(",")
+        hoo = loc_dom.xpath(
+            '//li[@class="storeDetailMap_openingTime_item"]/span/text()'
+        )
+        hoo = " ".join(hoo)
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = " ".join(raw_address.split()[-2:])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["address1"],
-            city=city,
-            state=SgRecord.MISSING,
-            zip_postal=poi["address"]["postcode"],
-            country_code=SgRecord.MISSING,
-            store_number=poi["id"],
-            phone=poi["telephone"],
-            location_type=SgRecord.MISSING,
-            latitude=poi["location"]["lat"],
-            longitude=poi["location"]["lng"],
-            hours_of_operation=hours_of_operation,
+            location_name=location_name,
+            street_address=street_address,
+            city=addr.city,
+            state="",
+            zip_postal=zip_code,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item

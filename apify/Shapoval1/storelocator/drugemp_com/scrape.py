@@ -15,14 +15,14 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./h2[@style="text-align:center;font-size:50px"]]')
+    div = tree.xpath('//div[./h2[@style="text-align:center; font-size:50px;"]]')
     for d in div:
         location_name = "".join(d.xpath(".//text()")).replace("\n", "").strip()
         street_address = "".join(
-            d.xpath('.//following::p[@style="font-size: 18px;"][1]//text()')
+            d.xpath('.//following::p[@style="font-size:18px;"][1]//text()')
         )
         ad = (
-            "".join(d.xpath('.//following::p[@style="font-size: 18px;"][2]//text()'))
+            "".join(d.xpath('.//following::p[@style="font-size:18px;"][2]//text()'))
             .replace("\n", "")
             .strip()
         )
