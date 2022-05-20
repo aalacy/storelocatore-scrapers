@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
 
 session = SgRequests()
 headers = {
@@ -15,7 +14,6 @@ logger = SgLogSetup().get_logger("americansignaturefurniture_com")
 
 
 def fetch_data():
-    locs = []
     url = (
         "https://api.blueport.com/v1/store?key=AIzaSyA6L31EabD8yXrytC4YBOoEdbNfbfDhjtw"
     )
