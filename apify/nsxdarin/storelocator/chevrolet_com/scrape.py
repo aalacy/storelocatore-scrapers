@@ -64,6 +64,7 @@ def fetch_data():
             lat = j.get("geolocation").get("latitude") or "<MISSING>"
             lng = j.get("geolocation").get("longitude") or "<MISSING>"
             store = j.get("dealerCode") or "<MISSING>"
+            typ = "<MISSING>"
             days = {
                 1: "Monday",
                 2: "Tuesday",
