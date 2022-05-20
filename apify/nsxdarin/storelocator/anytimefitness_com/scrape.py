@@ -26,7 +26,6 @@ def fetch_data(sgw: SgWriter):
             f"{a.get('address')} {a.get('address2')}".replace("None", "").strip()
             or "<MISSING>"
         )
-        print(status, page_url)
         state = a.get("state") or "<MISSING>"
         postal = a.get("zip") or "<MISSING>"
         if str(postal).find("-") != -1:
