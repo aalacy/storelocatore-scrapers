@@ -50,7 +50,7 @@ def fetch_data():
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"street":"')[1].split('"')[0]
                     website = "greyhound.ca"
-                    lurl = "<MISSING>"
+                    lurl = "https://www.greyhound.com/en-us/bus-station-" + store
                     country = "CA"
                     try:
                         hours = (
@@ -146,7 +146,7 @@ def fetch_data():
                     zc = item.split('"postalCode":"')[1].split('"')[0]
                     add = item.split('"street":"')[1].split('"')[0]
                     website = "greyhound.ca"
-                    lurl = "<MISSING>"
+                    lurl = "https://www.greyhound.com/en-us/bus-station-" + store
                     country = "CA"
                     try:
                         hours = (
