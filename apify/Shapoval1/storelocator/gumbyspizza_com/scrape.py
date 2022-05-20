@@ -158,6 +158,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)
