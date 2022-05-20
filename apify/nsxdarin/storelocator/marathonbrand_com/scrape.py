@@ -1,7 +1,6 @@
 import os
 
 os.environ.pop("PROXY_PASSWORD", None)
-os.environ.pop("PROXY_URL", None)
 
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -16,7 +15,7 @@ headers = {
 
 def get_locations(retry=0):
     try:
-        session = SgRequests()
+        session = SgRequests(verify_ssl=False)
         url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
         return session.get(url, headers=headers).iter_lines()
     except:
