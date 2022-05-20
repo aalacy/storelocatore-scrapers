@@ -54,16 +54,16 @@ def fetch_data():
         for j in js:
             a = j.get("address")
             page_url = "https://www.chevrolet.com/dealer-locator"
-            location_name = j.get("dealerName")
-            street_address = f"{a.get('addressLine1')} {a.get('addressLine2')} {a.get('addressLine3')}".strip()
+            name = j.get("dealerName")
+            add = f"{a.get('addressLine1')} {a.get('addressLine2')} {a.get('addressLine3')}".strip()
             city = a.get("cityName") or "<MISSING>"
             state = a.get("region") or "<MISSING>"
-            postal = a.get("postalCodeFormatted") or "<MISSING>"
+            zc = a.get("postalCodeFormatted") or "<MISSING>"
             country_code = "US"
             phone = j.get("generalContact").get("phone1") or "<MISSING>"
             phone = str(phone).replace(",", "").strip()
-            latitude = j.get("geolocation").get("latitude") or "<MISSING>"
-            longitude = j.get("geolocation").get("longitude") or "<MISSING>"
+            lat = j.get("geolocation").get("latitude") or "<MISSING>"
+            lng = j.get("geolocation").get("longitude") or "<MISSING>"
             store_number = j.get("dealerCode") or "<MISSING>"
             days = {
                 1: "Monday",
@@ -88,11 +88,11 @@ def fetch_data():
                     hours_of_operation_tmp.append(
                         f"{days[day]} {hour.get('openFrom')}-{hour.get('openTo')}"
                     )
-            hours_of_operation = "; ".join(hours_of_operation_tmp)
+            hours = "; ".join(hours_of_operation_tmp)
 
             yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
+                locator_domain=locator_domain,
+                page_url=page_url,
                 location_name=name,
                 street_address=add,
                 city=city,
