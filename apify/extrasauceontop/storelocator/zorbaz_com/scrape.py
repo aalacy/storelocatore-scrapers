@@ -37,7 +37,6 @@ def get_data():
         response = driver.page_source
 
     json_objects = extract_json(response.split("APOLLO_STATE")[1])[0]
-
     for key in json_objects.keys():
         if "RestaurantLocation:" in key:
             location = json_objects[key]
