@@ -65,11 +65,11 @@ def fetch_data():
 
             phone = soup.select_one("a[href*=tel]").text
             hours_of_operation = (
-                soup.findAll("div", {"class": "col-12 col-xl-6"})[-1]
+                soup.find("div", {"class": "store-hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
-                .replace("Gas Station Hours", "")
             )
+            print(hours_of_operation)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
