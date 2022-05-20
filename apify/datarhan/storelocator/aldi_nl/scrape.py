@@ -1,29 +1,35 @@
 from lxml import etree
-from time import sleep
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgFirefox
+import time
+from sglogging import sglog
 
 
 def fetch_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
     session = SgRequests()
     start_url = "https://uberall.com/api/storefinders/ALDINORDNL_8oqeY3lnn9MTZdVzFn4o0WCDVTauoZ/locations/all?v=20211005&language=nl&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&"
     domain = "aldi.nl"
-
     data = session.get(start_url).json()
     for poi in data["response"]["locations"]:
         city = poi["city"]
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
-        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-')}/{store_number}"
+        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-').replace('é', 'e').replace('ë', 'e').replace('ï', 'i')}/{store_number}"
+        log.info(page_url)
         with SgFirefox() as driver:
-            driver.get(page_url)
-            sleep(10)
-            loc_dom = etree.HTML(driver.page_source)
+            try:
+                driver.get(page_url)
+                time.sleep(10)
+                loc_dom = etree.HTML(driver.page_source)
+
+            except Exception:
+                raise Exception
+
         hoo = loc_dom.xpath(
             '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
         )
@@ -65,3 +71,5 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
+
+# https://www.aldi.nl/supermarkt.html/l/hardenberg/isra▒l-emanuelplein-9/3187516
