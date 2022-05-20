@@ -16,7 +16,6 @@ def get_data():
 
     soup = bs(html, "html.parser")
 
-
     grids = soup.find_all("div", attrs={"class": "row-fluid row-t2crq"})
     for grid in grids:
         locator_domain = "sytner.co.uk"
@@ -52,6 +51,7 @@ def get_data():
             "hours": hours,
             "country_code": country_code,
         }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
