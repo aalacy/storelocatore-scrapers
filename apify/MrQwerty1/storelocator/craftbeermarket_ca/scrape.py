@@ -23,8 +23,9 @@ def fetch_data(sgw: SgWriter):
             continue
         if len(line) == 1:
             line = d.xpath(".//i[@class='fal fa-clock']/following-sibling::text()")
-            line = list(filter(None, [li.strip() for li in line])).pop()
-            street_address, city = line.split(", ")
+            line = list(filter(None, [li.strip() for li in line]))
+            adr = line.pop()
+            street_address, city = adr.split(", ")
             state = SgRecord.MISSING
         else:
             state = line.pop().strip()
