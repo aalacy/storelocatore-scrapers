@@ -162,6 +162,28 @@ def fetch_data():
                 lat = "32.939137"
                 store = "GDM"
                 name = "Fairmont Grand Del Mar"
+            if "Banff" in name:
+                city = "Banff"
+            if "Carton House" in name:
+                city = "Maynooth"
+            if country == "Monaco":
+                city = "Monaco"
+            if country == "Singapore":
+                city = "Singapore"
+            if "Los Angeles" in name:
+                city = "Los Angeles"
+            if "Mara Safari Club" in name:
+                city = "Nairobi"
+            if "Taghazout Bay" in name:
+                city = "Taghazout"
+            if "Acapulco" in name:
+                city = "Acapulco"
+            if "Makkah Clock" in name:
+                city = "Mecca"
+            if "Fairmont Heritage Place Mayakoba" in name:
+                city = "Mayakoba"
+            if "Riviera Maya" in name:
+                city = "Riviera Maya"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -242,6 +264,28 @@ def fetch_data():
                 lat = "<MISSING>"
             if lng == "":
                 lng = "<MISSING>"
+            if "Banff" in name:
+                city = "Banff"
+            if "Carton House" in name:
+                city = "Maynooth"
+            if country == "Monaco":
+                city = "Monaco"
+            if country == "Singapore":
+                city = "Singapore"
+            if "Los Angeles" in name:
+                city = "Los Angeles"
+            if "Mara Safari Club" in name:
+                city = "Nairobi"
+            if "Taghazout Bay" in name:
+                city = "Taghazout"
+            if "Acapulco" in name:
+                city = "Acapulco"
+            if "Makkah Clock" in name:
+                city = "Mecca"
+            if "Fairmont Heritage Place Mayakoba" in name:
+                city = "Mayakoba"
+            if "Riviera Maya" in name:
+                city = "Riviera Maya"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
