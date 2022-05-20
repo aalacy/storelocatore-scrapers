@@ -69,7 +69,6 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
-            print(hours_of_operation)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
