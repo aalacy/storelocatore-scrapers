@@ -1,9 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("earthwisepet_com")
-
 
 session = SgRequests()
 headers = {
@@ -11,161 +13,89 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    url = "https://www.earthwisepet.com/sitemap.xml"
-    locs = ["https://earthwisepet.com/stores/view/yakima"]
-    r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://earthwisepet.com/stores/view/" in line:
-            items = line.split("<loc>https://earthwisepet.com/stores/view/")
-            for item in items:
-                if "</priority></url><url>" in item:
-                    lurl = "https://earthwisepet.com/stores/view/" + item.split("<")[0]
-                    if (
-                        lurl != "https://earthwisepet.com/stores/view/"
-                        and "yakima" not in lurl
-                    ):
-                        locs.append(lurl)
-    logger.info("Found %s Locations." % str(len(locs)))
-    for loc in locs:
-        name = ""
+    website = "earthwisepet.com"
+    typ = "<MISSING>"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    country = "US"
+    for x in range(1, 21):
+        logger.info(str(x))
         add = ""
+        loc = ""
+        name = ""
         city = ""
         state = ""
-        store = "<MISSING>"
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        hours = ""
-        country = "US"
         zc = ""
         phone = ""
-        logger.info("Pulling Location %s..." % loc)
-        website = "earthwisepet.com"
-        typ = "Store"
-        acount = 0
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split("<")[0]
-                if "|" in name:
-                    name = name.split("|")[0].strip()
-            if '<a tabindex="0" href="https://maps.google.com/?q=' in line2:
-                acount = acount + 1
-                if acount == 2:
-                    addinfo = (
-                        line2.split(
-                            '<a tabindex="0" href="https://maps.google.com/?q='
-                        )[1]
-                        .split('"')[0]
-                        .strip()
-                    )
-                    if addinfo.count(",") == 3:
-                        add = addinfo.split(",")[0].strip()
-                        city = addinfo.split(",")[1].strip()
-                        state = addinfo.split(",")[2].strip()
-                        zc = addinfo.split(",")[3].strip()
-                    else:
-                        add = (
-                            addinfo.split(",")[0].strip()
-                            + " "
-                            + addinfo.split(",")[1].strip()
-                        )
-                        city = addinfo.split(",")[2].strip()
-                        state = addinfo.split(",")[3].strip()
-                        zc = addinfo.split(",")[4].strip()
-            if 'href="tel:' in line2:
-                phone = line2.split('href="tel:')[1].split('"')[0].strip()
-            if 'google-map" data-lng=' in line2:
-                lat = line2.split("data-lat='")[1].split("'")[0]
-                lng = line2.split("data-lng='")[1].split("'")[0]
-            if 'week-nm">' in line2:
-                if hours == "":
-                    hours = line2.split('week-nm">')[1].split("<")[0]
+        lat = ""
+        lng = ""
+        url = "https://www.earthwisepet.com/stores/search/?page=" + str(x)
+        r = session.get(url, headers=headers)
+        lines = r.iter_lines()
+        for line in lines:
+            if '<i class="fa fa-phone"></i></span>' in line:
+                g = next(lines)
+                phone = g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+            if '<h4 class="text-uppercase">' in line:
+                g = next(lines)
+                if 'href="/' not in g:
+                    loc = g.split('href="')[1].split('"')[0]
                 else:
-                    hours = hours + "; " + line2.split('week-nm">')[1].split("<")[0]
-            if 'timing">' in line2:
-                hours = hours + ": " + line2.split('timing">')[1].split("<")[0]
-            if 'var latitude = "' in line2:
-                lat = line2.split('var latitude = "')[1].split('"')[0]
-            if 'var longitude = "' in line2:
-                lng = line2.split('var longitude = "')[1].split('"')[0]
-        if phone == "":
-            phone = "<MISSING>"
-        if hours == "":
-            hours = "<MISSING>"
-        if lat == "":
-            lat = "<MISSING>"
-        if lng == "":
-            lng = "<MISSING>"
-        if "woodlands" in loc:
-            add = "3570 FM 1488, Ste 500"
-            city = "Conroe"
-            state = "TX"
-            zc = "77384"
-            phone = "936-647-1518"
-            lat = "30.228852"
-            lng = "-95.5184688"
-            hours = "<MISSING>"
-        if "palmharbor" in loc:
-            name = "Palm Harbor"
-            add = "3335 Tampa Rd"
-            city = "Palm Harbor"
-            state = "FL"
-            zc = "34684"
-            phone = "727-470-9102"
-            lat = "28.068362"
-            lng = "-82.7235479"
-            hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+                    loc = (
+                        "https://earthwisepet.com" + g.split('href="')[1].split('"')[0]
+                    )
+                name = (
+                    g.rsplit('">', 1)[1]
+                    .split("<")[0]
+                    .replace("&#39;", "'")
+                    .replace("...", "")
+                    .strip()
+                )
+            if ', US " tabindex="' in line:
+                addinfo = line.split(', US " tabindex="')[0].split("q=")[1].strip()
+                zc = addinfo.rsplit(",", 1)[1].strip()
+                if addinfo.count(",") == 3:
+                    add = addinfo.split(",")[0].strip()
+                    city = addinfo.split(",")[1].strip()
+                    state = addinfo.split(",")[2].strip()
+                if addinfo.count(",") == 4:
+                    add = (
+                        addinfo.split(",")[0].strip()
+                        + " "
+                        + addinfo.split(",")[1].strip()
+                    )
+                    city = addinfo.split(",")[2].strip()
+                    state = addinfo.split(",")[3].strip()
+            if 'var latitude = "' in line:
+                lat = line.split('var latitude = "')[1].split('"')[0]
+            if 'var longitude = "' in line:
+                lng = line.split('var longitude = "')[1].split('"')[0]
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

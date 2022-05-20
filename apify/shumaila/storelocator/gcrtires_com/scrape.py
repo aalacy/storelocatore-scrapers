@@ -1,5 +1,10 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
 
 session = SgRequests()
 headers = {
@@ -8,88 +13,89 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    url = "https://www.gcrtires.com/content/bcs-sites/gcr/en/locations/_jcr_content.storelist.json"
-    p = 0
-    loclist = session.get(url, headers=headers, verify=False).json()["storeList"]
-    for loc in loclist:
-        pcode = loc["zip"]
-        street = loc["address"]
-        phone = loc["phone"]
-        store = loc["storenumber"]
-        title = "GCR Tires & Service #" + str(store)
-        city = loc["location"]
-        state = loc["state"]
-        lat = loc["latitude"]
-        longt = loc["longitude"]
-        hours = (
-            "Sunday "
-            + loc["sundayhours"]
-            + " Saturday "
-            + loc["saturdayhours"]
-            + " Weekdays "
-            + loc["weekdayhours"]
-            + " "
-        )
-        link = "https://www.gcrtires.com/locations/" + str(store)
-        data.append(
-            [
-                "https://www.gcrtires.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    mylist = static_coordinate_list(40, SearchableCountries.USA)
+    storelist = []
+    for lat, lng in mylist:
+
+        url = (
+            "https://www.gcrtires.com/bcsutil/commercial/locations?lat="
+            + str(lat)
+            + "&lon="
+            + str(lng)
+            + "&radius=700&bu=null&collection=aem_commercial_dealers&banner=GCR"
         )
 
-        p += 1
-    return data
+        loclist = session.get(url, headers=headers).json()
+
+        for loc in loclist:
+
+            pcode = loc["postalCode"]
+            street = loc["streetAddress"]
+            phone = loc["businessPhone"]
+            if "-" not in phone:
+                phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:]
+            store = loc["locationNo"]
+            title = loc["tradeName"]
+            ccode = loc["country"]
+            city = loc["city"]
+            state = loc["state"]
+            lat = loc["latitude"]
+            longt = loc["longitude"]
+            hours = ""
+            for day in daylist:
+                day = day + "day"
+                try:
+                    closestr = loc[day + "Close"]
+                except:
+                    hours = hours + day + " " + " Close "
+                    continue
+                close = int(closestr.split(":", 1)[0])
+                if close > 12:
+                    close = close - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + loc[day + "Open"]
+                    + " AM - "
+                    + str(close)
+                    + ":"
+                    + closestr.split(":", 1)[1]
+                    + " PM "
+                )
+            link = "https://www.gcrtires.com/stores" + loc["externalPath"]
+            if link in storelist:
+                continue
+            storelist.append(link)
+
+            yield SgRecord(
+                locator_domain="https://www.gcrtires.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

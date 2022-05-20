@@ -1,0 +1,15 @@
+--ignore CountryCodeFillRateChecker (UK)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+
+--ignore GeoConsistencyValidator (Not US)
+
+Found 8 concerning rows. Examples:
+         zip state                REASON  rowNumber
+10  BT30 9DQ    CO  ZIPCODE_NOT_IN_STATE         10
+13  BT31 9DP    CO  ZIPCODE_NOT_IN_STATE         13
+16  BT23 4LN    CO  ZIPCODE_NOT_IN_STATE         16
+23  BT24 8DZ    CO  ZIPCODE_NOT_IN_STATE         23
+24  BT92 2BA    CO  ZIPCODE_NOT_IN_STATE         24
+
+--ignore CountryValidator (Confirmed scrape correctly)

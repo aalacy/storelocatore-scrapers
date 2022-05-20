@@ -30,7 +30,11 @@ def fetch_data():
     # Your scraper here
     search_url = "https://www.cashlandok.com/storelist/xml"
     search_res = session.get(search_url, headers=headers)
-    search_sel = lxml.html.fromstring(search_res.text)
+    search_sel = lxml.html.fromstring(
+        search_res.text.replace("<![CDATA[", "")
+        .replace("]]>", "")
+        .replace("<br>", "\n")
+    )
 
     store_list = search_sel.xpath("//placemark")
 
@@ -51,18 +55,10 @@ def fetch_data():
             )
         )
 
-        if "phone:" == store_info[1]:
-            street_address = location_name.replace("Cashland - ", "").strip()
-            city = " ".join(store_info[0].split(" ")[:-2]).strip()
-
-            state = store_info[0].split(" ")[-2].strip()
-            zip = store_info[0].split(" ")[-1].strip()
-        else:
-            street_address = store_info[0]
-            city = " ".join(store_info[1].split(" ")[:-2]).strip()
-
-            state = store_info[1].split(" ")[-2].strip()
-            zip = store_info[1].split(" ")[-1].strip()
+        street_address = ", ".join(store_info[:-7]).strip()
+        city = " ".join(store_info[-7].split(" ")[:-2]).strip()
+        state = store_info[-7].split(" ")[-2].strip()
+        zip = store_info[-7].split(" ")[-1].strip()
 
         country_code = "US"
 
@@ -78,12 +74,12 @@ def fetch_data():
 
         location_type = "<MISSING>"
 
-        hours_of_operation = store_info[-2].strip()
+        hours_of_operation = store_info[-1].strip()
         if "M-F" not in hours_of_operation:
             hours_of_operation = "<MISSING>"
         map_info = "".join(store.xpath(".//coordinates/text()"))
 
-        latitude, longitude = map_info.split(",")[0], map_info.split(",")[1]
+        latitude, longitude = map_info.split(",")[1], map_info.split(",")[0]
         raw_address = "<MISSING>"
 
         yield SgRecord(

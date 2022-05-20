@@ -1,111 +1,64 @@
-import re
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-base_url = "https://local.hibdontire.com"
-
-
-def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-        for row in data:
-            writer.write_row(row)
-
-
-def fetch_links(url, session):
-    html = session.get(url).text
-    soup = BeautifulSoup(html, "html.parser")
-    target_div = soup.select_one("#links")
-    links = target_div.select("a")
-    urls = [a["href"] for a in links]
-
-    return urls
-
-
-def fetch_states(session):
-    return fetch_links(base_url, session)
-
-
-def fetch_cities(link, session):
-    city_url = f"{base_url}{link}"
-    return fetch_links(city_url, session)
-
-
-def fetch_locations(link, session):
-    location_url = f"{base_url}{link}"
-    return fetch_links(location_url, session)
-
-
-MISSING = "<MISSING>"
-
-
-def extract(url, session):
-    locator_domain = "hibdontire.com"
-    page_url = f"{base_url}{url}"
-    html = session.get(page_url).text
-    soup = BeautifulSoup(html, "html.parser")
-    info = soup.find("div", class_="location-info")
-
-    location_name = info.find("h3").text
-    store_number = re.sub(
-        r"store\s*",
-        "",
-        soup.find("div", class_="store-number").find("span").text,
-        flags=re.IGNORECASE,
-    )
-
-    street_address = soup.find("div", itemprop="streetAddress").text
-    city = soup.find("span", itemprop="addressLocality").text
-    state = soup.find("span", itemprop="addressRegion").text
-    postal = soup.find("span", itemprop="postalCode").text
-    country_code = "US"
-    latitude = MISSING
-    longitude = MISSING
-
-    hours_of_operation = ",".join(
-        [li.text for li in soup.find("dl", itemprop="openingHours").find_all("li")]
-    )
-    phone = soup.find("a", itemprop="telephone").text
-
-    return SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-    )
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    with SgRequests() as session:
-        cities = []
-        locations = []
-        states = fetch_states(session)
+    session = SgRequests()
 
-        for state in states:
-            cities.extend(fetch_cities(state, session))
+    start_url = "https://www.hibdontire.com/bsro/services/store/location/get-list-by-zip?zipCode={}"
+    domain = "hibdontire.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+    )
+    for code in all_codes:
+        data = session.get(start_url.format(code), headers=hdr).json()
+        if not data["data"].get("stores"):
+            continue
+        for poi in data["data"]["stores"]:
+            hoo = []
+            for e in poi["hours"]:
+                hoo.append(f'{e["weekDay"]}: {e["openTime"]} - {e["closeTime"]}')
+            hoo = " ".join(hoo)
+            if "SUN:" not in hoo:
+                hoo += " " + "SUN: closed"
 
-        for city in cities:
-            locations.extend(fetch_locations(city, session))
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=poi["localPageURL"],
+                location_name=poi["storeName"],
+                street_address=poi["address"],
+                city=poi["city"],
+                state=poi["state"],
+                zip_postal=poi["zip"],
+                country_code="",
+                store_number=poi["storeNumber"],
+                phone=poi["phone"],
+                location_type=poi["storeType"],
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
+                hours_of_operation=hoo,
+            )
 
-        for location in locations:
-            yield extract(location, session)
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

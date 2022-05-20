@@ -1,87 +1,90 @@
-import csv
+import usaddress
+from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "sweetpeasstore_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-all = []
+DOMAIN = "https://sweetpeasstore.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-
-    res = session.get("https://sweetpeasstore.com/locations/")
-    soup = BeautifulSoup(res.text, "html.parser")
-
-    ps = soup.find_all("div", {"class": "textwidget"})[2].find_all("p")
-
-    for p in ps:
-
-        addr = p.text.strip().split(", ")
-        sz = addr[-1].strip().split(" ")
-        zip = sz[-1]
-        state = sz[0]
-        del addr[-1]
-        city = addr[-1]
-        del addr[-1]
-        street = ", ".join(addr)
-
-        all.append(
-            [
-                "https://sweetpeasstore.com",
-                "<MISSING>",
-                street,
-                city,
-                state,
-                zip,
-                "US",
-                "<MISSING>",  # store #
-                "<MISSING>",  # phone
-                "<MISSING>",  # type
-                "<MISSING>",  # lat
-                "<MISSING>",  # long
-                "<MISSING>",  # timing
-                "https://sweetpeasstore.com/locations/",
-            ]
-        )
-
-    return all
+    if True:
+        url = "https://sweetpeasstore.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMotR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABiQWvw"
+        loclist = session.get(url, headers=headers).json()["markers"]
+        for loc in loclist:
+            address = loc["address"]
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            log.info(address)
+            address = address.replace(",", " ").replace("USA", "")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=MISSING,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=MISSING,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=MISSING,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

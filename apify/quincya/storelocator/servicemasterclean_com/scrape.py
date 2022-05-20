@@ -1,5 +1,3 @@
-import csv
-import re
 import time
 
 from bs4 import BeautifulSoup
@@ -8,163 +6,128 @@ from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("servicemasterclean_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://www.servicemasterclean.com/locations/location-list/"
+    base_link = "https://www.servicemasterclean.com/locations/?CallAjax=GetLocations"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    driver = SgChrome(user_agent=user_agent).driver()
-
-    driver.get(base_link)
-    time.sleep(10)
-
-    base = BeautifulSoup(driver.page_source, "lxml")
+    locator_domain = "https://www.servicemasterclean.com"
 
     session = SgRequests()
 
-    all_links = []
-    found_poi = []
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=250,
+        expected_search_radius_miles=250,
+    )
 
-    items = base.find(id="LocationList_HDR0_State").find_all("option")[1:]
-    locator_domain = "servicemasterclean.com"
+    found = []
+    for postcode in search:
+        json = {
+            "zipcode": postcode,
+            "distance": "250",
+            "tab": "ZipSearch",
+            "templates": {
+                "Item": '&lt;li data-servicetype="[{ServiceTypeIDs}]" data-serviceid="[{ServiceIDs}]"&gt;\t&lt;h2&gt;{FranchiseLocationName}&lt;/h2&gt;\t&lt;div class="info flex"&gt;\t\t&lt;if field="GMBLink"&gt;\t\t\t&lt;span class="rating-{FN0:GMBReviewRatingScoreOutOfFive}"&gt;\t\t\t\t{FN1:GMBReviewRatingScoreOutOfFive}\t\t\t\t&lt;svg data-use="star.36" class="rate1"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate2"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate3"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate4"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate5"&gt;&lt;/svg&gt;\t\t\t&lt;/span&gt;\t\t\t&lt;a href="{http:GMBLink}" target="_blank"&gt;Visit Google My Business Page&lt;/a&gt;\t\t&lt;/if&gt;\t\t&lt;if field="YelpLink"&gt;\t\t\t&lt;span class="rating-{FN0:YelpReviewRatingScoreOutOfFive}"&gt;\t\t\t\t{FN1:YelpReviewRatingScoreOutOfFive}\t\t\t\t&lt;svg data-use="star.36" class="rate1"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate2"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate3"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate4"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate5"&gt;&lt;/svg&gt;\t\t\t&lt;/span&gt;\t\t\t&lt;a href="{http:YelpLink}" target="_blank"&gt;Visit Yelp Page&lt;/a&gt;\t\t&lt;/if&gt;\t\t&lt;a class="flex" href="tel:{Phone}"&gt;\t\t\t&lt;svg data-use="phone.36"&gt;&lt;/svg&gt; {F:P:Phone}\t\t&lt;/a&gt;\t\t&lt;if field="Path"&gt;\t\t\t&lt;a href="{Path}" class="text-btn" rel="nofollow noopener"&gt;Website&lt;/a&gt;\t\t&lt;/if&gt;\t&lt;/div&gt;\t&lt;div class="type flex"&gt;\t\t&lt;strong&gt;Services:&lt;/strong&gt;\t\t&lt;ul&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2638"&gt;\t\t\t\t&lt;li&gt;Commercial&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2658"&gt;\t\t\t\t&lt;li&gt;Residential&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2634"&gt;\t\t\t\t&lt;li&gt;Janitorial&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t&lt;/ul&gt;\t&lt;/div&gt;&lt;/li&gt;'
+            },
+        }
+        stores = session.post(base_link, headers=headers, json=json).json()
 
-    for item in items:
-        all_links.append(
-            "https://www.servicemasterclean.com/locations/"
-            + item.text.replace(" ", "-").lower()
-        )
-
-    for link in all_links:
-        logger.info(link)
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        items = base.find_all(class_="third")
-        for item in items:
-
-            location_name = item.strong.text.strip()
-
-            raw_address = list(item.address.stripped_strings)
-            street_address = (
-                " ".join(raw_address[:-1])
-                .replace("\r\n", "")
-                .replace("\n", " ")
-                .replace("\t", "")
-                .replace("\xa0", " ")
-                .strip()
-            )
-            if not street_address:
-                street_address = "<MISSING>"
-            street_address = (re.sub(" +", " ", street_address)).strip()
-            city = raw_address[-1].split(",")[0].strip()
-            state = raw_address[-1].split(",")[1][:-6].strip()
-            zip_code = raw_address[-1][-6:].strip()
-            country_code = "US"
-            location_type = "<MISSING>"
-            phone = item.find(class_="flex phone-contact").text.strip()
-            hours_of_operation = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            final_link = (
-                "https://www.servicemasterclean.com"
-                + item.find(class_="text-btn")["href"]
-            )
-
-            if final_link in found_poi:
-                continue
-            req = session.get(final_link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
-            if "COMING SOON" in base.h1.text.upper():
-                continue
-
+        for store in stores:
             try:
-                store_number = base.find(class_="box")["data-key"]
+                location_name = store["FranchiseLocationName"]
             except:
-                store_number = "<MISSING>"
-
-            hours_of_operation = "<MISSING>"
+                continue
             try:
-                if base.find(id="HoursContainer").text.strip():
-                    try:
-                        payload = {
-                            "_m_": "HoursPopup",
-                            "HoursPopup$_edit_": store_number,
-                        }
-
-                        response = session.post(
-                            final_link, headers=headers, data=payload
-                        )
-                        hr_base = BeautifulSoup(response.text, "lxml")
-                        hours_of_operation = " ".join(
-                            list(hr_base.table.stripped_strings)
-                        )
-                    except:
-                        hours_of_operation = "<MISSING>"
+                street_address = (store["Address1"] + " " + store["Address2"]).strip()
             except:
-                pass
+                street_address = store["Address1"]
+            city = store["City"]
+            state = store["State"]
+            zip_code = store["ZipCode"]
+            country_code = store["Country"]
+            phone = store["Phone"]
+            location_type = store["LocationType"]
+            latitude = store["Latitude"]
+            longitude = store["Longitude"]
+            search.found_location_at(latitude, longitude)
+            store_number = store["FranchiseLocationID"]
+            hours_of_operation = store["LocationHours"]
+            link = locator_domain + store["Path"]
 
-            found_poi.append(final_link)
+            if link not in found:
+                logger.info(link)
+                found.append(link)
 
-            yield [
-                locator_domain,
-                final_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-    driver.close()
+                try:
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    session = SgRequests()
+                    time.sleep(10)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+
+                if (
+                    "COMING SOON" in base.h1.text.upper()
+                    or "COMING SOON" in base.title.text.upper()
+                ):
+                    continue
+
+                try:
+                    store_number = base.find(class_="box")["data-key"]
+                except:
+                    pass
+
+                try:
+                    if base.find(id="HoursContainer").text.strip():
+                        try:
+                            payload = {
+                                "_m_": "HoursPopup",
+                                "HoursPopup$_edit_": store_number,
+                            }
+
+                            response = session.post(link, headers=headers, data=payload)
+                            hr_base = BeautifulSoup(response.text, "lxml")
+                            hours_of_operation = " ".join(
+                                list(hr_base.table.stripped_strings)
+                            )
+                        except:
+                            hours_of_operation = "<MISSING>"
+                except:
+                    pass
+
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+                )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

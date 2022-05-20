@@ -1,148 +1,115 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        days = h.get("dayOfWeek")
+        opens = h.get("opens")
+        closes = h.get("closes")
+        line = f"{days} {opens} - {closes}".replace("None", "Closed")
+        tmp.append(line)
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    return hours_of_operation
 
 
-def get_urls():
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.jacadi.us"
+    api_url = "https://www.jacadi.us/store-finder"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Connection": "keep-alive",
-        "Referer": "https://www.jacadi.us/store-finder?iframe=false+&q=%D0%9D%D1%8C%D1%8E-%D0%99%D0%BE%D1%80%D0%BA%2C+10001%2C+%D0%A1%D0%A8%D0%90&latitude=40.75368539999999&longitude=-73.9991637",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get("https://www.jacadi.us/store-finder", headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    return tree.xpath("//li[@id='CA']/ul/li/a/@href | //li[@id='US']/ul/li/a/@href")
+    div = tree.xpath("//h3/following-sibling::ul/li/a")
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        spage_url = f"https://www.jacadi.us{slug}"
+        session = SgRequests()
+        r = session.get(spage_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//a[contains(text(), "Store details")]')
+        for d in div:
+            sslug = "".join(d.xpath(".//@href"))
+            page_url = f"https://www.jacadi.us{sslug}"
 
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            jsblock = "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
 
-def get_data(url):
-    locator_domain = "https://www.jacadi.us"
-    page_url = f"https://www.jacadi.us{url}"
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+            js = json.loads(jsblock)
+            a = js.get("address")
+            location_name = js.get("name")
+            location_type = js.get("@type")
+            street_address = a.get("streetAddress")
+            state = "<MISSING>"
 
-    direct = " ".join(tree.xpath('//a[contains(text(), "Store")]/@href'))
-    direct = f"https://www.jacadi.us{direct}"
-    if direct.find("603/store/604") != -1:
-        direct = "https://www.jacadi.us/store/603"
-    if direct.find("384") != -1:
-        direct = "https://www.jacadi.us/store/843"
-    if direct.find("606 /store/604") != -1:
-        direct = "https://www.jacadi.us/store/604"
-    if direct.find("603 /store/604") != -1:
-        direct = "https://www.jacadi.us/store/603"
-    session = SgRequests()
-    subr = session.get(direct)
-    jsBlock = (
-        "["
-        + subr.text.split('<script type="application/ld+json">')[1].split("</script>")[
-            0
-        ]
-        + "]"
-    )
-    js = json.loads(jsBlock)
-    for j in js:
-        page_url = direct
-        slug = page_url.split("/")[-1].strip()
-        page_url = f"https://www.jacadi.us/store/{slug}"
-        a = j.get("address")
-        street_address = "".join(a.get("streetAddress"))
-        city = a.get("addressLocality")
-        postal = a.get("postalCode")
-        state = a.get("addressRegion") or "<MISSING>"
-        country_code = a.get("addressCountry")
-        store_number = slug
-        location_name = j.get("name")
-        phone = j.get("telephone")
-        latitude = j.get("geo").get("latitude")
-        longitude = j.get("geo").get("longitude")
-        location_type = "<MISSING>"
-        hours = j.get("openingHoursSpecification")
-        tmp = []
-        for h in hours:
-            day = h.get("dayOfWeek")
-            open = h.get("opens")
-            close = h.get("closes")
-            line = f"{day}:{open} - {close}"
-            if open == "Closed":
-                line = f"{day} - Closed"
-            tmp.append(line)
-        hours_of_operation = " | ".join(tmp) or "<MISSING>"
+            postal = a.get("postalCode")
+            if postal == "0" or postal == "-":
+                postal = "<MISSING>"
+            country_code = a.get("addressCountry")
+            city = "".join(a.get("addressLocality"))
+            if city.find(",") != -1:
+                state = city.split(",")[1].strip()
+                city = city.split(",")[0].strip()
+            if country_code == "CA" and city.find(" ") != -1:
+                state = city.split()[1].strip()
+                city = city.split()[0].strip()
+            store_number = page_url.split("/")[-1].strip()
+            latitude = js.get("geo").get("latitude")
+            longitude = js.get("geo").get("longitude")
+            phone = js.get("telephone") or "<MISSING>"
+            if phone == "0":
+                phone = "<MISSING>"
+            hours = js.get("openingHoursSpecification") or "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            if hours != "<MISSING>":
+                hours_of_operation = get_hours(hours)
+            if latitude == "0" or latitude == "0.0":
+                latitude, longitude = "<MISSING>", "<MISSING>"
+            if state == "-":
+                state = "<MISSING>"
+            if postal == "0":
+                postal = "<MISSING>"
+            if postal[0] == postal[1] == postal[2] == "0":
+                postal = "<MISSING>"
+            if phone[0] == phone[1] == phone[2] == "0":
+                phone = "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-        return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.STORE_NUMBER})
+        )
+    ) as writer:
+        fetch_data(writer)
