@@ -76,14 +76,19 @@ def fetch_data():
                 lat, lng = _latlng(locs, location_name.split()[0].replace("-", " "))
             except:
                 lat, lng = 0, 0
+            country_code = addr.country
+            city = addr.city
+            if country_code == "Woluwé-Saint-Pierre":
+                country_code = ""
+                city = "Woluwé-Saint-Pierre"
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=country_code,
                 phone=phone,
                 latitude=lat,
                 longitude=lng,
