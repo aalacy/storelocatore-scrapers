@@ -1,10 +1,9 @@
-from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def fetch_data():
@@ -59,12 +58,12 @@ def fetch_data():
             city = a.get("cityName") or "<MISSING>"
             state = a.get("region") or "<MISSING>"
             zc = a.get("postalCodeFormatted") or "<MISSING>"
-            country_code = "US"
+            country = "US"
             phone = j.get("generalContact").get("phone1") or "<MISSING>"
             phone = str(phone).replace(",", "").strip()
             lat = j.get("geolocation").get("latitude") or "<MISSING>"
             lng = j.get("geolocation").get("longitude") or "<MISSING>"
-            store_number = j.get("dealerCode") or "<MISSING>"
+            store = j.get("dealerCode") or "<MISSING>"
             days = {
                 1: "Monday",
                 2: "Tuesday",
