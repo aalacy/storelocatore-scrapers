@@ -51,6 +51,10 @@ def fetch_data():
             start = int(digit.split("(")[1].split(",")[0])
             street_address = street_address[start:]
 
+        street_address = (
+            street_address.replace("The Willows", "").replace("Main Street", "").strip()
+        )
+
         city = store["city"]
         state = store["state"]
         zip_postal = store["zip"]
