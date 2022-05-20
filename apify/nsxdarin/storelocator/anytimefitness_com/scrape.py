@@ -38,6 +38,8 @@ def fetch_data(sgw: SgWriter):
         if country_code == "NL" and str(postal).find(" ") != -1:
             state = str(postal).split()[1].strip()
             postal = str(postal).split()[0].strip()
+        if str(postal).find("Singapore") != -1:
+            postal = str(postal).replace("Singapore", "").strip()
         store_number = a.get("number") or "<MISSING>"
         latitude = j.get("latitude")
         longitude = j.get("longitude")
