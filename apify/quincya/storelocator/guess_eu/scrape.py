@@ -52,7 +52,7 @@ def fetch_data(sgw: SgWriter):
         "path": "/on/demandware.store/Sites-guess_fr-Site/en/Stores-SearchStores",
         "scheme": "https",
         "accept": "application/json, text/javascript, */*; q=0.01",
-        "accept-encoding": "gzip, deflate, br",
+        "accept-encoding": "gzip, deflate",
         "accept-language": "en-US,en;q=0.9",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "cookie": cookie,
@@ -103,12 +103,7 @@ def fetch_data(sgw: SgWriter):
 
             for store in stores:
                 location_name = store["name"]
-                try:
-                    street_address = (
-                        store["address1"] + " " + store["address2"]
-                    ).strip()
-                except:
-                    street_address = store["address1"]
+                street_address = store["address1"]
                 city = store["city"]
                 try:
                     state = store["stateCode"]
@@ -129,6 +124,31 @@ def fetch_data(sgw: SgWriter):
                 if latitude == 0:
                     latitude = ""
                     longitude = ""
+
+                try:
+                    raw_address = (store["address1"] + " " + store["address2"]).strip()
+                except:
+                    raw_address = street_address
+
+                try:
+                    if len(street_address) < 5:
+                        street_address = raw_address
+                except:
+                    street_address = raw_address
+
+                if street_address:
+                    street_address = (
+                        street_address.replace("?", "")
+                        .split(", Kiev")[0]
+                        .split("- temporary")[0]
+                        .split("London Shopping")[0]
+                        .replace("Centre Commerc", "")
+                        .replace("Livingston Designer Outlet,", "")
+                        .replace("Guess Store - ", "")
+                        .strip()
+                    )
+                    if street_address[-1:] == ",":
+                        street_address = street_address[:-1]
 
                 try:
                     if street_address + loc_type in found:
@@ -153,6 +173,7 @@ def fetch_data(sgw: SgWriter):
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
                 )
 

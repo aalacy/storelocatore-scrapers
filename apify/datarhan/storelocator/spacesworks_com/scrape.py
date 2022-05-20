@@ -10,7 +10,6 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
     domain = "spacesworks.com"
@@ -18,12 +17,8 @@ def fetch_data():
 
     headers = {
         "accept": "application/json, text/plain, */*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "authorization": "Basic c3BhY2Vzd29ya3NAc3BhY2VzYnYtSzdUTVJIOmVmNmJlYWJjLTYwMTctNGYzMC04NDlhLTQ1YjY0N2I1NWVkMg==",
+        "authorization": "Basic c3BhY2Vzd29ya3NAc3BhY2VzYnYtSzdUTVJIOmQxMjY5YjVkLTEyODctNGYyZC05NWE1LTMxOWY2MzhkNjYyNQ==",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
-        "x-ga-clientid": "1722608705.1614690743",
-        "x-geo-iso2": "US",
     }
     response = session.get(start_url, headers=headers)
     data = json.loads(response.text)

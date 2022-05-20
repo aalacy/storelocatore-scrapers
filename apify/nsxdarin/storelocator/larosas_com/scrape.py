@@ -1,48 +1,23 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     "X-Requested-With": "XMLHttpRequest",
-    "Cookie": "ARRAffinity=e8b8d3148c29a06ebdae2d72da15134fada0945dbd963bce5c880255c35ebb72; ARRAffinitySameSite=e8b8d3148c29a06ebdae2d72da15134fada0945dbd963bce5c880255c35ebb72; .AspNetCore.Antiforgery.w5W7x28NAIs=CfDJ8Gh1N-Mm6ilPv9N490CiUlMvUsskJGqscbdbdcSPdnWvhFxKjiLC2iiiPc2L0Vh1k2S8fzsn7HbMN5zcHqRgjrC4RWlgKuQ6gU6YNxeTh3vycs3PouwYAf_fsyi6YDHNkdHo0JwBCuLK1LciveDm5-0; _ga=GA1.2.907074146.1609869384; _gid=GA1.2.609014934.1609869384; _gcl_au=1.1.356148459.1609869385; _fbp=fb.1.1609869385636.390311309; _gat=1",
-    "RequestVerificationToken": "CfDJ8Gh1N-Mm6ilPv9N490CiUlPwipLb31Qgv4C5y2KuPzqnZpZX0V6dke465fek_7lXkDM4drwDGL1pQvvyR9gBLrfj0fUhnyrBDINgxzBB-LYvcvYUnnsNdqy401iKbXaJDOs5wPCKHWgs6smPLGeUXjY",
+    "Cookie": "ARRAffinity=eeb07ed981018f5b52e2782779334447fffe71fbeeea9200f63be35f6a12f44a; ARRAffinitySameSite=eeb07ed981018f5b52e2782779334447fffe71fbeeea9200f63be35f6a12f44a; _gid=GA1.2.1309746962.1650226169; _gcl_au=1.1.1195149783.1650226169; ai_user=IbtUz|2022-04-17T20:09:29.200Z; _scid=63d870d2-fe27-402a-a144-eadd86fcb33f; _fbp=fb.1.1650226169697.449239281; _sctr=1|1650168000000; .AspNetCore.Antiforgery.w5W7x28NAIs=CfDJ8Cr3cY5hsCtFsO8Yv7yKxa1vyu9AYTG7VEiO36alCYbFxbkAsjSOYlPzUx8tzaA6XiQTYQLo9uH86iPpWIpyuPDxFx2GEzVZ67CyCAiVa2Uefq5-941m2z-gM_-cAL9GRK5kFAgvzWpzw_3j7w50Egc; _ga=GA1.1.1992558319.1650226169; _ga_XQLV2EFWD7=GS1.1.1650226169.1.1.1650226401.0; ai_session=1Ceh4|1650226170581|1650226507488.8",
+    "RequestVerificationToken": "CfDJ8Cr3cY5hsCtFsO8Yv7yKxa3VeKcxluv-UDLzi1TfDiPby0QsTNkDfZwm974pjUeaJr90ufX_1Avo1GPSydUQw5qw_sq4o_keP74BbYluivW3a68Q6qXQwgP5FgaHUCEK0N_t-pOYqyEhveeU8m7hBls",
 }
 
 logger = SgLogSetup().get_logger("larosas_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    allids = []
     for pid in range(1, 150):
         logger.info(pid)
         url = "https://www.larosas.com/api/locations?handler=GetLocationsByStoreID"
@@ -53,7 +28,6 @@ def fetch_data():
         country = "US"
         logger.info("Pulling Stores")
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"id":' in line:
                 items = line.split('"id":')
                 for item in items:
@@ -70,32 +44,39 @@ def fetch_data():
                         phone = item.split('"phone":"')[1].split('"')[0]
                         hours = item.split('"diningRoomHours":"')[1].split('"')[0]
                         hours = hours.replace("\\u003Cbr/\\u003E", "; ")
-                        if store not in allids:
-                            allids.append(store)
-                            if hours == "":
-                                hours = "<MISSING>"
-                            if "closed" not in name.lower():
-                                yield [
-                                    website,
-                                    loc,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                        if hours == "":
+                            hours = "<MISSING>"
+                        hours = (
+                            hours.replace("<br/>", "; ")
+                            .replace("<br />", "; ")
+                            .replace("<br>", "; ")
+                        )
+                        if "closed" not in name.lower():
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -6,7 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
 
 
 DOMAIN = "regalnails.com"
@@ -22,32 +21,6 @@ session = SgRequests()
 log = sglog.SgLogSetup().get_logger("regalnails_com")
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
-
-
 def fetch_data():
     max_results = 100
     max_distance = 500
@@ -55,7 +28,7 @@ def fetch_data():
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         max_search_distance_miles=max_distance,
-        max_search_results=max_results,
+        expected_search_radius_miles=max_distance,
     )
 
     for lat, lng in search:
@@ -140,7 +113,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=f"{street_address}, {city}, {state} {zip_postal}",
             )
 
 
@@ -151,7 +123,9 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.CITY,
                 }
             ),
             duplicate_streak_failure_factor=250000,

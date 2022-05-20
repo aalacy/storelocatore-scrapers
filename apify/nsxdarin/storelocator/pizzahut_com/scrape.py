@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("pizzahut_com")
 
@@ -10,40 +13,11 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://locations.pizzahut.com/"
     states = []
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if '<a class="Directory-listLink" href="' in line:
             items = line.split('<a class="Directory-listLink" href="')
             for item in items:
@@ -55,22 +29,19 @@ def fetch_data():
         locs = []
         logger.info(("Pulling State %s..." % state))
         r2 = session.get(state, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if '<a class="Directory-listLink" href="' in line2:
                 items = line2.split('<a class="Directory-listLink" href="')
                 for item in items:
                     if 'data-ya-track="todirectory"' in item:
                         city = item.split('"')[0]
                         curl = "https://locations.pizzahut.com/" + city
+                        curl = curl.replace("&#39;", "'")
                         cities.append(curl)
         for city in cities:
             logger.info(("Pulling City %s..." % city))
             r2 = session.get(city, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
+            for line2 in r2.iter_lines():
                 if '<a class="Teaser-titleLink" href="../' in line2:
                     items = line2.split('<a class="Teaser-titleLink" href="../')
                     for item in items:
@@ -78,14 +49,13 @@ def fetch_data():
                             lurl = (
                                 "https://locations.pizzahut.com/" + item.split('"')[0]
                             )
+                            lurl = lurl.replace("&#39;", "'")
                             if lurl not in locs:
                                 locs.append(lurl)
         for loc in locs:
             loc = loc.replace("&amp;", "&").replace("&#39;", "'")
             r3 = session.get(loc, headers=headers)
-            if r3.encoding is None:
-                r3.encoding = "utf-8"
-            lines = r3.iter_lines(decode_unicode=True)
+            lines = r3.iter_lines()
             country = "US"
             website = "pizzahut.com"
             typ = "Restaurant"
@@ -126,9 +96,9 @@ def fetch_data():
                     )[0]
                 if '{"ids":' in line3:
                     store = line3.split('{"ids":')[1].split(",")[0]
-                if "Carryout Hours</span>" in line3:
+                if "Carryout Hours<" in line3:
                     hrs = (
-                        line3.split("Carryout Hours</span>")[1]
+                        line3.split("Carryout Hours<")[1]
                         .split("data-days='")[1]
                         .split("]}]")[0]
                     )
@@ -191,27 +161,29 @@ def fetch_data():
                 hours = hours.replace("800", "8:00")
                 hours = hours.replace("900", "9:00")
                 hours = hours.replace(":3:", "3:")
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

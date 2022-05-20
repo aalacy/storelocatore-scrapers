@@ -33,7 +33,6 @@ def fetch_data(sgw: SgWriter):
         phone = "".join(j.get("phone"))
         country_code = "".join(j.get("country"))
         location_name = "".join(j.get("store")).replace(" &#8211;", "–").strip()
-
         latitude = "".join(j.get("lat"))
         longitude = "".join(j.get("lng"))
         page_url = "https://limefreshmexicangrill.com/locations/"
@@ -43,77 +42,28 @@ def fetch_data(sgw: SgWriter):
             " ".join(a.xpath('//*[contains(text(), "AM")]/text()')).replace("\r\n", "")
             or "<MISSING>"
         )
+        state = "<MISSING>"
+        links = a.xpath("//a/@href")
+        for i in links:
+            if "-fl-" in i:
+                state = "FL"
+        if "FL" in hours:
+            state = "FL"
+        perm_cls = "".join(
+            a.xpath('//*[contains(text(), "permanently closed")]//text()')
+        )
+        if perm_cls:
+            hours_of_operation = "Permanently closed"
         if location_name.find("Orlando") != -1:
             line = j.get("description")
             b = html.fromstring(line)
             hours_of_operation = " ".join(b.xpath("//p[2]//text()"))
-        slugAdr = street_address.split()[0].strip()
-        session = SgRequests()
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://takeout.limefreshmexicangrill.com",
-            "Connection": "keep-alive",
-            "Referer": "https://takeout.limefreshmexicangrill.com/info.cfm?fuseaction=store&noclose=1",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "TE": "trailers",
-        }
-
-        data = {"province_id": "23"}
-        r = session.post(
-            "https://takeout.limefreshmexicangrill.com/info.cfm?fuseaction=store&noclose=1",
-            headers=headers,
-            data=data,
-        )
-        tree = html.fromstring(r.text)
-
-        city = (
-            "".join(
-                tree.xpath(
-                    f'//span[contains(text(), "{slugAdr}")]/following-sibling::span[1]/text()'
-                )
-            )
-            .replace("\n", "")
-            .replace(",", "")
-            .strip()
-            or "<MISSING>"
-        )
-        state = (
-            "".join(
-                tree.xpath(
-                    f'//span[contains(text(), "{slugAdr}")]/following-sibling::span[2]/text()'
-                )
-            )
-            .replace("\n", "")
-            .replace(",", "")
-            .strip()
-            or "<MISSING>"
-        )
-        postal = (
-            "".join(
-                tree.xpath(
-                    f'//span[contains(text(), "{slugAdr}")]/following-sibling::span[3]/text()'
-                )
-            )
-            .replace("\n", "")
-            .replace(",", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if city == "<MISSING>":
-            city = location_name
-            if city.find("–") != -1:
-                city = city.split("–")[1].strip()
-            if city == "West Kendall" or city == "Coral Gables":
-                state = "FL"
-            postal = j.get("zip")
+        postal = j.get("zip") or "<MISSING>"
+        city = location_name
+        if city.find("–") != -1:
+            city = city.split("–")[1].strip()
+        if city.find(":") != -1:
+            city = city.split(":")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

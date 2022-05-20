@@ -13,17 +13,19 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["items"]
 
     for j in js:
-        street_address = j.get("street") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("region") or "<MISSING>"
-        postal = j.get("postcode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("store_id") or "<MISSING>"
+        street_address = j.get("street")
+        city = j.get("city")
+        state = j.get("region")
+        postal = j.get("postcode") or ""
+        if postal == "0":
+            postal = SgRecord.MISSING
+        country_code = j.get("country")
+        store_number = j.get("store_id")
         page_url = j.get("shop_view_url")
         location_name = j.get("title")
-        phone = j.get("phone_1") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("phone_1")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
 
         _tmp = []
         days = [

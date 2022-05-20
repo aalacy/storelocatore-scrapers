@@ -71,6 +71,25 @@ def fetch_data():
 
             store_number = "<MISSING>"
             location_type = store["Type"]
+            if location_type == "Branch":
+                page_url = (
+                    (
+                        "https://www.hsbc.ca/branch-list/"
+                        + location_name.split("(")[0]
+                        .strip()
+                        .replace(" ", "-")
+                        .strip()
+                        .replace("&", "")
+                        .strip()
+                        .replace("'", "")
+                        .strip()
+                        + "-transit-"
+                        + location_name.split("#")[1].strip().split(")")[0].strip()
+                    )
+                    .lower()
+                    .replace("--", "-")
+                    .strip()
+                )
 
             hours_list = []
             if "openingTimes" in store:
