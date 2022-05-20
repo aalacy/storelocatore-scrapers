@@ -21,7 +21,9 @@ def fetch_data():
     for poi_html in all_locations:
         page_url = poi_html.xpath("@url")[0]
         location_name = poi_html.xpath("@name")[0].replace("&#44;", ",")
-        street_address = poi_html.xpath("@street")[0].replace("&#44;", ",")
+        street_address = (
+            poi_html.xpath("@street")[0].replace("&#44;", ",").replace("amp;", "")
+        )
         city = poi_html.xpath("@city")[0]
         state = poi_html.xpath("@state")[0]
         zip_code = poi_html.xpath("@zip")[0]
