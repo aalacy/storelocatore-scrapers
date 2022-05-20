@@ -27,6 +27,8 @@ def fetch_data():
         loclist = soup.find("ul", {"class": "location-tabs"}).findAll("li")
         for loc in loclist:
             page_url = DOMAIN + loc.find("a")["href"]
+            if "coming-soon" in page_url:
+                continue
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")

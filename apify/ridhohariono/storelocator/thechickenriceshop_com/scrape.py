@@ -52,6 +52,47 @@ def pull_content(url):
     return soup
 
 
+def remove_opt_addr(street_address):
+    return re.sub(
+        r"Jalan\s?$",
+        "",
+        street_address.replace(
+            ", PTD 120470 Persiaran Pelangi Indah, Taman Pelangi Indah Ulu Tiram, Bahru",
+            "",
+        )
+        .replace("Mitsui Shopping Park LaLaport Bukit Bintang City Centre,", "")
+        .replace("Sunway Iskandar Bandar Medini Iskandar", "")
+        .replace("Bandar Indahpura Kulaijaya", "")
+        .replace("Legenda Heights", "")
+        .replace("AEON Mall", "")
+        .replace("Genting Highlands, Mukim", "")
+        .replace("Putra Square", "")
+        .replace("Kemasik Daerah Kemaman", "")
+        .replace("Kampung Banggol,", "")
+        .replace("Pantai Hospital KL,", "")
+        .replace("Aeon Big Shopping Centre Wangsa Maju,", "")
+        .replace("Perniagaan Mas Jaya Jalan Salleh", "")
+        .replace("Persiaran Komersial KLIA", "")
+        .replace("AEON Big Bukit Rimau,", "")
+        .replace("Bandar Bukit Tinggi 2", "")
+        .replace("Mines Resort City", "")
+        .replace("Kota Damansara", "")
+        .replace("Daerah Seberang Perai", "")
+        .replace("Sogo (KL) Department Store,", "")
+        .replace("AEON Alpha Angle Shopping Centre,", "")
+        .replace("Ara Damansara, PJU 1A", "")
+        .replace("Jalan PJU 7/4 Mutiara Damansara", "")
+        .replace("PTD 120470 Persiaran Pelangi Indah", "")
+        .replace("Malaysia", "")
+        .replace("Cyber12", "")
+        .replace("Bukit Rimau", "")
+        .replace("Bandar Bukit Tinggi Pandamaran", "")
+        .replace("Persiaran Gurney", "")
+        .strip()
+        .rstrip(","),
+    )
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     data = session.get(API_URL, headers=HEADERS).json()
@@ -74,15 +115,15 @@ def fetch_data():
             state = row["state"]
         if zip_postal == MISSING:
             zip_postal = row["postcode"]
-        street_address = (
+        street_address = remove_opt_addr(
             re.sub(
                 r",?\s?"
                 + city
-                + r",?|,?"
+                + r".*,?|,?"
                 + state
                 + r",?\s?|,?\s?"
                 + str(zip_postal)
-                + r",?",
+                + r",?|Taman.*|Jalan\s?$|Mid Valley City|Jalan\s+\D{3}\s+\d{1,2}\D{1,2}\/\d{1,2}\D{1,2}",
                 "",
                 row["address"],
             )

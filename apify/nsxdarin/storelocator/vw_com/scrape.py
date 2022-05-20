@@ -22,6 +22,8 @@ def write_output(data):
 
 
 def fetch_locations(postal, session):
+    if len(postal) == 4:
+        postal = "0" + postal
     url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
     logger.info(f"Crawling {url}")
     response = session.get(url)
@@ -126,7 +128,7 @@ def fetch_locations(postal, session):
 def fetch_data():
     with SgRequests() as session, ThreadPoolExecutor() as executor:
         search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
         )
         futures = [
             executor.submit(fetch_locations, postal, session) for postal in search

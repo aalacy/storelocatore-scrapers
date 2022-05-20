@@ -1,8 +1,9 @@
+from typing import Iterable
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "originalbuscemis_com"
@@ -16,8 +17,10 @@ session = SgRequests()
 DOMAIN = "https://originalbuscemis.com/"
 MISSING = SgRecord.MISSING
 
+API_ENDPOINT_URL = "https://originalbuscemis.com/wp-admin/admin-ajax.php"
 
-def fetch_data():
+
+def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
     latlist = [
         "44.3148443,-85.60236429999999",
         "42.565576,-83.127351",
@@ -25,11 +28,10 @@ def fetch_data():
         "48.3056044,-82.1229766",
         "11.696118,-110.4181358",
     ]
-    url = "https://originalbuscemis.com/wp-admin/admin-ajax.php"
     for i in range(0, len(latlist)):
         latnow = latlist[i].split(",")[0]
         longnow = latlist[i].split(",")[1]
-        mydata = {
+        payload = {
             "nonce": "58789e415c",
             "apikey": "71da911620ac133b0d303507b926ef6a",
             "action": "csl_ajax_search",
@@ -37,8 +39,9 @@ def fetch_data():
             "lng": longnow,
             "address": "",
         }
-        loclist = session.post(url, data=mydata, headers=headers).json()
-        loclist = loclist["response"]
+        loclist = http.post(API_ENDPOINT_URL, headers=headers, data=payload).json()[
+            "response"
+        ]
         for loc in loclist:
             location_name = loc["name"]
             log.info(location_name)
@@ -58,7 +61,7 @@ def fetch_data():
                 city = city[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=API_ENDPOINT_URL,
                 location_name=location_name.strip(),
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -78,12 +81,16 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+        with SgRequests(proxy_country="us") as http:
+            for rec in fetch_records(http):
+                writer.write_row(rec)
+                count = count + 1
 
     log.info(f"No of records being processed: {count}")
     log.info("Finished")

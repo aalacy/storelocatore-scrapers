@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
-import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "royalfarms.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -12,50 +14,6 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def get_splitted_address(address):
@@ -76,20 +34,6 @@ def get_splitted_address(address):
 def fetch_data():
     # Your scraper here
     locator_domain = website
-    page_url = ""
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zip = ""
-    country_code = ""
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
-
     locations_resp = session.get(
         "https://royalfarms.com/location_results.asp",
         headers=headers,
@@ -112,7 +56,7 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(stores_resp.text)
         stores = stores_sel.xpath('//tr[@class="listdata"]')
         for store in stores:
-            page_url = "<MISSING>"
+            page_url = "https://royalfarms.com/locations"
             temp_address = store.xpath("td[1]/text()")
             address_mobile = [
                 "".join(add).strip()
@@ -136,63 +80,74 @@ def fetch_data():
                 .strip()
             )
 
-            zip = (
-                "".join(add_dict["city_state_zip"])
-                .strip()
-                .split(",")[1]
-                .strip()
-                .split("\xa0")[1]
-                .strip()
-            )
+            try:
+                zip = (
+                    "".join(add_dict["city_state_zip"])
+                    .strip()
+                    .split(",")[1]
+                    .strip()
+                    .split("\xa0")[1]
+                    .strip()
+                )
+            except:
+                zip = "<MISSING>"
 
             store_number = location_name.replace("STORE #", "").strip()
-
-            if location_type == "":
-                location_type = "<MISSING>"
-
+            location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            if us.states.lookup(state):
-                country_code = "US"
-            else:
-                country_code = "CA"
-
-            if country_code == "":
-                country_code = "<MISSING>"
-
+            country_code = "US"
             phone = "".join(address_mobile[-1]).strip()
-            if phone == "" or "-" not in phone:
+            if (
+                not phone.replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .replace(" ", "")
+                .strip()
+                .isdigit()
+            ):
                 phone = "<MISSING>"
 
             hours_of_operation = "".join(store.xpath("td[2]/em/text()")).strip()
-            if hours_of_operation == "":
+            if "Closed" in hours_of_operation:
                 hours_of_operation = "<MISSING>"
+                location_type = "Temporarily Closed"
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            if "Coming Soon" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
+                location_type = "Coming Soon"
 
-            yield curr_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

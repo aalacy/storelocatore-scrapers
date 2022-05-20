@@ -73,6 +73,7 @@ def get_data(coord, sgw: SgWriter):
             a = j.get("Properties")
             location_name = a.get("LocationName") or "<MISSING>"
             street_address = a.get("Address") or "<MISSING>"
+            street_address = str(street_address).replace("*", "").strip()
             city = a.get("City") or "<MISSING>"
             state = a.get("State") or "<MISSING>"
             postal = a.get("Postalcode") or "<MISSING>"
@@ -110,7 +111,14 @@ def get_data(coord, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     postals = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.JAPAN],
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.JAPAN,
+            SearchableCountries.BELGIUM,
+            SearchableCountries.GERMANY,
+            SearchableCountries.BRITAIN,
+            SearchableCountries.ITALY,
+        ],
         max_search_distance_miles=300,
         expected_search_radius_miles=50,
         max_search_results=100,

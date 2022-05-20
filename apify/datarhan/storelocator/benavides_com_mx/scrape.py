@@ -23,6 +23,7 @@ def fetch_data():
 
     all_locations = data["props"]["pageProps"]["maplocations"]
     for poi in all_locations:
+        page_url = f"https://www.benavides.com.mx/consultorio/{poi['Local_ID']}"
         lv = f"Lu a Vi: {poi['Lu_vi_open']} a {poi['Lu_vi_close']}"
         sa = f"Sábado: {poi['Sa_open']} a {poi['Sa_close']}"
         do = f"DOMIRNGO {poi['Do_open']} a {poi['Do_close']}"
@@ -30,9 +31,9 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.benavides.com.mx/sucursales",
+            page_url=page_url,
             location_name=poi["Branch_Name"],
-            street_address=poi["Branch_Street"],
+            street_address=" ".join(poi["Branch_Street"].split()),
             city=poi["Branch_City"],
             state=poi["Branch_State"],
             zip_postal=poi["Branch_Zip"],

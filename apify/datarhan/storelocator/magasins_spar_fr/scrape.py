@@ -7,7 +7,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     start_url = (
         "https://magasins.spar.fr/api/v3/locations?size=100&near={},{}&language=fr"

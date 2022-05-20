@@ -42,7 +42,7 @@ def fetch_data():
             location_name = loc["store_name"]
             street_address = loc["address"]
             city = loc["city"]
-            state = "<MISSING>"
+            state = MISSING
             latitude = loc["latitude"]
             longitude = loc["longitude"]
             zip_postal = loc["postcode"]

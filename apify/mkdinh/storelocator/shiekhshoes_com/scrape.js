@@ -6,6 +6,10 @@ function getOrDefault(value) {
   return value || MISSING;
 }
 
+function get(key, object) {
+  return getOrDefault(object[key]);
+}
+
 function parseHtml(html) {
   const $ = cheerio.load(html);
   return {
@@ -69,30 +73,23 @@ function extractHoursOfOperation($) {
 }
 
 async function fetchData({ page, request }) {
-  // waiting for google popup to load. Sometimes it stalls so just kick it back into queue
-  await page.waitForSelector('.store-item', { timeout: 10000 });
-
-  await setTimeout(() => {}, 5000);
-
   const html = await page.content();
   const parser = parseHtml(html);
   const storePopup = parser.$('.store-item');
+  const { location } = request.userData;
 
-  const location_name = parser.getTextByItemProp('name');
-  const street_address = parser.getTextByItemProp('streetAddress').split(', ').shift(); // some page include city/state/zip in the address
+  const location_name = parser.getTextByItemProp('name') || get('store_name', location);
+  const street_address =
+    parser.getTextByItemProp('streetAddress').split(', ').shift() || get('address', location); // some page include city/state/zip in the address
   const city = parser.getTextByItemProp('addressLocality');
   const state = parser.getTextByItemProp('addressRegion');
   const country_code = parser.getTextByItemProp('addressCountry');
-  const latitude = storePopup.attr('data-latitude');
-  const longitude = storePopup.attr('data-longitude');
-  const store_number = storePopup.attr('data-store-id');
-  const phone = formatPhone(parser.getTextByItemProp('telephone'));
+  const latitude = storePopup.attr('data-latitude') || get('latitude', location);
+  const longitude = storePopup.attr('data-longituk4worde') || get('longitude', location);
+  const store_number = storePopup.attr('data-store-id') || get('storelocator_id', location);
+  const phone =
+    formatPhone(parser.getTextByItemProp('telephone')) || formatPhone(get('phone', location));
   const hours_of_operation = extractHoursOfOperation(parser.$);
-
-  // there are online stores or one that does not exist
-  if (location_name.match(/store\s\d|online/i)) {
-    return null;
-  }
 
   return {
     locator_domain: 'shiekh.com',
@@ -123,7 +120,7 @@ Apify.main(async function () {
       locations: [],
     },
   });
-
+  5;
   const proxyPassword = process.env.PROXY_PASSWORD;
   const proxyConfiguration = await Apify.createProxyConfiguration({
     groups: ['RESIDENTIAL'], // List of Apify Proxy groups

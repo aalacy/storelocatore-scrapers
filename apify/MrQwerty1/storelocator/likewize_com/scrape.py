@@ -9,13 +9,15 @@ from sgscrape.sgpostal import parse_address, International_Parser
 
 def get_international(line):
     adr = parse_address(International_Parser(), line)
-    steet = f"{adr.street_address_1} {adr.street_address_2}".replace("None", "").strip()
-    city = adr.city
+    street = f"{adr.street_address_1} {adr.street_address_2}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or SgRecord.MISSING
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
     country = adr.country or ""
 
-    return steet, city, state, postal, country
+    return street, city, state, postal, country
 
 
 def fetch_data(sgw: SgWriter):
@@ -34,6 +36,7 @@ def fetch_data(sgw: SgWriter):
 
         raw_address = ", ".join(lines)
         street_address, city, state, postal, country = get_international(raw_address)
+        postal = postal.replace("C.P.", "").strip()
         if not country and ("–" in location_name or "," in location_name):
             if len(postal) == 5:
                 country = "US"
@@ -43,6 +46,11 @@ def fetch_data(sgw: SgWriter):
             country = location_name
             if "–" in country:
                 country = country.split("–")[0].strip()
+
+        if country == "India" and city == SgRecord.MISSING:
+            city = raw_address.split(", ")[-2]
+        if country == "Peru" and city == SgRecord.MISSING:
+            city = raw_address.split(", ")[-1]
 
         row = SgRecord(
             page_url=page_url,
