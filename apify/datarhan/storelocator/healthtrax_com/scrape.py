@@ -66,6 +66,8 @@ def fetch_data():
         store_number = ""
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else ""
+        if phone and "Call" in phone:
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/strong/text()')[0]
         location_type = ""
         latitude = ""
         longitude = ""
@@ -83,6 +85,11 @@ def fetch_data():
             hoo = loc_dom.xpath('//div[@class="ClearFix cmsPanelContent"]/p/text()')[
                 2:10
             ]
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[p[strong[contains(text(), "Hours of Operation:")]]]/p/text()'
+            )
+            hoo = [e.strip() for e in hoo if "am-" in e]
         hoo = [" ".join([s.strip() for s in e.split()]) for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else ""
         if hours_of_operation.startswith("Sunday"):

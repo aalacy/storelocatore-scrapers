@@ -40,20 +40,37 @@ def fetch_data():
             )
             add = add.strip()
             name = line.split('"title":"')[1].split('"')[0]
-            city = line.split('"city":"')[1].split('"')[0]
-            state = line.split('"province_state":')[1].split(',"')[0].replace('"', "")
-            zc = line.split('"postal_code":"')[1].split('"')[0]
+            try:
+                city = line.split('"city":"')[1].split('"')[0]
+            except:
+                city = "<MISSING>"
+            try:
+                state = (
+                    line.split('"province_state":')[1].split(',"')[0].replace('"', "")
+                )
+            except:
+                state = "<MISSING>"
+            try:
+                zc = line.split('"postal_code":"')[1].split('"')[0]
+            except:
+                zc = "<MISSING>"
             country = line.split('"country":"')[1].split('"')[0]
             lat = line.split('"latitude":"')[1].split('"')[0]
             lng = line.split('"longitude":"')[1].split('"')[0]
             store = lid
             typ = "Supercharger"
-            hours = line.split('"hours":"')[1].split('"')[0]
+            try:
+                hours = line.split('"hours":"')[1].split('"')[0]
+            except:
+                hours = "<MISSING>"
             if hours == "":
                 hours = "<MISSING>"
             if state == "" or state == "null":
                 state = "<MISSING>"
-            phone = line.split('"number":"')[1].split('"')[0].strip()
+            try:
+                phone = line.split('"number":"')[1].split('"')[0].strip()
+            except:
+                phone = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

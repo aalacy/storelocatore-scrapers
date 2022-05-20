@@ -1,6 +1,6 @@
 from lxml import etree
-
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -8,12 +8,14 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
-    domain = "rocketfizz.com"
-    start_url = "https://rocketfizz.com/?sl_engine=sl-xml"
+    with SgFirefox() as driver:
+        start_url = "https://rocketfizz.com/?sl_engine=sl-xml"
+        driver.get(start_url)
+        response = driver.page_source
 
-    response = session.get(start_url)
-    dom = etree.XML(response.text)
+    domain = "rocketfizz.com"
+    session = SgRequests()
+    dom = etree.XML(response)
     all_locations = dom.xpath("//marker")
 
     for poi_html in all_locations:
