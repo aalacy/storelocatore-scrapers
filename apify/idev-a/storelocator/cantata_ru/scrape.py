@@ -16,7 +16,7 @@ _headers = {
 
 locator_domain = "https://cantata.ru"
 base_url = "https://cantata.ru/galleries"
-json_url = "https://cantata.ru/cantata/shops_search?{}"
+json_url = "https://cantata.ru/cantata/shops?{}"
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -34,7 +34,6 @@ def fetch_data():
                 for city in cities:
                     param = {
                         "city": city["name"],
-                        "q": city["name"],
                         "token": token,
                     }
                     logger.info(city["name"])
