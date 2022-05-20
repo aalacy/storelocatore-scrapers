@@ -41,8 +41,8 @@ def fetch_data():
                 hoo = " ".join(hoo)
                 latitude = poi_data["pageProps"]["siteApiData"]["latitude"]
                 longitude = poi_data["pageProps"]["siteApiData"]["longitude"]
-                latitude = latitude if latitude and len(latitude) > 2 else ""
-                longitude = longitude if longitude and len(longitude) > 2 else ""
+                latitude = latitude if latitude and len(str(latitude)) > 2 else ""
+                longitude = longitude if longitude and len(str(longitude)) > 2 else ""
 
                 item = SgRecord(
                     locator_domain=domain,
