@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
         if lunes:
             _tmp.append(f"Lunes a sábado: {lunes}")
 
-        domingo = "".join(d.xpath("./div[3]/p/text()")).replace("|", "").strip()
+        domingo = "".join(d.xpath("./div[3]//p/text()")).replace("|", "").strip()
         if lunes:
             _tmp.append(f"Domingo y Festivos: {domingo}")
         hours_of_operation = ";".join(_tmp)
