@@ -1,6 +1,7 @@
 import json
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -81,11 +82,15 @@ def fetch_data(sgw: SgWriter):
                 lng = store_data["longitude"]
                 locator_domain = "https://www.sherwin-williams.com"
                 location_name = store_data["name"] or "<MISSING>"
+                location_name = str(location_name).replace("&#039;", "`").strip()
                 street_address = store_data["address"] or "<MISSING>"
+                street_address = str(street_address).replace("&amp;", "&").strip()
                 city = store_data["city"] or "<MISSING>"
                 state = store_data["state"] or "<MISSING>"
                 postal = store_data["zipcode"] or "<MISSING>"
                 country_code = "CA"
+                if str(postal).replace("-", "").strip().isdigit():
+                    country_code = "US"
 
                 store_num = store_data["url"].split("storeNumber=")[1].split("&")[0]
                 if store_num in [
@@ -100,8 +105,21 @@ def fetch_data(sgw: SgWriter):
                 phone = store_data["phone"] or "<MISSING>"
 
                 link = "https://www.sherwin-williams.com" + store_data["url"]
-
-                hours = "<INACCESSIBLE>"
+                try:
+                    r = session.get(link, headers=headers)
+                    tree = html.fromstring(r.text)
+                    hours = (
+                        " ".join(
+                            tree.xpath(
+                                '//div[@class="cmp-storedetailhero__store-hours-container"]//time//text()'
+                            )
+                        )
+                        .replace("\n", "")
+                        .strip()
+                    )
+                    hours = " ".join(hours.split()) or "<MISSING>"
+                except:
+                    hours = "<MISSING>"
 
                 row = SgRecord(
                     locator_domain=locator_domain,

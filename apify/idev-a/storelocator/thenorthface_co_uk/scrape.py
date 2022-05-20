@@ -1,10 +1,10 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import Grain_2
+from sgzip.dynamic import Grain_4
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
 
@@ -53,6 +53,35 @@ def revert_c_map(val):
     if val == "UK":
         return "gb"
     return val.lower()
+
+
+def _v(val):
+    if val:
+        return (
+            val.replace("&#xe5;", "å")
+            .replace("&#xe4;", "ä")
+            .replace("&#xc4;", "Ä")
+            .replace("&#xc5;", "Å")
+            .replace("&#xdf;", "ß")
+            .replace("&#xfc;", "ü")
+            .replace("&#xdc;", "Ü")
+            .replace("&#xb0;", "°")
+            .replace("&#x93;", '"')
+            .replace("&#x94;", '"')
+            .replace("&#xf2;", "ò")
+            .replace("&#xf3;", "ó")
+            .replace("&#xc7;", "Ç")
+            .replace("&#xd6;", "Ö")
+            .replace("&#xe7;", "ç")
+            .replace("&#xe8;", "è")
+            .replace("&#xf6;", "ö")
+            .replace("&#xe9;", "é")
+            .replace("&#xfd;", "ý")
+            .replace("&#x9a;", "š")
+            .replace("&amp;", "&")
+        )
+    else:
+        return ""
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -121,10 +150,10 @@ class ExampleSearchIteration(SearchIteration):
                     found_location_at(latitude, longitude)
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.select_one("name").text.strip(),
-                    street_address=street_address,
-                    city=_.city.text.strip(),
-                    state=state,
+                    location_name=_v(_.select_one("name").text.strip()),
+                    street_address=_v(street_address),
+                    city=_v(_.city.text.strip()),
+                    state=_v(state),
                     zip_postal=_.postalcode.text.strip(),
                     country_code=_.country.text.strip(),
                     phone=phone,
@@ -132,7 +161,7 @@ class ExampleSearchIteration(SearchIteration):
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation="; ".join(hours).replace("---", ", "),
                 )
 
 
@@ -143,11 +172,20 @@ if __name__ == "__main__":
         c_list = [revert_c_map(cc) for cc in countries.keys()]
         with SgWriter(
             SgRecordDeduper(
-                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+                SgRecordID(
+                    {
+                        SgRecord.Headers.LATITUDE,
+                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.PHONE,
+                    }
+                )
+                .with_truncate(SgRecord.Headers.LATITUDE, 3)
+                .with_truncate(SgRecord.Headers.LONGITUDE, 3),
+                duplicate_streak_failure_factor=1000,
             )
         ) as writer:
             search_maker = DynamicSearchMaker(
-                search_type="DynamicGeoSearch", granularity=Grain_2()
+                search_type="DynamicGeoSearch", granularity=Grain_4()
             )
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
