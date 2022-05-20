@@ -38,8 +38,9 @@ def fetch_data():
             for loc in loclist:
                 page_url = loc.find("a")["href"].strip("/") + "/"
                 log.info(page_url)
-                r = session.get(page_url, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
+                driver.get(page_url)
+                response = driver.page_source
+                soup = BeautifulSoup(response, "html.parser")
                 try:
                     longitude, latitude = (
                         soup.select_one("iframe[src*=maps]")["src"]
@@ -84,7 +85,6 @@ def fetch_data():
                     .replace("Temporary Hours:", "")
                     .replace("Hours:", "")
                 )
-
                 if "DINE-IN" in hours_of_operation:
                     hours_of_operation = MISSING
                 elif "Temporarily Closed" in hours_of_operation:
