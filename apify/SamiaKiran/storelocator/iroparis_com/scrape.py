@@ -56,8 +56,14 @@ def fetch_data():
                 ):
                     hours_of_operation = hours_of_operation.replace("Sunday", "Sunday#")
                     hour_list = hours_of_operation.split("#")
-                    day_list = hour_list[0]
-                    time_list = hour_list[1]
+                    day_list = hour_list[0].split()
+                    time_list = (
+                        hour_list[1]
+                        .replace(" AM", "AM")
+                        .replace(" PM", "PM")
+                        .replace(" - ", "-")
+                        .split()
+                    )
                     hours_of_operation = ""
                     for day, time in zip(day_list, time_list):
                         hours_of_operation = hours_of_operation + " " + day + " " + time
@@ -74,6 +80,10 @@ def fetch_data():
                 if "Los Angeles" in state:
                     if "CA" in city.split()[-1]:
                         state = "CA"
+                if country_code == "CA":
+                    if zip_postal == MISSING:
+                        zip_postal = loc["address2"].split()
+                        zip_postal = zip_postal[-2] + " " + zip_postal[-1]
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url="https://www.iroparis.com/us/stores",
