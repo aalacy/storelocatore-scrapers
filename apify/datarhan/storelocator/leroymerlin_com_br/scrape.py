@@ -44,7 +44,9 @@ def fetch_data():
             state = ""
             if len(raw_address.split(" - ")[-1]) == 2:
                 state = raw_address.split(" - ")[-1]
-            zip_code = loc_dom.xpath('//dd[@itemprop="postalCode"]/text()')[0]
+            zip_code = loc_dom.xpath('//dd[@itemprop="postalCode"]/text()')[0].replace(
+                ".", ""
+            )
             phone = loc_dom.xpath('//dd[@itemprop="telephone"]/text()')
             phone = phone[0].split("/")[0].split("(")[0] if phone else ""
             geo = (
