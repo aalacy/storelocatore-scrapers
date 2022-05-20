@@ -73,6 +73,7 @@ def get_data(coord, sgw: SgWriter):
             a = j.get("Properties")
             location_name = a.get("LocationName") or "<MISSING>"
             street_address = a.get("Address") or "<MISSING>"
+            street_address = str(street_address).replace("*", "").strip()
             city = a.get("City") or "<MISSING>"
             state = a.get("State") or "<MISSING>"
             postal = a.get("Postalcode") or "<MISSING>"

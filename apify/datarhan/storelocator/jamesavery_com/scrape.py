@@ -58,6 +58,8 @@ def fetch_data():
             longitude = geo[1]
 
             loc_response = session.get(page_url, headers=hdr)
+            if loc_response.status_code != 200:
+                continue
             loc_dom = etree.HTML(loc_response.text)
             hoo = loc_dom.xpath('//ul[@class="store-locations__hours"]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()]) if hoo else ""
