@@ -19,11 +19,12 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//h3/text()")).strip()
         page_url = "".join(d.xpath(".//a[./img]/@href"))
         line = "".join(d.xpath(".//h4/text()")).split(",")
+        if len(line) == 1 and "COMING" in line[0]:
+            continue
         if len(line) == 1:
             line = d.xpath(".//i[@class='fal fa-clock']/following-sibling::text()")
-            line = list(filter(None, [li.strip() for li in line]))
-            adr = line.pop()
-            street_address, city = adr.split(", ")
+            line = list(filter(None, [li.strip() for li in line])).pop()
+            street_address, city = line.split(", ")
             state = SgRecord.MISSING
         else:
             state = line.pop().strip()
