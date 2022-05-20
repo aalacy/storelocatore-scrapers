@@ -16,13 +16,17 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()
     for j in js:
+
         a = j.get("content")
+        status = a.get("status")
+
         page_url = a.get("url") or "<MISSING>"
         location_name = a.get("title") or "<MISSING>"
         street_address = (
             f"{a.get('address')} {a.get('address2')}".replace("None", "").strip()
             or "<MISSING>"
         )
+        print(status, page_url)
         state = a.get("state") or "<MISSING>"
         postal = a.get("zip") or "<MISSING>"
         if str(postal).find("-") != -1:
@@ -142,6 +146,8 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             or "<MISSING>"
         )
+        if status == "1" or status == "2":
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
