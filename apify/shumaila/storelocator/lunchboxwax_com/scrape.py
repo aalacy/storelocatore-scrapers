@@ -29,6 +29,8 @@ def fetch_data():
         longitude = data["data-lon"]
         location_name = temp[0].text
         street_address = temp[1].text
+        if "Coming Soon" in street_address:
+            continue
         city = temp[2].text
         state = temp[3].text
         zip_postal = temp[4].text
@@ -37,8 +39,6 @@ def fetch_data():
         log.info(page_url)
         subrequest = session.get(page_url)
         subsoup = BeautifulSoup(subrequest.text, "html.parser")
-        if "Coming Soon" in subrequest.text:
-            continue
         try:
             hours_of_operation = (
                 subsoup.find("div", {"class", "hidden-hours"})
@@ -47,7 +47,6 @@ def fetch_data():
             )
         except:
             hours_of_operation = MISSING
-
         country_code = "US"
         if "-" in latitude:
             temp = latitude
