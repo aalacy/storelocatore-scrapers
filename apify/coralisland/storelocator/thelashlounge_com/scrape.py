@@ -31,9 +31,9 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             base = BeautifulSoup(r.text, "html.parser")
-            temp = base.find("script", attrs={"type": "application/ld+json"}).contents[
-                0
-            ]
+            temp = r.text.split("<script type='application/ld+json'> ")[1].split(
+                "</script>"
+            )[0]
             temp = json.loads(temp)
             location_name = temp["name"]
             try:

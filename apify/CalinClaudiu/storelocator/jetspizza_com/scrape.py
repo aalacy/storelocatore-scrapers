@@ -91,7 +91,11 @@ def para(url):
 
     k["StoreNumber"] = soup.body["class"][-1].split("-")[-1]
 
-    k["IsActive"] = "<MISSING>"
+    if "coming soon" in soup.find(class_="store__box-heading").text.lower():
+        k["IsActive"] = "Coming Soon"
+    else:
+        k["IsActive"] = "Open"
+
     k["Country"] = "US"
 
     return k
@@ -123,7 +127,8 @@ def fetch_data():
         soup = b4(son.text, "lxml")
         links = soup.find("div", {"class": "pge-find-store__entries"})
         for j in links.find_all("a", {"class": "locator-results__store-detail"}):
-            stores.append(j["href"])
+            if "/stores" in j["href"] and "//il" not in j["href"]:
+                stores.append(j["href"])
 
     logzilla.info("Grabbing store data")
 

@@ -60,7 +60,10 @@ def fetch_data():
         addr = row.find_next("p").get_text(strip=True, separator="@@").split("@@")
         raw_address = addr[0]
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = addr[1].strip()
+        try:
+            phone = addr[1].strip()
+        except:
+            phone = MISSING
         country_code = "UK"
         store_number = MISSING
         location_type = MISSING

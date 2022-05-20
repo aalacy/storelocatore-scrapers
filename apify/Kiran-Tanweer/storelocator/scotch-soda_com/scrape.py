@@ -71,10 +71,7 @@ def fetch_data():
                         country_code = "UK"
                     else:
                         state = MISSING
-                    if street == "Lennox Square, 3393 Peachtree Road NE":
-                        street = "3393 Peachtree Road NE"
-                    if street == "Houston Galleria, 5085 Westheimer Rd.":
-                        street = "5085 Westheimer Rd."
+
                     try:
                         street1 = soup.find(
                             "span", {"itemprop": "c-address-street-1"}
@@ -88,22 +85,38 @@ def fetch_data():
                     except AttributeError:
                         street = street
 
-                    yield SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url=link,
-                        location_name=title,
-                        street_address=street.strip(),
-                        city=city.strip(),
-                        state=state.strip(),
-                        zip_postal=pcode,
-                        country_code=country_code,
-                        store_number=MISSING,
-                        phone=phone,
-                        location_type=MISSING,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours.strip(),
-                    )
+                    if street == "Lennox Square, 3393 Peachtree Road NE":
+                        street = "3393 Peachtree Road NE"
+                    if street == "Houston Galleria, 5085 Westheimer Rd.":
+                        street = "5085 Westheimer Rd."
+                    if street == "Woodbury Commons":
+                        street = "236 Red Apple Court, Suite 236"
+                    if street == "340 SW Morrison":
+                        street = "340 SW Morrison #2395"
+                    if street == "6551 No 3 Rd":
+                        street = "6551 No 3 Rd #1542"
+
+                    if title.find("Outlet") != -1:
+                        title = title.replace("Outlet", "Outlet ")
+
+                    if street not in ("7014 East Camelback Road", "160 N Gulph Rd"):
+
+                        yield SgRecord(
+                            locator_domain=DOMAIN,
+                            page_url=link,
+                            location_name=title,
+                            street_address=street.strip(),
+                            city=city.strip(),
+                            state=state.strip(),
+                            zip_postal=pcode,
+                            country_code=country_code,
+                            store_number=MISSING,
+                            phone=phone,
+                            location_type=MISSING,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours.strip(),
+                        )
 
 
 def scrape():

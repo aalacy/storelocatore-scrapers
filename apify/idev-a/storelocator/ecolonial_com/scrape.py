@@ -1,8 +1,8 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 from datetime import datetime, timedelta
@@ -22,19 +22,25 @@ base_url = "https://ecolonial.com/wp-admin/admin-ajax.php?"
 types = ["daily", "monthly"]
 
 
+def _pp(val):
+    return "".join(
+        [vv for vv in val.split(";")[0] if vv.isdigit() or vv == "-" or vv == " "]
+    ).strip()
+
+
 def fetch_data():
     with SgRequests() as session:
         _from = datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
-        _to = (datetime.now() + timedelta(hours=4, minutes=30)).strftime(
+        _to = (datetime.now() + timedelta(hours=3, minutes=30)).strftime(
             "%m/%d/%Y %I:%M:%S %p"
         )
         for _type in types:
             params = dict(
                 action="mapmarkers",
-                ne_lat="39.64641823308406",
-                ne_lng="-70.28235054593024",
-                sw_lat="37.79514263845464",
-                sw_lng="-80.82098579983649",
+                ne_lat="43.35468582449911",
+                ne_lng="-67.61070150457917",
+                sw_lat="37.768048573165224",
+                sw_lng="-88.92417806707917",
                 zoom="7",
                 reset="0",
                 formaction="search",
@@ -93,7 +99,7 @@ def fetch_data():
                     latitude=_["latitude"],
                     longitude=_["longitude"],
                     country_code="US",
-                    phone=phone,
+                    phone=_pp(phone),
                     location_type=_type,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours)
@@ -104,7 +110,11 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LOCATION_TYPE, SgRecord.Headers.PAGE_URL})
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

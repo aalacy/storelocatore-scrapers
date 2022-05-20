@@ -25,11 +25,20 @@ def fetch_records(http, search):
             search.found_location_at(lat, lng)
         logger.info(f"[{lat, lng}] {len(locations)}")
         for _ in locations:
-            street_address = _["address"]
+            street = (
+                _["address"]
+                .replace(" ", "-")
+                .replace(".", "")
+                .replace(",", "")
+                .replace("#", "")
+                .replace("'", "")
+            )
+            page_url = f"https://www.chevronwithtechron.com/en_us/home/find-a-station.html?/station/{street}-{_['city'].replace(' ', '-')}-{_['state']}-{_['zip'].replace(' ', '-')}-id{_['id']}"
             yield SgRecord(
+                page_url=page_url,
                 location_name=_["name"],
                 store_number=_["id"],
-                street_address=street_address,
+                street_address=_["address"],
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["zip"],

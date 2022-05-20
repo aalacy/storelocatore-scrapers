@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "tanguay_ca"
@@ -15,7 +18,7 @@ headers = {
 }
 
 DOMAIN = "https://www.tanguay.ca/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def strip_accents(text):
@@ -30,53 +33,40 @@ def fetch_data():
         url = "https://www.tanguay.ca/fr/trouvez-un-magasin/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "store_hlt_td"})
+        loclist = soup.findAll("div", {"class": "box_shadow box_store"})
         for loc in loclist:
-            location_name = loc.find("h3").text.replace("\n", "").strip()
+            location_name = (
+                loc.find("h3").get_text(separator="|", strip=True).replace("|", "")
+            )
             location_name = strip_accents(location_name)
-            if "distribution" in location_name:
-                continue
             log.info(location_name)
-            temp = loc.findAll("div", {"class": "padding-store"})
-            coords = temp[1].findAll("input", {"type": "hidden"})
-            latitude = coords[0]["value"]
-            longitude = coords[1]["value"]
-            address = (
-                temp[1]
-                .text.replace("Adresse :", "")
-                .replace("\n", "")
-                .strip()
-                .split(",")
+            temp = loc.find("div", {"class": "padding-store"})
+            raw_address = (
+                temp.get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Adresse :", "")
             )
-            if len(address) < 4:
-                street_address = address[0].replace("Québec", "")
-                city = "Québec"
-                state = address[1]
-                zip_postal = address[2]
-            else:
-                street_address = address[0]
-                city = address[1]
-                state = address[2]
-                zip_postal = address[3]
-                phone = temp[2].find("a").text
+            temp = temp.findAll("input")
+            latitude = temp[0]["value"]
+            longitude = temp[1]["value"]
+            pa = parse_address_intl(strip_accents(raw_address))
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            phone = loc.select_one("a[href*=tel]").text.split()[1]
             country_code = "CA"
-            hour_list = loc.find("table").findAll("tr")
-            hours_of_operation = ""
-            for hour in hour_list:
-                day = hour.find("th").text.replace("\n", "").strip()
-                time = hour.find("td").text.replace("\n", "").strip()
-                hours_of_operation = hours_of_operation + " " + day + " " + time
             hours_of_operation = (
-                hours_of_operation.replace("Lundi :", "Monday :")
-                .replace("Mardi :", "Tuesday :")
-                .replace("Mercredi :", "Wednesday :")
-                .replace("Jeudi :", "Thursday :")
-                .replace("Vendredi :", "Friday :")
-                .replace("Samedi :", "Saturday :")
-                .replace("Dimanche :", "Sunday :")
+                loc.find("table").get_text(separator="|", strip=True).replace("|", " ")
             )
-            street_address = strip_accents(street_address)
-            city = strip_accents(city)
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -92,20 +82,18 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

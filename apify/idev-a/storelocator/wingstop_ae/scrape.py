@@ -39,13 +39,15 @@ def fetch_data():
                 if "Toll" in bb or "Ph:" in bb or "Ph :" in bb:
                     break
                 _addr.append(bb.strip())
-            if "UAE" in _addr[-1]:
-                del _addr[-1]
-            addr = parse_address_intl(" ".join(_addr) + ", United Arab Emirates")
+            if "Wingstop" in _addr[0]:
+                del _addr[0]
+            raw_address = " ".join(_addr).replace("\n", " ").replace("UAE", "").strip()
+            if raw_address.endswith(","):
+                raw_address = raw_address[:-1]
+            addr = parse_address_intl(raw_address + ", United Arab Emirates")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            raw_address = " ".join(_addr).replace("\n", " ")
             hours_of_operation = (
                 block[0]
                 .replace("\n", "; ")
@@ -55,11 +57,14 @@ def fetch_data():
             if hours_of_operation and "shop no" in hours_of_operation.lower():
                 hours_of_operation = ""
             coord = _coord(x, coords)
+            city = addr.city
+            if "Khalifa City" in raw_address:
+                city = "Khalifa City"
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h4.text.strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="UAE",
