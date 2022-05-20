@@ -22,13 +22,13 @@ def fetch_data():
     url = "https://www.enterprise.com/en/car-rental/locations/us.html"
     r = get(url)
     for line in r.iter_lines():
-        if '<h3 class="state-title"><a class="heading-link" href="' in line:
+        if '<a class="heading-link" href="/en/car-rental/locations/us/' in line:
             lurl = "https://www.enterprise.com" + line.split('href="')[1].split('"')[0]
             states.append(lurl + "|US")
     url = "https://www.enterprise.com/en/car-rental/locations/canada.html"
     r = get(url)
     for line in r.iter_lines():
-        if '<h3 class="state-title"><a class="heading-link" href="' in line:
+        if '<a class="heading-link" href="/en/car-rental/locations/canada/' in line:
             lurl = "https://www.enterprise.com" + line.split('href="')[1].split('"')[0]
             states.append(lurl + "|CA")
     for state in states:
