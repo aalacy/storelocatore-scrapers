@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "boxlunch.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -27,37 +29,41 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.boxlunch.com/on/demandware.store/Sites-boxlunch-Site/default/Stores-GetNearestStores?postalCode=10001&customStateCode=&maxdistance=50000&unit=mi&latitude=37.0902&longitude=95.7129&maxResults=1500&distanceUnit=mi&countryCode=US&productId=null&currentStoreId=null&pageSource=null"
+    search_url = "https://www.boxlunch.com/on/demandware.store/Sites-boxlunch-Site/default/Stores-FindStores?showMap=false&radius=50000&stateCode=&lat=40.75368539999999&long=-73.9991637&postalCode=10001"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads("".join(stores_req.text).strip())["stores"]
 
-    for key in stores.keys():
+    for store in stores:
         locator_domain = website
-        page_url = "https://www.boxlunch.com/stores-details?StoreID=" + key
-        location_name = stores[key]["name"]
-
-        street_address = stores[key]["address1"]
+        store_number = store["ID"]
+        page_url = "https://www.boxlunch.com/stores-details?StoreID=" + store_number
+        location_name = store["name"]
+        if "coming soon" in location_name.lower():
+            continue
+        street_address = store["address1"]
         if (
-            "address2" in stores[key]
-            and stores[key]["address2"] is not None
-            and len(stores[key]["address2"]) > 0
+            "address2" in store
+            and store["address2"] is not None
+            and len(store["address2"]) > 0
         ):
-            street_address = street_address + ", " + stores[key]["address2"]
-        city = stores[key]["city"]
-        state = stores[key]["stateCode"]
-        zip = stores[key]["postalCode"]
+            street_address = street_address + ", " + store["address2"]
+        city = store["city"]
+        state = store["stateCode"]
+        zip = store["postalCode"]
 
-        country_code = stores[key]["countryCode"]
-        phone = stores[key]["phone"]
+        country_code = store["countryCode"]
+        phone = store["phone"]
 
-        store_number = key
         location_type = "<MISSING>"
 
-        hours_of_operation = ""
         hours_list = []
 
-        if stores[key]["storeHours"] is not None and len(stores[key]["storeHours"]) > 0:
-            hours_sel = lxml.html.fromstring(stores[key]["storeHours"])
+        if (
+            "storeHours" in store
+            and store["storeHours"] is not None
+            and len(store["storeHours"]) > 0
+        ):
+            hours_sel = lxml.html.fromstring(store["storeHours"])
             hours = hours_sel.xpath('//div[@class="hours-row"]')
             for hour in hours:
                 day = "".join(
@@ -69,8 +75,8 @@ def fetch_data():
                 hours_list.append(day + ":" + time)
 
         hours_of_operation = "; ".join(hours_list).strip()
-        latitude = stores[key]["latitude"]
-        longitude = stores[key]["longitude"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -93,7 +99,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

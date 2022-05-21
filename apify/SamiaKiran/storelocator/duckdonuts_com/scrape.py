@@ -29,13 +29,13 @@ def fetch_data():
         loclist = session.post(url, headers=headers).json()
         for loc in loclist:
             store_number = loc["FranchiseLocationID"]
-            page_url = "https://www.duckdonuts.com" + loc["Path"]
+            try:
+                page_url = "https://www.duckdonuts.com" + loc["Path"]
+            except:
+                page_url = "https://www.duckdonuts.com/locations/"
             log.info(page_url)
             location_name = loc["FranchiseLocationName"]
-            try:
-                street_address = loc["Address1"] + " " + loc["Address1"]
-            except:
-                street_address = loc["Address1"]
+            street_address = loc["Address1"]
             city = loc["City"]
             state = loc["State"]
             zip_postal = loc["ZipCode"]
@@ -48,8 +48,11 @@ def fetch_data():
                 + str(store_number)
                 + "&HoursPopup%24_command_="
             )
-            r = session.post(page_url, headers=headers, data=payload)
-            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                r = session.post(page_url, headers=headers, data=payload)
+                soup = BeautifulSoup(r.text, "html.parser")
+            except:
+                continue
             hours_of_operation = (
                 soup.find("table").get_text(separator="|", strip=True).replace("|", " ")
             )

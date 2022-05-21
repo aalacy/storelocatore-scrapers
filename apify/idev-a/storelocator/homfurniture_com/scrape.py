@@ -36,27 +36,30 @@ def fetch_data():
         )
         res = http.get(d_url, headers=_headers).text
         websites = json.loads(
-            "{" + res.split("}});var n={")[1].split(".websites.find(function(")[0]
+            "{" + res.split(");var a={")[1].split(".websites.find(function(")[0]
         )["websites"]
         states = json.loads(
             "["
             + res.replace("!0", "true")
             .replace("!1", "false")
-            .split("}});var n=[")[1]
+            .split("}});var a=[")[1]
             .split('"superSaturdayRules.jsx"')[0]
             .strip()[:-2]
         )[2]["states"]
         for state in states:
-            hours = []
+            prev_hours = []
             for city in state["cities"]:
+                hours = []
                 for hr in city.get("locationHours", []):
                     if hr["label"] == "store":
                         for hh in hr["days"]:
                             if hh["hours"] == "Opening Soon":
                                 break
-                            else:
+                            elif "Opening" not in hh["hours"]:
                                 hours.append(f"{hh['dayLabel']}: {hh['hours']}")
 
+                if not hours and prev_hours:
+                    hours = prev_hours
                 for _ in city.get("locations", []):
                     page_url = locator_domain + _["url"]
                     phone = f"({_['phonePrefix']}) {_['phoneArea']}-{_['phoneLineNum']}"
@@ -75,6 +78,8 @@ def fetch_data():
                         locator_domain=locator_domain,
                         hours_of_operation="; ".join(hours),
                     )
+
+                prev_hours = hours
 
 
 if __name__ == "__main__":
