@@ -28,7 +28,7 @@ def fetch_data():
                 poi_data = session.get(poi_url, headers=hdr).json()
                 page_url = f'https://www.thrivepetcare.com/locations/{state["state"].lower().replace(" ", "-")}/{city["city"].lower().replace(" ", "-")}/{slug}'
                 street_address = poi_data["pageProps"]["siteApiData"]["addressLine1"]
-                street_address_2 = poi_data["pageProps"]["siteApiData"]["addressLine1"]
+                street_address_2 = poi_data["pageProps"]["siteApiData"]["addressLine2"]
                 if street_address_2:
                     street_address += " " + street_address_2
                 hoo = []
