@@ -31,7 +31,10 @@ def fetch_data():
         page_url = urljoin(start_url, poi["link"])
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        phone = loc_dom.xpath('//p[contains(text(), "Phone")]/span/text()')[0]
+        try:
+            phone = loc_dom.xpath('//p[contains(text(), "Phone")]/span/text()')[0]
+        except:
+            phone = "<MISSING>"
         hoo = loc_dom.xpath(
             '//h5[contains(text(), "Food Centre")]/following-sibling::p/span[@class="hours"]/text()'
         )
