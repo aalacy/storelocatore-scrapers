@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 from sgrequests import SgRequests
+from sgpostal.sgpostal import parse_address_intl
 import ssl
 
 MAX_WORKERS = 2
@@ -47,7 +48,9 @@ def get_hostel_urls():
 
 
 def fetch_records(idx, store_url, sgw: SgWriter):
-    with SgRequests(proxy_country="gb") as http:
+    with SgRequests(
+        proxy_country="gb",
+    ) as http:
         r1 = http.get(store_url, headers=headers)
         logger.info(f"[{idx}] PullingContentFrom {store_url}")
         logger.info(f"[{idx}] HTTPStatus: {r1.status_code}")
@@ -99,9 +102,10 @@ def fetch_records(idx, store_url, sgw: SgWriter):
         lat = ll[0]
         lng = ll[1]
 
-        sn = "".join(sel1.xpath('//*[contains(text(), "OS Map: ")]/text()'))
-        sn = sn.replace("OS Map: ", "")
-
+        pai = parse_address_intl(add_raw)
+        city = ""
+        if pai.city is not None:
+            city = pai.city
         item = SgRecord(
             page_url=store_url,
             location_name=locname,
@@ -109,7 +113,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             city=city,
             state=state,
             zip_postal=zip_,
-            store_number=sn,
+            store_number="",
             latitude=lat,
             longitude=lng,
             country_code="UK",
