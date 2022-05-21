@@ -19,7 +19,7 @@ base_url = "https://www.millerpaint.com/stores/"
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.uabb-masonary-cat-41")
+        links = soup.select("div.uabb-post-wrapper")
         logger.info(f"{len(links)} found")
         for link in links:
             page_url = link.a["href"]
