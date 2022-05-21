@@ -37,20 +37,35 @@ def fetch_data():
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 if r.url == "https://littlesprouts.com":
-                    continue
-                soup = BeautifulSoup(r.text, "html.parser")
-                longitude, latitude = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!2m", 1)[0]
-                    .split("!3d")
-                )
-                if "!3m" in latitude:
-                    latitude = latitude.split("!3m")[0]
-                location_name = soup.find("h1").text
-                address = (
-                    soup.select_one('p:contains("View Map")').text.split("|")[0].strip()
-                )
+                    hours_of_operation = MISSING
+                    phone = MISSING
+                    temp = loc.get_text(separator="|", strip=True).split("|")
+                    location_name = temp[0]
+                    address = temp[1]
+                else:
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    longitude, latitude = (
+                        soup.select_one("iframe[src*=maps]")["src"]
+                        .split("!2d", 1)[1]
+                        .split("!2m", 1)[0]
+                        .split("!3d")
+                    )
+                    if "!3m" in latitude:
+                        latitude = latitude.split("!3m")[0]
+                    location_name = soup.find("h1").text
+                    address = (
+                        soup.select_one('p:contains("View Map")')
+                        .text.split("|")[0]
+                        .strip()
+                    )
+
+                    hours_of_operation = (
+                        soup.select_one('h4:contains("Hours")')
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .replace("Days:", "")
+                    )
+                    phone = soup.select_one("a[href*=tel]").text
                 address = address.split(",")
                 street_address = address[0]
                 city = address[1]
@@ -59,14 +74,7 @@ def fetch_data():
                 try:
                     zip_postal = address[1]
                 except:
-                    MISSING
-                hours_of_operation = (
-                    soup.select_one('h4:contains("Hours")')
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                    .replace("Days:", "")
-                )
-                phone = soup.select_one("a[href*=tel]").text
+                    zip_postal = MISSING
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
