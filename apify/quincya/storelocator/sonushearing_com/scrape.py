@@ -149,7 +149,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
         if "all for" in hours_of_operation:
             hours_of_operation = ""
-        hours_of_operation = hours_of_operation.replace("Hours:", "").strip()
+        hours_of_operation = (
+            hours_of_operation.replace("Hours:", "").split("Week")[0].strip()
+        )
 
         try:
             geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_link)[
