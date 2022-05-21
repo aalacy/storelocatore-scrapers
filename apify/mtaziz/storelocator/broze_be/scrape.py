@@ -46,8 +46,6 @@ def fetch_records(sgw: SgWriter):
     with SgFirefox(executable_path=GeckoDriverManager().install()) as driver:
         driver.get(STORE_LOCATOR)
         driver.implicitly_wait(5)
-        driver.save_screenshot("broze.png")
-        pgsrc = driver.page_source
         xpath_iframe = '//div[@id="carte"]/iframe[contains(@src, "google.com/maps")]'
         WebDriverWait(driver, 30).until(
             EC.presence_of_element_located(
