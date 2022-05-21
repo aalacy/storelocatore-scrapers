@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()["stores"][:10]
+    js = r.json()["stores"]
     for j in js:
         id = j.get("ID")
         page_url = f"https://www.boconcept.com/on/demandware.store/Sites-US-Site/en_US/Storelocator-Detail?storeid={id}"

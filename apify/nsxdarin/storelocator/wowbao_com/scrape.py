@@ -1,7 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 session = SgRequests()
 headers = {
@@ -10,43 +14,17 @@ headers = {
 
 logger = SgLogSetup().get_logger("wowbao_com")
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+url_ql = "https://wowbao.order.online/graphql"
 
 
 def fetch_data():
-    url = "https://api2.storepoint.co/v1/15fe0bd667ae7b/locations?lat=33.7225&long=-116.377&radius=5000"
+    url = "https://api.storepoint.co/v1/15fe0bd667ae7b/locations?lat=41.8756&long=-87.6244&radius=500000"
     r = session.get(url, headers=headers)
     website = "wowbao.com"
     typ = "<MISSING>"
     country = "US"
     loc = "<MISSING>"
-    hours = "<MISSING>"
-    logger.info("Pulling Stores")
+    hours_of_operation = "<MISSING>"
     for item in json.loads(r.content)["results"]["locations"]:
         store = item["id"]
         lat = item["loc_lat"]
@@ -63,37 +41,96 @@ def fetch_data():
             state = addinfo.split(",")[2].strip()
         zc = "<MISSING>"
         phone = "<MISSING>"
-        ueurl = item["extra"].replace("\\", "")
-        logger.info(store)
-        try:
-            r2 = session.get(ueurl, headers=headers)
-            for line in r2.iter_lines():
-                line = str(line.decode("utf-8"))
-                if '"streetAddress":"' in line:
-                    add = line.split('"streetAddress":"')[1].split('"')[0]
-        except:
-            pass
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        loc = item["website"]
+        if "order.online" in loc:
+            try:
+                """
+                CHECKS PRESENCE OF GRAPHQL ENDPOINT TO UPDATE CITY, STREET, ZIP and HOO etc
+                """
+                graphql_id = re.findall(r"(\d+)/", item["website"])[0]
+                payload_ql = {
+                    "operationName": "storepageFeed",
+                    "variables": {
+                        "fulfillmentType": "Delivery",
+                        "storeId": f"{graphql_id}",
+                        "isMerchantPreview": False,
+                        "includeNestedOptions": False,
+                        "includeQuickAddContext": False,
+                    },
+                    "query": "query storepageFeed($storeId: ID!, $menuId: ID, $isMerchantPreview: Boolean, $fulfillmentType: FulfillmentType, $cursor: String){storepageFeed(storeId: $storeId, menuId: $menuId, isMerchantPreview: $isMerchantPreview, fulfillmentType: $fulfillmentType, cursor: $cursor){storeHeader { id address { lat lng city street state displayAddress cityLink __typename} __typename} menuBook{id name displayOpenHours __typename } __typename}}",
+                }
+                response_ql = session.post(
+                    url_ql, json=payload_ql, headers=headers
+                ).json()
+                add = response_ql["data"]["storepageFeed"]["storeHeader"]["address"][
+                    "street"
+                ]
+                zc = re.findall(
+                    r"[A-Z]{2} ([A-Z0-9 ]*)",
+                    response_ql["data"]["storepageFeed"]["storeHeader"]["address"][
+                        "displayAddress"
+                    ],
+                )[0]
+                state = re.findall(
+                    r"[A-Z]{2}",
+                    response_ql["data"]["storepageFeed"]["storeHeader"]["address"][
+                        "displayAddress"
+                    ],
+                )[0]
+                city = response_ql["data"]["storepageFeed"]["storeHeader"]["address"][
+                    "city"
+                ]
+                hours = response_ql["data"]["storepageFeed"]["menuBook"][
+                    "displayOpenHours"
+                ]
+                ooh = [
+                    day.title() + f": {hours}"
+                    for day in [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday",
+                        "saturday",
+                        "sunday",
+                    ]
+                ]
+                hours_of_operation = ", ".join(ooh)
+                raw_address = response_ql["data"]["storepageFeed"]["storeHeader"][
+                    "address"
+                ]["displayAddress"]
+
+            except:
+                pass
+
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

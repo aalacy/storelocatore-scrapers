@@ -1,3 +1,5 @@
+import os
+import ssl
 import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -7,11 +9,22 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ru:{}@proxy.apify.com:8000/"
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.okmarket.ru"
     api_url = "https://www.okmarket.ru/stores/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -27,7 +40,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         ids = j.get("id")
         city = j.get("name")
-        session = SgRequests()
+
         r = session.get(
             f"https://www.okmarket.ru/ajax/map_filter/search/?lang=ru&city_id={ids}&type=shop",
             headers=headers,
@@ -46,7 +59,10 @@ def fetch_data(sgw: SgWriter):
             country_code = "RU"
             latitude = j.get("coords").get("latitude")
             longitude = j.get("coords").get("longitude")
-            phone = j.get("phone")[0].get("label")
+            try:
+                phone = j.get("phone")[0].get("label")
+            except:
+                phone = "<MISSING>"
             hours_of_operation = j.get("time").get("label")
 
             row = SgRecord(
