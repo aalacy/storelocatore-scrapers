@@ -4,6 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "biscuitsandbath.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -33,13 +35,15 @@ def fetch_data():
     stores = stores_sel.xpath('//div[@class="wp-block-columns"]')
     for store in stores:
         store_url = "".join(
-            store.xpath(".//p/span/a[contains(@href,'/locations/')]/@href")
+            store.xpath(".//p//a[contains(@href,'/locations/')]/@href")
         ).strip()
         page_url = ""
         if "biscuitsandbath" not in store_url:
             page_url = "https://www.biscuitsandbath.com" + store_url
         else:
             page_url = store_url
+
+        log.info(page_url)
 
         location_type = "<MISSING>"
         locator_domain = website
@@ -50,7 +54,16 @@ def fetch_data():
             in "".join(store.xpath("div[2]/span/span/strong/text()")).strip()
         ):
             continue
-        address = "".join(store.xpath("div[2]/p[1]/a[1]/text()")).strip()
+        raw_address = store.xpath("div[2]/p[1]/a")
+        address = []
+        for add in raw_address:
+            if "".join(add.xpath("@data-type")).strip() == "tel":
+                break
+            else:
+                address.append("".join(add.xpath("text()")).strip())
+
+        address = ", ".join(address).strip().replace(", NY, NY,", " NY, NY").strip()
+        log.info(address)
         street_address = (
             address.split(",")[0]
             .strip()
@@ -64,8 +77,12 @@ def fetch_data():
         country_code = "US"
 
         phone = "".join(store.xpath('div[2]/p[1]/a[@data-type="tel"]/text()')).strip()
+        if len(phone) <= 0:
+            phone = "".join(
+                store.xpath('div[2]/p[1]/a[contains(@href,"tel:")]/text()')
+            ).strip()
 
-        temp_days = store.xpath("div[2]/p[1]/strong/span/text()")
+        temp_days = store.xpath("div[2]/p[1]/strong/mark/text()")
         days_list = []
         for day in temp_days:
             if len("".join(day).strip()) > 0:
@@ -91,7 +108,6 @@ def fetch_data():
         )
         store_number = "<MISSING>"
 
-        log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
         latitude = "<MISSING>"
@@ -125,7 +141,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,0 +1,51 @@
+--ignore CentroidValidator (Confirmed on website)
+Found 112 concerning rows. Examples:
+     latitude longitude                              REASON  rowNumber
+0  101.571306      3.15  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE          0
+1  101.585449  3.082577  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE          1
+2  101.614201  3.148335  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE          2
+3  101.717599  3.027702  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE          3
+4  101.594034  3.156145  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE          4
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+Found 92 concerning rows. Examples:
+                                      street_address              REASON  rowNumber
+0        Lot 3 & 3A, Lorong Teknologi A, Taman Sains  ADDR_HAS_NO_NUMBER          0
+2  Lot G211, Ground Floor, One Utama Shopping Cen...  ADDR_HAS_NO_NUMBER          2
+3  Lot L1-104/Lot L1-105, Level 1, Mines Shopping...  ADDR_HAS_NO_NUMBER          3
+5  Lot G6, Ground Floor, Mediplex (North Tower An...  ADDR_HAS_NO_NUMBER          5
+6  Lot LG26, Lower Ground Floor Jaya Shopping cen...  ADDR_HAS_NO_NUMBER          6
+
+
+--ignore StreetAddressHasStateName (No state name)
+Found 4 concerning rows. Examples:
+                                        street_address                    REASON  rowNumber
+8    Lot 04-97 & 04-98, 4th Floor, Berjaya Times Sq...  ADDR_CONTAINS_STATE_NAME          8
+19   Lot 23, Ground Floor, Lotus’s Mutiara Damansar...  ADDR_CONTAINS_STATE_NAME         19
+63                   Lot No. G7, Ground Floor, Lotus’s  ADDR_CONTAINS_STATE_NAME         63
+111  Lot 15, Ground Floor, Amanjaya Mall, No. 1, Ja...  ADDR_CONTAINS_STATE_NAME        111
+
+--ignore GeoConsistencyValidator (Not US zip)
+Found 109 concerning rows. Examples:
+     zip     state                REASON  rowNumber
+0  47810  Selangor  ZIPCODE_NOT_IN_STATE          0
+1  47500  Selangor  ZIPCODE_NOT_IN_STATE          1
+2  47800  Selangor  ZIPCODE_NOT_IN_STATE          2
+3  43300  Selangor  ZIPCODE_NOT_IN_STATE          3
+4  47810  Selangor  ZIPCODE_NOT_IN_STATE          4
+
+
+--ignore CountryValidator (Not US STATE)
+Found 109 concerning rows. Examples:
+      state         phone    zip            REASON  rowNumber
+0  Selangor  03-2106 8880  47810  INVALID_US_STATE          0
+1  Selangor  03-5636 8241  47500  INVALID_US_STATE          1
+2  Selangor  03-7727 0068  47800  INVALID_US_STATE          2
+3  Selangor  03-8949 9322  43300  INVALID_US_STATE          3
+4  Selangor  03-7496 7888  47810  INVALID_US_STATE          4
+
+
+--ignore LatLngDuplicationValidator (Confirmed on website)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+      latitude longitude                                     street_address  num_addrs
+21  101.520593  3.060376  {Lot 504, First Floor, Lot CC-48, Concourse Fl...          2

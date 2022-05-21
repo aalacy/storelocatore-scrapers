@@ -2,12 +2,18 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import json
-from dms2dec.dms_convert import dms2dec
+import dirtyjson as json
+from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+logger = SgLogSetup().get_logger("amerisleep")
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
 }
+locator_domain = "https://amerisleep.com"
+base_url = "https://amerisleep.com/retail/"
 
 
 def _valid(val):
@@ -24,37 +30,31 @@ def _valid(val):
     )
 
 
-def _sign(original, val):
-    if "-" in original:
-        return f"-{val}"
-
-
 def fetch_data():
     with SgRequests() as session:
-        locator_domain = "https://amerisleep.com/"
-        base_url = "https://amerisleep.com/retail/"
-        r = session.get(base_url, headers=_headers, verify=False)
-        soup = bs(r.text, "html.parser")
-        divlist = soup.select("div.container .o-grid__item p span a")
+        soup = bs(session.get(base_url, headers=_headers).text, "html.parser")
+        divlist = soup.select("div.retail-locations-column-info")
         for div in divlist:
-            link = div["href"]
-            r = session.get(link, headers=_headers, verify=False)
-            soup1 = bs(r.text, "lxml")
+            link = div.a["href"]
+            if not link.startswith("http"):
+                link = locator_domain + link
+            logger.info(link)
+            soup1 = bs(session.get(link, headers=_headers).text, "lxml")
             loc = json.loads(
                 soup1.find("script", type="application/ld+json")
                 .string.strip()
                 .replace("\n", "")
             )
-
-            latitude = loc["geo"]["latitude"]
-            longitude = loc["geo"]["longitude"]
-            if "'" in loc["geo"]["latitude"]:
-                latitude = _sign(
-                    loc["geo"]["latitude"], dms2dec(loc["geo"]["latitude"])
-                )
-                longitude = _sign(
-                    loc["geo"]["longitude"], dms2dec(loc["geo"]["longitude"])
-                )
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in soup1.select("div.store-hours div.store-hours__row")
+            ]
+            coord = (
+                soup1.select_one("div.retail-phone a.button")["href"]
+                .split("!3d")[1]
+                .split("?")[0]
+                .split("!4d")
+            )
             yield SgRecord(
                 page_url=link,
                 location_name=loc["name"],
@@ -65,15 +65,15 @@ def fetch_data():
                 country_code="US",
                 location_type=loc["@type"],
                 phone=loc["telephone"],
-                latitude=latitude,
-                longitude=longitude,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
-                hours_of_operation=_valid("; ".join(loc["openingHours"])),
+                hours_of_operation=_valid("; ".join(hours)),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
