@@ -74,11 +74,14 @@ def fetch_data():
                     i += 1
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
-                hours_of_operation = (
-                    soup.find("tbody")
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
+                try:
+                    hours_of_operation = (
+                        soup.find("tbody")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                except:
+                    hours_of_operation = MISSING
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
