@@ -80,6 +80,8 @@ def get_data(coord, sgw: SgWriter):
             if postal == "0":
                 postal = "<MISSING>"
             country_code = a.get("Country") or "<MISSING>"
+            if country_code == "US4" or country_code == "<MISSING>":
+                country_code = "US"
             store_number = a.get("LocationId")
             phone = "<MISSING>"
             latitude = a.get("Latitude") or "<MISSING>"

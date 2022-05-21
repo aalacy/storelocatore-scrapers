@@ -22,9 +22,11 @@ def fetch_data():
         all_locations = session.get(url.format(code)).json()
         for poi in all_locations.values():
             page_url = f"https://www.nautica.com/stores?storeid={poi['storeID']}"
-            hoo = poi["storeHours"]
+            hoo = ""
+            if poi["storeHours"]:
+                hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
             if hoo:
-                hoo = " ".join(hoo.split())
+                hoo = " ".join(" ".join(hoo).split())
 
             item = SgRecord(
                 locator_domain=domain,
