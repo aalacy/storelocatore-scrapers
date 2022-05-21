@@ -11,10 +11,10 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://johnsonfitness.com.my/"
     page_url = "https://johnsonfitness.com.my/store-location/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    session = SgRequests()
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[./ul/li/a[contains(@href, "goo")]]')
@@ -35,8 +35,11 @@ def fetch_data(sgw: SgWriter):
         street_address = " ".join(street_address.split())
         city = a.city or "<MISSING>"
         text = "".join(d.xpath("./ul/li[1]//a/@href"))
-        latitude = text.split("ll=")[1].split("%2C")[0].strip()
-        longitude = text.split("ll=")[1].split("%2C")[1].split("&")[0].strip()
+        try:
+            latitude = text.split("ll=")[1].split("%2C")[0].strip()
+            longitude = text.split("ll=")[1].split("%2C")[1].split("&")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = "".join(d.xpath(".//preceding::ul[1]/li[1]/a//text()"))
         if phone.find(":") != -1:
             phone = phone.split(":")[1].strip()

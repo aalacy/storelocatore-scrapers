@@ -37,6 +37,9 @@ def fetch_data(sgw: SgWriter):
             phone = j.get("phone") or ""
             if "," in phone:
                 phone = phone.split(",")[0].strip()
+            if phone:
+                if phone[0].isalpha() and phone[-1].isalpha():
+                    phone = SgRecord.MISSING
             latitude = j.get("lat")
             longitude = j.get("lng")
             hours_of_operation = j.get("hours")

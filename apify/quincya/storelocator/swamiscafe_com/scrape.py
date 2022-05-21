@@ -1,4 +1,5 @@
 import json
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -7,20 +8,23 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.swamiscafe.com/our-locations"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    driver = SgChrome(user_agent=user_agent).driver()
 
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    driver.get(base_link)
 
+    base = BeautifulSoup(driver.page_source, "lxml")
     locator_domain = "swamiscafe.com"
 
     raw_data = base.find(id="popmenu-apollo-state").contents[0]
@@ -63,6 +67,7 @@ def fetch_data(sgw: SgWriter):
                     hours_of_operation=hours_of_operation,
                 )
             )
+    driver.close()
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:

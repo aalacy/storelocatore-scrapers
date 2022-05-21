@@ -63,13 +63,18 @@ def get_data(coords, sgw: SgWriter):
             .strip()
         )
         ad = " ".join(ad.split())
+
         b = parse_address(International_Parser(), ad)
         street_address = (
             f"{b.street_address_1} {b.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
-        state = b.state or "<MISSING>"
-        postal = b.postcode or "<MISSING>"
+        try:
+            state = ad.split(",")[-1].split()[0].strip()
+            postal = "".join(ad.split(",")[-1].split()[1:]).strip()
+        except:
+            state = b.state or "<MISSING>"
+            postal = b.postcode or "<MISSING>"
         country_code = "CA"
         city = b.city or "<MISSING>"
         phone = (

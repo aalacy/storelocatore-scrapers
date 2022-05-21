@@ -74,6 +74,10 @@ def get_data(page_url, sgw: SgWriter):
     )
     hours_of_operation = hours_of_operation.replace("PM ", "PM;")
 
+    iscoming = tree.xpath("//h2[contains(text(), 'coming')]")
+    if iscoming:
+        hours_of_operation = "Coming Soon"
+
     row = SgRecord(
         page_url=page_url,
         location_name=location_name,

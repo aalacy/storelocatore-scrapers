@@ -36,6 +36,7 @@ def fetch_data():
                     if 'data-ya-track="todirectory"' in item:
                         city = item.split('"')[0]
                         curl = "https://locations.pizzahut.com/" + city
+                        curl = curl.replace("&#39;", "'")
                         cities.append(curl)
         for city in cities:
             logger.info(("Pulling City %s..." % city))
@@ -48,6 +49,7 @@ def fetch_data():
                             lurl = (
                                 "https://locations.pizzahut.com/" + item.split('"')[0]
                             )
+                            lurl = lurl.replace("&#39;", "'")
                             if lurl not in locs:
                                 locs.append(lurl)
         for loc in locs:

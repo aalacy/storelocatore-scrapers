@@ -49,6 +49,8 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split()).strip()
         if hours_of_operation.find("Dine-in") != -1:
             hours_of_operation = hours_of_operation.split("Dine-in")[0].strip()
+        if hours_of_operation.find("Opening") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

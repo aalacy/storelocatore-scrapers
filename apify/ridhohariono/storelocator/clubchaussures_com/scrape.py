@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_intl
 from sgselenium import SgSelenium
 import json
 import re
@@ -34,6 +35,20 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
+def parse_street(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            return street_address
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING
+
+
 def pull_content(url):
     log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
@@ -52,13 +67,13 @@ def fetch_data():
     )
     data = json.loads(
         re.search(
-            r'AmLocation\.Amastyload\(\{"totalRecords":31,"items":(.*)\}\);',
+            r'AmLocation\.Amastyload\(\{"totalRecords":\d{2,3},"items":(.*)\}\);',
             contents.string,
         ).group(1)
     )
     for row in data:
         location_name = row["name"]
-        street_address = row["address"]
+        street_address = parse_street(row["address"])
         city = row["city"]
         state = row["state"]
         zip_postal = row["zip"]

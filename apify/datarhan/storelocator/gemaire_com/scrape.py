@@ -1,46 +1,27 @@
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests()
     domain = "gemaire.com"
-    start_url = "https://www.gemaire.com/branch/service/locate/?address={}"
+    start_url = "https://www.gemaire.com/"
 
-    all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=200,
-    )
-    for code in all_codes:
-        response = session.get(start_url.format(code))
-        data = json.loads(response.text)
-        if data.get("branches"):
-            all_locations += data["branches"]
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "reactBranchConfig")]/text()')[0].split(
+        "Config="
+    )[-1][:-1]
+    data = json.loads(data)
 
-    for poi in all_locations:
-        if type(poi) == str:
-            continue
-        location_name = poi["branch_name"]
-        street_address = poi["address"]["address_2"]
-        if poi["address"]["address_3"]:
-            street_address += ", " + poi["address"]["address_3"]
-        city = poi["address"]["city"]
-        state = poi["address"]["state"]
-        zip_code = poi["address"]["postcode"]
-        country_code = poi["address"]["country"]
-        store_number = poi["branch_id"]
-        phone = poi["phone"]
-        location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hours_of_operation = []
+    for store_number, poi in data["allBranches"].items():
+        hoo = []
         days = {
             "1": "Monday",
             "2": "Tuesday",
@@ -55,26 +36,28 @@ def fetch_data():
             if hours["isOpen"]:
                 opens = hours["open"]
                 closes = hours["close"]
-                hours_of_operation.append(f"{day} {opens} - {closes}")
+                hoo.append(f"{day} {opens} - {closes}")
             else:
-                hours_of_operation.append(f"{day} closed")
-        hours_of_operation = " ".join(hours_of_operation) if hours_of_operation else ""
+                hoo.append(f"{day} closed")
+        hoo = " ".join(hoo) if hoo else ""
+        latitude = poi["latitude"] if poi["latitude"] != 0 else ""
+        longitude = poi["longitude"] if poi["longitude"] != 0 else ""
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.gemaire.com",
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
+            page_url=start_url,
+            location_name=poi["branch_name"],
+            street_address=poi["address"]["address_2"],
+            city=poi["address"]["city"],
+            state=poi["address"]["state"],
+            zip_postal=poi["address"]["postcode"],
+            country_code=poi["address"]["country"],
             store_number=store_number,
-            phone=phone,
-            location_type=location_type,
+            phone=poi["address"]["phone"],
+            location_type="",
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hoo,
         )
 
         yield item

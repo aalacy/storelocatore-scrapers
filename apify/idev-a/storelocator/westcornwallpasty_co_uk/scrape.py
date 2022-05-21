@@ -19,6 +19,8 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             addr = _["acf"]["location"]
+            if addr["latitude"] == "" and addr["longitude"] == "":
+                continue
             street_address = addr["address_line_1"]
             if addr["address_line_2"]:
                 street_address += " " + addr["address_line_2"]
