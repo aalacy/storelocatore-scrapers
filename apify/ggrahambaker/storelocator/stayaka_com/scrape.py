@@ -24,15 +24,17 @@ def fetch_data():
         url = "https://www.stayaka.com/locations"
         response = session.get(url, headers=headers)
         soup = BeautifulSoup(response.content, "html.parser")
-        state_list =soup.findAll("ul", {"class": "submenu level-3"})
+        state_list = soup.findAll("ul", {"class": "submenu level-3"})
         for state_url in state_list:
             loclist = state_url.findAll("a")
             for loc in loclist:
-                page_url = DOMAIN+loc['href']
+                page_url = DOMAIN + loc["href"]
                 log.info(page_url)
                 response = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(response.content, "html.parser")
-                cont = json.loads(soup.find("script", {"type": "application/ld+json"}).text)
+                cont = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).text
+                )
                 location_name = cont["name"]
                 page_url = cont["url"]
                 try:
@@ -41,9 +43,15 @@ def fetch_data():
                     phone = MISSING
                 addy = cont["address"]
                 try:
-                    street_address = addy["streetAddress"].replace("Cira Centre South,", "").strip()
+                    street_address = (
+                        addy["streetAddress"].replace("Cira Centre South,", "").strip()
+                    )
                 except:
-                    street_address= soup.find("div", {"class": "property-address"}).get_text(separator='|', strip=True).split('|')[1]
+                    street_address = (
+                        soup.find("div", {"class": "property-address"})
+                        .get_text(separator="|", strip=True)
+                        .split("|")[1]
+                    )
                 city = addy["addressLocality"]
                 state = addy["addressRegion"]
                 zip_postal = addy["postalCode"]
@@ -52,9 +60,9 @@ def fetch_data():
                     country_code = "GB"
                 latitude = cont["geo"]["latitude"]
                 longitude = cont["geo"]["longitude"]
-                if len(str(latitude)) <2:
+                if len(str(latitude)) < 2:
                     latitude = MISSING
-                    longitude= MISSING
+                    longitude = MISSING
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
@@ -71,6 +79,7 @@ def fetch_data():
                     longitude=longitude,
                     hours_of_operation=MISSING,
                 )
+
 
 def scrape():
     log.info("Started")
