@@ -1,4 +1,3 @@
-from proxyfier import ProxyProviders
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -114,7 +113,7 @@ def fetch_jp(idx, page_url, http, sgw: SgWriter):
 
 
 def get_store_urls():
-    s = SgRequests()
+    s = SgRequests(proxy_country="us")
     r = s.get("https://golftec.golfdigest.co.jp/studio/", headers=headers)
     sel = html.fromstring(r.text)
     store_urls = [
@@ -127,10 +126,7 @@ def get_store_urls():
 def fetch_data(sgw: SgWriter):
     store_urls_jp = get_store_urls()
     logger.info(f"StoreCountInJapan: {len(store_urls_jp)}")
-    with SgRequests(
-        proxy_country="us",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
-    ) as http:
+    with SgRequests(proxy_country="us") as http:
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = []
             task_cn = [executor.submit(fetch_cn, china_url, http, sgw)]
