@@ -49,6 +49,9 @@ def fetch_data():
                 else:
                     city = street_address.split(",")[0]
                     street_address = ", ".join(street_address.split(",")[1:])
+            location_type = poi["StoreType"]
+            if location_type != "brandstore":
+                continue
 
             item = SgRecord(
                 locator_domain=domain,
@@ -61,11 +64,11 @@ def fetch_data():
                 country_code=poi["URL"].split("/")[1].upper(),
                 store_number=poi["ID"],
                 phone=poi["Phone"],
-                location_type=poi["StoreType"],
+                location_type=location_type,
                 latitude=poi["Latitude"],
                 longitude=poi["Longitude"],
                 hours_of_operation="",
-                raw_address=street_address,
+                raw_address=poi["Address"],
             )
 
             yield item

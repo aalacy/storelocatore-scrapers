@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import json
@@ -12,7 +12,7 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA], granularity=Grain_8()
+    country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
 )
 
 
@@ -21,7 +21,7 @@ def fetch_data():
     maxZ = search.items_remaining()
     total = 0
     for code in search:
-        with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=7) as session:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
             found = 0
@@ -130,9 +130,9 @@ def human_phone(val):
 
 def human_hours(k):
     days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    if k.get("lobby"):
+    if k.get("lobby") or k.get("drive"):
         hours = []
-        for x, _ in enumerate(k["lobby"]):
+        for x, _ in enumerate(k.get("lobby", []) or k.get("drive", [])):
             time = _
             if not _:
                 time = "closed"
@@ -195,7 +195,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=5,
-        duplicate_streak_failure_factor=100,
+        duplicate_streak_failure_factor=1000,
     )
 
     pipeline.run()

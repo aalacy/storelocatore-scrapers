@@ -1,45 +1,109 @@
-from sgscrape import simple_scraper_pipeline as sp
-from sgscrape import sgpostal as parser
-from sglogging import sglog
-
-from sgscrape import simple_utils as utils
-
-
+from typing import Iterable, Tuple, Callable
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
 from sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sglogging import sglog
+from sgscrape import sgpostal as parser
+from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait  # noqa
+from selenium.webdriver.common.by import By  # noqa
+from selenium.webdriver.support import expected_conditions as EC  # noqa
+from selenium.webdriver.common.keys import Keys  # noqa
 from bs4 import BeautifulSoup as b4
 
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
-def para(url):
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
+
+def fix_comma(x):
+    x = x.replace("None", "")
+    h = []
     try:
-        soup = b4(
-            SgRequests.raise_on_err(session.get(url, headers=headers)).text, "lxml"
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
+                h.append(i)
+        return ", ".join(h)
+    except Exception:
+        return x
+
+
+def ret_record(soup, url, lat, lng):
+
+    page_url = SgRecord.MISSING
+    location_name = SgRecord.MISSING
+    street_address = SgRecord.MISSING
+    city = SgRecord.MISSING
+    state = SgRecord.MISSING
+    zip_postal = SgRecord.MISSING
+    country_code = SgRecord.MISSING
+    store_number = SgRecord.MISSING
+    phone = SgRecord.MISSING
+    location_type = SgRecord.MISSING
+    latitude = SgRecord.MISSING
+    longitude = SgRecord.MISSING
+    hours_of_operation = SgRecord.MISSING
+    raw_address = SgRecord.MISSING
+    latitude = lat if lat else SgRecord.MISSING
+    longitude = lng if lng else SgRecord.MISSING
+
+    try:
+        page_url = url
+    except Exception:
+        pass
+    try:
+        location_name = soup.find("title").text.strip()
+    except Exception:
+        pass
+    try:
+        try:
+            raw_address = soup.find("address").find("a").text.strip()
+        except Exception:
+            raw_address = soup.find("address").text.strip()
+    except Exception:
+        pass
+    parsed = parser.parse_address_intl(raw_address)
+    try:
+        street_address = (
+            parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+        )
+        street_address(
+            (street_address + ", " + parsed.street_address_2)
+            if parsed.street_address_2
+            else street_address
         )
     except Exception:
-        return False
+        pass
 
-    k = {}
-    k["url"] = url
-    raw_a = soup.find("address").text.strip()
-    k["rawa"] = raw_a
-    parsed = parser.parse_address_intl(raw_a)
-    k["country"] = parsed.country if parsed.country else "<MISSING>"
-    k["address"] = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-    k["address"] = (
-        (k["address"] + ", " + parsed.street_address_2)
-        if parsed.street_address_2
-        else k["address"]
-    )
-    k["city"] = parsed.city if parsed.city else "<MISSING>"
-    k["state"] = parsed.state if parsed.state else "<MISSING>"
-    k["zip"] = parsed.postcode if parsed.postcode else "<MISSING>"
     try:
-        k["name"] = soup.find("title").text.strip()
+        city = parsed.city if parsed.city else SgRecord.MISSING
     except Exception:
-        k["name"] = "<MISSING>"
+        pass
+
+    try:
+        state = parsed.state if parsed.state else SgRecord.MISSING
+    except Exception:
+        pass
+
+    try:
+        zip_postal = parsed.postcode if parsed.postcode else SgRecord.MISSING
+    except Exception:
+        pass
+
+    try:
+        country_code = parsed.country if parsed.country else SgRecord.MISSING
+    except Exception:
+        pass
+
+    try:
+        phone = soup.find(
+            "a", {"href": lambda x: x and x.startswith("tel:")}
+        ).text.strip()
+    except Exception:
+        pass
 
     try:
         coords = (
@@ -48,20 +112,14 @@ def para(url):
             .split(",")
         )
     except Exception:
-        coords = ["<MISSING>", "<MISSING>"]
-
-    k["lat"] = coords[0]
-    k["lng"] = coords[1]
-
-    try:
-        k["phone"] = soup.find(
-            "a", {"href": lambda x: x and x.startswith("tel:")}
-        ).text.strip()
-    except Exception:
-        k["phone"] = "<MISSING>"
+        coords = [SgRecord.MISSING, SgRecord.MISSING]
+    if not latitude or latitude == SgRecord.MISSING:
+        latitude = coords[0]
+    if not longitude or longitude == SgRecord.MISSING:
+        longitude = coords[1]
 
     try:
-        k["hours"] = "; ".join(
+        hours_of_operation = "; ".join(
             list(
                 soup.find(
                     "ol", {"class": lambda x: x and "opening-times" in x}
@@ -69,210 +127,125 @@ def para(url):
             )
         )
     except Exception:
-        k["hours"] = "<MISSING>"
+        pass
 
-    return k
-
-
-def fetch_data():
-    para("https://toniandguy.com/salon/phnom-penh")
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://toniandguy.com/sitemap.xml"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-
-    links = soup.find_all("loc")
-    pages = []
-    for i in links:
-        pages.append(i.text.strip())
-
-    lize = utils.parallelize(
-        search_space=pages,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
-    )
-    for i in lize:
-        if i:
-            yield i
-
-    logzilla.info(f"Finished grabbing data!!")  # noqa
-
-
-def scrape():
-    url = "https://toniandguy.com/"
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(mapping=["url"], part_of_record_identity=True),
-        location_name=sp.MappingField(mapping=["name"]),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["lng"],
-        ),
-        street_address=sp.MappingField(mapping=["address"]),
-        city=sp.MappingField(mapping=["city"]),
-        state=sp.MappingField(mapping=["state"]),
-        zipcode=sp.MappingField(mapping=["zip"]),
-        country_code=sp.MappingField(mapping=["country"]),
-        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
-        store_number=sp.MissingField(),
-        hours_of_operation=sp.MappingField(
-            mapping=["hours"],
-            value_transform=lambda x: x.replace("\n", "")
-            .replace("\r", "")
-            .replace("\t", "")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " "),
-        ),
-        location_type=sp.MissingField(),
-        raw_address=sp.MappingField(
-            mapping=["rawa"],
-            value_transform=lambda x: x.replace("\n", "")
-            .replace("\r", "")
-            .replace("\t", "")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " "),
-        ),
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain="https://toniandguy.com/",
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
     )
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
 
-    pipeline.run()
+class ExampleSearchIteration(SearchIteration):
+    def __init__(self):
+        self.__state = CrawlStateSingleton.get_instance()
+
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        """
+        This method gets called on each iteration of the search.
+        It provides you with all the data you could get from the search instance, as well as
+        a method to register found locations.
+        :param coord: The current coordinate (lat, long)
+        :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
+        :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
+        :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
+        :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
+        """
+
+        with SgChrome() as driver:
+            lat, lng = coord
+            url = "https://toniandguy.com/salon-finder"
+            driver.get(url)
+            searchbox_xpath = '//*[@id="content"]/main/section/section/div/div/div/form/div/div[1]/input'  # Might break
+            inputel = WebDriverWait(driver, 30).until(
+                EC.visibility_of_element_located((By.XPATH, searchbox_xpath))
+            )
+            inputel.send_keys(f"{lat}, {lng}")
+            inputel.send_keys(Keys.ENTER)
+            soup = b4(driver.page_source, "lxml")
+            locs = soup.find_all("div", {"data-map-marker": True})
+            for loc in locs:
+                data = loc["data-map-marker"].split(",")
+                try:
+                    found_location_at(
+                        data[0],
+                        data[1],
+                    )
+                except Exception:
+                    pass
+                yield {"lat": data[0], "lng": data[1], "link": data[-1]}
+
+
+def fetch_records(http, state):
+    for next_r in state.request_stack_iter():
+        lat = next_r.context.get("lat")
+        lng = next_r.context.get("lng")
+        url = next_r.url
+        page = SgRequests.raise_on_err(http.get(url))
+        try:
+            soup = b4(page.text, "lxml")
+            return ret_record(soup, url, lat, lng)
+        except Exception:
+            return ret_record(None, url, lat, lng)
 
 
 if __name__ == "__main__":
-    scrape()
+    state = CrawlStateSingleton.get_instance()
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_8()
+    )
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=SearchableCountries.ALL,
+        )
+
+        def record_initial_requests(par_search, state):
+            for rec in par_search.run():
+                state.push_request(
+                    SerializableRequest(
+                        url=rec["link"], context={"lat": rec["lat"], "lng": rec["lng"]}
+                    )
+                )
+
+        state.get_misc_value(
+            "init", default_factory=lambda: record_initial_requests(par_search, state)
+        )
+
+        with SgRequests() as http:
+            for rec in fetch_records(http, state):
+                writer.write_row(rec)

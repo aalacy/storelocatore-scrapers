@@ -1,3 +1,4 @@
+import unicodedata
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -18,15 +19,18 @@ DOMAIN = "https://www.moncler.com/en-us/"
 MISSING = SgRecord.MISSING
 
 
+def strip_accents(text):
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+
+    return str(text)
+
+
 def fetch_data():
     if True:
         url = "https://www.moncler.com/on/demandware.store/Sites-MonclerUS-Site/en_US/StoresApi-FindAll"
         loclist = session.get(url, headers=headers).json()["stores"]
         for loc in loclist:
-            if loc["countryCode"]["value"] != "US":
-                if loc["countryCode"]["value"] != "CA":
-                    if loc["countryCode"]["value"] != "GB":
-                        continue
             store_number = loc["ID"]
             latitude = loc["latitude"]
             longitude = loc["longitude"]
@@ -36,16 +40,28 @@ def fetch_data():
             try:
                 street_address = loc["address1"] + " " + loc["address2"]
             except:
-                street_address = loc["address1"]
-            city = loc["city"]
+                try:
+                    street_address = loc["address1"]
+                except:
+                    street_address == loc["address2"]
+            street_address = strip_accents(street_address)
+            city = strip_accents(loc["city"])
             try:
-                state = loc["stateCode"]
+                state = strip_accents(loc["stateCode"])
             except:
                 state = MISSING
             try:
-                zip_postal = loc["postalCode"]
+                zip_postal = strip_accents(loc["postalCode"])
             except:
                 zip_postal = MISSING
+            if state.isdigit():
+                state = MISSING
+            if len(state) < 2:
+                state = MISSING
+            raw_address = strip_accents(
+                street_address + " " + city + " " + state + " " + zip_postal
+            )
+            raw_address = raw_address.replace(MISSING, "")
             country_code = loc["countryCode"]["value"]
             page_url = "https://www.moncler.com/en-us/storelocator/" + loc["slug"]
             log.info(page_url)
@@ -69,6 +85,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 

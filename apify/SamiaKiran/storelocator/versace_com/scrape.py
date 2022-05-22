@@ -37,9 +37,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     for country in country_list:
         count = country["data-count"]
         count = int(count.replace(")", "").replace("(", ""))
-        country_url = country["href"].replace(
-            "../../", "https://boutiques.versace.com/"
-        )
+        country_url = country["href"].replace("../", "https://boutiques.versace.com/")
         if count > 1:
             log.info(f"Fetching data from Country {country.text}")
             r = session.get(country_url, headers=headers)
@@ -49,9 +47,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
                     "a", {"class": "Directory-listLink"}
                 )
                 for link in linklist:
-                    loc_link = link["href"]
-                    loc_link = loc_link.split("en-us/")[1]
-                    loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
+                    loc_link = link["href"].replace(
+                        "../", "https://boutiques.versace.com/"
+                    )
                     count = link["data-count"]
                     count = int(count.replace(")", "").replace("(", ""))
                     if count > 1:
@@ -61,11 +59,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
                             "ul", {"class": "Directory-listTeasers Directory-row"}
                         ).findAll("li")
                         for loc in loclist:
-                            loc_link = loc.find("a", {"class": "Teaser-link"})["href"]
-                            loc_link = loc_link.split("en-us/")[1]
-                            loc_link = (
-                                "https://boutiques.versace.com/us/en-us/" + loc_link
-                            )
+                            loc_link = loc.find("a", {"class": "Teaser-link"})[
+                                "href"
+                            ].replace("../../", "https://boutiques.versace.com/")
                             store_url_list.append(loc_link)
                             log.info(loc_link)
                             state.push_request(SerializableRequest(url=loc_link))
@@ -76,9 +72,9 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             except:
                 linklist = soup.findAll("a", {"class": "Teaser-link"})
                 for link in linklist:
-                    loc_link = link["href"]
-                    loc_link = loc_link.split("en-us/")[1]
-                    loc_link = "https://boutiques.versace.com/us/en-us/" + loc_link
+                    loc_link = link["href"].replace(
+                        "../../", "https://boutiques.versace.com/"
+                    )
                     store_url_list.append(loc_link)
                     log.info(loc_link)
                     state.push_request(SerializableRequest(url=loc_link))
@@ -95,15 +91,18 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         log.info(f"Pulling the data from: {next_r.url}")
         soup = BeautifulSoup(r.text, "html.parser")
         try:
-            street_address = strip_accents(
+            street = strip_accents(
                 soup.find("span", {"class": "c-address-street-1"}).text
                 + " "
                 + soup.find("span", {"class": "c-address-street-2"}).text
             )
         except:
-            street_address = strip_accents(
+            street = strip_accents(
                 soup.find("span", {"class": "c-address-street-1"}).text
             )
+        street_address = strip_accents(
+            soup.find("span", {"class": "c-address-street-1"}).text
+        )
         city = soup.find("span", {"class": "c-address-city"}).text
         try:
             state = strip_accents(soup.find("abbr", {"itemprop": "addressRegion"}).text)
@@ -141,6 +140,8 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             )
         except:
             hours_of_operation = MISSING
+        raw_address = street + " " + city + " " + state + " " + zip_postal
+        raw_address = raw_address.replace(MISSING, "")
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=next_r.url,
@@ -156,6 +157,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
+            raw_address=raw_address,
         )
 
 

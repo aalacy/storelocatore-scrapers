@@ -61,14 +61,21 @@ def fetch_data():
             )[:-1]
         phone = [e.replace("\xa0", "") for e in phone if e.strip()]
         phone = " ".join(phone).replace("Tels: ", "").split("|")[0].strip()
+        if state == "N. L.":
+            phone = "(81) " + phone
+        else:
+            phone = "(55) " + phone
         geo = (
             poi_html.xpath('.//a[contains(@href, "waze")]/@href')[0]
             .split("=")[1]
             .split("&")[0]
             .split(",")
         )
-        hoo = poi_html.xpath('.//p[contains(text(), "Lunes")]//text()')
+        hoo = poi_html.xpath('.//*[contains(text(), "00 a")]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
+        if "obispado" in location_name:
+            city = "Monterrey"
 
         item = SgRecord(
             locator_domain=domain,

@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
 
 DOMAIN = "smogbusters.com"
-LOCATION_URL = "https://smogbusters.com/our-locations/"
+LOCATION_URL = "https://www.smogbusters.com/locations.aspx"
 API_URL = "https://images.ebizautos.media/fonts/dealerlocator/sites/13648/data/locations.json?formattedAddress=&boundsNorthEast=&boundsSouthWest="
 HEADERS = {
     "Accept": "*/*",
@@ -56,17 +56,26 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
     data = session.get(API_URL, headers=HEADERS).json()
     for row in data:
+        content = soup.find("a", id=row["web"].split("#")[1]).find_next("div")
         location_name = row["name"]
         street_address = (row["address"] + " " + row["address2"]).strip()
         city = row["city"]
         state = row["state"]
         zip_postal = row["postal"]
-        phone = row["phone"]
+        phone = (
+            content.find("p")
+            .get_text(strip=True, separator="@@")
+            .split("@@")[-1]
+            .strip()
+        )
         country_code = "US"
         store_number = row["id"]
-        hours_of_operation = MISSING
+        hours_of_operation = content.find("ul", {"class": "ml-5"}).get_text(
+            strip=True, separator=","
+        )
         latitude = row["lat"]
         longitude = row["lng"]
         location_type = row["categories"]

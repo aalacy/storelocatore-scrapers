@@ -27,7 +27,7 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
-        phone = poi_html.xpath('.//span[@class="num"]/text()')[0]
+        phone = poi_html.xpath('.//span[@class="num"]/text()')[0].split("/")[0].strip()
 
         item = SgRecord(
             locator_domain=domain,
@@ -43,7 +43,8 @@ def fetch_data():
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation=raw_address,
+            hours_of_operation="",
+            raw_address=raw_address,
         )
 
         yield item

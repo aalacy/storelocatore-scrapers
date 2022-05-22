@@ -31,16 +31,20 @@ def fetch_data():
 
     for i, e in data.items():
         for poi in e:
-            location_name = etree.HTML(poi["lmark"]).xpath("//text()")
-            location_name = location_name[0].strip() if location_name else ""
+            location_name = ""
             if location_name and location_name.endswith(","):
                 location_name = location_name[:-1]
-            raw_address = etree.HTML(poi["address"]).xpath("//text()")[0]
+            raw_address = poi["extaddress"]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
-            phone = etree.HTML(poi["cNumber"]).xpath("//text()")[0]
+            city = raw_address.split(", ")[1]
+            if "P.C" in city:
+                city = raw_address.split(", ")[2]
+            phone = (
+                etree.HTML(poi["cNumber"]).xpath("//text()")[0].split("/")[0].strip()
+            )
             location_type = etree.HTML(poi["serviceoffered"]).xpath("//text()")
             location_type = ", ".join(location_type)
             hoo = etree.HTML(poi["showroomtiming"]).xpath("//text()")[1:]
@@ -51,7 +55,7 @@ def fetch_data():
                 page_url=start_url,
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state="",
                 zip_postal="",
                 country_code="Oman",

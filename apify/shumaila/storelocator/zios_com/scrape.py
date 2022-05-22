@@ -1,99 +1,83 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zios_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+website = "zios_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://zios.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    cleanr = re.compile(r'<[^>]+>')
-    pattern = re.compile(r'\s\s+')
-    p = 0
-    url = 'https://zios.com/locations/?disp=all'
-    r = session.get(url, headers=headers, verify=False)  
-    soup =BeautifulSoup(r.text, "html.parser")   
-    divlist = soup.findAll('div', {'class': 'loc-panel'})
-    logger.info("states = ",len(divlist))
+    url = "https://zios.com/locations/?disp=all"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "loc-panel"})
     for div in divlist:
-        det = div.findAll('li',{'class':'col-md-6'})
+        det = div.findAll("li", {"class": "col-md-6"})
         for dt in det:
-            txtnow = re.sub(cleanr,'\n',str(dt))
-            txtnow = re.sub(pattern, '\n' ,txtnow).replace('[','').replace(']','').lstrip().splitlines()
-            title = txtnow[0]
-            street= txtnow[1]
-            city,state = txtnow[2].split(', ')
-            try:
-                city = city.split(' (')[0]
-            except:
-                pass            
-            state,pcode =state.lstrip().split(' ',1)
-            try:
-                temp,pcode = pcode.lstrip().rstrip().split(' ',1)
-                state = state + ' '+temp
-            except:
-                pass
-            phone = txtnow[3].replace('Phone:','').lstrip()
-            hours = ''
-            flag = 0
-            for m in range(3,len(txtnow)):
-                if txtnow[m].find('day')> -1 or txtnow[m].find('AM') > -1:
-                    
-                    hours = hours + txtnow[m] + ' '
-                else:
-                    pass
-                           
-                        
-            logger.info(txtnow)
-            logger.info(phone,hours)
-            data.append([
-                        'https://zios.com/',
-                        'https://zios.com/locations/?disp=all',                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        '<MISSING>',
-                        phone,
-                        '<MISSING>',
-                        '<MISSING>',
-                        '<MISSING>',
-                        hours
-                    ])
-            #logger.info(p,data[p])
-            p += 1
-            logger.info(">>>>>>>>>>>>")
-       
-    return data
+            temp = dt.get_text(separator="|", strip=True).split("|")
+            location_name = temp[0].replace("(Currently being remodeled.)", "")
+            if "(Currently being remodeled.)" in temp[0]:
+                hours_of_operation = MISSING
+                phone = MISSING
+                street_address = temp[2]
+                address = temp[3].split(",")[1].split()
+                city = location_name
+                state = address[0]
+                zip_postal = address[1]
+            else:
+                hours_of_operation = dt.text.split("Store Hours")[1].split(
+                    "Catering Information"
+                )[0]
+                street_address = temp[1]
+                address = temp[2].split(",")
+                city = address[0]
+                address = address[1].split()
+                state = address[0]
+                zip_postal = address[1]
+                phone = temp[3].replace("Phone:", "")
+            log.info(street_address)
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

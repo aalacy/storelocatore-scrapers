@@ -43,6 +43,8 @@ def get_data(page_url, sgw: SgWriter):
     street_address = line.pop(0)
     if street_address.endswith(","):
         street_address = street_address[:-1]
+    if "(" in street_address:
+        street_address = street_address.split("(")[0].strip()
     line = line[-1]
     city = line.split(",")[0].strip()
     state = line.split(",")[1].strip()
@@ -54,17 +56,19 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
-    hours_of_operation = " ".join(
-        " ".join(
-            tree.xpath(
-                "//p[./strong[contains(text(), 'PATIO')]]/following-sibling::p[1]//text()"
-            )
-        ).split()
+
+    _tmp = []
+    hours = tree.xpath(
+        "//p[./b[text()='Hours']]/following-sibling::p//text()|//p[./strong[text()='Hours']]/following-sibling::p//text()"
     )
-    if not hours_of_operation:
-        hours_of_operation = " ".join(
-            " ".join(tree.xpath("//p[@class='p1']//text()")).split()
-        )
+    for h in hours:
+        if "hours" in h.lower():
+            break
+        if not h.strip():
+            continue
+        _tmp.append(h.strip())
+
+    hours_of_operation = " ".join(_tmp).replace("pm ", "pm;").replace("pm;–", "pm –")
 
     row = SgRecord(
         page_url=page_url,
