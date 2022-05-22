@@ -84,7 +84,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = re.sub(r"[0-9]{2}/[0-9]{2}/[0-9]{4}", "", hours)
         hours_of_operation = hours_of_operation.replace("  ", " ").strip()
 
-        if ":0" not in hours_of_operation:
+        if ":30" not in hours_of_operation and ":00" not in hours_of_operation:
             hours_of_operation = "Closed"
 
         sgw.write_row(

@@ -52,12 +52,18 @@ def fetch_data():
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
-        store_list = search_sel.xpath('//div[@data-pub-type="page-list"]/div/div')
+        store_list = search_sel.xpath('//div[@data-pub-type="page-list"]')
+        if len(store_list) > 0:
+            store_list = store_list[0].xpath("div/div")
         log.info(len(store_list))
         for store in store_list:
-            location_name = "".join(store.xpath(".//h2/text()")).strip()
+            location_name = "".join(
+                store.xpath(
+                    ".//div[@class='pub__card__info']//span[contains(@class,'pub__h2')]/text()"
+                )
+            ).strip()
             if (
-                "collection point" in location_name.lower()
+                "collection points" in location_name.lower()
                 or "planning studio" in location_name.lower()
             ):
                 continue
@@ -97,8 +103,6 @@ def fetch_data():
                 zip = "<MISSING>"
 
             country_code = "SA"
-
-            location_name = "".join(store.xpath(".//h2/text()")).strip()
 
             phone = "<MISSING>"
             store_number = "<MISSING>"

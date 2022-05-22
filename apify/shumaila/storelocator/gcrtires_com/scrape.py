@@ -45,14 +45,16 @@ def fetch_data():
             lat = loc["latitude"]
             longt = loc["longitude"]
             hours = ""
+
             for day in daylist:
                 day = day + "day"
                 try:
                     closestr = loc[day + "Close"]
                 except:
                     hours = hours + day + " " + " Close "
-                    continue
-                close = int(closestr.split(":", 1)[0])
+
+                    close = int(closestr.split(":", 1)[0])
+                continue
                 if close > 12:
                     close = close - 12
                 hours = (

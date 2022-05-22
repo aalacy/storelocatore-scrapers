@@ -65,7 +65,10 @@ def fetch_data():
             zip_postal = zip_postal.strip() if zip_postal else MISSING
             loc = loc[1].split("Horaires :")
             phone = loc[0]
-            hours_of_operation = loc[1].replace("Revenir sur la recherche", "")
+            try:
+                hours_of_operation = loc[1].replace("Revenir sur la recherche", "")
+            except:
+                hours_of_operation = MISSING
             country_code = "FR"
             yield SgRecord(
                 locator_domain=DOMAIN,

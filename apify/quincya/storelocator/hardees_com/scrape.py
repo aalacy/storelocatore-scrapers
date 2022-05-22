@@ -30,6 +30,9 @@ def fetch_data(sgw: SgWriter):
     for main_item in main_items:
         link = base_link + main_item["href"]
         logger.info(link)
+        if main_item["href"].count("/") > 1:
+            final_links.append(link)
+            continue
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
         next_items = base.find_all(class_="Directory-listLink")

@@ -13,3 +13,6 @@ Found 11 <lat, lng> pair(s) that belong to multiple addresses. Examples:
 13   18.9940705  72.82443855  {1St Floor Store 5 Senapati Bapat Marg, Sky Zo...          2
 15  19.08707254  72.88894482  {Phoenix Market City Mall L.B.S Road Kamani Ku...          2
 17  19.14135459   72.8310566  {2 Link Rd Malad W, Infinity 2 Link Road Malad...          2
+
+
+NOTE: Latitude/Longitude marked as MISSING because all coordinate is not correct for all locations

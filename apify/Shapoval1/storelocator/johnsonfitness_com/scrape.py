@@ -12,8 +12,6 @@ def get_data(zips, sgw: SgWriter):
 
     locator_domain = "https://www.johnsonfitness.com"
 
-    session = SgRequests()
-
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -145,13 +143,13 @@ def get_data(zips, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     zips = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
-        expected_search_radius_miles=10,
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=60,
+        expected_search_radius_miles=60,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -159,5 +157,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
