@@ -86,7 +86,12 @@ def fetch_data():
                     params=ajax_params,
                     data=ajax_data,
                 )
-                json_list = json.loads(ajax_req.text)
+                json_list = json.loads(
+                    ajax_req.text.split("<textarea>")[1]
+                    .strip()
+                    .split("</textarea>")[0]
+                    .strip()
+                )
                 for js in json_list:
                     if js["command"] == "insert" and js["method"] == "html":
                         store_sel = lxml.html.fromstring(js["data"])
