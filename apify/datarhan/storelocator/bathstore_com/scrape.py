@@ -56,6 +56,9 @@ def fetch_data():
             '//li[@class="storeDetailMap_openingTime_item"]/span/text()'
         )
         hoo = " ".join(hoo)
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = " ".join(raw_address.split()[-2:])
 
         item = SgRecord(
             locator_domain=domain,
@@ -64,7 +67,7 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code="",
             store_number="",
             phone=phone,
