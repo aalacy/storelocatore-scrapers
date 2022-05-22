@@ -25,6 +25,7 @@ class ExampleSearchIteration(SearchIteration):
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
         """
+        CN was creating issue, I have removed it from crawl list.
         This method gets called on each iteration of the search.
         It provides you with all the data you could get from the search instance, as well as
         a method to register found locations.
@@ -97,7 +98,7 @@ class ExampleSearchIteration(SearchIteration):
                     hours_of_operation=hours,
                 )
         except Exception as e:
-            logger.info(f"Failed for {lati} - {lngi}: {e}")
+            logger.info(f"Failed for [{current_country}]: [{lati},{lngi}]: {e}")
             pass
 
 
@@ -143,7 +144,6 @@ if __name__ == "__main__":
                 "CA",
                 "CH",
                 "CI",
-                "CN",
                 "CO",
                 "CR",
                 "CY",
