@@ -106,6 +106,10 @@ def fetch_records(idx, store_url, sgw: SgWriter):
         city = ""
         if pai.city is not None:
             city = pai.city
+        if "Brecon, Powys, LD3 8NH" in add_raw:
+            city = "Brecon"
+        if "Brecon, Powys, LD3 7YS" in add_raw:
+            city = "Brecon"
         item = SgRecord(
             page_url=store_url,
             location_name=locname,
