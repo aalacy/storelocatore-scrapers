@@ -17,10 +17,10 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
-    base = str(BeautifulSoup(req.text, "lxml"))
+    base_str = str(BeautifulSoup(req.text, "lxml"))
 
     js = (
-        base.split("location_data = new Array();")[1]
+        base_str.split("location_data = new Array();")[1]
         .split("map_0")[0]
         .replace("location_data.push(", "")
         .replace(");", "")
