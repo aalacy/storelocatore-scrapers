@@ -27,16 +27,27 @@ def fetch_data(sgw: SgWriter):
 
     for j in js["data"]:
         a = j.get("location")
-        page_url = "https://coinsource.net/bitcoin-atm-locations"
         location_name = j.get("name") or "<MISSING>"
+        if (
+            location_name == "Warehouse Gemini Tester 2"
+            or location_name == "ATM Bitcoin"
+            or location_name == "Crypto Coin"
+        ):
+            continue
         location_type = j.get("atmType")
         country_code = a.get("country") or "US"
         latitude = a.get("latitude") or "<MISSING>"
         longitude = a.get("longitude") or "<MISSING>"
-        street_address = "".join(a.get("street")).strip() or "<MISSING>"
+        street_address = (
+            "".join(a.get("street")).replace("null", "").strip() or "<MISSING>"
+        )
         city = "".join(a.get("city")).strip() or "<MISSING>"
         state = "".join(a.get("state")).strip() or "<MISSING>"
         postal = "".join(a.get("zip")).strip() or "<MISSING>"
+        if postal == "TX":
+            postal = "<MISSING>"
+        store_number = j.get("id")
+        page_url = f"https://coinsource.net/bitcoin-atm-locations?kiosk={store_number}"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -47,7 +58,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=SgRecord.MISSING,
             location_type=location_type,
             latitude=latitude,
@@ -62,6 +73,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://coinsource.net"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         fetch_data(writer)

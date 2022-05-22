@@ -40,10 +40,14 @@ def fetch_data(sgw: SgWriter):
             "".join(tree.xpath('//script[contains(text(), "var markers")]/text()'))
             .split("JSON.parse('")[1]
             .split("');")[0]
+            .replace("28.694529", "28.694529,")
             .strip()
         )
-        latitude = "".join(ll[i]).split(",")[0].strip()
-        longitude = "".join(ll[i]).split(",")[1].strip()
+        try:
+            latitude = "".join(ll[i]).split(",")[0].strip()
+            longitude = "".join(ll[i]).split(",")[1].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         i += 1
         phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
         if phone == "NA":

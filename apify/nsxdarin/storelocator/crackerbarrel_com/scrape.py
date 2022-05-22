@@ -22,7 +22,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://crackerbarrel.com/Locations/States/" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 7:
@@ -41,7 +40,6 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '"address1":"' in line2:
                 add = line2.split('"address1":"')[1].split('"')[0]
             if '"city":"' in line2:
@@ -120,6 +118,16 @@ def fetch_data():
             hours = "Sun-Thu: 7:00 AM - 9:00 PM; Fri-Sat: 7:00 AM - 10:00 PM"
             lat = "36.614289"
             lng = "-83.7017957"
+        if "States/ar/conway/276" in loc:
+            name = "Cracker Barrel in Conway"
+            city = "Conway"
+            state = "AR"
+            zc = "72032"
+            add = "525 Skyline Drive"
+            phone = "501-327-6107"
+            hours = "Sun-Thu: 7:00 AM - 9:00 PM; Fri-Sat: 7:00 AM - 10:00 PM"
+            lat = "35.1107489"
+            lng = "-92.4319122"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

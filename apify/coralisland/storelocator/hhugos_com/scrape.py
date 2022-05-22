@@ -1,109 +1,67 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from lxml import etree
-import json
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-session = SgRequests()
-base_url = "https://hhugos.com"
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://hhugos.com/"
+    api_url = "https://hhugos.com/wp-admin/admin-ajax.php?action=store_search&lat=35.77959&lng=-78.63818&max_results=25&search_radius=50&autoload=1"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
 
-def validate(item):
-    if item is None:
-        item = ""
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = " ".join(item)
-    return item.replace("\u2013", "-").strip()
-
-
-def get_value(item):
-    if item is None:
-        item = "<MISSING>"
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
-
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        page_url = "https://hhugos.com/store-locator/"
+        location_name = j.get("store") or "<MISSING>"
+        street_address = (
+            f"{j.get('address')} {j.get('address2')}".replace("None", "").strip()
+            or "<MISSING>"
         )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "page_url",
-                "hours_of_operation",
-            ]
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        hours = j.get("hours")
+        if hours:
+            a = html.fromstring(hours)
+            hours_of_operation = " ".join(a.xpath("//*//text()"))
+            hours_of_operation = " ".join(hours_of_operation.split())
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-        for row in data:
-            writer.writerow(row)
+
+        sgw.write_row(row)
 
 
-def fetch_data():
-    output_list = []
-    url = "https://hhugos.com/wp-admin/admin-ajax.php?action=store_search&lat=35.75957&lng=-79.0193&max_results=300&search_radius=500"
-    request = session.get(url)
-    store_list = json.loads(request.text)
-    for store in store_list:
-        output = []
-        output.append(base_url)  # url
-        output.append(get_value(store["store"]))  # location name
-        output.append(get_value(store["address"] + " " + store["address2"]))  # address
-        output.append(get_value(store["city"]))  # city
-        output.append(get_value(store["state"]))  # state
-        output.append(get_value(store["zip"]))  # zipcode
-        output.append(get_value(store["country"]))  # country code
-        output.append(get_value(store["id"]))  # store_number
-        output.append(get_value(store["phone"]))  # phone
-        output.append("Han-Dee Hugo's")  # location type
-        output.append(get_value(store["lat"]))  # latitude
-        output.append(get_value(store["lng"]))  # longitude
-        output.append("<MISSING>")  # page URL Missing
-        store_hours = ""
-        if store["hours"]:
-            store_hours = eliminate_space(etree.HTML(store["hours"]).xpath(".//text()"))
-        output.append(get_value(store_hours))  # opening hours
-        output_list.append(output)
-    return output_list
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

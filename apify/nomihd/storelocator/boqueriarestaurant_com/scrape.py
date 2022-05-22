@@ -3,10 +3,10 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 
 website = "boqueriarestaurant.com"
@@ -34,78 +34,84 @@ def fetch_data():
     search_res = session.get(base, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
-    api_url = "https://webstore-v2.goparrot.ai/api/v2/merchants/465e4a11-4b2e-4807-8f5d-e90de1f1d84e/place-picker-stores-with-stores"
-    api_res = session.get(api_url, headers=headers)
-    json_res = json.loads(api_res.text)
-
     stores_list = search_sel.xpath(
-        '//div[@class="vc_tta-panels" and .//strong[contains(./text(),"HOURS")]]/div[.//text()="HOURS"]'
+        '//div[@class="vc_tta-panels" and .//p[contains(./text(),"Hours")]]/div[.//text()="Hours"]'
+    ) + search_sel.xpath(
+        '//div[@class="vc_tta-panels" and .//p[contains(./text(),"Hours")]]/div[.//p[contains(text(),"HOURS")]]'
     )
-
     for store in stores_list:
-        name = "".join(store.xpath(".//h3/text()")).strip()
-
-        for store_json in json_res:  # get target store json
-            if name.upper() in store_json["name"].upper():
-                break
-
-        if name.upper() not in store_json["name"].upper():
-            log.info("json_data not updated")
-            continue
-
+        location_name = "".join(store.xpath(".//h3/text()")).strip()
         store_number = "".join(store.xpath("@id")).strip()
         page_url = "https://boqueriarestaurant.com/#" + store_number
         locator_domain = website
 
-        location_name = store_json["name"].strip()
+        raw_address = (
+            "".join(store.xpath('.//p[./strong[contains(text(),"Address:")]]//text()'))
+            .strip()
+            .replace("Address:", "")
+            .strip()
+        )
+        formatted_addr = parser.parse_address_usa(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
 
-        street_address = (
-            store_json["location"]["houseNumber"]
-            + " "
-            + store_json["location"]["streetName"]
-        ).strip()
+        city = formatted_addr.city
+        state = formatted_addr.state
+        if city and city == "Nyc":
+            state = "NY"
 
-        city = store_json["location"]["city"].strip()
-        state = store_json["location"]["stateCode"].strip()
+        zip = formatted_addr.postcode
+        country_code = "US"
 
-        zip = store_json["location"]["postalCode"].strip()
-
-        country_code = store_json["location"]["countryCode"].strip()
-
-        phone = store_json["details"]["contactInfo"]["phoneNumber"]
+        phone = (
+            "".join(store.xpath('.//p[./strong[contains(text(),"Phone:")]]//text()'))
+            .strip()
+            .replace("Phone:", "")
+            .strip()
+            .split("Note")[0]
+            .strip()
+            .encode("ascii", "ignore")
+            .decode("utf-8")
+        )
 
         location_type = "<MISSING>"
 
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[strong]/span/text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        ".//div[./p[contains(text(),'Hours')]]/p[2]//text()"
+                    )
+                ],
             )
         )
-        if not hours:
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store.xpath(".//p[strong]/text()")],
-                )
-            )
-
-        if not hours:
+        if len(hours) <= 0:
             hours = list(
                 filter(
                     str,
                     [
                         x.strip()
-                        for x in store.xpath(".//p[contains(text(),'HOURS')]/text()")
+                        for x in store.xpath(
+                            ".//div[./p[contains(text(),'HOURS')]]/p[1]/text()"
+                        )
                     ],
                 )
             )
-        hours_of_operation = "; ".join(hours).replace("HOURS;", "").strip()
+        hours_of_operation = (
+            "; ".join(hours)
+            .strip()
+            .split("; Please")[0]
+            .strip()
+            .replace("HOURS;", "")
+            .strip()
+        )
 
-        latitude = store_json["location"]["latitude"]
-        longitude = store_json["location"]["longitude"]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
-        raw_address = "<MISSING>"
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

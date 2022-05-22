@@ -5,3 +5,4 @@ lxml==4.6.2
 sgselenium==0.1.4
 sglogging==0.0.4
 sgscrape==0.1.13
+sgpostal==0.1.0
