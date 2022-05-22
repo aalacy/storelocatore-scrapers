@@ -47,18 +47,18 @@ def get_data():
 
             try:
                 hours_soup = bs(hours_response, "html.parser")
-                hours_parts = hours_soup.find(
-                    "div", attrs={"class": "loc-hours-table"}
-                ).find_all("tr")
+                hours_table = hours_soup.find("div", attrs={"class": "loc-hours-table"})
+
+                hours_days = hours_table.find_all("td", attrs={"class": "day"})
+                hours_times = hours_table.find_all("td", attrs={"class": "hours"})
 
                 hours = ""
-                for part in hours_parts:
-                    hours = hours + part.text.strip() + ", "
+                for x in range(hours_days):
+                    day = hours_days[x]
+                    time = hours_times[x]
+                    hours = hours + day + " " + time + ", "
 
                 hours = hours[:-2]
-                hours = hours.replace("\n", "").replace("\r", "").replace("\t", "")
-                while "  " in hours:
-                    hours = hours.replace("  ", " ")
 
             except Exception:
                 hours = "<MISSING>"
