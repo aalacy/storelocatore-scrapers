@@ -16,6 +16,27 @@ headers = {
 }
 
 
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
+
+
 def fetch_data():
     # Your scraper here
     search_url = "https://www.mscdirect.com/corporate/locations-branches"
@@ -134,12 +155,8 @@ def fetch_data():
             map_link = "".join(
                 store.xpath('div/a[contains(text(),"Map and Directions")]/@href')
             ).strip()
-            latitude = ""
-            longitude = ""
-            if len(map_link) > 0:
-                if "/@" in map_link:
-                    latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
-                    longitude = map_link.split("/@")[1].strip().split(",")[1]
+
+            latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(
                 locator_domain=locator_domain,

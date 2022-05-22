@@ -57,6 +57,12 @@ def fetch_data(sgw: SgWriter):
                 postal = "<MISSING>"
             country_code = page_url.split(".com/")[1].split("_")[0].upper().strip()
             city = b.get("city") or "<MISSING>"
+            if city == "Kuwat City":
+                city = "Kuwait City"
+            if street_address.find(f" {city}") != -1:
+                street_address = (
+                    street_address.split(f" {city}")[0].replace(",", "").strip()
+                )
             phone = b.get("telephone") or "<MISSING>"
             if phone == "n/a":
                 phone = "<MISSING>"
@@ -91,6 +97,97 @@ def fetch_data(sgw: SgWriter):
                 location_type=SgRecord.MISSING,
                 latitude=SgRecord.MISSING,
                 longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+    locator_domain = "https://www.buynespresso.com/"
+    countries = ["UK", "BE", "CH", "NO"]
+    for c in countries:
+        session = SgRequests()
+        r = session.get(
+            f"https://www.nespresso.com/storelocator/app/find_poi-v4.php?country={c}"
+        )
+        js = r.json()
+        for j in js:
+            a = j.get("point_of_interest")
+            location_type = a.get("type") or "<MISSING>"
+            street_address = a.get("address").get("address_line")
+            city = a.get("address").get("city").get("name")
+            postal = "".join(a.get("address").get("postal_code"))
+            location_name = (
+                a.get("address")
+                .get("name")
+                .get("company_name_type")
+                .get("name")
+                .get("name")
+                or "<MISSING>"
+            )
+            phone = a.get("phone") or "<MISSING>"
+            hours_of_operation = (
+                "".join(a.get("opening_hours_text").get("text"))
+                .replace("<br>", " ")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = (
+                hours_of_operation.replace("The opening hours are;", "")
+                .replace("Opening hours are;", "")
+                .replace("<br />", " ")
+                .replace("<br", "")
+                .replace("&oslash;:", "ø")
+                .strip()
+            )
+            if hours_of_operation.find("Horaires spéciaux") != -1:
+                hours_of_operation = hours_of_operation.split("Horaires spéciaux")[
+                    0
+                ].strip()
+            if hours_of_operation.find("Orari speciali ") != -1:
+                hours_of_operation = hours_of_operation.split("Orari speciali ")[
+                    0
+                ].strip()
+            if hours_of_operation.find("zielle Öffnungszeiten") != -1:
+                hours_of_operation = hours_of_operation.split("zielle Öffnungszeiten")[
+                    0
+                ].strip()
+            if hours_of_operation.find("Boutique-Bereich:") != -1:
+                hours_of_operation = (
+                    hours_of_operation.split("Boutique-Bereich:")[1]
+                    .split("Spezielle")[0]
+                    .strip()
+                )
+            if hours_of_operation.find("Spezielle Öffnungszeiten") != -1:
+                hours_of_operation = hours_of_operation.split(
+                    "Spezielle Öffnungszeiten"
+                )[0].strip()
+            hours_of_operation = (
+                hours_of_operation.replace("Öffunungszeiten:", "")
+                .replace("öffunungszeiten:", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+            latitude = j.get("position").get("latitude")
+            longitude = j.get("position").get("longitude")
+            page_url = f"https://www.nespresso.com/{c.lower()}/en/store-locator"
+            country_code = c
+            if postal.find(" ") != -1 and country_code == "CH":
+                postal = postal.split()[0].strip()
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=SgRecord.MISSING,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 

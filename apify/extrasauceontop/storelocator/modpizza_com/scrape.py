@@ -123,6 +123,8 @@ def get_data():
 
         hours_parts = extract_json(page_response)[-1]["hours"]
         hours = ""
+        if "1400 Hwy 17 N Unit 5" in address:
+            hours_parts = extract_json(page_response)[14]["hours"]
 
         for part in hours_parts:
             day = part["day"]
@@ -143,6 +145,7 @@ def get_data():
 
         hours = hours[:-2]
 
+        address = address.split(" across")[0]
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,

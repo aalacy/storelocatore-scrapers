@@ -10,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgpostal import sgpostal as parser
 
 
 website = "boschcarservice.com"
@@ -39,7 +40,8 @@ class _SearchIteration(SearchIteration):
     a method to register found locations.
     """
 
-    def __init__(self):
+    def __init__(self, http: SgRequests):
+        self.__http = http
         self.__state = CrawlStateSingleton.get_instance()
 
     def do(
@@ -56,76 +58,89 @@ class _SearchIteration(SearchIteration):
         log.info(f"cood:{lat},{lng}")
         search_url = "https://dl-emea.dxtservice.com/dl/api/search?latitude={}&longitude={}&searchRadius=100&includeStores=COUNTRY&pageIndex={}&pageSize=100&minDealers=10&maxDealers=20&storeTags=[103]"
         page_no = 0
-        with SgRequests(dont_retry_status_codes=([404])) as session:
-            while True:
+        while True:
 
-                stores_req = session.get(
-                    search_url.format(lat, lng, page_no), headers=headers
-                )
-                try:
-                    status = json.loads(stores_req.text)["httpStatus"]
-                    if "No Content" == status or "External API error" == status:
-                        break
-                    for store in json.loads(stores_req.text)["data"]["items"]:
-                        page_url = "<MISSING>"
-                        locator_domain = website
-                        location_name = store["displayName"]
-                        street_address = store["address"]["addressLine1"]
+            stores_req = self.__http.get(
+                search_url.format(lat, lng, page_no), headers=headers
+            )
+            try:
+                status = json.loads(stores_req.text)["httpStatus"]
+                if "No Content" == status or "External API error" == status:
+                    break
+                for store in json.loads(stores_req.text)["data"]["items"]:
+                    page_url = "<MISSING>"
+                    locator_domain = website
+                    location_name = store["displayName"]
+                    street_address = store["address"]["addressLine1"]
 
-                        if (
-                            "addressLine2" in store["address"]
-                            and store["address"]["addressLine2"] is not None
-                            and len(store["address"]["addressLine2"]) > 0
-                        ):
-                            street_address = (
-                                street_address + ", " + store["address"]["addressLine2"]
-                            )
-
-                        city = store["address"]["city"]
-                        state = store["address"]["state"]
-                        zip = store["address"]["zipcode"]
-                        country_code = store["address"]["country"]
-                        store_number = store["storeId"]
-                        phone = store["address"]["officePhoneNumber"]
-                        if not phone:
-                            phone = store["address"]["mobilePhoneNumber"]
-
-                        location_type = store["storeType"]
-                        hours_dict = store["openingHours"]
-                        hours_list = []
-                        if hours_dict:
-                            for key in hours_dict.keys():
-                                day = key
-                                time = ", ".join(hours_dict[day])
-                                hours_list.append(day + ": " + time)
-
-                        hours_of_operation = "; ".join(hours_list).strip()
-                        latitude = store["geoCoordinates"]["latitude"]
-                        longitude = store["geoCoordinates"]["longitude"]
-
-                        found_location_at(lat, lng)
-                        yield SgRecord(
-                            locator_domain=locator_domain,
-                            page_url=page_url,
-                            location_name=location_name,
-                            street_address=street_address,
-                            city=city,
-                            state=state,
-                            zip_postal=zip,
-                            country_code=country_code,
-                            store_number=store_number,
-                            phone=phone,
-                            location_type=location_type,
-                            latitude=latitude,
-                            longitude=longitude,
-                            hours_of_operation=hours_of_operation,
+                    if (
+                        "addressLine2" in store["address"]
+                        and store["address"]["addressLine2"] is not None
+                        and len(store["address"]["addressLine2"]) > 0
+                    ):
+                        street_address = (
+                            street_address + ", " + store["address"]["addressLine2"]
                         )
 
-                except:
-                    log.error(stores_req.text)
-                    pass
+                    city = store["address"]["city"]
+                    state = store["address"]["state"]
+                    zip = store["address"]["zipcode"]
+                    raw_address = ""
+                    if street_address and len(street_address) > 0:
+                        raw_address = street_address
+                    if city and len(city) > 0:
+                        raw_address = raw_address + ", " + city
+                    if state and len(state) > 0:
+                        raw_address = raw_address + ", " + state
+                    if zip and len(zip) > 0:
+                        raw_address = raw_address + ", " + zip
 
-                page_no = page_no + 1
+                    formatted_addr = parser.parse_address_intl(raw_address)
+
+                    city = formatted_addr.city
+                    country_code = store["address"]["country"]
+                    store_number = store["storeId"]
+                    phone = store["address"]["officePhoneNumber"]
+                    if not phone:
+                        phone = store["address"]["mobilePhoneNumber"]
+
+                    location_type = store["storeType"]
+                    hours_dict = store["openingHours"]
+                    hours_list = []
+                    if hours_dict:
+                        for key in hours_dict.keys():
+                            day = key
+                            time = ", ".join(hours_dict[day])
+                            hours_list.append(day + ": " + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    latitude = store["geoCoordinates"]["latitude"]
+                    longitude = store["geoCoordinates"]["longitude"]
+
+                    found_location_at(lat, lng)
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
+
+            except:
+                log.error(stores_req.text)
+                pass
+
+            page_no = page_no + 1
 
 
 def scrape():
@@ -142,15 +157,18 @@ def scrape():
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        search_iter = _SearchIteration()
-        par_search = ParallelDynamicSearch(
-            search_maker=search_maker,
-            search_iteration=search_iter,
-            country_codes=SearchableCountries.ALL,
-        )
+        countries = SearchableCountries.ALL
+        for country in countries:
+            with SgRequests(dont_retry_status_codes=([404])) as http:
+                search_iter = _SearchIteration(http=http)
+                par_search = ParallelDynamicSearch(
+                    search_maker=search_maker,
+                    search_iteration=search_iter,
+                    country_codes=[country],
+                )
 
-        for rec in par_search.run():
-            writer.write_row(rec)
+                for rec in par_search.run():
+                    writer.write_row(rec)
 
 
 if __name__ == "__main__":
