@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    page_url = "https://dennysdiners.co.uk/locations/"
+    page_url = "https://dennysdiners.co.uk/find-us/"
     location_name = (
         "".join(tree.xpath('//li[./span/i[@class="fas fa-map-pin"]]/span[2]/text()[1]'))
         .replace("\n", "")

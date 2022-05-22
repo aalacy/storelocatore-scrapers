@@ -49,6 +49,7 @@ def get_data(loc):
 
     zip_postal = pa.postcode
     zip_postal = zip_postal.strip() if zip_postal else MISSING
+    zip_postal = zip_postal.replace("C.P.", "")
     latitude = loc["latitud"]
     longitude = loc["longitud"]
     return (
