@@ -58,12 +58,14 @@ def fetch_data():
                     continue
                 temp = soup.findAll("div", {"class": "wpb_wrapper"})[1].findAll("h3")
                 try:
-                    raw_address = temp[0].get_text(separator="|", strip=True).split("|")
+                    raw_address = (
+                        temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                    )
                 except:
                     raw_address = (
                         soup.findAll("p")[1]
                         .get_text(separator="|", strip=True)
-                        .split("|")
+                        .replace("|", " ")
                     )
 
                 pa = parse_address_intl(raw_address)

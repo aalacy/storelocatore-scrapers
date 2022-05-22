@@ -10,15 +10,16 @@ from sglogging import sglog
 
 
 def get_params():
-    params = []
+    params = set()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
     )
 
     for _zip in search:
         api = f"https://www.alwaysbestcare.com/wp-json/ral/v1/location/offices?q={_zip}"
         r = session.get(api, headers=headers)
         js = r.json()["features"]
+        logger.info(f"{_zip}: {len(js)} location(s) found")
 
         for j in js:
             p = j.get("properties") or {}
@@ -26,7 +27,7 @@ def get_params():
             page_url = p.get("url")
             g = j.get("geometry") or {}
             lng, lat = g.get("coordinates") or (SgRecord.MISSING, SgRecord.MISSING)
-            params.append((page_url, lat, lng, store_number))
+            params.add((page_url, lat, lng, store_number))
 
     return params
 
