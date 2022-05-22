@@ -89,7 +89,7 @@ def fetch_data():
 
     for store in stores:
         store_number = get_JSON_object_variable(store, "EAGId")
-        page_url = get_JSON_object_variable(store, "Url")
+        page_url = store_url
         location_name = get_JSON_object_variable(store, "Name")
         location_type = get_JSON_object_variable(store, "ShopTypeName")
         street_address = get_JSON_object_variable(store, "AddressLine").replace(

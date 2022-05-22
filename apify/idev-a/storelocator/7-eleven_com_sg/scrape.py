@@ -51,7 +51,9 @@ def fetch_data():
                 longitude=longitude,
                 country_code="Singapore",
                 locator_domain=locator_domain,
-                hours_of_operation=_["outlet_open_operating"],
+                hours_of_operation=_["outlet_open_operating"]
+                .replace("Operating Hours:", "")
+                .strip(),
             )
 
 

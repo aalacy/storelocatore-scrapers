@@ -1,20 +1,18 @@
 import json
 from lxml import etree
-from time import sleep
-from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
     session = SgRequests(proxy_country="us", verify_ssl=False)
     domain = "waterworks.com"
     start_url = "https://www.waterworks.com/us_en/storelocation/index/storelist/"
-
     headers = {
         "accept": "application/json, text/javascript, */*; q=0.01",
         "accept-encoding": "gzip, deflate, br",
@@ -31,17 +29,9 @@ def fetch_data():
         page_url = "https://www.waterworks.com/us_en/{}".format(
             poi["rewrite_request_path"]
         )
-        hdr = {
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-        }
-        loc_response = session.get(page_url, headers=hdr)
-        denied = True if loc_response.status_code != 200 else False
-        while denied:
-            sleep(uniform(5, 15))
-            session = SgRequests(proxy_country="us")
-            loc_response = session.get(page_url, headers=hdr)
-            denied = True if loc_response.status_code != 200 else False
-        loc_dom = etree.HTML(loc_response.text)
+        with SgFirefox(block_third_parties=True) as driver:
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
 
         street_address = poi["address"]
         if "@" in street_address:

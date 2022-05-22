@@ -1,12 +1,14 @@
 import json
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
 
 logger = SgLogSetup().get_logger("sherwin-williams_com")
 
@@ -80,11 +82,15 @@ def fetch_data(sgw: SgWriter):
                 lng = store_data["longitude"]
                 locator_domain = "https://www.sherwin-williams.com"
                 location_name = store_data["name"] or "<MISSING>"
+                location_name = str(location_name).replace("&#039;", "`").strip()
                 street_address = store_data["address"] or "<MISSING>"
+                street_address = str(street_address).replace("&amp;", "&").strip()
                 city = store_data["city"] or "<MISSING>"
                 state = store_data["state"] or "<MISSING>"
                 postal = store_data["zipcode"] or "<MISSING>"
                 country_code = "CA"
+                if str(postal).replace("-", "").strip().isdigit():
+                    country_code = "US"
 
                 store_num = store_data["url"].split("storeNumber=")[1].split("&")[0]
                 if store_num in [
@@ -99,30 +105,21 @@ def fetch_data(sgw: SgWriter):
                 phone = store_data["phone"] or "<MISSING>"
 
                 link = "https://www.sherwin-williams.com" + store_data["url"]
-                location_request = session.get(
-                    link,
-                    headers=headers,
-                )
-                location_soup = BeautifulSoup(location_request.text, "lxml")
-
-                hours = ""
                 try:
+                    r = session.get(link, headers=headers)
+                    tree = html.fromstring(r.text)
                     hours = (
                         " ".join(
-                            list(
-                                location_soup.find(
-                                    "div",
-                                    {
-                                        "class": "cmp-storedetailhero__store-hours-container"
-                                    },
-                                ).stripped_strings
+                            tree.xpath(
+                                '//div[@class="cmp-storedetailhero__store-hours-container"]//time//text()'
                             )
                         )
-                        .replace("Store Hours", "")
+                        .replace("\n", "")
                         .strip()
                     )
+                    hours = " ".join(hours.split()) or "<MISSING>"
                 except:
-                    pass
+                    hours = "<MISSING>"
 
                 row = SgRecord(
                     locator_domain=locator_domain,
@@ -145,6 +142,11 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
