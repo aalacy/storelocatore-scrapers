@@ -83,6 +83,8 @@ def fetch_data():
             ).strip()
 
         temp_days = store.xpath("div[2]/p[1]/strong/mark/text()")
+        if "coming soon" in "".join(temp_days).lower():
+            continue
         days_list = []
         for day in temp_days:
             if len("".join(day).strip()) > 0:

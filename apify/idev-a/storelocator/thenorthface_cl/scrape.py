@@ -1,21 +1,25 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgChrome
+import time
+from webdriver_manager.chrome import ChromeDriverManager
+import ssl
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
+ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domain = "https://www.thenorthface.cl"
 base_url = "https://www.thenorthface.cl/tiendas"
+json_url = r"https://www.thenorthface.cl/graphql\?query\=query\+GetCmsPage"
 
 
 def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
+        driver.get(base_url)
+        time.sleep(2)
+        soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.store-card")
         for _ in locations:
             p = _.select("p")

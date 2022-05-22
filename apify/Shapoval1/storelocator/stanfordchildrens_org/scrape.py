@@ -29,6 +29,11 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("id")
         page_url = f"https://www.stanfordchildrens.org/en/location/{slug}"
         location_name = j.get("name") or "<MISSING>"
+        location_name = str(location_name).replace("&amp;", "&").strip()
+        if str(location_name).find("-") != -1:
+            location_name = str(location_name).split("-")[0].strip()
+        if str(location_name).find("–") != -1:
+            location_name = str(location_name).split("–")[0].strip()
         location_type = j.get("loctype") or "<MISSING>"
         street_address = (
             f"{j.get('address-a')} {j.get('address-b') or ''}".replace("None", "")
