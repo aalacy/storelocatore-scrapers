@@ -47,7 +47,7 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//div[div[h6[contains(text(), "Regular Hours")]]]/following-sibling::div[1]//li/text()'
         )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split('Lunch')[0]
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Lunch")[0]
 
         item = SgRecord(
             locator_domain=domain,
