@@ -40,12 +40,15 @@ def fetch_data(search):
                 if _["ADDR_2"]:
                     addr += " " + _["ADDR_2"]
                 addr = addr.strip()
-                hours = []
-                if _["KING_ORDER_STATE_OF_WEEK_DAY"]:
-                    for hh in json.loads(_["KING_ORDER_STATE_OF_WEEK_DAY"]):
-                        hours.append(
-                            f"{hr_obj[hh['dayOfWeek']]}: {hh['kingOrderOpenTime']}-{hh['kingOrderCloseTime']}"
-                        )
+                hours = _["STORE_TIME"].split(",")
+                if not hours:
+                    if _["KING_ORDER_STATE_OF_WEEK_DAY"]:
+                        hours = []
+                        for hh in json.loads(_["KING_ORDER_STATE_OF_WEEK_DAY"]):
+                            hours.append(
+                                f"{hr_obj[hh['dayOfWeek']]}: {hh['kingOrderOpenTime']}-{hh['kingOrderCloseTime']}"
+                            )
+
                 yield SgRecord(
                     page_url="https://burgerking.co.kr/#/store",
                     store_number=_["STOR_CD"],
@@ -57,7 +60,9 @@ def fetch_data(search):
                     country_code="South Korea",
                     phone=_["TEL_NO"],
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation="; ".join(hours)
+                    .replace("Cleaning Day(Close):", "")
+                    .strip(),
                     raw_address=addr,
                 )
 

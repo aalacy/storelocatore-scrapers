@@ -34,10 +34,12 @@ def fetch_data():
         stores = json_res["newsData"]["filterableList"]["newsitems"]["newsContent"]
 
         for store in stores:
-
+            is_loc_name_missing = False
             locator_domain = website
 
             location_name = store["bannerDetails"]["title"]["value"]
+            if len(location_name) <= 0:
+                is_loc_name_missing = True
             page_url = search_url
             location_type = "<MISSING>"
 
@@ -56,10 +58,12 @@ def fetch_data():
                     filter(str, [x.strip() for x in sub_store.xpath(".//text()")])
                 )
                 info = " ".join(info)
-                page_url = page_url + str(sub_idx)
                 phone = info.split("Phone")[1].strip()
 
                 raw_address = info.split("Phone")[0].strip()
+
+                if is_loc_name_missing:
+                    location_name = raw_address.split(" ")[0].strip()
 
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1

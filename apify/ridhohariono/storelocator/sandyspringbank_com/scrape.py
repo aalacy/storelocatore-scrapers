@@ -65,8 +65,8 @@ def fetch_data():
     )
     for lat, lng in search:
         payload = {
-            "lat": lat,
-            "lng": lng,
+            "lat": "39.2369558",
+            "lng": "-76.79135579999999",
             "searchby": "FCS|",
             "SearchKey": "",
             "rnd": "1641484157002",
@@ -77,7 +77,11 @@ def fetch_data():
         stores = bs(data, "lxml").find_all("marker")
         log.info(f"Found ({len(stores)}) locations with coord => {lat},{lng}")
         for row in stores:
-            location_name = row.find("title").text.strip()
+            location_name = (
+                row.find("title")
+                .text.replace("Please visit us at our new address.", "")
+                .strip()
+            )
             street_address = row.find("add1").text.strip()
             ctt = list(row.find("add2").stripped_strings)
             ct = ctt[0].split(",")
@@ -88,21 +92,27 @@ def fetch_data():
             if len(ctt) > 1:
                 phone = ctt[-1].strip()
             country_code = "US"
-            hours_of_operation = ""
-            hr = list(
+            hoo_content = (
                 row.find("label", text=re.compile("Hours"))
                 .parent.find("contents")
-                .stripped_strings
+                .find("table")
             )
-            del hr[0]
-            for h in hr:
-                if h == "Details":
-                    break
-                hours_of_operation += " " + h
+            hours_of_operation = re.sub(
+                r"Details.*|Drive-Thru:.*",
+                "",
+                hoo_content.get_text(strip=True, separator=",").replace(
+                    "day:,", "day: "
+                ),
+                flags=re.IGNORECASE,
+            ).strip()
+            if len(hours_of_operation) < 5:
+                hours_of_operation = hoo_content.find_next("div").text.strip()
             store_number = MISSING
             latitude = row["lat"]
             longitude = row["lng"]
             location_type = MISSING
+            if "temporarily closed" in location_name:
+                location_type = "TEMP_CLOSED"
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

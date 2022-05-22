@@ -48,6 +48,8 @@ def fetch_data(sgw: SgWriter):
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
             country_code = "US"
+            if state == "IL":
+                country_code = "US"
             if page_url.find("mex") != -1:
                 country_code = "Mexico"
             city = a.city or "<MISSING>"
@@ -117,6 +119,8 @@ def fetch_data(sgw: SgWriter):
                     state = ad.split(",")[1].split()[0].strip()
                     postal = " ".join(ad.split(",")[1].split()[1:]).strip()
                     country_code = "CA"
+                    if state == "IL":
+                        country_code = "US"
                     city = ad.split(",")[0].strip()
 
             row = SgRecord(

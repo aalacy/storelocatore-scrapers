@@ -5,30 +5,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from concurrent import futures
-
-
-def get_urls():
-
-    api_url = "https://charge.pod-point.com/"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = (
-        "".join(tree.xpath('//script[contains(text(), "var podAddresses =")]/text()'))
-        .split("var podAddresses =")[1]
-        .split(";")[0]
-        .strip()
-    )
-    js = json.loads(div)
-    tmp = []
-    for j in js:
-        ids = j.get("id")
-        tmp.append(ids)
-    return tmp
 
 
 def get_hours(hours) -> str:
@@ -43,68 +19,77 @@ def get_hours(hours) -> str:
     return hours_of_operation
 
 
-def get_data(url, sgw: SgWriter):
-    locator_domain = "https://pod-point.com/"
-    api_url = f"https://charge.pod-point.com/ajax/pods/{url}"
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://pod-point.com/"
+    api_url = "https://charge.pod-point.com/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    try:
-        j = r.json()
-    except:
-        return
-    a = j.get("address")
-    aa = a.get("address")
-    store_number = a.get("id")
-    location_name = a.get("name")
-    street_address = f"{aa.get('address1')} {aa.get('address2')}".strip()
-    if street_address.find("(") != -1:
-        street_address = street_address.split("(")[0].strip()
-    postal = aa.get("postcode")
-    country_code = aa.get("country")
-    city = aa.get("town")
-    slug = a.get("slug")
-    page_url = f"https://charge.pod-point.com/address/{slug}"
-    latitude = a.get("latitude")
-    longitude = a.get("longitude")
-    location_type = a.get("type")
-    hours_of_operation = "<MISSING>"
-    hours = a.get("opening").get("times") or "<MISSING>"
-    if hours != "<MISSING>":
-        hours_of_operation = get_hours(hours)
-
-    row = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=SgRecord.MISSING,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=SgRecord.MISSING,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
+    tree = html.fromstring(r.text)
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "var podAddresses =")]/text()'))
+        .split("var podAddresses =")[1]
+        .split(";")[0]
+        .strip()
     )
+    js = json.loads(div)
+    for j in js:
 
-    sgw.write_row(row)
+        ids = j.get("id")
+        api_url = f"https://charge.pod-point.com/ajax/pods/{ids}"
+        aa = j.get("address")
+        store_number = j.get("id")
+        location_name = j.get("name")
+        street_address = f"{aa.get('address1')} {aa.get('address2')}".replace(
+            "- Open 06:00 to 00:00", ""
+        ).strip()
+        if street_address.find("(") != -1:
+            street_address = street_address.split("(")[0].strip()
+        postal = aa.get("postcode")
+        country_code = aa.get("country")
+        city = aa.get("town")
+        latitude = j.get("location").get("lat")
+        longitude = j.get("location").get("lng")
+        location_type = j.get("type")
+        hours_of_operation = "<MISSING>"
+        hours = j.get("opening").get("times") or "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
+        r = session.get(api_url, headers=headers)
+        try:
+            j = r.json()
+            a = j.get("address")
+            slug = a.get("slug")
+            page_url = f"https://charge.pod-point.com/address/{slug}"
+        except:
+            page_url = "https://charge.pod-point.com/"
 
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=SgRecord.MISSING,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=SgRecord.MISSING,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-def fetch_data(sgw: SgWriter):
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=7) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
         fetch_data(writer)

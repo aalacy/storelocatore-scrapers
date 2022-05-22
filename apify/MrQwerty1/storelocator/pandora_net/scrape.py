@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
 
 def override(js):
@@ -42,19 +43,21 @@ def override(js):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = [
-        "https://maps.pandora.net/api/getAsyncLocations?search=75022&level=domain&template=domain&limit=5000&radius=5000",
-        "https://maps.pandora.net/api/getAsyncLocations?search=Berlin&level=domain&template=domain&limit=5000&radius=5000",
-    ]
-
-    for api in urls:
+    search = DynamicZipSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
+    )
+    for _z in search:
+        api = f"https://maps.pandora.net/api/getAsyncLocations?search={_z}&level=domain&template=domain&limit=1000&radius=1000"
         r = session.get(api, headers=headers)
         js_init = r.json()["maplist"]
-        line = (
-            "["
-            + js_init.split('<div class="tlsmap_list">')[1].split(",</div>")[0]
-            + "]"
-        )
+        try:
+            line = (
+                "["
+                + js_init.split('<div class="tlsmap_list">')[1].split(",</div>")[0]
+                + "]"
+            )
+        except:
+            continue
         js = json.loads(line)
 
         for j in js:
@@ -62,10 +65,13 @@ def fetch_data(sgw: SgWriter):
             if page_url.startswith("/"):
                 page_url = page_url.replace("//", "https://")
             location_name = j.get("location_name")
-            street_address = f"{j.get('address_1')} {j.get('address_2')}".strip()
-            city = j.get("city")
-            state = j.get("big_region")
-            postal = j.get("post_code")
+            adr1 = j.get("address_1") or ""
+            adr2 = j.get("address_1") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = j.get("city") or ""
+            state = j.get("big_region") or ""
+            postal = j.get("post_code") or ""
+            raw_address = " ".join(f"{street_address} {city} {state} {postal}".split())
             country_code = j.get("country")
             store_number = j.get("fid")
             phone = j.get("local_phone")
@@ -106,6 +112,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
             sgw.write_row(row)
@@ -126,5 +133,9 @@ if __name__ == "__main__":
         "Sec-Fetch-User": "?1",
     }
     locator_domain = "https://pandora.net/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)

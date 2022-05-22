@@ -41,10 +41,11 @@ def fetch_records(session, search):
             street_address = _["AddressLine1"]
             if _["AddressLine2"]:
                 street_address += " " + _["AddressLine2"]
-
             if _["AddressLine3"]:
                 street_address += " " + _["AddressLine3"]
-
+            street_address = street_address.replace("PDSA SHOP", "").replace("PDSA", "")
+            st = street_address.split(" ")
+            street_address = " ".join([ss for ss in st if ss.strip()])
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["Id"],

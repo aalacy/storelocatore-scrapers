@@ -1,6 +1,6 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import ssl
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -29,29 +29,36 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//div[@class="fullwidth-element paragraph-side col-xs-12 col-sm-6 col-md-3" and section]'
-    )
+    all_locations = dom.xpath('//div[@class="dealer-details"]')
     for poi_html in all_locations:
-        city = poi_html.xpath(".//*/strong/text()")[0]
-        location_name = poi_html.xpath(".//div/strong/text()")[0]
-        street_address = poi_html.xpath('.//a[contains(@href, "waze")]/text()')[0]
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
-        hoo = poi_html.xpath(
-            './/div[strong[contains(text(), "שעות פתיחה אולם תצוגה")]]/following-sibling::div//text()'
-        )
-        if not hoo:
-            hoo = poi_html.xpath(
-                './/div[strong[span[contains(text(), "שעות פתיחה אולם תצוגה")]]]/following-sibling::div//text()'
-            )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo).split("שעות")[0].strip()
-        if not hoo:
+        page_url = poi_html.xpath('.//a[@data-gt-action="view-dealer"]/@href')[0]
+        page_url = urljoin(start_url, page_url)
+        if page_url == "https://www.toyota.co.il/":
             continue
+        loc_response = session.get(page_url, headers=hdr)
+        if loc_response.status_code != 200:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
+        if not loc_dom.xpath('//div[@id="map"]/a/@href'):
+            continue
+
+        location_name = poi_html.xpath(".//h2/text()")[0]
+        raw_address = (
+            poi_html.xpath('.//li[@class="address"]/text()')[0].strip().split(" - ")
+        )
+        city = raw_address[-1]
+        street_address = raw_address[0]
+        phone = poi_html.xpath('.//li[@class="phone"]/a/text()')[0]
+        geo = (
+            loc_dom.xpath('//div[@id="map"]/a/@href')[0]
+            .split("/")[-1]
+            .split("?")[0]
+            .split(",")
+        )
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://toyota.co.il/#/box-ajax/url=%2Fdealers%2Fdealers/size=fullscreen",
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -61,9 +68,9 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation=hoo,
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation="",
         )
 
         yield item

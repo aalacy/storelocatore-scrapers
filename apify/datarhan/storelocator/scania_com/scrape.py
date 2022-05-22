@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+import demjson
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -269,9 +270,12 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     for country_code in all_iso:
-        data = session.get(start_url.format(country_code), headers=hdr).json()
-
+        data = session.get(start_url.format(country_code), headers=hdr)
+        data = demjson.decode(data.text)
+        if not data.get("dealers"):
+            continue
         for poi in data["dealers"]:
+            page_url = f'https://www.scania.com/us/en/home/admin/misc/dealer/dealer-details.html?dealer={poi["scaniaId"]}'
             hoo = []
             if poi.get("openingHours"):
                 for e in poi["openingHours"]:
@@ -280,23 +284,37 @@ def fetch_data():
                     closes = e["openTimes"][0]["timeTo"]
                     hoo.append(f"{days}: {opens} - {closes}")
             hoo = " ".join(hoo)
+            state = poi["legalAddress"]["postalAddress"]["physicalAddress"][
+                "countryRegion"
+            ]["value"]
+            if state.isdigit():
+                state = ""
+            zip_code = poi["visitingAddress"]["postalAddress"]["physicalAddress"][
+                "postalCode"
+            ]
+            if zip_code:
+                zip_code = zip_code.replace("CEP:", "").strip()
+            raw_city = poi["visitingAddress"]["postalAddress"]["physicalAddress"][
+                "city"
+            ]["value"]
+            addr = parse_address_intl(raw_city)
+            city = addr.city
+            if zip_code == "Griffith":
+                city = "Griffith"
+                zip_code = "2680"
+            if zip_code == "00000":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.scania.com/us/en/home/dealer-locator.html",
+                page_url=page_url,
                 location_name=poi["organizationName"]["legalName"]["value"],
                 street_address=poi["visitingAddress"]["postalAddress"][
                     "physicalAddress"
                 ]["street"]["streetName"]["value"],
-                city=poi["visitingAddress"]["postalAddress"]["physicalAddress"]["city"][
-                    "value"
-                ].split(", ")[0],
-                state=poi["legalAddress"]["postalAddress"]["physicalAddress"][
-                    "countryRegion"
-                ]["value"],
-                zip_postal=poi["visitingAddress"]["postalAddress"]["physicalAddress"][
-                    "postalCode"
-                ],
+                city=city,
+                state=state,
+                zip_postal=zip_code,
                 country_code=poi["domicileCountry"]["countryCode"],
                 store_number=poi["dealerId"],
                 phone=poi["customerReceptionPhoneNumbers"][
@@ -310,6 +328,7 @@ def fetch_data():
                     "coordinates"
                 ]["longitude"],
                 hours_of_operation=hoo,
+                raw_address=raw_city,
             )
 
             yield item
@@ -319,7 +338,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             )
         )
     ) as writer:

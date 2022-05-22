@@ -25,6 +25,9 @@ def fetch_data():
     for page_url in all_locations:
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
+        c_soon = loc_dom.xpath('//strong[contains(text(), "Opening soon!")]')
+        if c_soon:
+            continue
 
         location_name = loc_dom.xpath("//h1/text()")[0].strip()
         raw_address = loc_dom.xpath('//a[contains(@href, "maps")]/text()')
@@ -33,6 +36,9 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
+        city = addr.city
+        if not city:
+            city = raw_address.split(", ")[-4]
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0].strip()
         latitude = re.findall(r"lat: (.+?),", loc_response.text)[0]
         longitude = re.findall(r"lng: (.+?),", loc_response.text)[0]
@@ -44,7 +50,7 @@ def fetch_data():
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code=addr.country,

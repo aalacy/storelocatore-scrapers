@@ -1,4 +1,3 @@
-import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -11,98 +10,74 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://wrapchic.co.uk/"
-    api_url = "https://wrapchic.co.uk/find-wrapchic/"
+    page_url = "https://wrapchic.co.uk/find-wrapchic/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//div[@class="section group all_locations"]/div[@class="col span_4_of_12"]'
-    )
+    div = tree.xpath('//div[./h2[@class="locationtitle"]]')
     for d in div:
-        location_name = (
-            "".join(d.xpath('.//*[@class="locationtitle"]/text()'))
+
+        location_name = "".join(d.xpath(".//h2//text()")).replace("\n", "").strip()
+        ad = (
+            " ".join(d.xpath(".//h2/following-sibling::p[text()][1]//text()"))
             .replace("\n", "")
             .strip()
         )
-        info1 = (
-            " ".join(d.xpath(".//*//text()"))
-            .replace("\n", " ")
-            .replace(" ", "")
-            .replace("-", "")
-            .strip()
-        )
-        ad = (
-            " ".join(d.xpath(".//h2/following-sibling::p[1]//text()"))
-            .replace("\n", " ")
-            .strip()
-        )
-        if location_name.find("Woking – Peacocks Centre") != -1:
+        if ad.find("Unit F1") != -1:
             ad = (
-                " ".join(
-                    d.xpath('.//p[contains(text(), "@")]/preceding-sibling::p//text()')
-                )
-                .replace("\n", " ")
-                .replace("\r", " ")
+                ad
+                + " "
+                + "".join(d.xpath(".//h2/following-sibling::p[text()][2]//text()"))
+                .replace("\n", "")
+                .strip()
+                + " "
+                + "".join(d.xpath(".//h2/following-sibling::p[text()][3]//text()"))
+                .replace("\n", "")
+                .strip()
+                + " "
+                + "".join(d.xpath(".//h2/following-sibling::p[text()][4]//text()"))
+                .replace("\n", "")
                 .strip()
             )
-
-        ad = (
-            " ".join(ad.split())
-            .replace("Wrapchic CanterburyUnit 18-9", "Wrapchic Canterbury Unit 1 8-9")
-            .replace("The ParadeCanterbury", "The Parade Canterbury")
-            .strip()
-        )
-
+        ad = " ".join(ad.split())
         a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "UK"
-        if "Dubai" in ad:
+        if ad.find("Dubai") != -1:
             country_code = "Dubai"
         city = a.city or "<MISSING>"
-        if city == "<MISSING>" and location_name.find("London") != -1:
-            city = "London"
         text = "".join(d.xpath('.//a[text()="View Map"]/@href'))
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        phone = (
-            re.findall(
-                r"((?:\+\d{2}[-\.\s]??|\d{4}[-\.\s]??)?(?:\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4}))",
-                info1,
-            )
-            or "<MISSING>"
-        )
-        phone = "".join(phone).replace("\xa0", "").strip()
-
-        hours_of_operation = (
-            " ".join(
-                d.xpath(
-                    './/p[contains(text(), "–")]/text() | .//p[contains(text(), "to ")]/text()'
-                )
-            )
-            .replace("\n", " ")
-            .strip()
-            or "<MISSING>"
-        )
-        session = SgRequests()
-        r = session.get("https://wrapchic.co.uk/locations/", headers=headers)
-        tree = html.fromstring(r.text)
-        page_url = "".join(
-            tree.xpath(f'//a[contains(text(), "{location_name}")]/@href')
-        )
+        latitude = text.split("@")[1].split(",")[0].strip()
+        longitude = text.split("@")[1].split(",")[1].strip()
+        info = d.xpath(".//p//text()")
+        info = list(filter(None, [s.strip() for s in info]))
+        phone = "<MISSING>"
+        for i in info:
+            if "Tel" in i or "0189" in i or "04 " in i:
+                phone = str(i).replace("Tel:", "").strip()
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        for i in info:
+            if (
+                "Monday" in i
+                or "Tuesday" in i
+                or "Wednesday" in i
+                or "Thursday" in i
+                or "Friday" in i
+                or "Saturday" in i
+                or "Sunday" in i
+                or "Every day" in i
+            ):
+                tmp.append(i)
+            hours_of_operation = "; ".join(tmp).strip() or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -128,6 +103,8 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LATITUDE})
+        )
     ) as writer:
         fetch_data(writer)

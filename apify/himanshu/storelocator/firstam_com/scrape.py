@@ -9,21 +9,27 @@ session = SgRequests()
 
 
 def fetch_data(sgw: SgWriter):
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
     r = session.get(
-        "https://www.firstam.com/services-api/api/alta/search?take=100000&skip=0&officeDisplayFlag=true&officeZipCode=&officeStatus=active"
+        "https://www.firstam.com/services-api/api/alta/search?take=100000&skip=0&officeDisplayFlag=true&officeZipCode=&officeStatus=active",
+        headers=headers,
     )
     data = r.json()
     for i in range(len(data)):
         store_data = data[i]
         store = []
         store.append("https://www.firstam.com")
-        store.append(store_data["officeName"])
+        store.append(store_data["officeName"].replace("\n", " "))
         if not store_data["officeAddressLine1"]:
             continue
         store.append(
-            store_data["officeAddressLine1"] + store_data["officeAddressLine2"]
+            store_data["officeAddressLine1"].replace("\n", " ")
+            + store_data["officeAddressLine2"].replace("\n", " ")
             if store_data["officeAddressLine2"]
-            else store_data["officeAddressLine1"]
+            else store_data["officeAddressLine1"].replace("\n", " ")
         )
         store.append(store_data["officeCity"])
         store.append(store_data["officeState"])
@@ -47,7 +53,9 @@ def fetch_data(sgw: SgWriter):
             else "<MISSING>"
         )
         store.append(
-            store_data["companyName"] if store_data["companyName"] else store[1]
+            store_data["companyName"].replace("\n", " ")
+            if store_data["companyName"]
+            else store[1]
         )
         store.append(
             store_data["officeLatitude"]
@@ -66,7 +74,7 @@ def fetch_data(sgw: SgWriter):
             SgRecord(
                 locator_domain=store[0],
                 location_name=store[1],
-                street_address=store[2],
+                street_address=store[2].replace("Suite", " Suite").replace("  ", " "),
                 city=store[3],
                 state=store[4],
                 zip_postal=store[5],
