@@ -34,13 +34,13 @@ def fetch_data():
             hours = "<MISSING>"
             website = "marathonabrand.com"
             typ = "<MISSING>"
-            lat = line.split(",")[7]
-            lng = line.split(",")[8]
+            lat = line.split(",")[8]
+            lng = line.split(",")[7]
             country = "US"
             phone = line.split(",")[6]
             zc = line.split(",")[5]
             zc = f"{zc[:5]}-{zc[5:]}"
-            loc = "<MISSING>"
+            loc = "https://www.marathonbrand.com/Stations/Station_Locator/"
             if phone == "":
                 phone = "<MISSING>"
             yield SgRecord(
