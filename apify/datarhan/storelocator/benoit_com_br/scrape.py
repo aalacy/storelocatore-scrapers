@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import json
 from lxml import etree
 
@@ -32,7 +31,9 @@ def fetch_data():
         if poi["Description"]:
             phone = poi["Description"].split("|")[-1]
             phone = phone.split(":")[-1] if phone and "Telefone" in phone else ""
-            hoo = poi["Description"].split("|")[0]
+            hoo = poi["Description"].split("|")[0].split("de Atendimento:")[-1]
+            if "Telefone" in hoo:
+                hoo = ""
         street_address = f"{poi['AddressLine']} {poi['AddressNumber']}"
         latitude = poi["Latitude"]
         latitude = latitude if latitude and latitude != "0.0" else ""
