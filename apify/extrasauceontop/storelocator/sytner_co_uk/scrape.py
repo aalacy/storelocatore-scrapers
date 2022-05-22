@@ -45,19 +45,23 @@ def get_data():
             driver.get(page_url)
             hours_response = driver.page_source
 
-            hours_soup = bs(hours_response, "html.parser")
-            hours_parts = hours_soup.find(
-                "div", attrs={"class": "loc-hours-table"}
-            ).find_all("tr")
+            try:
+                hours_soup = bs(hours_response, "html.parser")
+                hours_parts = hours_soup.find(
+                    "div", attrs={"class": "loc-hours-table"}
+                ).find_all("tr")
 
-            hours = ""
-            for part in hours_parts:
-                hours = hours + part.text.strip() + ", "
+                hours = ""
+                for part in hours_parts:
+                    hours = hours + part.text.strip() + ", "
 
-            hours = hours[:-2]
-            hours = hours.replace("\n", "").replace("\r", "").replace("\t", "")
-            while "  " in hours:
-                hours = hours.replace("  ", " ")
+                hours = hours[:-2]
+                hours = hours.replace("\n", "").replace("\r", "").replace("\t", "")
+                while "  " in hours:
+                    hours = hours.replace("  ", " ")
+
+            except Exception:
+                hours = "<MISSING>"
 
             yield {
                 "locator_domain": locator_domain,
