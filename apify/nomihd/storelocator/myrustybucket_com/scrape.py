@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from sgselenium import SgFirefox
 import ssl
+import lxml.html
 
 try:
     _create_unverified_https_context = (
