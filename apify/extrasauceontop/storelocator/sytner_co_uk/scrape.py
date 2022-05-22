@@ -1,4 +1,3 @@
-from asyncio.base_events import _ExceptionHandler
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
