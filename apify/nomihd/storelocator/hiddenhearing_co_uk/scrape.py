@@ -75,32 +75,31 @@ def fetch_data():
             country_code = "GB"
 
             log.info(page_url)
-            if "/hearing-aids-centre/" in page_url:
-                store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
-                hours = list(
-                    filter(
-                        str,
-                        [x.strip() for x in store_sel.xpath("//table//tr//text()")],
-                    )
+            hours = list(
+                filter(
+                    str,
+                    [x.strip() for x in store_sel.xpath("//table//tr//text()")],
                 )
+            )
 
-                hours_of_operation = (
-                    "; ".join(hours)
-                    .replace("day; ", "day: ")
-                    .replace("day:;", "day:")
-                    .replace("OPEN FOR BUSINESS!", "")
-                    .replace("NOW OPEN!", "")
-                    .strip(";! ")
-                )
+            hours_of_operation = (
+                "; ".join(hours)
+                .replace("day; ", "day: ")
+                .replace("day:;", "day:")
+                .replace("OPEN FOR BUSINESS!", "")
+                .replace("NOW OPEN!", "")
+                .strip(";! ")
+            )
 
+            try:
                 latitude, longitude = (
                     store_res.text.split('"latitude":')[1].split(",")[0].strip(),
                     store_res.text.split('"longitude":')[1].split(",")[0].strip(),
                 )
-            else:
-                hours_of_operation = "<MISSING>"
+            except:
                 latitude, longitude = "<MISSING>", "<MISSING>"
 
             yield SgRecord(
