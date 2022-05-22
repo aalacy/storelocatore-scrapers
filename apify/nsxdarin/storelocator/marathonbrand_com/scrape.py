@@ -19,7 +19,7 @@ def get_locations(retry=0):
         url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
         return session.get(url, headers=headers).iter_lines()
     except:
-        if retry < 10:
+        if retry < 100:
             return get_locations(retry + 1)
 
 
