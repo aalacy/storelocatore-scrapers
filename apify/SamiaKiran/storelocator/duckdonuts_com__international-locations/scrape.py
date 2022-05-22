@@ -49,7 +49,7 @@ def fetch_data():
                 .replace("|", " ")
             )
             log.info(location_name)
-            page_url = loc.find("a")["href"]
+            page_url = loc.findAll("a")[-1]["href"]
             page_url = "https://www.duckdonuts.com" + page_url
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
