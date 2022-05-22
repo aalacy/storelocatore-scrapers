@@ -13,14 +13,14 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
     domain = "jamesavery.com"
-    start_url = "https://www.jamesavery.com/store_locations?utf8=%E2%9C%93&distance=any&address={}&store_type%5B%5D=retail&authenticity_token=yEwudnl2zo%2FdiLBCZIncYa3relP0t3%2FZPLiT4xG8SaJbVKaPckX7qzA1x6Ve%2F1uMa2N2xOUCG0%2FlPJcccmfIoA%3D%3D"
+    start_url = "https://www.jamesavery.com/store_locations?utf8=%E2%9C%93&distance=50&address={}&store_type%5B%5D=retail&authenticity_token=yEwudnl2zo%2FdiLBCZIncYa3relP0t3%2FZPLiT4xG8SaJbVKaPckX7qzA1x6Ve%2F1uMa2N2xOUCG0%2FlPJcccmfIoA%3D%3D"
 
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=100
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=40
     )
     for code in all_codes:
         response = session.get(start_url.format(code), headers=hdr)

@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
 from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -57,19 +58,29 @@ def fetch_data():
                     continue
                 temp = soup.findAll("div", {"class": "wpb_wrapper"})[1].findAll("h3")
                 try:
-                    address = temp[0].get_text(separator="|", strip=True).split("|")
+                    raw_address = (
+                        temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                    )
                 except:
-                    address = (
+                    raw_address = (
                         soup.findAll("p")[1]
                         .get_text(separator="|", strip=True)
-                        .split("|")
+                        .replace("|", " ")
                     )
-                street_address = address[0]
-                address = address[1].split(",")
-                city = address[0]
-                address = address[1].split()
-                state = address[0]
-                zip_postal = address[1]
+
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
                 try:
                     phone = temp[1].text
                 except:
@@ -105,6 +116,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
                 )
 
 
