@@ -129,12 +129,7 @@ def fetch_data():
                         zip = formatted_addr.postcode
 
                         country_code = (
-                            search_url.split("bathandbodyworks.")[1]
-                            .strip()
-                            .split("/")[0]
-                            .strip()
-                            .replace("com.", "")
-                            .strip()
+                            search_url.split(".boots")[0].strip().split(".")[-1].strip()
                         )
 
                         phone = (
