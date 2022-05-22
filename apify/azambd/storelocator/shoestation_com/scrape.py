@@ -24,7 +24,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def get_driver(url, driver=None):
-    print("Driver Initiation")
+    log.info("Driver Initiation")
     options = webdriver.ChromeOptions()
     options.add_argument("start-maximized")
     options.add_argument("--headless")
