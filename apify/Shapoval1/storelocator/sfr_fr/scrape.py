@@ -74,6 +74,10 @@ def get_data(url, sgw: SgWriter):
     ):
         hours_of_operation = "Closed"
     postal = j.get("address").get("postalCode") or "<MISSING>"
+    state = (
+        "".join(tree.xpath('//ol[@class="c-bread-crumbs-list"]/li[2]//text()'))
+        or "<MISSING>"
+    )
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -81,7 +85,7 @@ def get_data(url, sgw: SgWriter):
         location_name=location_name,
         street_address=street_address,
         city=city,
-        state=SgRecord.MISSING,
+        state=state,
         zip_postal=postal,
         country_code=country_code,
         store_number=SgRecord.MISSING,

@@ -44,6 +44,9 @@ def fetch_data(sgw: SgWriter):
         zip_code = addr.postcode
         country_code = "Germany"
         phone = store["phoneNumber"]
+        if not phone:
+            if location_name == "Neu-Ulm":
+                phone = "0731 20766-0"
         store_number = store["storeNumber"]
         location_type = ""
         latitude = store["coordinates"]["latitude"]

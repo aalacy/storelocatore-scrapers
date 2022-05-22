@@ -39,7 +39,9 @@ def fetch_data():
         data = session.post(url, json=frm, headers=hdr).json()
         for poi in data["Items"]:
             page_url = urljoin(start_url, poi["ItemUrl"])
-            street_address = f'{poi["Address"]} {poi["AddressExtension"]}'
+            street_address = f'{poi["Address"]} {poi["AddressExtension"]}'.split(
+                ", Barrie"
+            )[0]
             hoo = []
             for e in poi["ScheduleList"]:
                 day = e["WeekdayId"]

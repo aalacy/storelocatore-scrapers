@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -18,8 +19,9 @@ def fetch_data(sgw: SgWriter):
     r = session.post("https://www.nordsee.com/de/", headers=headers, data=data)
     js = r.json()["stores"]
     for j in js:
-
-        page_url = "https://www.nordsee.com/de/filialen/"
+        info = j.get("listItem")
+        a = html.fromstring(info)
+        page_url = "".join(a.xpath('//a[@class="storeListItem__link"]/@href'))
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("street_no") or "<MISSING>"
         postal = j.get("zipcode") or "<MISSING>"
@@ -38,7 +40,9 @@ def fetch_data(sgw: SgWriter):
                 times = hours.get(f"{d}")
                 line = f"{day} {times}"
                 tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+            hours_of_operation = "; ".join(tmp).replace("False", "Closed").strip()
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
 
         row = SgRecord(
             locator_domain=locator_domain,

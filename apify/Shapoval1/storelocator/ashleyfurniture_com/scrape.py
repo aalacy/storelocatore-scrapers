@@ -36,19 +36,27 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@class="state-col"]/a')
     for d in div:
-        slug = "".join(d.xpath(".//@href"))
-        state_url = f"https://stores.ashleyfurniture.com{slug}"
+        slug = "".join(d.xpath(".//@href")).split("/")[-2].strip()
+        state_url = f"https://stores.ashleyfurniture.com/outlet/{slug}/"
         r = session.get(state_url, headers=headers)
         tree = html.fromstring(r.text)
         div = tree.xpath('//div[@class="city-details"]')
         for d in div:
             slug = "".join(d.xpath(".//div[@class='storeName']//a/@href"))
             page_url = f"https://stores.ashleyfurniture.com{slug}"
-            street_address = "".join(d.xpath('.//div[@class="address"]//text()'))
+            street_address = (
+                "".join(d.xpath('.//div[@class="address"]//text()'))
+                .replace("&amp;", "&")
+                .strip()
+            )
             phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
             city = "".join(d.xpath('.//div[@class="cityName"]//text()'))
+            city = str(city).replace("&#241;", "ñ").replace("&#233;", "é").strip()
             state = "".join(d.xpath(".//h1//strong//text()"))
             location_name = city
+            location_name = (
+                str(location_name).replace("&#241;", "ñ").replace("&#233;", "é").strip()
+            )
             country_code = "US"
             location_type = "outlet"
             try:
@@ -64,9 +72,13 @@ def fetch_data(sgw: SgWriter):
                     .replace("&#39;", "`")
                     .replace("&#194;", "Â")
                     .replace("&#233;", "é")
+                    .replace("&amp;", "&")
+                    .replace("&#250;", "ú")
                     .strip()
                     or "<MISSING>"
                 )
+                if street_address == "<MISSING>":
+                    continue
                 city = a.get("addressLocality") or "<MISSING>"
                 state = a.get("addressRegion") or "<MISSING>"
                 if state.isdigit():
@@ -145,13 +157,19 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if street_address == "<MISSING>":
+            continue
         city = a.get("addressLocality") or "<MISSING>"
+        city = str(city).replace("&#241;", "ñ").replace("&#233;", "é").strip()
         state = a.get("addressRegion") or "<MISSING>"
         if state.isdigit():
             state = "<MISSING>"
         postal = a.get("postalCode") or "<MISSING>"
         country_code = a.get("addressCountry") or "<MISSING>"
         location_name = j.get("name") or "<MISSING>"
+        location_name = (
+            str(location_name).replace("&#241;", "ñ").replace("&#233;", "é").strip()
+        )
         phone = j.get("telephone") or "<MISSING>"
         hours = j.get("openingHoursSpecification") or "<MISSING>"
         hours_of_operation = "<MISSING>"
