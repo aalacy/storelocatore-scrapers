@@ -162,7 +162,6 @@ def fetch_data():
             )
 
             map_link = "".join(store_info_sel[0].xpath(".//@href")).strip()
-            # log.info(map_link)
 
             latitude, longitude = get_latlng(map_link)
 
