@@ -5,6 +5,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup as b4
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape import sgpostal as parser
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 import json
@@ -30,7 +31,7 @@ def fix_comma(x):
 
 
 def ret_record(record):
-
+    MISSING = SgRecord.MISSING
     page_url = SgRecord.MISSING
     location_name = SgRecord.MISSING
     street_address = SgRecord.MISSING
@@ -106,6 +107,18 @@ def ret_record(record):
         longitude = str(record["Coords"]["Lng"])
     except Exception:
         pass
+
+    parsed = parser.parse_address_intl(raw_address)
+    country_code = parsed.country if parsed.country else MISSING
+    street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
+    street_address = (
+        (street_address + ", " + parsed.street_address_2)
+        if parsed.street_address_2
+        else street_address
+    )
+    city = parsed.city if parsed.city else MISSING
+    state = parsed.state if parsed.state else MISSING
+    zip_postal = parsed.postcode if parsed.postcode else MISSING
 
     return SgRecord(
         page_url=page_url,
