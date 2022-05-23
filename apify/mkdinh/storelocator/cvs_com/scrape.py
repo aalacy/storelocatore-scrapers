@@ -2,7 +2,6 @@ import re
 import json
 import time
 import random
-import simplejson
 import threading
 import http.client
 from datetime import datetime
@@ -20,6 +19,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("cvs_com")
 http.client._MAXHEADERS = 1000  # type: ignore
+
+MAX_WORKERS = None
 
 
 start_time = datetime.now()
@@ -47,7 +48,7 @@ def write_output(data):
 def get_session():
     if (
         not hasattr(thread_local, "session")
-        or thread_local.request_count > 10
+        or thread_local.request_count > 5
         or thread_local.session_failed
     ):
         thread_local.session = SgRequests()
@@ -77,6 +78,7 @@ def enqueue_links(url, selectors):
     session = get_session()
     r = session.get(url, headers=headers)
     if r.status_code != 200:
+        logger.error(r)
         raise Exception()
 
     soup = BeautifulSoup(r.text, "html.parser")
@@ -97,7 +99,7 @@ def enqueue_links(url, selectors):
 
 def scrape_state_urls(state_urls):
     city_urls = []
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(enqueue_links, url, [".states a"]) for url in state_urls
         ]
@@ -111,7 +113,7 @@ def scrape_state_urls(state_urls):
 def scrape_city_urls(city_urls):
     # scrape each city url and populate loc_urls with the results
     loc_urls = []
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(
                 enqueue_links, url, [".directions-link a", ".tb-store-link a"]
@@ -148,44 +150,27 @@ def extract_value(key, html):
 def get_basic_info(id, page_schema, location, session):
     address = None
     try:
-        data = {"storeId": id}
-        result = session.post(
-            "https://www.cvs.com/rest/bean/cvs/store/CvsStoreLocatorServices/getStoreIdDetails",
-            data=data,
-        ).json()
-
-        info = result["atgResponse"]["sm"]
+        node = location.find("cvs-store-details")
+        props = json.loads(node["sd-props"])
+        store = props["cvsMyStoreDetailsProps"]["store"]
         address = {
-            "street_address": info["ad"].strip(),
-            "city": info["ci"].strip(),
-            "state": info["st"].strip(),
-            "postal": info["zp"].strip(),
-            "phone": info["ph"].strip(),
+            "street_address": store["addressLine"].strip(),
+            "city": store["addressCityDescriptionText"].strip(),
+            "state": store["addressState"].strip(),
+            "postal": store["addressZipCode"].strip(),
+            "phone": store["phoneNumber"].strip(),
             "country_code": "US",
         }
-    except simplejson.decoder.JSONDecodeError:
-        try:
-            node = location.find("cvs-store-details")
-            props = json.loads(node["sd-props"])
-            store = props["cvsMyStoreDetailsProps"]["store"]
-            address = {
-                "street_address": store["addressLine"].strip(),
-                "city": store["addressCityDescriptionText"].strip(),
-                "state": store["addressState"].strip(),
-                "postal": store["addressZipCode"].strip(),
-                "phone": store["phoneNumber"].strip(),
-                "country_code": "US",
-            }
-        except:
-            addr = page_schema["address"]
-            address = {
-                "street_address": addr["streetAddress"].strip(),
-                "city": addr["addressLocality"].strip(),
-                "state": addr["addressRegion"].strip(),
-                "postal": addr["postalCode"].strip(),
-                "phone": addr["telephone"].strip(),
-                "country_code": addr["addressCountry"].strip(),
-            }
+    except:
+        addr = page_schema["address"]
+        address = {
+            "street_address": addr["streetAddress"].strip(),
+            "city": addr["addressLocality"].strip(),
+            "state": addr["addressRegion"].strip(),
+            "postal": addr["postalCode"].strip(),
+            "phone": addr["telephone"].strip(),
+            "country_code": addr["addressCountry"].strip(),
+        }
     # parsing directional data from street address
     if "," in address["street_address"]:
         street_address, *others = re.split(",", address["street_address"])
@@ -310,9 +295,14 @@ def get_location(page_url):
     hours_of_operation = get_hours(location, page_schema)
 
     locator_domain = "cvs.com"
-    location_name = re.sub(r"(\s+at\s){1,2}\s*", " ", get(page_schema, "name"))
+    location_name = re.sub(
+        r"(\s*at\s+){1,2}", " ", get(page_schema, "name"), flags=re.IGNORECASE
+    )
     location_type = get(page_schema, "@type")
-    street_address = get(basic_info, "street_address")
+    street_address = re.sub(
+        r"(\s*at\s+){1,2}", " ", get(basic_info, "street_address"), flags=re.IGNORECASE
+    )
+
     city = get(basic_info, "city")
     state = get(basic_info, "state")
     postal = get(basic_info, "postal")
@@ -340,7 +330,7 @@ def get_location(page_url):
 
 
 def scrape_loc_urls(loc_urls):
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(get_location, loc) for loc in loc_urls]
         for future in as_completed(futures):
             try:

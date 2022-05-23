@@ -3,9 +3,11 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 
 
 website = "restaurantlabelleprovince.com"
@@ -35,10 +37,12 @@ def fetch_data():
         page_url = search_url
         locator_domain = website
         location_name = restaurant["title"]
+        log.info(location_name)
         raw_address = search_sel.xpath(
             f'//td/strong[text()="{location_name}"]/parent::node()/text()'
         )
 
+        phone = "<MISSING>"
         if len(raw_address) <= 0:
             if "(Henri-Bourassa)" in location_name:
                 location_name = location_name.split("(")[0].strip()
@@ -53,7 +57,43 @@ def fetch_data():
                 f'//td/strong[text()="{location_name}"]/parent::node()/text()'
             )
 
-        raw_address = ", ".join(raw_address[:-1]).strip().replace(",,", ",").strip()
+        if len(raw_address) <= 0:
+            log.info(location_name)
+            continue
+
+        if (
+            raw_address[-1]
+            .strip()
+            .replace("(", "")
+            .replace(")", "")
+            .replace("-", "")
+            .strip()
+            .replace(" ", "")
+            .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "")
+            .strip()
+            .isdigit()  # checking if it's phonenumber or zip
+        ):
+            raw_address = ", ".join(raw_address[:-1]).strip().replace(",,", ",").strip()
+
+            phone = search_sel.xpath(
+                f'//td/strong[text()="{location_name}"]/parent::node()/text()'
+            )
+
+            if phone:
+                phone = phone[-1].strip()
+        else:
+            raw_address = (
+                ", ".join(raw_address)
+                .strip()
+                .replace(",,", ",")
+                .strip()
+                .replace(", ,", ",")
+                .strip()
+            )
+
         if raw_address[0] == ",":
             raw_address = "".join(raw_address[1:]).strip()
 
@@ -76,13 +116,6 @@ def fetch_data():
         country_code = "CA"
 
         store_number = "<MISSING>"
-
-        phone = search_sel.xpath(
-            f'//td/strong[text()="{location_name}"]/parent::node()/text()'
-        )
-
-        if phone:
-            phone = phone[-1].strip()
 
         location_type = "<MISSING>"
 
@@ -108,13 +141,54 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
-        # break
+
+    # hardcoding missing location
+    location_name = "Saint-Michel"
+    raw_address = ", ".join(
+        search_sel.xpath(f'//td/strong[text()="{location_name}"]/parent::node()/text()')
+    ).strip()
+
+    formatted_addr = parser.parse_address_intl(raw_address)
+    street_address = formatted_addr.street_address_1
+    if formatted_addr.street_address_2:
+        street_address = street_address + ", " + formatted_addr.street_address_2
+
+    city = formatted_addr.city
+    if city is None:
+        city = location_name
+    state = formatted_addr.state
+    zip = raw_address.split(",")[-1].strip()
+    if len(zip) != 7:
+        zip = formatted_addr.postcode
+
+    street_address = street_address.replace(zip, "").strip()
+    street_address = street_address.replace(zip.split(" ")[0], "").strip()
+
+    yield SgRecord(
+        locator_domain=website,
+        page_url=search_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip,
+        country_code="CA",
+        store_number="<MISSING>",
+        phone="<MISSING>",
+        location_type="<MISSING>",
+        latitude="<MISSING>",
+        longitude="<MISSING>",
+        hours_of_operation="<MISSING>",
+        raw_address=raw_address,
+    )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

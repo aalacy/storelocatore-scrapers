@@ -7,6 +7,16 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "flagstar.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -64,9 +74,17 @@ def fetch_data():
                 state = "".join(store.xpath("@data-state")).strip()
                 zip = "".join(store.xpath("@data-zip")).strip()
                 country_code = "US"
-                phone = "".join(store.xpath("@data-bankingphone")).strip()
+                phone = store.xpath('td[5]//a[contains(@href,"tel:")]/text()')
+                if len(phone) > 0:
+                    phone = phone[0]
+                else:
+                    phone = ""
+
                 if len(phone) <= 0:
-                    phone = "".join(store.xpath("@data-loanphone")).strip()
+                    phone = "".join(store.xpath("@data-bankingphone")).strip()
+                    if len(phone) <= 0:
+                        phone = "".join(store.xpath("@data-loanphone")).strip()
+
                 store_number = "".join(store.xpath("@data-branchnum")).strip()
                 latitude = "".join(store.xpath("@data-lattitude")).strip()
                 longitude = "".join(store.xpath("@data-longitude")).strip()

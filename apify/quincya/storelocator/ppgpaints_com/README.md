@@ -1,2 +1,2 @@
---ignore CountValidator --ignore StateLevelCountValidator (Filtered found 567 POI on website)
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StoreNumberColumnValidator --ignore CentroidValidator (Confirmed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Filtered found 541 POI on website)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StoreNumberColumnValidator --ignore CentroidValidator --ignore GeoConsistencyValidator (Confirmed on website)

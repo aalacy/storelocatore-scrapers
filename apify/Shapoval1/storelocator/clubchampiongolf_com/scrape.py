@@ -56,10 +56,21 @@ def fetch_data(sgw: SgWriter):
             .replace("fcom", "f.com")
             .strip()
         )
+
         page_url = slug
         if page_url.find("https") == -1:
             page_url = f"https://clubchampiongolf.com{slug}"
-
+        sub_ad = ""
+        if slug.find("txgca") != -1:
+            page_url = "https://clubchampiongolf.com/locations"
+            info = j.get("properties").get("description")
+            n = html.fromstring(info)
+            sub_ad = (
+                " ".join(n.xpath('//a[contains(@title, "TXG")]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            sub_ad = " ".join(sub_ad.split())
         location_name = j.get("properties").get("name")
         store_number = j.get("id")
         latitude = j.get("geometry").get("coordinates")[1]
@@ -80,6 +91,9 @@ def fetch_data(sgw: SgWriter):
         ad = " ".join(ad.split())
         if ad.find("(") != -1:
             ad = ad.split("(")[0].strip()
+        if page_url == "https://clubchampiongolf.com/locations":
+            ad = sub_ad
+        ad = ad.replace("Our new location is:", "").strip()
         a = parse_address(USA_Best_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -87,7 +101,12 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "US"
+        if not postal.isdigit():
+            country_code = "CA"
         city = a.city or "<MISSING>"
+        if ad.find(", ON") != -1:
+            state = ad.split(",")[-1].split()[0].strip()
+            postal = " ".join(ad.split(",")[-1].split()[1:]).strip()
         phone = (
             "".join(
                 tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')

@@ -21,7 +21,12 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    items = base.find(id="desktop-menu-0-8").find_all("a")
+    items = (
+        base.find(class_="nav-bar__linklist list--unstyled")
+        .find(string="Locations")
+        .find_next("ul")
+        .find_all("a")
+    )
     locator_domain = "muttsandco.com"
 
     for item in items:
