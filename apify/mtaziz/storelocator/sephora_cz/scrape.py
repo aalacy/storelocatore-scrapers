@@ -51,6 +51,10 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.se/butiker/",
 ]  # Store locators for all countries
 
+LOCATION_URLS_GRID = [
+    "https://www.sephora.cz/prodejny",
+    "https://www.sephora.de/Stores-Alle",
+]
 
 # Middle East
 # These new store locators added.
@@ -265,6 +269,11 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             raw_address = ht.unescape(raw_address)
             location_name = ht.unescape(location_name)
             sta_additional_info_rmved = sta_additional_info_rmved.split("+")[0].strip()
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
+        if country_code == "CZ":
+            raw_address = ht.unescape(raw_address)
             sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
             city = ht.unescape(city)
 

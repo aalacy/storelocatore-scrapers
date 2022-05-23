@@ -43,8 +43,7 @@ def fetch_data():
             )[0]
         city = addr.city
         if not city:
-            addr_name = parse_address_intl(location_name)
-            city = addr_name.city
+            city = location_name.replace("Outlet", "")
         phone = loc_dom.xpath('//a[contains(@onclick, "tel")]/text()')[0]
         geo = (
             loc_dom.xpath("//iframe/@src")[0]

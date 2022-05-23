@@ -165,6 +165,7 @@ def fetch_data_from_files(data_files, domain, url_country):
                 )
 
                 phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
+                phone = phone.rsplit("  ")[0]
 
             street_address = ""
             if "street" in store["address"]:
