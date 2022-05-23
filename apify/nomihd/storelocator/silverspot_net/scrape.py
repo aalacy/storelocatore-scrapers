@@ -81,19 +81,21 @@ def fetch_data():
         hours = store_sel.xpath("//table//tr[position()>2]/td")
         hours_list = []
         for hour in hours:
-            if len("".join(hour.xpath("text()")).strip()) > 0:
-                hours_list.append("".join(hour.xpath("text()")).strip())
+            if len("".join(hour.xpath(".//text()")).strip()) > 0:
+                hours_list.append("".join(hour.xpath(".//text()")).strip())
 
         if len(hours_list) <= 0:
             hours = store_sel.xpath(
                 '//p[./u/strong[contains(text(),"Hours of Operation")]]/following-sibling::p'
             )
             for hour in hours:
-                if len("".join(hour.xpath("text()")).strip()) > 0:
-                    hours_list.append("".join(hour.xpath("text()")).strip())
+                if len("".join(hour.xpath(".//text()")).strip()) > 0:
+                    hours_list.append("".join(hour.xpath(".//text()")).strip())
                 else:
                     break
-        hours_of_operation = "; ".join(hours_list).strip()
+        hours_of_operation = (
+            "; ".join(hours_list).strip().split("; VOTED BEST")[0].strip()
+        )
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 

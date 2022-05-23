@@ -404,9 +404,6 @@ if __name__ == "__main__":
 
     tocrawl = [
         "cn",
-        "kz",
-        "ir",
-        "sa",
         "rw",
         "sb",
         "sc",

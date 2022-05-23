@@ -30,14 +30,20 @@ def fetch_data():
         link = div.find("p", {"class": "storeLocator-store-moreLink"}).find("a")["href"]
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        lat, longt = (
-            r.text.split('a href="https://www.google.com/maps/search/?api=1&query=', 1)[
-                1
-            ]
-            .split('"', 1)[0]
-            .split(",", 1)
-        )
-        phone = soup.find("a", {"class": "link--phone"}).text
+        try:
+            lat, longt = (
+                r.text.split(
+                    'a href="https://www.google.com/maps/search/?api=1&query=', 1
+                )[1]
+                .split('"', 1)[0]
+                .split(",", 1)
+            )
+        except:
+            lat = longt = "<MISSING>"
+        try:
+            phone = soup.find("a", {"class": "link--phone"}).text
+        except:
+            phone = "<MISSING>"
         try:
             hourlist = div.find("table", {"class": "store-timetable-table"}).findAll(
                 "tr"

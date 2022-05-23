@@ -54,7 +54,7 @@ def fetch_data():
                         )
                         add = add.strip()
                         city = item["Address"]["City"]
-                        state = item["Address"]["State"]
+                        state = item["Address"].get("State", "<MISSING>")
                         country = item["Address"]["Country"][:2]
                         zc = item["Address"]["PostalCode"]
                         store = item["SalesCode"]

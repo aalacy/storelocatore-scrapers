@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -37,20 +36,25 @@ def fetch_data():
         if not geo:
             geo = poi_html.xpath('.//a[contains(@href, "maps")]/@href')
             if geo:
-                geo = geo[0].split("sll=")[-1].split("&")[0].split(",")[::-1]
+                if "&ll=" in geo[0]:
+                    geo = geo[0].split("&ll=")[-1].split("&")[0].split(",")[::-1]
+                else:
+                    geo = geo[0].split("sll=")[-1].split("&")[0].split(",")[::-1]
             else:
                 geo = ["", ""]
         if len(geo) == 1:
             geo = ["", ""]
         hoo = poi_html.xpath('.//div[@class="details hours"]/p/text()')
         hoo = [e.strip() for e in hoo if e.strip() and "Open" not in e]
-        hoo = " ".join(hoo)
+        hoo = (
+            " ".join(hoo).split("phone. ")[-1].split("Available ")[-1].split("Take")[0]
+        )
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
-            street_address=raw_address[0],
+            street_address=raw_address[0].split("Fritz Farm,")[-1],
             city=raw_address[1].split(", ")[0],
             state=" ".join(raw_address[1].split(", ")[1].split()[:-1]),
             zip_postal=raw_address[1].split(", ")[1].split()[-1],

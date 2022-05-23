@@ -24,8 +24,7 @@ else:
 logger = SgLogSetup().get_logger("cat_com")
 DOMAIN = "cat.com"
 MISSING = SgRecord.MISSING
-API_ENDPOINT_URL = "https://www.cat.com/content/catdotcom/en_US/support/dealer-locator/jcr:content/CATSectionArea/Copy%20of%20dealerlocator_1797052033.dealer-locator.html?searchType=location&maxResults=4500&searchDistance=20000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&searchValue=-150.4352207%2C60.9951298"
-
+API_ENDPOINT_URL = "https://www.cat.com/content/catdotcom/en_US/support/dealer-locator/jcr:content/root/responsivegrid/container/dealerlocator.dealer-locator.html?searchType=location&maxResults=4500&searchDistance=20000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&searchValue=-73.9874105%2C40.7322535"
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"

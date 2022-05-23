@@ -35,18 +35,25 @@ def fetch_data(sgw: SgWriter):
             if state == "CA":
                 country_code = "US"
             city = j.get("city") or "<MISSING>"
+            if str(city).find(",") != -1:
+                city = str(city).split(",")[0].strip()
             store_number = j.get("stockist_id") or "<MISSING>"
             page_url = (
                 f"https://www.brasnthings.com/stores/store/index/id/{store_number}"
             )
+            if (
+                page_url == "https://www.brasnthings.com/stores/store/index/id/14381"
+                or page_url == "https://www.brasnthings.com/stores/store/index/id/14311"
+                or page_url == "https://www.brasnthings.com/stores/store/index/id/14371"
+                or page_url == "https://www.brasnthings.com/stores/store/index/id/14391"
+            ):
+                continue
             latitude = j.get("latitude") or "<MISSING>"
             longitude = j.get("longitude") or "<MISSING>"
             if latitude == longitude:
                 latitude, longitude = "<MISSING>", "<MISSING>"
             phone = j.get("phone") or "<MISSING>"
-            r = http.get(url=page_url, headers=headers)
-            assert isinstance(r, httpx.Response)
-            assert 200 == r.status_code
+            r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             curr_date = date.today()
             next_date = curr_date + timedelta(days=1)

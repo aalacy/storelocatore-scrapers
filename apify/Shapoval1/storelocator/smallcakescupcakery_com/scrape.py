@@ -24,11 +24,6 @@ def fetch_data(sgw: SgWriter):
             "".join(d.xpath('.//a[./span[text()="Visit Website"]]/@href')) or api_url
         )
         location_name = "".join(d.xpath(".//h3//text()")).replace("\n", "").strip()
-        if (
-            location_name.find("Coming Soon") != -1
-            or location_name.find("coming soon") != -1
-        ):
-            continue
         ad = (
             " ".join(d.xpath("./span[position() < 3]/text()")).replace("\n", "").strip()
         )
@@ -59,6 +54,12 @@ def fetch_data(sgw: SgWriter):
             .isdigit()
         ):
             phone = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if (
+            location_name.find("Coming Soon") != -1
+            or location_name.find("coming soon") != -1
+        ):
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -74,7 +75,7 @@ def fetch_data(sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
             raw_address=ad,
         )
 

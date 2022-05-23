@@ -117,6 +117,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.PAGE_URL,
                     SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.PHONE,
                 }
             )
         )

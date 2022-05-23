@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from bs4 import BeautifulSoup as bs
@@ -30,39 +30,31 @@ bs_url = "https://www.bupa.co.uk/BDC/SearchPractices"
 json_url = "https://www.bupa.co.uk/BDC/GoogleMapSearch"
 
 
-def get_driver():
-    return SgChrome(
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+def get_url(url=None):
+    rr = None
+    with SgChrome(
         executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
-    ).driver()
-
-
-@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
-def get_url(driver=None, url=None):
-    if not driver:
-        driver = get_driver()
-    try:
+    ) as driver:
         driver.get(url)
-    except:
-        driver = get_driver()
-        raise Exception
+        rr = driver.wait_for_request(json_url, timeout=30)
+
+    return rr
 
 
-def fetch_records(driver, search):
+def fetch_records(search):
     for zip in search:
         with SgRequests(proxy_country="us") as http:
-            del driver.requests
-            headers = {}
-            get_url(
-                driver,
-                f'https://www.bupa.co.uk/dental/dental-care/practices?loc={zip.replace(" ", "%20")}',
-            )
             try:
-                rr = driver.wait_for_request(json_url, timeout=30)
+                rr = get_url(
+                    f'https://www.bupa.co.uk/dental/dental-care/practices?loc={zip.replace(" ", "%20")}',
+                )
             except:
                 continue
 
+            headers = {}
             for key, val in rr.headers.items():
                 if key.lower() != "content-length":
                     headers[key] = val
@@ -113,7 +105,6 @@ def fetch_records(driver, search):
 
 
 if __name__ == "__main__":
-    driver = get_driver()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2()
     )
@@ -123,7 +114,5 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=100,
         )
     ) as writer:
-        for rec in fetch_records(driver, search):
+        for rec in fetch_records(search):
             writer.write_row(rec)
-    if driver:
-        driver.close()

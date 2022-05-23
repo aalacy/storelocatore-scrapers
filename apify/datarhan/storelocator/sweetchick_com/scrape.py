@@ -36,9 +36,9 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=page_url,
             location_name=location_name,
-            street_address=raw_address[0],
+            street_address=raw_address[0].replace(",", ""),
             city=raw_address[1].split(", ")[0],
             state=raw_address[1].split(", ")[1].split()[0],
             zip_postal=raw_address[1].split(", ")[1].split()[1],
@@ -48,7 +48,7 @@ def fetch_data():
             location_type="",
             latitude=loc_dom.xpath("//@data-gmaps-lat")[0],
             longitude=loc_dom.xpath("//@data-gmaps-lng")[0],
-            hours_of_operation="",
+            hours_of_operation=hoo,
         )
 
         yield item

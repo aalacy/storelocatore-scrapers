@@ -1,141 +1,83 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://fallasstores.net/"
+    api_url = "https://api.storerocket.io/api/user/1vZ4v6y4Qd/locations"
+    session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["results"]["locations"]
+    for j in js:
 
-    base_url = "https://www.fallasstores.net"
-    addresses = []
-
-    r = session.get(
-        "https://api.storerocket.io/api/user/1vZ4v6y4Qd/locations",
-        headers=headers,
-    )
-
-    json_data = r.json()
-
-    for location in json_data["results"]["locations"]:
-
-        locator_domain = base_url
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
+        page_url = "https://www.fallasstores.net/store-locator-map"
+        location_name = j.get("name") or "<MISSING>"
+        ad = "".join(j.get("address"))
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        hours_of_operation = ""
-        page_url = ""
+        city = a.city or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        if str(ad).find("PR,") != -1:
+            street_address = " ".join(ad.split(",")[:-3])
+            city = ad.split(",")[-3].strip()
+            state = ad.split(",")[-2].strip()
+            postal = ad.split(",")[-1].strip()
+        if str(location_name).find("El Paso- S-antonio") != -1:
+            street_address = ad.split(",")[0].strip()
+        if ad.find(" Puerto Rico") != -1:
+            state = "PR"
+        phone = j.get("phone") or "<MISSING>"
+        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        tmp = []
+        for d in days:
+            day = str(d).capitalize()
+            times = j.get(f"{d}")
+            line = f"{day} {times}"
+            tmp.append(line)
+        hours_of_operation = " ;".join(tmp) or "<MISSING>"
+        if hours_of_operation.count("None") == 7:
+            hours_of_operation = "<MISSING>"
 
-        store_number = location["id"]
-        location_type = location["location_type_name"]
-        location_name = location["name"]
-        street_address = location["address_line_1"]
-        if "address_line_2" in location and location["address_line_2"]:
-            street_address += " " + location["address_line_2"]
-        if street_address is None:
-            street_address = location["address"].split(",")[0].strip()
-
-        if location["city"] is not None:
-            city = location["city"]
-        else:
-            city = location["address"].split(",")[1].strip()
-        if location["state"] is not None:
-            state = location["state"]
-            zip = location["postcode"]
-        else:
-            sz = location["address"].split(",")[2].split()
-            if len(sz) == 2:
-                state = sz[0].strip()
-                zip = sz[-1].strip()
-
-            else:
-                state = sz[0].strip()
-                zip = location["address"].split(",")[-1].strip()
-        if len(zip) == 3:
-            zipp = "00" + zip
-        else:
-            zipp = zip
-
-        latitude = location["lat"]
-        longitude = location["lng"]
-        phone = location["phone"]
-        hours_of_operation = (
-            str(location["hours"])
-            .replace("{", "")
-            .replace("}", "")
-            .replace("'", "")
-            .replace(",", "")
-            .replace("None", "Closed")
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
-        store = [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zipp,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-            page_url,
-        ]
-
-        if str(store[2]) not in addresses:
-            addresses.append(str(store[2]))
-
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)
