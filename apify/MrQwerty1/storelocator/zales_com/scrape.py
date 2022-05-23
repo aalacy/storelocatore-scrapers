@@ -4,67 +4,75 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from tenacity import stop_after_attempt, wait_fixed, retry
 
 
-def fetch_data(_zip, sgw: SgWriter):
-    for i in range(777):
-        api = f"https://www.zales.com/store-finder?q={_zip}&page={i}"
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
+def get_json(api):
+    r = session.get(api, headers=headers)
+    js = r.json()["data"]
 
-        r = session.get(api, headers=headers)
-        try:
-            js = r.json().get("data") or []
-        except:
-            return
+    return js
 
-        for j in js:
-            _type = j.get("baseStore") or ""
-            location_name = "Zales"
-            location_type = "Zales"
-            slug = j.get("url")
-            page_url = f"https://www.zales.com{slug}?baseStore={_type}"
-            if page_url.endswith("/null"):
-                page_url = SgRecord.MISSING
 
-            street_address = f'{j.get("line1")} {j.get("line2") or ""}'.strip()
-            city = j.get("town")
-            state = j.get("region")
-            postal = j.get("postalCode")
-            country_code = "US"
-            phone = j.get("phone")
-            latitude = j.get("latitude")
-            longitude = j.get("longitude")
-            store_number = j.get("name")
-            if _type == "zalesoutlet":
-                location_name = "Zales Outlet"
-                location_type = "Outlet"
+def fetch_data(sgw: SgWriter):
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
+    )
+    for _zip in search:
+        for i in range(777):
+            api = f"https://www.zales.com/store-finder?q={_zip}&page={i}"
+            js = get_json(api)
 
-            _tmp = []
-            items = j.get("openings") or {}
-            for k, v in items.items():
-                _tmp.append(f"{k} {v}")
+            for j in js:
+                _type = j.get("baseStore") or ""
+                location_name = "Zales"
+                location_type = "Zales"
+                slug = j.get("url")
+                page_url = f"https://www.zales.com{slug}?baseStore={_type}"
+                if page_url.endswith("/null"):
+                    page_url = SgRecord.MISSING
 
-            hours_of_operation = ";".join(_tmp)
-            row = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
-            )
+                street_address = f'{j.get("line1")} {j.get("line2") or ""}'.strip()
+                city = j.get("town")
+                state = j.get("region")
+                postal = j.get("postalCode")
+                country_code = "US"
+                phone = j.get("phone")
+                latitude = j.get("latitude")
+                longitude = j.get("longitude")
+                store_number = j.get("name")
+                if _type == "zalesoutlet":
+                    location_name = "Zales Outlet"
+                    location_type = "Outlet"
 
-            sgw.write_row(row)
+                _tmp = []
+                items = j.get("openings") or {}
+                for k, v in items.items():
+                    _tmp.append(f"{k} {v}")
 
-        if len(js) < 5:
-            break
+                hours_of_operation = ";".join(_tmp)
+                row = SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
+
+            if len(js) < 5:
+                break
 
 
 if __name__ == "__main__":
@@ -87,9 +95,4 @@ if __name__ == "__main__":
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        for _z in DynamicZipSearch(
-            country_codes=[SearchableCountries.USA],
-            max_search_distance_miles=100,
-            expected_search_radius_miles=20,
-        ):
-            fetch_data(_z, writer)
+        fetch_data(writer)

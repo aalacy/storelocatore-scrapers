@@ -12,7 +12,7 @@ from sglogging import sglog
 def get_params():
     params = set()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
 
     for _zip in search:
@@ -36,6 +36,9 @@ def get_data(param, sgw: SgWriter):
     page_url, latitude, longitude, store_number = param
     r = session.get(page_url, headers=headers)
     logger.info(f"{page_url}: {r.status_code}")
+    if r.status_code != 200:
+        logger.info(f"{page_url} skipped b/c status code is {r.status_code}")
+        return
     tree = html.fromstring(r.text)
 
     try:
