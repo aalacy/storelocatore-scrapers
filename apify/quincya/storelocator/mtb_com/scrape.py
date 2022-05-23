@@ -61,6 +61,21 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(req.text, "lxml")
         location_name = base.find(id="location-name").text.strip()
         street_address = base.find(itemprop="streetAddress")["content"]
+        street_address = (
+            base.find(itemprop="streetAddress")["content"]
+            .replace("Thruway Nys Thruway", "Thruway")
+            .replace("Newton Plaza", "")
+            .replace("Pittston Bypass", "")
+            .replace("Hamilton Square", "")
+            .replace("Hudson Mall", "")
+            .replace("Holland Union Building,", "")
+            .split("Spencerport")[0]
+            .split("(Aka")[0]
+            .split(", Penni")[0]
+            .split("Holland Union")[0]
+            .split("Stoney Creek")[0]
+            .split("Seaford Village")[0]
+        ).strip()
         city = base.find(class_="Address-field Address-city").text.strip()
         state = base.find(itemprop="addressRegion").text.strip()
         zip_code = base.find(itemprop="postalCode").text.strip()
@@ -85,14 +100,30 @@ def fetch_data(sgw: SgWriter):
         except:
             location_type = ""
 
-        try:
-            hours_of_operation = (
-                " ".join(list(base.find(class_="c-hours-details").stripped_strings))
-                .replace("Day of the Week Hours", "")
-                .strip()
-            )
-        except:
-            hours_of_operation = ""
+        if "Branch" in location_type:
+            try:
+                hours_of_operation = (
+                    " ".join(list(base.find(class_="c-hours-details").stripped_strings))
+                    .replace("Day of the Week Hours", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = ""
+        else:
+            try:
+                hours_of_operation = (
+                    " ".join(
+                        list(
+                            base.find(string="ATM Hours")
+                            .find_next(class_="c-hours-details")
+                            .stripped_strings
+                        )
+                    )
+                    .replace("Day of the Week Hours", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = ""
 
         latitude = base.find(itemprop="latitude")["content"]
         longitude = base.find(itemprop="longitude")["content"]
