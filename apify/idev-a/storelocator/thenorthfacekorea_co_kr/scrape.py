@@ -35,6 +35,12 @@ def fetch_data():
             hours = _["holidayClosedDates"]
             if not hours:
                 hours = ["별도 휴무일이 없습니다"]
+            latitude = _["latitude"]
+            longitude = _["longitude"]
+            if latitude == 0.0:
+                latitude = ""
+            if longitude == 0.0:
+                longitude = ""
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -43,8 +49,8 @@ def fetch_data():
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["zip"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
+                latitude=latitude,
+                longitude=longitude,
                 country_code="KR",
                 phone=_["phone"],
                 locator_domain=locator_domain,

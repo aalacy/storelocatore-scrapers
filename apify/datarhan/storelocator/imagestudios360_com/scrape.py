@@ -18,15 +18,15 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//ul[@class="studioLocationsList"]//a/@href')
-    for store_url in all_locations:
-        loc_response = session.get(store_url)
+    all_locations = dom.xpath('//div[@class="locations_list_block"]/a/@href')
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="locationName"]/p/text()')[0]
-        raw_address = loc_dom.xpath('//div[@class="locationAddress"]/p[1]/text()')
-        raw_address = [e.strip() for e in raw_address if e.strip()]
-        addr = parse_address_intl(" ".join(raw_address))
+        location_name = loc_dom.xpath('//h1[@class="pro_title"]/text()')[0]
+        raw_address = loc_dom.xpath('//div[@class="salon_address"]/text()')
+        raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
@@ -41,18 +41,20 @@ def fetch_data():
         if len(zip_code) > 5:
             zip_code = ""
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone and "@" not in phone[0] else ""
+        phone = (
+            phone[0].replace("Lori", "").replace("or Rich", "").split(" 781")[0]
+            if phone and "@" not in phone[0]
+            else ""
+        )
         location_type = "<MISSING>"
-        if "coming-soon" in store_url:
-            location_type = "coming soon"
+        if "coming-soon" in page_url:
+            continue
         if "COMING SOON" in location_name:
-            location_type = "coming soon"
-        latitude = loc_dom.xpath("//@data-lat")[0]
-        longitude = loc_dom.xpath("//@data-lng")[0]
+            continue
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -62,8 +64,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
+            latitude="",
+            longitude="",
             hours_of_operation="",
         )
 

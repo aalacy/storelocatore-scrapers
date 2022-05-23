@@ -1,3 +1,4 @@
+import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -27,6 +28,12 @@ def get_data(_id, sgw: SgWriter):
         source = j.get("calle_numero") or "<html>"
         tree = html.fromstring(source)
         street_address = " ".join(" ".join(tree.xpath("//text()")).split())
+        try:
+            postal = re.findall(r"\d{5}", street_address).pop()
+        except:
+            postal = SgRecord.MISSING
+        if ", C." in street_address:
+            street_address = street_address.split(", C.")[0]
         city = j.get("nombre_asentamiento")
         state = j.get("nombre_estado")
         location_type = j.get("formato")
@@ -43,6 +50,7 @@ def get_data(_id, sgw: SgWriter):
             street_address=street_address,
             city=city,
             state=state,
+            zip_postal=postal,
             country_code=country_code,
             location_type=location_type,
             latitude=latitude,
@@ -84,6 +92,10 @@ if __name__ == "__main__":
 
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
     ) as writer:
         fetch_data(writer)

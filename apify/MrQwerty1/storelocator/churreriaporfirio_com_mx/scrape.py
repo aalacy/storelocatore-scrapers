@@ -39,7 +39,9 @@ def get_data(api, sgw: SgWriter):
     street_address = f"{adr1} {adr2}".strip()
     city = j.get("ciudad")
     state = j.get("mexico_states_name")
-    postal = j.get("codigo_postal")
+    postal = j.get("codigo_postal") or ""
+    if postal.isalpha():
+        postal = SgRecord.MISSING
     country_code = "MX"
     phone = j.get("telefono") or ""
     if "/" in phone:

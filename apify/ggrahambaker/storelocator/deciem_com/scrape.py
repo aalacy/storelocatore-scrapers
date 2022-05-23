@@ -3,7 +3,7 @@ import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
@@ -52,6 +52,7 @@ def fetch_data():
             if poi["address2"]:
                 street_address += " " + poi["address2"]
             street_address = street_address if street_address else "<MISSING>"
+
             city = poi["city"]
             city = city if city else "<MISSING>"
             state = poi.get("stateCode")
@@ -59,6 +60,9 @@ def fetch_data():
             zip_code = poi["postalCode"]
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["countryCode"]
+            location_type = poi["owner"]
+            location_name = location_name + " " + street_address + " " + city
+            location_name = location_name.replace("<MISSING>", "").strip()
             country_code = country_code if country_code else "<MISSING>"
             if country_code not in ["CA", "GB", "US"]:
                 continue
@@ -68,16 +72,14 @@ def fetch_data():
             except:
 
                 phone = "<MISSING>"
-            location_type = poi["owner"]
             latitude = poi["latitude"]
             longitude = poi["longitude"]
             try:
                 hours_of_operation = poi["storeHours"].replace("\n", " ").strip()
             except:
                 hours_of_operation = "<MISSING>"
-            check = f"{location_name} {street_address}"
-            if check not in scraped_items:
-                scraped_items.append(check)
+            if location_name not in scraped_items:
+                scraped_items.append(location_name)
                 yield SgRecord(
                     locator_domain=domain,
                     page_url=store_url,
@@ -99,7 +101,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
 
         results = fetch_data()

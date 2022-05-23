@@ -6,20 +6,26 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests()
     domain = "remax.ca"
-    start_url = "https://api.remax.ca/api/v1/office/search/?text={}&from=0&size=12&category=Residential&propertyTypes=Residential"
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=10
-    )
+    start_url = "https://api.remax.ca/api/v1/office/search"
+    all_codes = static_zipcode_list(1, SearchableCountries.CANADA)
+
     for code in all_codes:
         code = code[:3] + "+" + code[3:]
-        response = session.get(start_url.format(code))
+        params = {
+            "randomSeed": "1651060139549",
+            "text": code,
+            "size": 1000,
+            "from": 0,
+            "category": "Residential",
+        }
+        response = session.get(start_url, params=params)
         data = json.loads(response.text)
         all_locations = data["result"]["results"]
 
@@ -34,8 +40,8 @@ def fetch_data():
             zip_code = poi["postalCode"]
             country_code = poi["country"]
             phone = poi.get("telephone")
-            latitude = poi["latitude"]
-            longitude = poi["longitude"]
+            latitude = poi.get("latitude")
+            longitude = poi.get("longitude")
 
             item = SgRecord(
                 locator_domain=domain,

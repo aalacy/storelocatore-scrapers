@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
@@ -55,7 +55,8 @@ def _d(_, found_location_at, current_country):
     else:
         location_name = _["town"]
 
-    found_location_at(_["latitude"], _["longitude"])
+    if found_location_at:
+        found_location_at(_["latitude"], _["longitude"])
     return SgRecord(
         location_name=location_name,
         street_address=street_address,
@@ -110,11 +111,13 @@ def fetch_kw():
     with SgRequests() as http:
         locations = http.get(kw_url, headers=_headers).json()["data"]
         for _ in locations:
-            yield _d(_, "kw")
+            yield _d(_, None, "kw")
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", expected_search_radius_miles=100
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             SgRecordID(
@@ -127,10 +130,9 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=100,
         )
     ) as writer:
-        search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
-            search_iteration=search_iter,
+            search_iteration=lambda: ExampleSearchIteration(),
             country_codes=[
                 SearchableCountries.UNITED_ARAB_EMIRATES,
                 SearchableCountries.PAKISTAN,

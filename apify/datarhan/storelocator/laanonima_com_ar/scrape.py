@@ -9,7 +9,6 @@ from sgpostal.sgpostal import parse_address_intl
 
 def fetch_data():
     session = SgRequests()
-
     start_url = (
         "https://www.laanonima.com.ar/contents/themes/responsive/bin/get_sucursales.php"
     )
@@ -25,6 +24,8 @@ def fetch_data():
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         hoo = f'Lunes a Viernes: {poi["h_lv"]}, Sábado: {poi["h_sab"]}, Domingo: {poi["h_dom"]}'
+        if "Lunes a Viernes: , Sábado: , Domingo:" in hoo:
+            hoo = ""
         city = addr.city
         if city and city.endswith("."):
             city = city[:-1]

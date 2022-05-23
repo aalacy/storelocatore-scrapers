@@ -52,6 +52,7 @@ def fetch_data():
                 "Manchester",
                 "Birmingham",
                 "Reigate",
+                "Luton",
             ]:
                 state = ""
             yield SgRecord(

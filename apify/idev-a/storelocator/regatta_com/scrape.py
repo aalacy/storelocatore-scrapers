@@ -13,18 +13,19 @@ _headers = {
 
 locator_domain = "https://www.regatta.com/"
 base_url = "https://backend-regatta-uk.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1=52.536273191622705&lng1=-122.51953162500001&lat2=17.727758845003045&lng2=-68.90625037500001"
-us_url = "https://backend-regatta-us.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1=62.24128219987466&lng1=-171.86167175000003&lat2=-7.767694768368658&lng2=-64.63510925000001"
 
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def fetch_data():
     with SgRequests() as session:
-        locations = session.get(us_url, headers=_headers).json()["result"]["hits"][
+        locations = session.get(base_url, headers=_headers).json()["result"]["hits"][
             "hits"
         ]
         for loc in locations:
             _ = loc["_source"]
+            if "Coming Soon" in _["telephone"]:
+                continue
             street_address = _["street"]
             if _["street_line_2"]:
                 street_address += " " + _["street_line_2"]
@@ -65,7 +66,7 @@ def fetch_data():
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY})
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.PHONE})
         )
     ) as writer:
         results = fetch_data()

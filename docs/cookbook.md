@@ -4,10 +4,9 @@
 
 ## Table of Contents
 
-### Templates
-
-- [Experimental Live Realtime Templating Engine](./cookbook/crawly_web.md)
-- [Template types and uses](./cookbook/templates.md)
+[//]: # '### Templates'
+[//]: # '- [Experimental Live Realtime Templating Engine](./cookbook/crawly_web.md)'
+[//]: # '- [Template types and uses](./cookbook/templates.md)'
 
 ### Basics
 

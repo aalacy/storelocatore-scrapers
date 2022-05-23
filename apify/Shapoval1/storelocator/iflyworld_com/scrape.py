@@ -56,6 +56,8 @@ def fetch_data(sgw: SgWriter):
             page_url = f"https://www.iflyworld.com{page_url}"
 
         city = j.get("city") or "<MISSING>"
+        if city == "<MISSING>" and country_code == "FR":
+            city = page_url.split("votre-visite/")[1].split(".")[0].capitalize()
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
@@ -106,5 +108,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.PHONE}))
+    ) as writer:
         fetch_data(writer)

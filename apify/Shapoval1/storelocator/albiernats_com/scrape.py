@@ -44,7 +44,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h2[text()="Restaurant Hours"]/following-sibling::p//text()'
+                    '//h2[text()="Restaurant Hours"]/following-sibling::div//text()'
                 )
             )
             .replace("\n", "")
