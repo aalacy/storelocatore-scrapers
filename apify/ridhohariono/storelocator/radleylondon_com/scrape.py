@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
         for p in page_urls:
             slug = "".join(p.xpath(".//@href"))
             page_url = f"https://www.radleylondon.com{slug}"
-            print(page_url)
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
 
