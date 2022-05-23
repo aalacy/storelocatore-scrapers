@@ -214,6 +214,7 @@ def gen_hours(rec):
         for recz in newrec["horas"]:
             copyrec = newrec
             copyrec["horas"] = recz
+            copyrec["rawadd"] = recz.split(" - ",1)[0]
             yield copyrec
 
     except Exception:
