@@ -157,10 +157,17 @@ def fetch_records(http):
         zip_postal = _.get("zip")
         if zip_postal:
             zip_postal = zip_postal.replace("Canada", "").replace(",", "").strip()
+        street_address = _["address"].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+
+        if street_address.endswith("USA"):
+            addr = street_address.split(",")
+            street_address = ", ".join(addr[:-2])
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],
-            street_address=_["address"].replace(",", ""),
+            street_address=street_address,
             city=_["city"],
             state=_["state"],
             zip_postal=zip_postal,
