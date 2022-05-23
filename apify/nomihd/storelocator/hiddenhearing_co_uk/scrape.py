@@ -7,6 +7,7 @@ import lxml.html
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 
 website = "hiddenhearing.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -21,6 +22,15 @@ def fetch_data():
     search_url = "https://www.hiddenhearing.co.uk/hearing-aids-centre/all-clinics"
 
     with SgRequests() as session:
+        json_req = session.get(
+            "https://www.hiddenhearing.co.uk/api/clinics/getclinics/%7B22907258-EC4D-4701-BC3C-9F0A3A3204F9%7D",
+            headers=headers,
+        )
+        stores_list = json.loads(json_req.text)
+        url_dict = {}
+        for st in stores_list:
+            url_dict[st["ItemUrl"]] = st["ClinicType"]
+
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
@@ -31,15 +41,20 @@ def fetch_data():
             locator_domain = website
             store_number = "<MISSING>"
 
-            page_url = base + "".join(
+            page_url = "".join(
                 store.xpath('./div[@class="m-clinic-tile-card "]/a/@href')
             )
 
+            location_type = url_dict[page_url]
+            if location_type == "partner":
+                location_type = "Hearing Clinics"
+            else:
+                location_type = "Hearing Centres"
+
+            page_url = base + page_url
             location_name = "".join(
                 store.xpath('./div[@class="m-clinic-tile-card "]/a/text()')
             ).strip()
-
-            location_type = "<MISSING>"
 
             store_info = list(
                 filter(
@@ -84,7 +99,6 @@ def fetch_data():
                     [x.strip() for x in store_sel.xpath("//table//tr//text()")],
                 )
             )
-
             hours_of_operation = (
                 "; ".join(hours)
                 .replace("day; ", "day: ")
