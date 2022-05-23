@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import lxml
 import usaddress
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -33,13 +32,51 @@ def fetch_data():
             soup = BeautifulSoup(driver.page_source, "html.parser")
 
             title = soup.find("h1").text
+            try:
+                address = (
+                    soup.find("div", {"class": "location-details"}).find("small").text
+                )
+                phone = soup.find("span", {"itemprop": "telephone"}).text
+                lat = driver.page_source.split('latitude" content="', 1)[1].split(
+                    '"', 1
+                )[0]
+                longt = driver.page_source.split('"longitude" content="', 1)[1].split(
+                    '"', 1
+                )[0]
 
-            address = soup.find("div", {"class": "location-details"}).find("small").text
-            phone = soup.find("span", {"itemprop": "telephone"}).text
-            lat = driver.page_source.split('latitude" content="', 1)[1].split('"', 1)[0]
-            longt = driver.page_source.split('"longitude" content="', 1)[1].split(
-                '"', 1
-            )[0]
+                address = usaddress.parse(address)
+                ltype = "Store"
+                i = 0
+                street = ""
+                city = ""
+                state = ""
+                pcode = ""
+                while i < len(address):
+                    temp = address[i]
+                    if (
+                        temp[1].find("Address") != -1
+                        or temp[1].find("Street") != -1
+                        or temp[1].find("Recipient") != -1
+                        or temp[1].find("Occupancy") != -1
+                        or temp[1].find("BuildingName") != -1
+                        or temp[1].find("USPSBoxType") != -1
+                        or temp[1].find("USPSBoxID") != -1
+                    ):
+                        street = street + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        pcode = pcode + " " + temp[0]
+                    i += 1
+                street = street.lstrip().replace(",", "")
+                city = city.lstrip().replace(",", "")
+                state = state.lstrip().replace(",", "")
+                pcode = pcode.lstrip().replace(",", "")
+            except:
+                street = city = state = pcode = phone = lat = longt = "<MISSING>"
+                ltype = "Delivery Only"
             hours = (
                 soup.find("div", {"class": "location-details"})
                 .findAll("p")[-1]
@@ -53,37 +90,6 @@ def fetch_data():
                 hours = hours.split("ay: ", 1)[1]
             except:
                 pass
-            address = usaddress.parse(address)
-
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
-            street = street.lstrip().replace(",", "")
-            city = city.lstrip().replace(",", "")
-            state = state.lstrip().replace(",", "")
-            pcode = pcode.lstrip().replace(",", "")
-
             yield SgRecord(
                 locator_domain="https://greendragon.com/",
                 page_url=link,
@@ -95,7 +101,7 @@ def fetch_data():
                 country_code="US",
                 store_number=SgRecord.MISSING,
                 phone=phone.strip(),
-                location_type=SgRecord.MISSING,
+                location_type=ltype,
                 latitude=lat,
                 longitude=longt,
                 hours_of_operation=hours,
