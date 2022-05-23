@@ -1,4 +1,10 @@
+import os
+
+os.environ.pop("PROXY_PASSWORD", None)
+os.environ.pop("PROXY_URL", None)
+
 from lxml import html
+from time import sleep
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -7,7 +13,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 
 
 def fetch_data(sgw: SgWriter):
@@ -26,12 +32,16 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if page_url.find("Corporativo") != -1:
             continue
-        with SgFirefox() as driver:
+        with SgChrome(is_headless=True) as driver:
 
             driver.get(page_url)
-            driver.switch_to.frame(0)
+            sleep(10)
+            iframe = driver.find_element_by_xpath(
+                '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
+            )
+            driver.switch_to.frame(iframe)
             try:
-                WebDriverWait(driver, 30).until(
+                WebDriverWait(driver, 200).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
@@ -74,12 +84,9 @@ def fetch_data(sgw: SgWriter):
             phone = driver.find_element_by_xpath(
                 '//span[text()="Venta Telefónica"]/following-sibling::span'
             ).text
-            hours = driver.find_element_by_xpath(
-                '//div[./strong[text()="Nuestra Tienda"]]/div/span[2]'
+            hours_of_operation = driver.find_element_by_xpath(
+                '//span[./strong[text()="Horarios de Tienda:"]]/following-sibling::span[1]'
             ).text
-            hours_of_operation = (
-                "".join(hours).replace("\n", " ").strip() or "<MISSING>"
-            )
 
             row = SgRecord(
                 locator_domain=locator_domain,

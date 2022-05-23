@@ -50,7 +50,10 @@ def fetch_data():
             if phone == "":
                 phone = "<MISSING>"
             hours = "<MISSING>"
-            typ = "<MISSING>"
+            try:
+                typ = item["location_type"]
+            except:
+                typ = "<MISSING>"
             canada = [
                 "NL",
                 "NS",
