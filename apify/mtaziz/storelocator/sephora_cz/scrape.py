@@ -51,10 +51,6 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.se/butiker/",
 ]  # Store locators for all countries
 
-LOCATION_URLS_GRID = [
-    "https://www.sephora.cz/prodejny",
-    "https://www.sephora.de/Stores-Alle",
-]
 
 # Middle East
 # These new store locators added.
