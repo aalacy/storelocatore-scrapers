@@ -57,7 +57,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//a[@class=" main-menu-link main-menu-link-sub"]/@href')
-    log.info(f"Listing Page URLs...")
+    log.info("Listing Page URLs...")
     for store_url in all_locations:
         if "urgent-care-locations" in str(store_url):
             log.info(f"Crawling: {store_url}")
