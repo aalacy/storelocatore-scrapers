@@ -1,97 +1,34 @@
 from sgpostal.sgpostal import parse_address_intl
 import time
-import json
 from lxml import html
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import random
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-import ssl
 
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
+from sgrequests import SgRequests
 
 
 website = "unode50.com"
-store_url1 = "https://www.unode50.com/us/stores#34.09510173134606,-118.3993182825743"
-store_url = "view-source:https://www.unode50.com/us/stores"
+api_url = "https://www.unode50.com/as/amlocator/index/ajax/"
+
 MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 
-def driver_sleep(driver, time=2):
-    try:
-        WebDriverWait(driver, time).until(
-            EC.presence_of_element_located((By.ID, MISSING))
-        )
-    except Exception:
-        pass
-
-
-def random_sleep(driver, start=5, limit=3):
-    driver_sleep(driver, random.randint(start, start + limit))
-
-
-def fetch_stores():
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
-
-        driver.maximize_window()
-        random_sleep(driver, 1)
-
-        driver.get("https://www.unode50.com")
-        random_sleep(driver, 10)
-
-        try:
-            lButton = driver.find_element_by_xpath(
-                "//button[contains(@id, 'btn-cookie-allow')]"
-            )
-            driver.execute_script("arguments[0].click();", lButton)
-            random_sleep(driver, 10)
-        except Exception as e:
-            log.info(e)
-            pass
-
-        tried = 0
-        while True:
-            tried = tried + 1
-
-            if tried == 10:
-                break
-
-            log.debug(f"Trying {tried} ...")
-            try:
-                driver.get(store_url1)
-                driver.forward()
-                driver.get(store_url)
-                driver.forward()
-                random_sleep(driver, 12)
-
-                body = html.fromstring(driver.page_source, "lxml")
-
-                data = body.xpath(
-                    "//td[contains(text(), 'store-locator-search') and contains(text(), 'Magento_Ui/js/core/app')]/text()"
-                )[0]
-                data = json.loads(data)
-                return data["*"]["Magento_Ui/js/core/app"]["components"][
-                    "store-locator-search"
-                ]["markers"]
-            except Exception as e:
-                log.info(f"Failed Locading redirected page: {e}")
-                pass
-    return []
+def stringify_nodes(body, xpath):
+    nodes = body.xpath(xpath)
+    values = []
+    for node in nodes:
+        for text in node.itertext():
+            text = text.strip()
+            if text:
+                values.append(text)
+    if len(values) == 0:
+        return MISSING
+    return " ".join((" ".join(values)).split())
 
 
 def get_address(raw_address):
@@ -121,7 +58,11 @@ def get_address(raw_address):
 
 
 def fetch_data():
-    stores = fetch_stores()
+
+    data = session.get(api_url).json()
+
+    stores = data["items"]
+
     log.info(f"Total stores = {len(stores)}")
     for store in stores:
         country_code = MISSING
@@ -129,17 +70,21 @@ def fetch_data():
         location_type = MISSING
         hours_of_operation = MISSING
 
+        pophtml = html.fromstring(store["popup_html"], "lxml")
+
+        location_name = pophtml.xpath("//div[@class='amlocator-title']/text()")[0]
+
+        raw_address = (
+            stringify_nodes(pophtml, '//div[contains(@class, "amlocator-info-popup")]')
+            .replace(location_name, "", 1)
+            .strip()
+        )
+
         store_number = store["id"]
-        location_name = store["name"]
-        raw_address = store["address"].replace("\n", ", ").replace("\t", ", ")
-        raw_address = " ".join(raw_address.split())
-        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
-        if raw_address[len(raw_address) - 1] == ",":
-            raw_address = raw_address[:-1]
 
         street_address, city, state, zip_postal = get_address(raw_address)
-        latitude = store["latitude"]
-        longitude = store["longitude"]
+        latitude = store["lat"]
+        longitude = store["lng"]
         page_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
 
         yield SgRecord(

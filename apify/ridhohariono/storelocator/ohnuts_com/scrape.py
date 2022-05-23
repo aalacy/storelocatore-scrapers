@@ -92,16 +92,22 @@ def fetch_data():
         location_type = MISSING
         latitude, longitude = get_latlong(store)
         hoo_content = store.find("strong", text="General Store Hours:")
-        hoo = (
-            hoo_content.parent.parent.parent.get_text(strip=True, separator=",")
-            .replace("Store Hours", "")
-            .split("General :")
-        )
+        try:
+            hoo = (
+                hoo_content.parent.parent.parent.get_text(strip=True, separator=",")
+                .replace("Store Hours", "")
+                .split("General :")
+            )[1]
+        except:
+            hoo = store.find("div", {"class": "step"})
+            hoo.find("div").decompose()
+            hoo = hoo.get_text(strip=True, separator=",")
         hours_of_operation = (
-            hoo[1]
-            .replace("day,", "day ")
-            .replace("Two and half hour before sunset", "6:00pm")
+            hoo.replace("day,", "day ")
+            .replace("Two and half hour before sunset", " 6:00pm")
             .replace(",* Curb Side Pick Up is Available in this Location *", "")
+            .replace(" ", "")
+            .strip()
         ).lstrip(",")
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(

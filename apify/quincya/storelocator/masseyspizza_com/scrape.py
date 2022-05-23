@@ -29,9 +29,11 @@ def fetch_data(sgw: SgWriter):
         except:
             continue
         raw_address = list(item.stripped_strings)[1:]
+        if "COMING SOON" in raw_address[0].upper():
+            continue
         if "NOW OPEN" in raw_address[0] or "VILLE/WORTH" in raw_address[0]:
             raw_address.pop(0)
-        for i, item in enumerate(raw_address):
+        for i, y in enumerate(raw_address):
             if (
                 "Massey’s Pizza" in raw_address[i]
                 or "View Map" in raw_address[i]
@@ -47,17 +49,47 @@ def fetch_data(sgw: SgWriter):
             street_address = " ".join(raw_address[:2]).strip()
             phone = raw_address[2]
             hours_of_operation = " ".join(raw_address[3:])
+        street_address = (
+            street_address.replace("Indian Mound Mall", "").split("Wal-")[0].strip()
+        )
+        hours_of_operation = (
+            hours_of_operation.split("DINING")[0].split("VIEW")[0].strip()
+        )
+        map_link = ""
+        try:
+            map_link = item.find("a", string="View Map")["href"]
+            geo = map_link.split("@")[1].split("/")[0].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = ""
+            longitude = ""
 
-        hours_of_operation = hours_of_operation.split("DINING")[0].strip()
+        try:
+            city = map_link.split(",+")[1]
+            state = map_link.split(",+")[2].split("+")[0]
+            zip_code = map_link.split(",+")[2].split("+")[1].split("/")[0].split("!")[0]
+        except:
+            city = ""
+            state = ""
+            zip_code = ""
+        if location_name.upper() in ["WESTERVILLE", "HEATH"]:
+            city = location_name.title()
+            state = "OH"
+        if "Pawleys Island" in location_name:
+            city = "Pawleys Island"
+            state = "South Carolina"
+        if "BEECHCROFT" in location_name.upper():
+            city = "Columbus"
+            state = "OH"
+        if not city:
+            city = location_name.title()
 
-        city = ""
-        state = ""
-        zip_code = ""
+        city = city.replace("+", " ")
+
         country_code = "US"
         store_number = "<MISSING>"
         location_type = ""
-        latitude = ""
-        longitude = ""
 
         sgw.write_row(
             SgRecord(

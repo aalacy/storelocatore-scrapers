@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("bigy_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,60 +22,49 @@ def fetch_data():
         country = "US"
         loc = url
         store = str(x)
+        name = ""
         logger.info("Pulling Store #%s..." % str(x))
         lines = r.iter_lines()
         for line in lines:
-            line = str(line.decode("utf-8"))
-            if 'property="name">' in line:
+            if '<h1 class="txt-find-a-store">' in line:
                 name = (
-                    line.split('property="name">')[1]
-                    .split("<")[0]
-                    .replace("&nbsp;", " ")
+                    line.split('<h1 class="txt-find-a-store">')[1].split("<")[0].strip()
                 )
-            if '"PostalAddress">' in line:
-                add = line.split('"PostalAddress">')[1].split("<")[0]
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                addinfo = g.strip().replace("\t", "").split("<")[0]
-                city = addinfo.split(",")[0]
-                state = addinfo.split(",")[1].strip().split(" ")[0]
-                zc = addinfo.rsplit(" ", 1)[1]
-            if '"telephone" content="' in line:
-                phone = line.split('"telephone" content="')[1].split('"')[0]
-            if '"openingHours" content="' in line:
-                hours = (
-                    line.split('"openingHours" content="')[1]
-                    .split(">")[1]
-                    .split("<")[0]
-                )
-            if ".storeDetail.initMap('" in line:
-                lat = line.split(".storeDetail.initMap('")[1].split("'")[0]
-                lng = (
-                    line.split(".storeDetail.initMap('")[1]
-                    .split(", '")[1]
-                    .split("'")[0]
-                )
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+            if '"Address1":"' in line:
+                add = line.split('"Address1":"')[1].split('"')[0]
+                city = line.split('"City":"')[1].split('"')[0]
+                state = line.split('"State":"')[1].split('"')[0]
+                zc = line.split('"Zipcode":"')[1].split('"')[0]
+                phone = line.split('"PhoneNumber":"')[1].split('"')[0]
+            if ">Hours:</span>" in line:
+                hours = line.split(">Hours:</span>")[1].split("<")[0].strip()
+            if '"Latitude":' in line:
+                lat = line.split('"Latitude":')[1].split(",")[0]
+                lng = line.split('"Longitude":')[1].split(",")[0]
+        if name != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

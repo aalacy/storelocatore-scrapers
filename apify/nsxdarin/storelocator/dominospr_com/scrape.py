@@ -68,6 +68,8 @@ def fetch_data():
                         .replace("\r", "")
                     )
                     loc = "<MISSING>"
+                    if zc == "USA" or "PR" in zc:
+                        zc = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
+from typing import Iterable, Tuple, Callable
 from datetime import datetime as dt
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgscrape.simple_utils import parallelize
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, stop_after_attempt
 
 website = "raymourflanigan.com"
@@ -17,8 +21,6 @@ headers = {
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
 }
 
-url_list = []
-
 
 def retry_error_callback(retry_state):
     postal = retry_state.args[0]
@@ -26,27 +28,52 @@ def retry_error_callback(retry_state):
     return []
 
 
-@retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
-def fetch_records_for(zipcode):
-    log.info(f"pulling records for zipcode: {zipcode}")
-    url = "https://www.raymourflanigan.com/api/custom/location-search"
-    params = {
-        "postalCode": zipcode,
-        "distance": 100,
-        "includeShowroomLocations": True,
-        "includeOutletLocations": True,
-        "includeClearanceLocations": True,
-        "includeAppointments": True,
-    }
-    stores = session.get(url, params=params, headers=headers).json()
-    return stores["locations"]
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
 
-def process_record(raw_results_from_one_zipcode):
-    for store in raw_results_from_one_zipcode:
-        if store["url"] not in url_list:
-            url_list.append(store["url"])
+    @retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
+        if len(zipcode) == 1:
+            zipcode = "0000" + zipcode
+        if len(zipcode) == 2:
+            zipcode = "000" + zipcode
+        if len(zipcode) == 3:
+            zipcode = "00" + zipcode
+        if len(zipcode) == 4:
+            zipcode = "0" + zipcode
+
+        log.info(f"pulling data for zipcode: {zipcode}")
+        url = "https://www.raymourflanigan.com/api/custom/location-search"
+        params = {
+            "postalCode": zipcode,
+            "distance": 100,
+            "includeShowroomLocations": True,
+            "includeOutletLocations": True,
+            "includeClearanceLocations": True,
+            "includeAppointments": True,
+        }
+        stores = self.__http.get(url, params=params, headers=headers).json()[
+            "locations"
+        ]
+
+        for store in stores:
             page_url = "https://www.raymourflanigan.com" + store["url"]
             log.info(page_url)
             locator_domain = website
@@ -78,17 +105,22 @@ def process_record(raw_results_from_one_zipcode):
             hours = store["hours"]
             hours_list = []
             for key, hour in hours.items():
-                if hours[key] and hours[key]["open"] and hours[key]["close"]:
-                    day = key
-                    if day != "today":
-                        hours_list.append(
-                            day + ":" + hours[key]["open"] + "-" + hours[key]["close"]
-                        )
+                if isinstance(hours[key], dict):
+                    if hours[key] and hours[key]["open"] and hours[key]["close"]:
+                        day = key
+                        if day != "today":
+                            hours_list.append(
+                                day
+                                + ":"
+                                + hours[key]["open"]
+                                + "-"
+                                + hours[key]["close"]
+                            )
             hours_of_operation = "; ".join(hours_list).strip()
 
             latitude = store["latitude"]
             longitude = store["longitude"]
-
+            found_location_at(latitude, longitude)
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -108,17 +140,27 @@ def process_record(raw_results_from_one_zipcode):
 
 
 def scrape():
-    with SgWriter() as writer:
-        results = parallelize(
-            search_space=static_zipcode_list(
-                radius=10, country_code=SearchableCountries.USA
-            ),
-            fetch_results_for_rec=fetch_records_for,
-            processing_function=process_record,
-            max_threads=20,  # tweak to see what's fastest
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(search_type="DynamicZipSearch")
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
         )
-        for rec in results:
-            writer.write_row(rec)
+    ) as writer:
+        with SgRequests(dont_retry_status_codes=([404])) as http:
+            search_iter = _SearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[SearchableCountries.USA],
+            )
+
+            for rec in par_search.run():
+                writer.write_row(rec)
+
+    log.info("Finished")
 
 
 if __name__ == "__main__":

@@ -1,48 +1,16 @@
-import csv
 import json
 
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_stores = []
-
-    DOMAIN = "johnsoncontrols.com"
+    domain = "johnsoncontrols.com"
     start_url = "https://jcilocationfinderapi-prod.azurewebsites.net/api/locationsapi/getnearbylocations?latitude={}&longitude={}&distance=none&units=mi&iso=en"
 
     headers = {
@@ -58,8 +26,7 @@ def fetch_data():
 
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=50,
-        max_search_results=None,
+        expected_search_radius_miles=50,
     )
     for coord in all_coordinates:
         lat, lng = coord
@@ -68,10 +35,8 @@ def fetch_data():
         data = json.loads(data)
 
         for poi in data:
-            store_url = ""
-            store_url = store_url if store_url else "<MISSING>"
+            page_url = "https://www.johnsoncontrols.com/locations"
             location_name = poi["Name"]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = poi["Address1"]
             if poi["Address2"]:
                 street_address += ", " + poi["Address2"]
@@ -80,65 +45,50 @@ def fetch_data():
             if poi["Address4"]:
                 street_address += poi["Address4"]
             street_address = (
-                street_address.strip().replace(">", "")
-                if street_address
-                else "<MISSING>"
+                street_address.strip().replace(">", "") if street_address else ""
             )
             city = poi["City"]
-            city = city if city else "<MISSING>"
             state = poi["State"]
-            state = state.strip() if state else "<MISSING>"
             zip_code = poi["PostalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["Country"]
-            if country_code not in ["USA", "United States", "Canada"]:
-                continue
-            country_code = country_code if country_code else "<MISSING>"
             store_number = poi["ID"]
-            store_number = store_number if store_number else "<MISSING>"
             phone = ""
             if poi["PhoneNumbers"]["Phone"]:
                 phone = poi["PhoneNumbers"]["Phone"][0]["Number"]
-            phone = phone if phone else "<MISSING>"
             location_type = poi["LocationTypeName"]
-            location_type = location_type if location_type else "<MISSING>"
             latitude = poi["Latitude"]
-            latitude = latitude if latitude else "<MISSING>"
             longitude = poi["Longitude"]
-            longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = ""
-            hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation="",
             )
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            check = "{} {}".format(location_name, street_address)
-            if check not in scraped_stores:
-                scraped_stores.append(check)
-                items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

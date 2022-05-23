@@ -12,14 +12,12 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["objects"]
 
     for j in js:
-        street_address = (
-            f"{j.get('street')} {j.get('street2') or ''}".strip() or "<MISSING>"
-        )
+        street_address = f"{j.get('street')} {j.get('street2') or ''}".strip()
         city = j.get("city")
         state = j.get("state")
         postal = j.get("postal_code")
         country_code = j.get("country")
-        store_number = j.get("partner_location_id") or "<MISSING>"
+        store_number = j.get("partner_location_id")
         page_url = j.get("homepage_url") or "<MISSING>"
         location_name = j.get("location_name")
         phone = j.get("phones")[0].get("number")
@@ -68,5 +66,5 @@ if __name__ == "__main__":
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)
