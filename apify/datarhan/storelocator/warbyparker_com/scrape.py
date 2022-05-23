@@ -40,8 +40,11 @@ def fetch_data():
         phone = poi["cms_content"]["phone"]
         if not phone:
             loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-            phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
+            if loc_response.status_code == 200:
+                loc_dom = etree.HTML(loc_response.text)
+                phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(
+                    ":"
+                )[-1]
 
         item = SgRecord(
             locator_domain=domain,

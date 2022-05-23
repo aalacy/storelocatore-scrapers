@@ -51,7 +51,10 @@ def fetch_data(sgw: SgWriter):
         latitude = store["latitude"]
         longitude = store["longitude"]
 
-        link = "https://www.nandos.ca/find/" + store["slug"]
+        try:
+            link = "https://www.nandos.ca/find/" + store["slug"]
+        except:
+            continue
 
         sgw.write_row(
             SgRecord(

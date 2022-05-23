@@ -1,15 +1,17 @@
+import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://tcmarkets.com/"
     api_url = "https://tcmarkets.com/store-finder/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -19,13 +21,27 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-
+        info = tree.xpath('//div[@class="fl-rich-text"]//text()')
+        info = list(filter(None, [a.strip() for a in info]))
+        ad_info = " ".join(info)
+        if ad_info.find("Store Address") != -1:
+            ad_info = ad_info.split("Store Address")[1].strip()
+        if ad_info.find("Store Hours") != -1:
+            ad_info = ad_info.split("Store Hours")[0].strip()
+        if ad_info.find("Find a Store") != -1:
+            continue
+        ph = re.findall(r"[(][\d]{3}[)][ ]?[\d]{3}-[\d]{4}", ad_info) or "<MISSING>"
+        phone = "".join(ph[0]) or "<MISSING>"
+        if ad_info.find(f"{phone}") != -1:
+            ad_info = ad_info.split(f"{phone}")[0].strip()
         location_name = (
-            "".join(tree.xpath("//h6//text() | //h2//text()")) or "<MISSING>"
+            "".join(tree.xpath("//h6//text() | //h2//text()"))
+            .replace("\n", "")
+            .replace("\r", "")
+            .strip()
+            or "<MISSING>"
         )
         if location_name == "<MISSING>":
             location_name = (
@@ -38,70 +54,17 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
-        if location_name == "<MISSING>":
-            continue
-        if page_url == "https://tcmarkets.com/store-finder/mountain-home/":
-            location_name = "TOWN AND COUNTRY DISCOUNT FOODS MOUNTAIN HOME, AR, 72653"
+        a = parse_address(International_Parser(), ad_info)
         street_address = (
-            "".join(
-                tree.xpath('//p[./strong[contains(text(), "Store Address")]]/text()[1]')
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        ad = (
-            "".join(
-                tree.xpath('//p[./strong[contains(text(), "Store Address")]]/text()[2]')
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        if street_address.find("7278 E. Highway 14") != -1:
-            ad = (
-                "".join(
-                    tree.xpath(
-                        '//p[./strong[contains(text(), "Store Address")]]/following-sibling::p[1]/text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        ad = ad.replace("Salem MO, 65560", "Salem, MO 65560")
-        state = ad.split(",")[1].split()[0].strip()
-        try:
-            postal = ad.split(",")[1].split()[1].strip()
-        except:
-            postal = "<MISSING>"
-        country_code = "USA"
-        city = ad.split(",")[0].strip()
-        phone = (
-            "".join(
-                tree.xpath('//p[./strong[contains(text(), "Store Address")]]/text()[3]')
-            )
-            .replace("\n", "")
-            .strip()
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
-        if phone == "<MISSING>":
-            phone = (
-                "".join(
-                    tree.xpath(
-                        '//p[./strong[contains(text(), "Store Address")]]/following-sibling::p[1]/text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        if street_address.find("7278 E. Highway 14") != -1:
-            phone = (
-                "".join(
-                    tree.xpath(
-                        '//p[./strong[contains(text(), "Store Address")]]/following-sibling::p[1]/text()[2]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        if phone == "<":
+            phone = "<MISSING>"
         hours_of_operation = (
             " ".join(tree.xpath('//p[./strong[text()="Store Hours:"]]/text()'))
             .replace("\n", "")
@@ -111,6 +74,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 "Monday" + " " + hours_of_operation.split("Monday")[1].strip()
             )
+        cms = "".join(tree.xpath('//img[contains(@src, "coming-soon")]/@src'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -134,8 +100,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://tcmarkets.com/"
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

@@ -16,6 +16,18 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
 
 
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
 def set_proxies():
     if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
 
@@ -180,10 +192,22 @@ class CleanRecord:
                 cleanRecord["street_address2"] = ""
         cleanRecord["street_address3"] = ""
         cleanRecord["street_address4"] = ""
-        cleanRecord["city"] = badRecord["properties"]["addressLine3"]
-        cleanRecord["state"] = badRecord["properties"]["subDivision"]
-        cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
-        cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        try:
+            cleanRecord["city"] = badRecord["properties"]["addressLine3"]
+        except Exception:
+            cleanRecord["city"] = ""
+        try:
+            cleanRecord["state"] = badRecord["properties"]["subDivision"]
+        except Exception:
+            cleanRecord["state"] = ""
+        try:
+            cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
+        except Exception:
+            cleanRecord["zipcode"] = ""
+        try:
+            cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        except Exception:
+            cleanRecord["country_code"] = ""
         try:
             cleanRecord["phone"] = badRecord["properties"]["telephone"]
         except Exception:
@@ -236,6 +260,138 @@ class CleanRecord:
                     ],
                 )
 
+        return cleanRecord
+
+    def USA2(badRecord, config, country, locale):
+        cleanRecord = {}
+        cleanRecord["locator_domain"] = config.get("Domain")
+        try:
+            cleanRecord["location_name"] = badRecord["properties"]["longDescription"]
+        except Exception:
+            cleanRecord["location_name"] = None
+        cleanRecord["latitude"] = badRecord["geometry"]["coordinates"][1]
+        cleanRecord["longitude"] = badRecord["geometry"]["coordinates"][0]
+        cleanRecord["street_address1"] = badRecord["properties"]["addressLine1"]
+        if not cleanRecord["location_name"]:
+            try:
+                cleanRecord["location_name"] = badRecord["properties"]["addressLine2"]
+            except Exception:
+                cleanRecord["street_address2"] = ""
+        else:
+            try:
+                badRecord["properties"]["addressLine2"] = badRecord["properties"][
+                    "addressLine2"
+                ]
+                cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
+            except Exception:
+                cleanRecord["street_address2"] = ""
+        cleanRecord["street_address3"] = ""
+        cleanRecord["street_address4"] = ""
+        try:
+            cleanRecord["city"] = badRecord["properties"]["addressLine3"]
+        except Exception:
+            cleanRecord["city"] = ""
+        try:
+            cleanRecord["state"] = badRecord["properties"]["subDivision"]
+        except Exception:
+            cleanRecord["state"] = ""
+        try:
+            cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
+        except Exception:
+            cleanRecord["zipcode"] = ""
+        try:
+            cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        except Exception:
+            cleanRecord["country_code"] = ""
+        try:
+            cleanRecord["phone"] = badRecord["properties"]["telephone"]
+        except Exception:
+            cleanRecord["phone"] = ""
+        cleanRecord["store_number"] = badRecord["properties"]["id"]
+        try:
+            cleanRecord["hours_of_operation"] = (
+                str(list(badRecord["properties"]["restauranthours"].items()))
+                .replace("'", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("hours", "")
+            )
+        except Exception:
+            cleanRecord["hours_of_operation"] = ""
+        cleanRecord["location_type"] = (
+            badRecord["properties"]["filterType"]
+            if "OPEN" in badRecord["properties"]["openstatus"]
+            else badRecord["properties"]["openstatus"]
+        )
+        if (
+            cleanRecord["hours_of_operation"] == ""
+            or not cleanRecord["hours_of_operation"]
+        ):
+            try:
+                cleanRecord["hours_of_operation"] = (
+                    str(list(badRecord["properties"]["drivethruhours"].items()))
+                    .replace("'", "")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replace("hours", "")
+                )
+            except Exception:
+                cleanRecord["hours_of_operation"] = ""
+
+        cleanRecord["raw_address"] = ""
+        identifier = None
+        cleanRecord["page_url"] = None
+        try:
+            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                cleanRecord["locator_domain"],
+                country,
+                locale,
+                badRecord["properties"]["identifierValue"],
+            )
+            cleanRecord["store_number"] = badRecord["properties"]["identifierValue"]
+        except Exception:
+            cleanRecord["page_url"] = None
+
+        if not cleanRecord["page_url"]:
+            for dent in badRecord["properties"]["identifiers"]["storeIdentifier"]:
+                if any(dent["identifierType"] == z for z in ["NSN", "NATLSTRNUMBER"]):
+                    identifier = dent["identifierValue"]
+                    cleanRecord["store_number"] = dent[
+                        "identifierValue"
+                    ]  # Unexpected change to store_number
+
+            if identifier:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"], country, locale, identifier
+                )
+            else:
+                try:
+                    cleanRecord[
+                        "page_url"
+                    ] = "https://{}/{}/{}/location/{}.html".format(
+                        cleanRecord["locator_domain"],
+                        country,
+                        locale,
+                        badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                            "identifierValue"
+                        ],
+                    )
+                except Exception:
+                    cleanRecord[
+                        "page_url"
+                    ] = "https://{}/{}/{}/location/{}.html".format(
+                        cleanRecord["locator_domain"],
+                        country,
+                        locale,
+                        badRecord["properties"]["identifiers"]["storeIdentifier"][0][
+                            "identifierValue"
+                        ],
+                    )
+        cleanRecord["page_url"].replace("/gb//gb/", "/gb/")
         return cleanRecord
 
     def DEDUPE(badRecord):
@@ -652,7 +808,7 @@ class CrawlMethod(CleanRecord):
         def getAllData(headers, country, locale, Point):
             if self._config.get("apiCountry"):
                 country = self._config.get("apiCountry")
-            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=100000&maxResults=25000&country={}&language={}"
+            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=1000&maxResults=200&country={}&language={}"
             api = api.format(Point[0], Point[1], country, locale)
             return self._session.get(api, headers=headers).json()
 
@@ -674,7 +830,6 @@ class CrawlMethod(CleanRecord):
 
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
         maxZ = self._search.items_remaining()
-        total = 0
         for Point in self._search:
             remaining = self._search.items_remaining()
             if remaining == 0:
@@ -686,6 +841,7 @@ class CrawlMethod(CleanRecord):
                 headers = {}
                 headers["referer"] = getReferer(self._config.get("Url"))
                 country, locale = getLocale(headers)
+                headers = {}
                 results = results = getAllData(headers, country, locale, Point)
             except Exception as e:
                 self.Oopsie(Point, str(e))
@@ -701,11 +857,6 @@ class CrawlMethod(CleanRecord):
             except Exception as e:
                 self.Oopsie(Point, str(e))
                 continue
-                progress = str(round(100 - (remaining / maxZ * 100), 2)) + "%"
-                total += found
-                logzilla.info(
-                    f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
-                )
 
     def QuickDedupe(self):
         record_cleaner = CleanRecord.DEDUPE
@@ -783,7 +934,7 @@ class getData(CrawlMethod):
         )
 
     def EnableSGREQUESTS(self):
-        self._session = SgRequests()
+        self._session = SgRequests(verify_ssl=False)
 
     def EnableSGREQUESTSclose(self):
         self._session.close()

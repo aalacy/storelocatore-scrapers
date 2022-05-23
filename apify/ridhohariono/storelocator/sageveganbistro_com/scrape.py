@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -70,11 +71,10 @@ def fetch_data():
         country_code = "US"
         hoo = ""
         for x in info[1:]:
-            hoo += (
-                x.get_text(strip=True, separator=" ").replace("HAPPY HOUR", "").strip()
-                + ", "
-            )
-        hours_of_operation = hoo.strip().rstrip(",")
+            hoo += x.get_text(strip=True, separator=" ").strip() + ", "
+        hours_of_operation = re.sub(
+            r",?\s?HAPPY HOUR.*", "", hoo.strip().rstrip(","), flags=re.IGNORECASE
+        ).strip()
         location_type = MISSING
         store_number = MISSING
         latitude = MISSING

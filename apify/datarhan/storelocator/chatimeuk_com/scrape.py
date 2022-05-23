@@ -33,6 +33,7 @@ def fetch_data():
             or "170 High Street" in street_address
             or "53 Chapel" in street_address
             or "Island Site" in street_address
+            or "2 The Square" in street_address
         ):
             street_address += ", " + city
             city = poi_html.xpath(".//following-sibling::p[3]//text()")[0]
@@ -49,7 +50,7 @@ def fetch_data():
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
-            street_address=street_address,
+            street_address=street_address.replace(", ,", ","),
             city=city,
             state="",
             zip_postal=zip_code,

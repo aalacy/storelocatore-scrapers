@@ -45,6 +45,7 @@ def fetch_data():
             else:
                 hours_of_operation = "Monday closed, Tuesday closed, Wednesday closed, Thursday closed, Friday closed, Saturday closed, Sunday closed"
             page_url = f"https://www.bentleymotors.com/en/apps/dealer-locator.html/partner/{store_number}-{location_name.replace(' ', '-')}"
+            location_type = ", ".join([dep["name"] for dep in a["departments"]])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -57,7 +58,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
-                location_type=", ".join(poi["coordinates"][0]["types"]),
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,

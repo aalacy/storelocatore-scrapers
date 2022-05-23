@@ -41,7 +41,8 @@ def fetch_data():
         json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
 
         try:
-            for info in json_list:
+            for curr_json in json_list:
+                info = "".join(curr_json).strip()
                 if info[0] == "{":
                     data = json.loads(info)
                     for address in data["address"]:
@@ -52,28 +53,36 @@ def fetch_data():
                         country_code = address["addressCountry"]
                     phone = data["telephone"]
                     location_name = data["name"]
+                    log.info(location_name)
                     if "NOW CLOSED".lower() in location_name.lower():
                         continue
                     location_type = data["@type"]
-                    latitude = (
-                        "".join(
-                            store_sel.xpath(
-                                '//div[@class="theatreMap"]/a/img/@data-src'
+                    try:
+                        latitude = (
+                            "".join(
+                                store_sel.xpath(
+                                    '//div[@class="theatreMap"]/a/img/@data-src'
+                                )
                             )
+                            .split("pp=")[1]
+                            .split(",")[0]
                         )
-                        .split("pp=")[1]
-                        .split(",")[0]
-                    )
-                    longitude = (
-                        "".join(
-                            store_sel.xpath(
-                                '//div[@class="theatreMap"]/a/img/@data-src'
+                    except:
+                        latitude = "<MISSING>"
+
+                    try:
+                        longitude = (
+                            "".join(
+                                store_sel.xpath(
+                                    '//div[@class="theatreMap"]/a/img/@data-src'
+                                )
                             )
+                            .split("pp=")[1]
+                            .split(",")[1]
+                            .split("&")[0]
                         )
-                        .split("pp=")[1]
-                        .split(",")[1]
-                        .split("&")[0]
-                    )
+                    except:
+                        longitude = "<MISSING>"
 
                     yield SgRecord(
                         locator_domain=website,

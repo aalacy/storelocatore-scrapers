@@ -84,7 +84,11 @@ def fetch_data():
                             country_code,
                         ) = get_address(address)
                         phone = loc.find("p", {"class": "phone"}).find("a").text
-                        hours_of_operation = MISSING
+                        hours_of_operation = (
+                            temp.find("p", {"class": "hours"})
+                            .get_text(separator="|", strip=True)
+                            .replace("|", " ")
+                        )
                         yield SgRecord(
                             locator_domain=DOMAIN,
                             page_url=url,

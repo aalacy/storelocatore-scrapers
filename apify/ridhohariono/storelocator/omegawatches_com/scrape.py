@@ -11,7 +11,7 @@ import re
 
 
 DOMAIN = "omegawatches.com"
-BASE_URL = "https://www.omegawatches.com"
+BASE_URL = "https://www.omegawatches.com/"
 LOCATION_URL = "https://www.omegawatches.com/store"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -58,13 +58,6 @@ def pull_content(url):
     return soup
 
 
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return MISSING, MISSING
-    return latlong.group(1), latlong.group(2)
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -75,8 +68,13 @@ def fetch_data():
     )
     for row in data:
         page_url = (BASE_URL + row["websiteUrl"]) or LOCATION_URL
+        store = pull_content(page_url)
         location_name = row["name"].replace("<br />", " ").strip()
+        if not location_name:
+            location_name = row["cityName"]
         raw_address = row["adrOnly"].replace("<br />", ",").strip().rstrip(",")
+        if not raw_address:
+            raw_address = row["cityName"]
         street_address, city, state, zip_postal = getAddress(raw_address)
         if street_address == MISSING:
             street_address = row["adrOnly"].replace("<br />", ",").strip()
@@ -93,11 +91,26 @@ def fetch_data():
             city = "Honolulu"
             state = MISSING
         country_code = row["countryCode"]
-        phone = row["contacts"]["phone"]
-        if not phone:
-            row["contacts"]["fax"] or MISSING
-        location_type = MISSING
-        hours_of_operation = (
+        location_type = "BOUTIQUE" if row["is_boutique"] == 1 else "RETAILERS"
+        try:
+            phone = (
+                store.find("a", {"class": "ow-store-view__tel"})
+                .text.replace("T.", "")
+                .strip()
+            )
+        except:
+            phone = MISSING
+        if phone == MISSING:
+            phone = row["contacts"]["phone"]
+            if not phone:
+                phone = row["contacts"]["fax"] or MISSING
+        try:
+            hours_of_operation = store.find(
+                "ul", {"class": "ow-store-view__opening"}
+            ).get_text(strip=True, separator=" ")
+        except:
+            hours_of_operation = MISSING
+        is_closed = (
             " ".join(
                 re.sub(
                     r"Dostęp do.*|www.*|Ouverture.*|Actuellement Fermé.*|(Opening|Opeing)? hours may vary due to Covid.*|,?\s?Public Holiday|Sujeto a modificaciones debido a disposiciones sanitarias por COVID 19|Daily opening hour according to flight schedule|Open for every outbound International flight|Closed Good Friday and Christmas Day|follow the opening hour of department store|Please note our current opening hours:, , |Free and private.*|Last appointment.*|Servicing Center opening hours,|Recomendamos.*|Open depending on flight.*",
@@ -110,13 +123,12 @@ def fetch_data():
             or MISSING
         )
         if (
-            "emporarily closed" in hours_of_operation
-            or "Ouverture" in hours_of_operation
-            or "under renovation" in hours_of_operation
-            or "temporary" in hours_of_operation
+            "emporarily closed" in is_closed
+            or "Ouverture" in is_closed
+            or "under renovation" in is_closed
+            or "temporary" in is_closed
         ):
-            location_type = "Temporarily closed"
-            hours_of_operation = "Temporarily closed"
+            location_name = location_name + " - Temporarily closed"
         store_number = row["id"]
         latitude = MISSING if row["latitude"] == 0 else row["latitude"]
         longitude = MISSING if row["longitude"] == 0 else row["longitude"]

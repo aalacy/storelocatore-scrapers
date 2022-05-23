@@ -32,8 +32,8 @@ def fetch_data():
         )[0].split("/")[0]
         hoo = poi_html.xpath(
             './/strong[contains(text(), "Hours of Operation:")]/following::text()'
-        )[0]
-        hoo = " ".join(hoo.split())
+        )
+        hoo = " ".join(" ".join(hoo).split()).split("Buffet")[0].split("Happy")[0]
 
         item = SgRecord(
             locator_domain=domain,

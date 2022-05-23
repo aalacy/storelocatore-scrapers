@@ -63,7 +63,10 @@ def fetch_data():
             if not url["href"]:
                 continue
             store = pull_content(page_url)
-            location_name = store.find("h1", {"class": "sub-brand"}).text.strip()
+            try:
+                location_name = store.find("h1", {"class": "sub-brand"}).text.strip()
+            except:
+                continue
             raw_address = (
                 store.find("span", {"class": "store-address"})
                 .get_text(strip=True, separator=" ")
@@ -88,8 +91,8 @@ def fetch_data():
             )
             location_type = MISSING
             store_number = store.find("div", id="book-online").find("a")["data-id"]
-            latitude = store.find("meta", {"itemprop": "latitude"})["content"]
-            longitude = store.find("meta", {"itemprop": "longitude"})["content"]
+            latitude = MISSING
+            longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

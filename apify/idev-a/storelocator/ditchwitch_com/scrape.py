@@ -125,10 +125,9 @@ if __name__ == "__main__":
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
-        search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
-            search_iteration=search_iter,
+            search_iteration=lambda: ExampleSearchIteration(),
             country_codes=countries,
         )
 
