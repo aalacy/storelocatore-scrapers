@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -293,9 +294,11 @@ def fetch_data():
             ]
             if zip_code:
                 zip_code = zip_code.replace("CEP:", "").strip()
-            city = poi["visitingAddress"]["postalAddress"]["physicalAddress"]["city"][
-                "value"
-            ].split(", ")[0]
+            raw_city = poi["visitingAddress"]["postalAddress"]["physicalAddress"][
+                "city"
+            ]["value"]
+            addr = parse_address_intl(raw_city)
+            city = addr.city
             if zip_code == "Griffith":
                 city = "Griffith"
                 zip_code = "2680"
@@ -325,6 +328,7 @@ def fetch_data():
                     "coordinates"
                 ]["longitude"],
                 hours_of_operation=hoo,
+                raw_address=raw_city,
             )
 
             yield item

@@ -3,7 +3,7 @@
 #### Library version:
 
 ```
-sgzip>=0.10.0
+sgzip>=0.11.0
 ```
 
 ### Required reading: [Dynamic Geospatial Search (Link)](./sgzip.md)
@@ -32,10 +32,12 @@ sgzip>=0.10.0
     - See example below for enhanced clarity.
   - `ParallelDynamicSearch`:
     - This is the engine that brings the abovementioned classes together.
-    - Here, you inject instances of the previous classes, specify the `country_codes`, and the maximum thread count.
-      - Pro Tip #1: Don't create too many threads. The default of `4` is generally good.
-      - Pro Tip #2: The more threads you have, the more concurrent calls you can make, which can overwhelm an API.
+    - Here, you inject instances of the previous classes, specify the `country_codes`.
     - See example below for enhanced clarity.
+    - When injecting the `search_iteration` argument, you can **either** provide an instance, or a function that returns the instance.
+      - If you provided a function, an instance will be created _per country_.
+      - This is a good way to inject an HTTP client, since sgzip will work sequentially within a country in any case.
+      - You can see the function injected in the example below.
 
 ```python
 from typing import Iterable, T_co, Tuple, Callable
@@ -56,8 +58,8 @@ class ExampleSearchIteration(SearchIteration):
     It provides you with all the data you could get from the search instance, as well as
     a method to register found locations.
     """
-    def __init__(self, http: SgRequests):
-        self.__http = http
+    def __init__(self):
+        self.__http = SgRequests()  # Leaks resources, but it's ok.
         self.__state = CrawlStateSingleton.get_instance()
 
     def do(self,
@@ -96,15 +98,12 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(search_type='DynamicGeoSearch', granularity=Grain_8())
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        with SgRequests() as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(search_maker=search_maker,
-                                               search_iteration=search_iter,
-                                               country_codes=SearchableCountries.ALL,
-                                               max_threads=8)
+        par_search = ParallelDynamicSearch(search_maker=search_maker,
+                                           search_iteration=lambda: ExampleSearchIteration(),
+                                           country_codes=SearchableCountries.ALL)
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in par_search.run():
+            writer.write_row(rec)
 
     state = CrawlStateSingleton.get_instance()
     print("Printing number of records by country-code:")
