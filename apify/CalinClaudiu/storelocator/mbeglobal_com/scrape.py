@@ -31,7 +31,7 @@ def fix_comma(x):
 
 
 def ret_record(record):
-
+    MISSING = SgRecord.MISSING
     page_url = SgRecord.MISSING
     location_name = SgRecord.MISSING
     street_address = SgRecord.MISSING
