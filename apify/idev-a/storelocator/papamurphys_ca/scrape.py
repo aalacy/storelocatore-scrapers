@@ -6,7 +6,6 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
-import re
 
 logger = SgLogSetup().get_logger("papamurphys")
 
