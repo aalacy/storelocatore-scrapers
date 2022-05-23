@@ -13,8 +13,10 @@ def get_locations(retry=0):
     try:
         session = SgRequests()
         url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
-        wayback_data = session.get(f'http://archive.org/wayback/available?url={url}').json()
-        data_url = wayback_data['archived_snapshots']['closest']['url']
+        wayback_data = session.get(
+            f"http://archive.org/wayback/available?url={url}"
+        ).json()
+        data_url = wayback_data["archived_snapshots"]["closest"]["url"]
 
         return session.get(data_url, headers=headers).iter_lines()
     except:
