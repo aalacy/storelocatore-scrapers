@@ -36,7 +36,7 @@ def get_locations(url):
         js_data = theScript[i]
         bs_data = list(stores[i].stripped_strings)
         print(js_data)
-        print('\n')
+        print("\n")
         print(bs_data)
 
         if len(bs_data) == 6:
@@ -51,7 +51,7 @@ def get_locations(url):
             addressData = []
             for i in nice:
                 addressData.append(i.strip())
-            
+
             try:
                 k["address"] = addressData[0]
 
@@ -61,9 +61,11 @@ def get_locations(url):
                 k["country"] = "US"
             except Exception:
                 MISSING = SgRecord.MISSING
-                parsed = parser.parse_address_intl(' '.join(addressData))
+                parsed = parser.parse_address_intl(" ".join(addressData))
                 country_code = parsed.country if parsed.country else MISSING
-                street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
+                street_address = (
+                    parsed.street_address_1 if parsed.street_address_1 else MISSING
+                )
                 street_address = (
                     (street_address + ", " + parsed.street_address_2)
                     if parsed.street_address_2
@@ -82,15 +84,14 @@ def get_locations(url):
             k["lat"] = js_data["lat"] if js_data["lat"] else ""
             k["lon"] = js_data["lng"] if js_data["lng"] else ""
             k["storeno"] = bs_data[0].split("#")[-1].strip()
-            if ',' not in bs_data[2]:
-                print('popp')
+            if "," not in bs_data[2]:
+                print("popp")
                 print(bs_data[2])
                 bs_data.pop(2)
             nice = bs_data[2].split(",")
             addressData = []
             for i in nice:
                 addressData.append(i.strip())
-
 
             k["address"] = addressData[0]
 
@@ -133,11 +134,11 @@ def scrape():
         ),
         latitude=sp.MappingField(
             mapping=["lat"],
-            part_of_record_identity = True,
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["lon"],
-            part_of_record_identity = True,
+            part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
             mapping=["address"],
@@ -152,11 +153,14 @@ def scrape():
             mapping=["zip"],
         ),
         country_code=sp.MappingField(mapping=["country"], is_required=False),
-        phone=sp.MappingField(mapping=["phone"], is_required=False,
-            part_of_record_identity = True,),
+        phone=sp.MappingField(
+            mapping=["phone"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         store_number=sp.MappingField(
             mapping=["storeno"],
-            part_of_record_identity = True,
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(mapping=["type"], is_required=False),
