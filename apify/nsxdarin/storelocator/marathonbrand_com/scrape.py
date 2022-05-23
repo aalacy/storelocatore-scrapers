@@ -15,7 +15,9 @@ headers = {
 
 def get_locations(retry=0):
     try:
-        session = SgRequests(verify_ssl=False, proxy_country='us', retries_with_fresh_proxy_ip=1)
+        session = SgRequests(
+            verify_ssl=False, proxy_country="us", retries_with_fresh_proxy_ip=1
+        )
         url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
         return session.get(url, headers=headers).iter_lines()
     except:
