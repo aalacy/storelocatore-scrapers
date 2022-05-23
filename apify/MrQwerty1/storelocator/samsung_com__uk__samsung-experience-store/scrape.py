@@ -58,14 +58,17 @@ def fetch_data(sgw: SgWriter):
             store_number = j.get("searchableId")
             location_name = j.get("name")
             a = j.get("address") or {}
-            street_address = a.get("street")
-            city = j.get("locality")
-            postal = a.get("zip")
-            phone = j.get("telephone")
+            street_address = a.get("street") or ""
+            city = j.get("locality") or ""
+            postal = a.get("zip") or ""
+            phone = j.get("telephone") or ""
+            if phone.count("+") > 1:
+                phone = phone.split("+")[1].strip()
             c = j.get("coordinates") or {}
             latitude = c.get("latitude")
             longitude = c.get("longitude")
             hours_of_operation = j.get("openingHours")
+            raw_address = " ".join(f"{street_address} {city} {postal}".split())
 
             row = SgRecord(
                 page_url=page_url,
@@ -80,6 +83,7 @@ def fetch_data(sgw: SgWriter):
                 location_type=location_type,
                 phone=phone,
                 locator_domain=locator_domain,
+                raw_address=raw_address,
                 hours_of_operation=hours_of_operation,
             )
 
