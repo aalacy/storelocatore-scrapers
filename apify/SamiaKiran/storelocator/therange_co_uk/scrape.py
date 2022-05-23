@@ -115,6 +115,8 @@ def fetch_data():
                 + "-"
                 + hour["closes"]
             )
+        if "Closed-Closed" in hours_of_operation:
+            continue
         try:
             driver_page_url.switch_to.frame(0)
             geo_link = driver.find_element(
@@ -127,7 +129,6 @@ def fetch_data():
         except:
             latitude = MISSING
             longitude = MISSING
-
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,

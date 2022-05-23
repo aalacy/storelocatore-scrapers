@@ -14,7 +14,7 @@ website = "https://www.smartstyle.com"
 starter_url = f"{website}/en-us/salon-directory.html"
 json_url = "https://info3.regiscorp.com/salonservices/siteid/6/salon/"
 MISSING = SgRecord.MISSING
-max_workers = 10
+max_workers = 5
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -36,7 +36,7 @@ def request_with_retries(url, retry=1):
             log.error(f"failed with status code ={response.status_code}")
     except Exception as e:
         log.error(f"Failed to load e={e}")
-    if retry > 3:
+    if retry > 5:
         return None
     return request_with_retries(url, retry + 1)
 

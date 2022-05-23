@@ -40,6 +40,7 @@ def get_data(url, sgw: SgWriter):
     postal = j.get("postalCode")
     country_code = j.get("country")
 
+    store_number = j.get("corporateCode")
     phone = j.get("phone")
     latitude = j.get("latitude")
     longitude = j.get("longitude")
@@ -74,6 +75,7 @@ def get_data(url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
+        store_number=store_number,
         phone=phone,
         latitude=latitude,
         longitude=longitude,

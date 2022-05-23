@@ -21,9 +21,19 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath('.//p[@class="link"]//a//@href'))
-        ad = "".join(d.xpath('.//p[@class="address"]//text()'))
         location_name = "".join(d.xpath(".//h4//text()"))
-        a = parse_address(International_Parser(), ad)
+        latitude = "".join(d.xpath(".//@data-lat"))
+        longitude = "".join(d.xpath(".//@data-lng"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        address_line = (
+            " ".join(tree.xpath("//h1/following::ul[1]/li[1]//text()"))
+            .replace("\n", "")
+            .strip()
+        )
+        address_line = " ".join(address_line.split())
+        a = parse_address(International_Parser(), address_line)
         street_address = (
             f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
@@ -32,8 +42,6 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "DE"
         city = a.city or "<MISSING>"
-        latitude = "".join(d.xpath(".//@data-lat"))
-        longitude = "".join(d.xpath(".//@data-lng"))
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -50,7 +58,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
-            raw_address=ad,
+            raw_address=address_line,
         )
 
         sgw.write_row(row)

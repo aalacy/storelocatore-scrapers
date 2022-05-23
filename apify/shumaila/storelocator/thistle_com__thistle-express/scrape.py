@@ -33,9 +33,11 @@ def fetch_data():
         title = content["name"]
         phone = content["telephone"]
         state = content["address"]["addressRegion"]
-        city = street.split(", ")[-1]
+
+        city = street.split(", ")[-2]
         street = street.split(", " + city, 1)[0]
         city = city.replace(pcode, "").strip()
+
         yield SgRecord(
             locator_domain="https://www.thistle.com/thistle-express",
             page_url=link,
