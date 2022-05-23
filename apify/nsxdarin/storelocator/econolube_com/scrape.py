@@ -1,5 +1,4 @@
 from lxml import etree
-
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -58,7 +57,7 @@ def fetch_data():
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_address[0],
+            street_address=raw_address[0].replace(",", "").replace(".", ""),
             city=raw_address[-1].split(", ")[0],
             state=raw_address[-1].split(", ")[-1].split()[0],
             zip_postal=raw_address[-1].split(", ")[-1].split()[-1],
