@@ -61,6 +61,8 @@ def fetch_data():
             if _address[0] == location_name:
                 _address = _address[1:]
 
+            raw_address = " ".join(_address)
+
             zip = _address[-1]
             if len(zip.split(",")) > 1:
                 zip = zip.split(",")[1]
@@ -118,6 +120,7 @@ def fetch_data():
                     country_code=item["country"],
                     locator_domain=locator_domain,
                     hours_of_operation=_valid("; ".join(hours)),
+                    raw_address=raw_address,
                 )
 
 
