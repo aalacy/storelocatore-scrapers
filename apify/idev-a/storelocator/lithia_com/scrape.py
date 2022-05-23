@@ -80,7 +80,7 @@ def record_initial_requests(http, driver):
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
         except:
             try:
-                if not "www" in page_url:
+                if "www" not in page_url:
                     page_url = "https://www." + urlparse(page_url).netloc
                     sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
                 else:
