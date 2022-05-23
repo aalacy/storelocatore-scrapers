@@ -1,8 +1,3 @@
-import os
-
-os.environ.pop("PROXY_URL", None)
-os.environ.pop("PROXY_PASSWORD", None)
-
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -16,13 +11,14 @@ headers = {
 
 def get_locations(retry=0):
     try:
-        session = SgRequests(
-            verify_ssl=False, proxy_country="us", retries_with_fresh_proxy_ip=1
-        )
+        session = SgRequests()
         url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
-        return session.get(url, headers=headers).iter_lines()
+        wayback_data = session.get(f'http://archive.org/wayback/available?url={url}').json()
+        data_url = wayback_data['archived_snapshots']['closest']['url']
+
+        return session.get(data_url, headers=headers).iter_lines()
     except:
-        if retry < 1000:
+        if retry < 10:
             return get_locations(retry + 1)
 
 
