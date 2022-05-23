@@ -23,10 +23,13 @@ def fetch_data(sgw: SgWriter):
         if location_type != "store":
             continue
         street_address = (
-            f"{a.get('streetNumber')} {a.get('streetName')}".strip() or "<MISSING>"
+            f"{a.get('streetNumber')} {a.get('streetName')}".replace("None", "").strip()
+            or "<MISSING>"
         )
         state = a.get("region") or "<MISSING>"
         postal = a.get("postal_code") or "<MISSING>"
+        if postal == "0000":
+            postal = "<MISSING>"
         country_code = a.get("country") or "<MISSING>"
         city = a.get("district") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"

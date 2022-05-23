@@ -73,38 +73,34 @@ def fetch_data():
 
         for store in stores:
 
-            store_url = "".join(store.xpath("./@href")).strip()
-            log.info(store_url)
+            page_url = "".join(store.xpath("./@href")).strip()
+            log.info(page_url)
 
-            store_res = session.get(store_url, headers=headers)
+            store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
             locator_domain = website
 
-            location_name = store_sel.xpath(
-                '//div[contains(@class,"hero-title")]/h2//text()'
-            )
-            if len(location_name) > 0:
-                location_name = location_name[0]
+            location_name = " ".join(
+                store_sel.xpath(
+                    '//h1[@class="h2"]//text() | //div[contains(@class,"hero-title")]/h2//text()'
+                )
+            ).strip()
 
             location_type = "<MISSING>"
+
+            store_info_sel = store_sel.xpath(
+                '//div[contains(./span/strong/text(),"ADDRESS")] | //p[contains(strong/text(),"ADDRESS")]'
+            )
 
             store_info = list(
                 filter(
                     str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//p[contains(strong/text(),"ADDRESS")]//text()'
-                        )
-                    ],
+                    [x.strip() for x in store_info_sel[0].xpath(".//text()")],
                 )
             )
 
             full_address = store_info[1:]
-            if len(full_address) == 3:
-                full_address = store_info[2:]
-
             street_address, city, state, zip, country_code = split_fulladdress(
                 full_address
             )
@@ -116,23 +112,19 @@ def fetch_data():
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            '//p[contains(strong/text(),"PHONE")]//text()'
+                            '//div[contains(./span/strong/text(),"PHONE")]//text() | //p[contains(strong/text(),"PHONE")]//text()'
                         )
                     ],
                 )
             )[1].strip()
 
-            page_url = store_url
-
+            hour_sel = store_sel.xpath(
+                '//div[contains(./span/strong/text(),"HOURS")]| //p[contains(strong/text(),"HOURS")]'
+            )
             hours = list(
                 filter(
                     str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//p[contains(strong/text(),"HOURS")]//text()'
-                        )
-                    ],
+                    [x.strip() for x in hour_sel[0].xpath(".//text()")],
                 )
             )
             hours_of_operation = (
@@ -155,23 +147,21 @@ def fetch_data():
             )
 
             if (
-                "Closed for season".upper() in hours_of_operation.upper()
-                or "Closed for seaon" in hours_of_operation
+                "Closed for ".upper() in hours_of_operation.upper()
+                or "Closed till" in hours_of_operation
             ):
                 location_type = "Temporarily Closed"
             store_number = (
                 "".join(
                     store_sel.xpath(
-                        '//div[@id="maincontent"]//div[@class="page-designer chromeless "]/@id'
+                        '//div[@class="page-designer chromeless " and contains(@id,"location-")]/@id'
                     )
                 )
                 .split("-")[-1]
                 .strip()
             )
 
-            map_link = "".join(
-                store_sel.xpath('//p[contains(strong/text(),"ADDRESS")]//@href')
-            ).strip()
+            map_link = "".join(store_info_sel[0].xpath(".//@href")).strip()
 
             latitude, longitude = get_latlng(map_link)
 

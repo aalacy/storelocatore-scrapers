@@ -206,6 +206,36 @@ def fetch_records_global(idx, url, sgw: SgWriter):
         if MISSING not in store and country == "CA":
             name = "STORE #" + store
 
+        # Fix city contains numerics / numbers
+
+        if city.isdigit() is True:
+            city = MISSING
+        city = city.replace('"', "")
+
+        # Custom Fix for postcode
+        # State data used to pull postcode data,
+        # and if zipcode has missing data,
+        # then we can replace zipcode with state's data.
+        # 2830-106
+        # 2975-338
+        # 11-97
+
+        if zc == MISSING and state == "2830-106":
+            zc = "2830-106"
+            state = MISSING
+
+        if zc == MISSING and state == "2975-338":
+            zc = "2975-338"
+            state = MISSING
+
+        if zc == MISSING and state == "11-97":
+            zc = "11-97"
+            state = MISSING
+
+        # Fix number in state column
+        if state.isdigit() is True:
+            state = MISSING
+
         rec = SgRecord(
             locator_domain=website,
             page_url=loc,

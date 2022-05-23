@@ -25,13 +25,13 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath("//h1/text()")[0]
-        raw_address = loc_dom.xpath('//meta[@name="geo.placename"]/@content')
-        raw_address = raw_address[0].split(", ") if raw_address else ""
-        if not raw_address:
-            raw_address = loc_dom.xpath(
-                '//h5[contains(text(), "Find Us")]/following-sibling::p[1]/text()'
-            )
-            raw_address = raw_address[:1] + raw_address[1].split(", ")
+        raw_address = loc_dom.xpath(
+            '//h5[contains(text(), "Find Us")]/following-sibling::p[1]/text()'
+        )
+        raw_address = raw_address[:1] + raw_address[1].split(", ")
+        street_address = loc_dom.xpath(
+            '//h5[contains(text(), "Find Us")]/following-sibling::p[1]/text()'
+        )[0]
         hoo = loc_dom.xpath(
             '//h5[contains(text(), "Hours")]/following-sibling::p/text()'
         )[0]
@@ -62,7 +62,7 @@ def fetch_data():
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_address[0],
+            street_address=street_address,
             city=raw_address[1],
             state=raw_address[2].split()[0],
             zip_postal=raw_address[2].split()[-1],

@@ -45,15 +45,11 @@ def fetch_data():
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
 
-            city = pa.city
-            city = city.strip() if city else MISSING
-
             state = pa.state
             state = state.strip() if state else MISSING
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-
             store_number = loc["data-locationid"]
             latitude = loc["data-latitude"]
             longitude = loc["data-longitude"]
@@ -62,6 +58,11 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            temp = raw_address.split(",")[-1].split()
+            if len(temp) == 4:
+                city = temp[0] + " " + temp[1]
+            else:
+                city = temp[0]
             if hours_of_operation == "Temporarily Closed":
                 hours_of_operation = MISSING
                 location_type = "TEMPORARILY CLOSED"

@@ -66,6 +66,7 @@ def other_source(session, state):
     url = "https://www.walmart.com/store/directory"
     main = SgRequests.raise_on_err(session.get(url, headers=headers))
     soup = b4(main.text, "lxml")
+    logger.info(f"{len(main.text)}")
     allstates = (
         soup.find("div", {"class": "store-directory-container"})
         .find("ul")
@@ -210,11 +211,20 @@ def gen_hours(rec):
         except Exception:
             pass
         if len(newrec["horas"]) > 0:
+            for i in newrec["horas"]:
+                if "HARMAC" in i or "harmac" in i:
+                    newrec["horas"] = i
+                    return newrec
             newrec["horas"] = "\n".join(newrec["horas"])
         else:
             raise
         return newrec
     except Exception as mf:
+        logger.error(f"{str(rec)}", exc_info=mf)
+        if rec:
+            newrec = rec
+        else:
+            raise
         newrec["horas"] = str(mf)
         return newrec
 
@@ -250,8 +260,6 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    test = gen_hours(transform_types(test_other(session)))
-    please_write(test)
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
         yield gen_hours(transform_types(item))

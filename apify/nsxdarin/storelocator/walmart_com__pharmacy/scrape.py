@@ -47,65 +47,62 @@ def fetch_data():
                             country = "US"
                             lat = store["geoPoint"]["latitude"]
                             lng = store["geoPoint"]["longitude"]
+                            hrs = (
+                                "Mon-Fri: "
+                                + str(store)
+                                .split("'name': 'PHARMACY'")[1]
+                                .split("operationalHours")[1]
+                                .split("monToFriHrs")[1]
+                                .split("'startHr': '")[1]
+                                .split("'")[0]
+                                + "-"
+                                + str(store)
+                                .split("'name': 'PHARMACY'")[1]
+                                .split("operationalHours")[1]
+                                .split("monToFriHrs")[1]
+                                .split("'endHr': '")[1]
+                                .split("'")[0]
+                            )
                             try:
                                 hrs = (
-                                    "Mon-Fri: "
+                                    hrs
+                                    + "; Sat: "
                                     + str(store)
-                                    .split('"name":"PHARMACY"')[1]
-                                    .split('"operationalHours":')[1]
-                                    .split('"monToFriHrs":')[1]
-                                    .split('"startHr":"')[1]
-                                    .split('"')[0]
+                                    .split("'name': 'PHARMACY'")[1]
+                                    .split("operationalHours")[1]
+                                    .split("saturdayHrs")[1]
+                                    .split("'startHr': '")[1]
+                                    .split("'")[0]
                                     + "-"
                                     + str(store)
-                                    .split('"name":"PHARMACY"')[1]
-                                    .split('"operationalHours":')[1]
-                                    .split('"monToFriHrs":')[1]
-                                    .split('"endHr":"')[1]
-                                    .split('"')[0]
+                                    .split("'name': 'PHARMACY'")[1]
+                                    .split("operationalHours")[1]
+                                    .split("saturdayHrs")[1]
+                                    .split("'endHr': '")[1]
+                                    .split("'")[0]
                                 )
-                                try:
-                                    hrs = (
-                                        hrs
-                                        + "; Sat: "
-                                        + str(store)
-                                        .split('"name":"PHARMACY"')[1]
-                                        .split('"operationalHours":')[1]
-                                        .split('"saturdayHrs":')[1]
-                                        .split('"startHr":"')[1]
-                                        .split('"')[0]
-                                        + "-"
-                                        + str(store)
-                                        .split('"name":"PHARMACY"')[1]
-                                        .split('"operationalHours":')[1]
-                                        .split('"saturdayHrs":')[1]
-                                        .split('"endHr":"')[1]
-                                        .split('"')[0]
-                                    )
-                                except:
-                                    hrs = hrs = "; Sat: Closed"
-                                try:
-                                    hrs = (
-                                        hrs
-                                        + "; Sun: "
-                                        + str(store)
-                                        .split('"name":"PHARMACY"')[1]
-                                        .split('"operationalHours":')[1]
-                                        .split('"sundayHrs":')[1]
-                                        .split('"startHr":"')[1]
-                                        .split('"')[0]
-                                        + "-"
-                                        + str(store)
-                                        .split('"name":"PHARMACY"')[1]
-                                        .split('"operationalHours":')[1]
-                                        .split('"sundayHrs":')[1]
-                                        .split('"endHr":"')[1]
-                                        .split('"')[0]
-                                    )
-                                except:
-                                    hrs = hrs + "; Sun: Closed"
                             except:
-                                hrs = "<MISSING>"
+                                hrs = hrs + "; Sat: Closed"
+                            try:
+                                hrs = (
+                                    hrs
+                                    + "; Sun: "
+                                    + str(store)
+                                    .split("'name': 'PHARMACY'")[1]
+                                    .split("operationalHours")[1]
+                                    .split("sundayHrs")[1]
+                                    .split("'startHr': '")[1]
+                                    .split("'")[0]
+                                    + "-"
+                                    + str(store)
+                                    .split("'name': 'PHARMACY'")[1]
+                                    .split("operationalHours")[1]
+                                    .split("sundayHrs")[1]
+                                    .split("'endHr': '")[1]
+                                    .split("'")[0]
+                                )
+                            except:
+                                hrs = hrs + "; Sun: Closed"
                             hours = hrs
                             yield SgRecord(
                                 locator_domain=website,
@@ -135,6 +132,3 @@ def scrape():
 
 
 scrape()
-
-if __name__ == "__main__":
-    scrape()
