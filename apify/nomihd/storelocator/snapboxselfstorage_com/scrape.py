@@ -97,29 +97,35 @@ def fetch_data():
         store_number = page_url.split("-")[-1].strip().replace(".html", "").strip()
 
         location_type = "<MISSING>"
-        if "Coming Soon" in store_res.text:
+        if (
+            "Coming Soon"
+            in "".join(
+                store_sel.xpath('//div[@id="facility-details"]//p//text()')
+            ).strip()
+        ):
             location_type = "Coming Soon"
 
-        hours_of_operation = (
-            "; ".join(
-                list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//div[@class="hours"]/p[./strong[contains(text(),"Office Hours")]]/text()'
-                            )
-                        ],
+        temp_hours = store_sel.xpath(
+            '//div[@class="hours"]/p[./strong[contains(text(),"Office Hours")]]'
+        )
+        if len(temp_hours) > 0:
+            hours_of_operation = (
+                "; ".join(
+                    list(
+                        filter(
+                            str,
+                            [x.strip() for x in temp_hours[0].xpath("text()")],
+                        )
                     )
                 )
+                .strip()
+                .split("Gate Hours:")[0]
+                .strip("; ")
+                .replace("Office Hours:;", "")
+                .strip()
             )
-            .strip()
-            .split("Gate Hours:")[0]
-            .strip("; ")
-            .replace("Office Hours:;", "")
-            .strip()
-        )
+        else:
+            hours_of_operation = "<MISSING>"
 
         latitude, longitude = "<MISSING>", "<MISSING>"
 
