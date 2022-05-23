@@ -1,5 +1,4 @@
 from sgselenium import SgFirefox
-from proxyfier import ProxyProviders
 import time
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
@@ -38,7 +37,6 @@ def get_data():
         block_third_parties=True,
         is_headless=True,
         proxy_country="uk",
-        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as driver:
         driver.get(url)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
