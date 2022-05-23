@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sglogging import sglog
 
 
 def fetch_data(sgw: SgWriter):
@@ -43,7 +44,8 @@ def fetch_data(sgw: SgWriter):
             + ',"distance":500000},"filters":[{"columnName":"storeTypes","operation":"equal","value":["1_ses"]}]}'
         )
         r = session.post(api, data=data, headers=headers)
-        if r.status_code == 503:
+        logger.info(f"{page_url}: {r.status_code}")
+        if r.status_code != 200:
             continue
         js = r.json()["locations"]
 
@@ -102,6 +104,7 @@ if __name__ == "__main__":
         "TE": "trailers",
         "Pragma": "no-cache",
     }
+    logger = sglog.SgLogSetup().get_logger(logger_name="samsung.com")
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
