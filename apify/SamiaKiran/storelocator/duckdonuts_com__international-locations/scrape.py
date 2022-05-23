@@ -74,6 +74,8 @@ def fetch_data():
             except:
                 longitude = MISSING
                 latitude = MISSING
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
             try:
                 phone = loc.find("div", {"class": "phone"}).text
             except:
