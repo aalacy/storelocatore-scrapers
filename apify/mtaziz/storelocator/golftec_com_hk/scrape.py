@@ -74,7 +74,7 @@ def fetch_hk(page_url, http, sgw: SgWriter):
         longitude=longitude,
         hours_of_operation=hours_of_operation,
         phone=phone,
-        raw_address=f"{street_address}, {city}, {postal}",
+        raw_address=raw_address,
     )
     logger.info(f"Item: {item}")
     sgw.write_row(item)
