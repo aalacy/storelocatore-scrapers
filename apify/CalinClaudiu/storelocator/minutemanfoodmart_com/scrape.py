@@ -35,9 +35,6 @@ def get_locations(url):
         k = {}
         js_data = theScript[i]
         bs_data = list(stores[i].stripped_strings)
-        print(js_data)
-        print("\n")
-        print(bs_data)
 
         if len(bs_data) == 6:
             k["lat"] = js_data["lat"] if js_data["lat"] else ""
@@ -85,8 +82,6 @@ def get_locations(url):
             k["lon"] = js_data["lng"] if js_data["lng"] else ""
             k["storeno"] = bs_data[0].split("#")[-1].strip()
             if "," not in bs_data[2]:
-                print("popp")
-                print(bs_data[2])
                 bs_data.pop(2)
             nice = bs_data[2].split(",")
             addressData = []
