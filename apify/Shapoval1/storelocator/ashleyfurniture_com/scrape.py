@@ -51,11 +51,30 @@ def fetch_data(sgw: SgWriter):
             )
             phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
             city = "".join(d.xpath('.//div[@class="cityName"]//text()'))
-            city = str(city).replace("&#241;", "ñ").replace("&#233;", "é").strip()
+            city = (
+                str(city)
+                .replace("&#241;", "ñ")
+                .replace("&#233;", "é")
+                .replace("&#193;", "Á")
+                .replace("&#243;", "ó")
+                .replace("&#225;", "á")
+                .replace("&#246;", "ö")
+                .replace("&#220;", "Ü")
+                .replace(",", "")
+                .strip()
+            )
             state = "".join(d.xpath(".//h1//strong//text()"))
             location_name = city
             location_name = (
-                str(location_name).replace("&#241;", "ñ").replace("&#233;", "é").strip()
+                str(location_name)
+                .replace("&#241;", "ñ")
+                .replace("&#233;", "é")
+                .replace("&#193;", "Á")
+                .replace("&#243;", "ó")
+                .replace("&#225;", "á")
+                .replace("&#246;", "ö")
+                .replace("&#220;", "Ü")
+                .strip()
             )
             country_code = "US"
             location_type = "outlet"
@@ -80,6 +99,7 @@ def fetch_data(sgw: SgWriter):
                 if street_address == "<MISSING>":
                     continue
                 city = a.get("addressLocality") or "<MISSING>"
+                city = str(city).replace(",", "").strip()
                 state = a.get("addressRegion") or "<MISSING>"
                 if state.isdigit():
                     state = "<MISSING>"
@@ -154,13 +174,25 @@ def fetch_data(sgw: SgWriter):
             .replace("&#39;", "`")
             .replace("&#194;", "Â")
             .replace("&#233;", "é")
+            .replace("&amp;", "&")
             .strip()
             or "<MISSING>"
         )
         if street_address == "<MISSING>":
             continue
         city = a.get("addressLocality") or "<MISSING>"
-        city = str(city).replace("&#241;", "ñ").replace("&#233;", "é").strip()
+        city = (
+            str(city)
+            .replace("&#241;", "ñ")
+            .replace("&#233;", "é")
+            .replace("&#193;", "Á")
+            .replace("&#243;", "ó")
+            .replace("&#225;", "á")
+            .replace("&#246;", "ö")
+            .replace("&#220;", "Ü")
+            .replace(",", "")
+            .strip()
+        )
         state = a.get("addressRegion") or "<MISSING>"
         if state.isdigit():
             state = "<MISSING>"
@@ -168,7 +200,15 @@ def fetch_data(sgw: SgWriter):
         country_code = a.get("addressCountry") or "<MISSING>"
         location_name = j.get("name") or "<MISSING>"
         location_name = (
-            str(location_name).replace("&#241;", "ñ").replace("&#233;", "é").strip()
+            str(location_name)
+            .replace("&#241;", "ñ")
+            .replace("&#233;", "é")
+            .replace("&#193;", "Á")
+            .replace("&#243;", "ó")
+            .replace("&#225;", "á")
+            .replace("&#246;", "ö")
+            .replace("&#220;", "Ü")
+            .strip()
         )
         phone = j.get("telephone") or "<MISSING>"
         hours = j.get("openingHoursSpecification") or "<MISSING>"
