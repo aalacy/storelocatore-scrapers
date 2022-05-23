@@ -34,7 +34,7 @@ def fetch_data(sgw: SgWriter):
 
     for store_data in stores:
         link = store_data["location"]["extra_fields"]["post_link"]
-        location_name = store_data["title"]
+        location_name = store_data["title"].replace("#038;", "").replace("&#8217;", "'")
         raw_address = list(
             BeautifulSoup(
                 store_data["location"]["extra_fields"]["address"], "lxml"

@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -13,7 +14,8 @@ def get_urls():
     api = "https://www.intermarche.pt/umbraco/Api/Pos/Get"
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r.status_code}")
-    js = r.json()["list"]
+    js = json.loads(json.loads(r.text))["list"]
+
     for j in js:
         urls.add(j.get("url"))
 
@@ -31,8 +33,13 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
     postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
+    if " " in postal:
+        postal = postal.split()[0].strip()
     country_code = "PT"
-    phone = "".join(tree.xpath("//a[@itemprop='telephone']/text()")).strip()
+    try:
+        phone = tree.xpath("//a[@itemprop='telephone']/text()")[0].strip()
+    except IndexError:
+        phone = SgRecord.MISSING
     store_number = "".join(tree.xpath("//div[@id='pos-map']/@data-pos"))
     latitude = "".join(tree.xpath("//div[@id='pos-map']/@data-latitude"))
     longitude = "".join(tree.xpath("//div[@id='pos-map']/@data-longitude"))

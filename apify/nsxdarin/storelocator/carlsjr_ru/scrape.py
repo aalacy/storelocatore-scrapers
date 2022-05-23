@@ -27,21 +27,16 @@ def fetch_data():
         coords = []
         r = session.get(url, headers=headers)
         website = "carlsjr.ru"
-        loc = "<MISSING>"
+        loc = url
         typ = "<MISSING>"
         country = "RU"
         phone = "<MISSING>"
         lines = r.iter_lines()
         locinfo = []
         for line in lines:
-            if '"coordinates": [' in line:
-                clat = line.split('"coordinates": [')[1].split(",")[0]
-                clng = (
-                    line.split('"coordinates": [')[1]
-                    .split(",")[1]
-                    .split("]")[0]
-                    .strip()
-                )
+            if '"coordinates": [' in line or 'coordinates":[' in line:
+                clat = line.split("[")[1].split(",")[0]
+                clng = line.split("[")[1].split(",")[1].split("]")[0].strip()
                 coords.append(clat + "|" + clng)
             if 'field="li_descr__' in line:
                 name = (
@@ -77,7 +72,7 @@ def fetch_data():
                     name + "|" + add + "|" + city + "|" + state + "|" + hours
                 )
             if "</html>" in line:
-                for x in range(0, len(coords) - 1):
+                for x in range(0, len(coords)):
                     store = "<MISSING>"
                     name = locinfo[x].split("|")[0]
                     add = locinfo[x].split("|")[1]

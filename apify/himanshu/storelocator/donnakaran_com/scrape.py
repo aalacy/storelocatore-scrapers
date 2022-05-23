@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.dkny.com/"
-    for i in range(1, 500):
+    for i in range(1, 10000):
         page_url = f"https://www.dkny.com/store-locator/{i}/"
         session = SgRequests()
         headers = {
