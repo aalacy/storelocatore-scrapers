@@ -1,5 +1,6 @@
 import os
 
+os.environ.pop("PROXY_URL", None)
 os.environ.pop("PROXY_PASSWORD", None)
 
 from sgrequests import SgRequests
