@@ -96,6 +96,8 @@ def fetch_data():
                                     store_json["address"]["addressLocality"]
                                     .strip()
                                     .replace("&#039;", "'")
+                                    .split("(")[0]
+                                    .strip()
                                 )
 
                                 state = "<MISSING>"
