@@ -37,6 +37,8 @@ def fetch_data(sgw: SgWriter):
                 .replace('"', "")
                 .replace(":", "")
             )
+    max_results = 25
+    max_distance = 50
     r_headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
@@ -47,8 +49,8 @@ def fetch_data(sgw: SgWriter):
 
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-            max_search_distance_miles=200,
-            expected_search_radius_miles=50,
+            max_search_distance_miles=max_distance,
+            max_search_results=max_results,
         )
         logger.info("Sgzips for loc_type: %s" % loc_type)
 
