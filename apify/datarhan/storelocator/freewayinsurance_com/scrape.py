@@ -40,23 +40,15 @@ def fetch_data():
         location_name = store_data["name"]
         street_address = store_data["address"]["streetAddress"]
         city = store_data["address"]["addressLocality"]
-        city = city if city else SgRecord.MISSING
         state = store_data["address"]["addressRegion"]
-        state = state if state else SgRecord.MISSING
         zip_code = store_data["address"]["postalCode"]
-        zip_code = zip_code if zip_code else SgRecord.MISSING
         country_code = store_data["address"]["addressCountry"]
-        country_code = country_code if country_code else SgRecord.MISSING
         phone = store_data["telephone"]
-        phone = phone if phone else SgRecord.MISSING
         if phone == "none":
             phone = SgRecord.MISSING
         location_type = store_data["@type"]
-        location_type = location_type if location_type else SgRecord.MISSING
         latitude = store_data["geo"]["latitude"]
-        latitude = latitude if latitude else SgRecord.MISSING
         longitude = store_data["geo"]["longitude"]
-        longitude = longitude if longitude else SgRecord.MISSING
         hours = []
         hoo = store_data["openingHoursSpecification"]
         for e in hoo:
@@ -67,7 +59,7 @@ def fetch_data():
                 opens = e["opens"]
                 closes = e["closes"]
                 hours.append(f"{day} {opens} - {closes}")
-        hours_of_operation = ", ".join(hours) if hours else SgRecord.MISSING
+        hours_of_operation = ", ".join(hours) if hours else ""
 
         item = SgRecord(
             locator_domain=domain,

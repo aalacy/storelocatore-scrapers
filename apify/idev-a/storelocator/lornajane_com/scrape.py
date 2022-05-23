@@ -2,64 +2,117 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import Grain_2
+from typing import Iterable, Tuple, Callable
 from sgrequests.sgrequests import SgRequests
-import us
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("lornajane")
-
+locator_domain = "https://www.lornajane.com"
+base_url = "https://www.lornajane.co.uk/on/demandware.store/Sites-LJ{}-Site/en_GB/Stores-FindStores?country={}&latitude={}&longitude={}"
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+cc_map = {
+    "us": "United States",
+    "gb": "United Kingdom",
+    "au": "Austrailia",
+    "nz": "New Zealand",
+    "ca": "Canada",
+    "sg": "Singapore",
+}
 
-def fetch_data():
-    with SgRequests() as session:
-        for ss in us.states.STATES:
-            url = f"https://www.lornajane.com/on/demandware.store/Sites-LJUS-Site/en_US/Stores-FindStores?country=US&state={ss.name}"
-            logger.info(url)
-            # here you use the requests session to fetch the location from the requests
-            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
+url_map = {"gb": "UK", "sg": "SG", "us": "UK", "au": "UK", "nz": "UK"}
+
+
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        lat = coord[0]
+        lng = coord[1]
+        with SgRequests(proxy_country=current_country.lower()) as session:
+            url = base_url.format(
+                url_map[current_country], current_country.upper(), lat, lng
+            )
+            locations = bs(session.get(url).text, "lxml").select(
                 "div.results div.store-item"
             )
+            logger.info(f"[{current_country}] [{lat, lng}] {len(locations)}")
             for _ in locations:
-                addr = list(_.select_one("div.store-address").stripped_strings)
+                _addr = list(_.select_one("div.store-address").stripped_strings)
+                if _addr[0].startswith("Shop"):
+                    del _addr[0]
+                raw_address = " ".join(_addr).replace("\n", "")
+                addr = parse_address_intl(raw_address + ", " + cc_map[current_country])
                 phone = ""
                 if _.select_one("a.storelocator-phone"):
                     phone = _.select_one("a.storelocator-phone").text.strip()
+                if phone == "null":
+                    phone = ""
                 try:
-                    coord = (
+                    _coord = (
                         _.select_one("a.store-map")["href"].split("addr=")[1].split(",")
                     )
+                    found_location_at(_coord[0], _coord[1])
                 except:
-                    coord = ["", ""]
+                    _coord = ["", ""]
                 page_url = _.select_one("div.store-name a")["href"]
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                hours = list(sp1.select_one("div.store-hours").stripped_strings)
+                sp1 = bs(session.get(page_url).text, "lxml")
+                hours = []
+                if sp1.select_one("div.store-hours"):
+                    hours = list(sp1.select_one("div.store-hours").stripped_strings)
                 if hours:
                     hours = hours[1:]
+                city = addr.city
+                if not city:
+                    city = _["data-store-name"].replace("Uniquely", "").strip()
+
+                state = addr.state
+                if not state and "Auckland" in raw_address:
+                    state = "Auckland"
                 yield SgRecord(
                     page_url=page_url,
-                    street_address=" ".join(addr[:-1]).replace("\n", ""),
-                    city=addr[-1].split(",")[0].replace("\n", "").strip(),
-                    state=addr[-1].split(",")[1].replace("\n", "").strip(),
-                    zip_postal=addr[-1].split(",")[2].replace("\n", "").strip(),
                     store_number=_["data-store-id"],
                     location_name=_["data-store-name"],
+                    locator_domain=locator_domain,
+                    street_address=" ".join(_addr[:-1]).replace("\n", ""),
+                    city=city,
+                    state=state,
+                    zip_postal=addr.postcode,
+                    country_code=addr.country,
                     phone=phone,
-                    latitude=coord[0],
-                    longitude=coord[1],
+                    latitude=_coord[0],
+                    longitude=_coord[1],
                     hours_of_operation="; ".join(hours),
-                    raw_address=" ".join(addr).replace("\n", ""),
+                    raw_address=raw_address,
                 )
 
 
 if __name__ == "__main__":
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_2()
+    )
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=["au", "nz", "sg"],
+        )
+        for rec in par_search.run():
             writer.write_row(rec)

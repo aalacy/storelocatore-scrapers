@@ -74,6 +74,16 @@ def fetch_data():
                 street_address, city, state, zip_postal = getAddress(raw_address)
                 if "Unit 2 Theatre Plain" in street_address:
                     city = "Great Yarmouth"
+                if zip_postal == MISSING:
+                    zip_postal = raw_address.split(",")[-1]
+                    street_address = re.sub(
+                        zip_postal, "", street_address, flags=re.IGNORECASE
+                    ).strip()
+                if city == MISSING:
+                    city = raw_address.split(",")[1].strip()
+                    street_address = re.sub(
+                        city + r"\s?", "", street_address, flags=re.IGNORECASE
+                    ).strip()
                 phone = row["items"][2]["label"].strip()
                 country_code = "UK"
                 hoo = row["items"][0]["label"]
@@ -90,7 +100,9 @@ def fetch_data():
                 store_number = MISSING
                 latitude = MISSING
                 longitude = MISSING
-                log.info("Append {} => {}".format(location_name, street_address))
+                log.info(
+                    f"Append {location_name} => {street_address}, {city}, {zip_postal}"
+                )
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=LOCATION_URL,

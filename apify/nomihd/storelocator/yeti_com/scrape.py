@@ -63,7 +63,7 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        if "Coming Soon" in store_res.text:
+        if "Coming Soon" in store_res.text or "We're Moving" in store_res.text:
             continue
         location_name = "".join(store_sel.xpath("//div/h1/text()"))
 

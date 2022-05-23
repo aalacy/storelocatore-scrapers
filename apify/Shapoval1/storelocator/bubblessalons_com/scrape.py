@@ -1,97 +1,97 @@
-import csv
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "http://www.bubblessalons.com"
-    api_url = "http://www.bubblessalons.com/api/content/render/false/type/xml/query/+structureName:BubblesSalonLocations%20+(conhost:48190c8c-42c4-46af-8d1a-0cd5db894797%20conhost:SYSTEM_HOST)%20+languageId:1*%20+deleted:false%20+live:true%20%20+working:true/orderby/modDate%20desc/limit/50"
+    locator_domain = "https://locations.bubblessalons.com/"
+    api_url = "https://locations.bubblessalons.com/search?q=washington+dc&r=100"
     session = SgRequests()
-    r = session.get(api_url)
-    tree = html.fromstring(r.content)
-    for i in tree:
-        location_name = "".join(i.xpath(".//title/text()"))
-        street_address = "".join(i.xpath(".//address/text()"))
-        phone = "".join(i.xpath(".//phone/text()"))
-        city = "".join(i.xpath(".//city/text()"))
-
-        state = "".join(i.xpath(".//state/text()"))
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="location-list-resultContainer"]')
+    for d in div:
+        slug = "".join(d.xpath('.//a[@class="location-card-title-link"]/@href'))
+        page_url = f"https://locations.bubblessalons.com/{slug}"
+        location_name = "".join(d.xpath('.//span[@class="location-name-geo"]/text()'))
+        street_address = (
+            "".join(d.xpath('.//span[@class="c-address-street-1"]/text()'))
+            + " "
+            + "".join(d.xpath('.//span[@class="c-address-street-2"]/text()'))
+        )
+        street_address = street_address.strip()
+        state = "".join(d.xpath('.//abbr[@class="c-address-state"]/text()'))
+        postal = "".join(d.xpath('.//span[@class="c-address-postal-code"]/text()'))
         country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "".join(i.xpath(".//latitude/text()"))
-        longitude = "".join(i.xpath(".//longitude/text()"))
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(i.xpath('.//*[contains(text(), "pm")]/text()'))
-            .replace("{", "")
-            .replace("}", "")
-            .strip()
+        city = "".join(d.xpath('.//span[@class="c-address-city"]/span[1]/text()'))
+        phone = "".join(d.xpath('.//div[@itemprop="telephone"]/text()'))
+        hours_js = "".join(
+            d.xpath(
+                './/div[@class="c-location-hours-details-wrapper js-location-hours"]/@data-days'
+            )
         )
-        page_url = "http://www.bubblessalons.com" + "".join(
-            i.xpath('.//*[contains(text(), "/find-a-bubbles-salon/")]/text()')
+        h_js = json.loads(hours_js)
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if h_js:
+            for h in h_js:
+                day = h.get("day")
+                opens = str(h.get("intervals")[0].get("start"))
+                closes = str(h.get("intervals")[0].get("end"))
+                if len(str(opens)) == 4:
+                    opens = opens[:2] + ":" + opens[2:]
+                if len(str(opens)) == 3:
+                    opens = opens[:1] + ":" + opens[1:]
+                if len(str(closes)) == 4:
+                    closes = closes[:2] + ":" + closes[2:]
+                if len(str(closes)) == 3:
+                    closes = closes[:1] + ":" + closes[1:]
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        latitude = "".join(
+            tree.xpath(
+                '//div[@id="schema-location"]//meta[@itemprop="latitude"]/@content'
+            )
         )
-        session = SgRequests()
-        r = session.get(page_url)
-        trees = html.fromstring(r.text)
-        ad = trees.xpath('//div[@class="adress"]//text()')
-        ad = list(filter(None, [a.strip() for a in ad]))
-        ad = " ".join(ad)
-        postal = ad.split()[-1]
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        longitude = "".join(
+            tree.xpath(
+                '//div[@id="schema-location"]//meta[@itemprop="longitude"]/@content'
+            )
+        )
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

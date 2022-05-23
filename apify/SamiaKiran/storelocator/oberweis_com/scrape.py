@@ -1,166 +1,166 @@
-import csv
-from sgrequests import SgRequests
 from sglogging import sglog
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "oberweis_com"
+session = SgRequests()
+website = "oberweis"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
-session = SgRequests()
+url = "https://www.oberweis.com/api/StoreFinder"
+
+payload = '{"latitude":41.79818400000001,"longitude":-88.348431,"searchOberweis":true,"searchRetail":true,"distance":320}'
 headers = {
-    "authority": "oberweis.com",
-    "method": "POST",
-    "path": "/api/StoreFinder",
-    "scheme": "https",
+    "authority": "www.oberweis.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
     "accept": "application/json, text/plain, */*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
-    "content-length": "109",
     "content-type": "application/json;charset=UTF-8",
-    "cookie": "ASP.NET_SessionId=f2bpeacqxm2zslnguuwo1tvh; _ga=GA1.2.1878780694.1611165405; _gid=GA1.2.1932864939.1611165405; _gcl_au=1.1.1640766567.1611165406; customerId=0; _fbp=fb.1.1611165411823.1887695553; sib_cuid=c1148fb0-1481-4e39-aeef-2b5a650fe546; _pin_unauth=dWlkPU5UWmhaRFV6WTJNdE1XVmlaUzAwTURNNExXRTVORFl0WVdNMk1URXdZVFV5WVdVNA; cookieconsent_status=dismiss; _gat=1; _uetsid=dfe162705b4811ebab738b147d7c30b3; _uetvid=dfe1dce05b4811eb8bde95cf5c676bc9",
-    "origin": "https://oberweis.com",
-    "referer": "https://oberweis.com/search/find-a-store?oberweisStores=true&groceryStores=true",
     "sec-ch-ua-mobile": "?0",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "origin": "https://www.oberweis.com",
     "sec-fetch-site": "same-origin",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://www.oberweis.com/search/find-a-store",
+    "accept-language": "en-US,en;q=0.9",
 }
 
+DOMAIN = "https://www.oberweis.com/"
+MISSING = SgRecord.MISSING
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        log.info(f"No of records being processed: {len(temp_list)}")
+def get_stores(loc):
+    location_name = loc["name"]
+    try:
+        page_url = loc["location"]
+        page_url = page_url.replace(" ", "%20")
+        page_url = "https://oberweis.com/ice-cream-and-dairy-stores/" + page_url
+    except:
+        page_url = "https://www.oberweis.com/search/find-a-store"
+    log.info(location_name)
+    try:
+        phone = loc["phone"]
+    except:
+        phone = MISSING
+    street_address = loc["address"].replace("DELIVERY TO:", "")
+    city = loc["city"]
+    state = loc["state"]
+    zip_postal = loc["zipCode"]
+    try:
+        longitude = loc["coordinates"]["longitude"]
+        latitude = loc["coordinates"]["latitude"]
+    except:
+        latitude = MISSING
+        longitude = MISSING
+    try:
+        hours = loc["description"]
+        hours = hours.replace("<br>", " ").replace("<b>", "").replace("</b>", " ")
+        hours = hours.split("Store Hours", 1)
+        phone = hours[0].split("Phone:", 1)[1].split("Email", 1)[0].strip()
+        hours_of_operation = hours[1]
+        if "This location is" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("This location")[0]
+    except:
+        hours_of_operation = MISSING
+
+    country_code = "US"
+    return (
+        location_name,
+        page_url,
+        street_address,
+        city,
+        state,
+        zip_postal,
+        latitude,
+        longitude,
+        hours_of_operation,
+        country_code,
+        phone,
+    )
 
 
 def fetch_data():
-    data = []
-    url = "https://oberweis.com/api/StoreFinder"
     if True:
-        myobj = {
-            "latitude": "41.79818400000001",
-            "longitude": "-88.348431",
-            "searchOberweis": "true",
-            "searchRetail": "true",
-            "distance": "100",
-        }
-        r = session.post(url, json=myobj, headers=headers)
-        oberweis = r.json()["oberweis"]
-        retail = r.json()["retail"]
+        loclist = session.post(url, data=payload, headers=headers).json()
+        oberweis = loclist["oberweis"]
+        retail = loclist["retail"]
         for loc in oberweis:
-            title = loc["name"]
-            link = loc["location"]
-            link = link.replace(" ", "%20")
-            link = "https://oberweis.com/ice-cream-and-dairy-stores/" + link
-            street = loc["address"]
-            city = loc["city"]
-            state = loc["state"]
-            pcode = loc["zipCode"]
-            if not pcode:
-                pcode = "<MISSING>"
-            longt = loc["coordinates"]["longitude"]
-            lat = loc["coordinates"]["latitude"]
-            hours = loc["description"]
-            hours = hours.replace("<br>", " ").replace("<b>", "").replace("</b>", " ")
-            hours = hours.split("Store Hours", 1)
-            phone = hours[0].split("Phone:", 1)[1].split("Email", 1)[0].strip()
-            hours = hours[1].strip()
-            data.append(
-                [
-                    "https://oberweis.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            (
+                location_name,
+                page_url,
+                street_address,
+                city,
+                state,
+                zip_postal,
+                latitude,
+                longitude,
+                hours_of_operation,
+                country_code,
+                phone,
+            ) = get_stores(loc)
+            location_type = "Oberweis"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
         for loc in retail:
-            title = loc["name"]
-            street = loc["address"]
-            if not street:
-                street = "<MISSING>"
-            city = loc["city"]
-            if not city:
-                city = "<MISSING>"
-            state = loc["state"]
-            pcode = loc["zipCode"]
-            if not pcode:
-                pcode = "<MISSING>"
-            longt = loc["coordinates"]["longitude"]
-            lat = loc["coordinates"]["latitude"]
-            data.append(
-                [
-                    "https://oberweis.com/",
-                    "https://oberweis.com/search/find-a-store",
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    "<MISSING>",
-                ]
+            (
+                location_name,
+                page_url,
+                street_address,
+                city,
+                state,
+                zip_postal,
+                latitude,
+                longitude,
+                hours_of_operation,
+                country_code,
+                phone,
+            ) = get_stores(loc)
+            location_type = "Retail"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-    return data
 
 
 def scrape():
-    log.info("Started")
-    data = fetch_data()
-    write_output(data)
-    log.info("Finished")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

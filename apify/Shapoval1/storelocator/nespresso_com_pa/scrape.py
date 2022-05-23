@@ -62,7 +62,17 @@ def fetch_data(sgw: SgWriter):
                 )
                 .replace("\n", "")
                 .strip()
-            )
+            ) or "<MISSING>"
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    " ".join(
+                        d.xpath(
+                            './/p[./strong[text()="Direccion:"]]/following-sibling::p[1]/following-sibling::p//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                ) or "<MISSING>"
             hours_of_operation = " ".join(hours_of_operation.split())
 
             row = SgRecord(

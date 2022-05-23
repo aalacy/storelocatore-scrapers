@@ -10,7 +10,7 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://carepointhealth.org/locations/"
+    base_link = "https://carepointhealth.org/locations-directions/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -19,20 +19,22 @@ def fetch_data(sgw: SgWriter):
     response = session.get(base_link, headers=headers)
     base = BeautifulSoup(response.text, "lxml")
 
-    items = base.find_all(class_="sub_column")
+    items = base.find(class_="elementor-section-wrap").find_all(
+        class_="elementor-column"
+    )
     locator_domain = "carepointhealth.org"
 
     for item in items:
-        if "get directions" not in item.text:
+        if "get directions" not in item.text.lower():
             continue
         raw_data = list(item.stripped_strings)[:-1]
         location_name = "CarePoint Health Medical Group"
         phone = "<MISSING>"
         link = base_link
-        if len(raw_data) == 4:
+        if len(raw_data) > 3:
             location_name = raw_data[0]
             phone = raw_data[-1].replace("Phone:", "").strip()
-            link = item.a["href"]
+            link = "https://carepointhealth.org" + item.a["href"]
             raw_data.pop(0)
         street_address = raw_data[0].strip()
         city_line = raw_data[1]
