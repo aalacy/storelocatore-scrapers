@@ -185,7 +185,7 @@ def fetch_data_from_files(data_files, domain, url_country):
                 ):
                     street_address = address
                 else:
-                    street_address = re.sub(fr",\s*{city}", "", address)
+                    street_address = re.sub(rf",\s*{city}", "", address)
 
             store_number = "<MISSING>"
             location_type = store["Type"]
