@@ -34,7 +34,12 @@ def extract_json(html_string):
 
 def get_data():
     url = "https://www.paulsmith.com/uk/stores"
-    with SgFirefox(block_third_parties=True, is_headless=True, proxy_country="uk", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
+    with SgFirefox(
+        block_third_parties=True,
+        is_headless=True,
+        proxy_country="uk",
+        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
+    ) as driver:
         driver.get(url)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         scroll_pause = 0.5
@@ -50,18 +55,23 @@ def get_data():
             if new_height == last_height:
                 break
             last_height = new_height
-        
+
         response = driver.page_source
 
         soup = bs(response, "html.parser")
         page_urls = []
-        for page_url in ["https://www.paulsmith.com" + a_tag["href"] for a_tag in soup.find_all("a", attrs={"class": "flex flex-col items-center"})]:
+        for page_url in [
+            "https://www.paulsmith.com" + a_tag["href"]
+            for a_tag in soup.find_all(
+                "a", attrs={"class": "flex flex-col items-center"}
+            )
+        ]:
             if page_url not in page_urls:
                 page_urls.append(page_url)
 
         for page_url in page_urls:
             locator_domain = "paulsmith.com"
-            
+
             driver.get(page_url)
             loc_response = driver.page_source
 
@@ -74,7 +84,7 @@ def get_data():
                 city = loc_data["address"][0]["addressLocality"]
                 store_number = "<MISSING>"
                 address = loc_data["address"][0]["streetAddress"]
-                
+
                 state = loc_data["address"][0]["addressRegion"]
                 if state.lower() == "na" or state == "N/A":
                     state = "<MISSING>"
@@ -87,7 +97,7 @@ def get_data():
                 hours = ""
                 for part in loc_data["openingHours"]:
                     hours = hours + part + ", "
-                
+
                 hours = hours[:-2]
 
                 yield {
@@ -108,8 +118,10 @@ def get_data():
                 }
 
             except Exception:
-                loc_data = extract_json(unescape(loc_response).split('"app"')[1])[0]["props"]["shop"]
-                
+                loc_data = extract_json(unescape(loc_response).split('"app"')[1])[0][
+                    "props"
+                ]["shop"]
+
                 location_name = loc_data["title"]
                 latitude = loc_data["latitude"]
                 longitude = loc_data["longitude"]
@@ -117,21 +129,21 @@ def get_data():
                 store_number = "<MISSING>"
 
                 try:
-                    address = loc_data["address_line_1"] + " " + loc_data["address_line_2"]
+                    address = (
+                        loc_data["address_line_1"] + " " + loc_data["address_line_2"]
+                    )
                 except Exception:
                     address = loc_data["address_line_1"]
                 state = "<MISSING>"
                 zipp = loc_data["postcode"]
                 if zipp == "na":
                     zipp = "<MISSING>"
-                
+
                 phone = loc_data["telephone"]
                 location_type = "<MISSING>"
                 hours = "<MISSING>"
                 country_code = loc_data["country_name"]
-                
-                
-                
+
                 yield {
                     "locator_domain": locator_domain,
                     "page_url": page_url,
@@ -148,7 +160,7 @@ def get_data():
                     "hours": hours,
                     "country_code": country_code,
                 }
-                
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
