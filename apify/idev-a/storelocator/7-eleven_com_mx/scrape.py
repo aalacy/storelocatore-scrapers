@@ -39,13 +39,17 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+
+            zip_postal = addr.postcode
+            if zip_postal:
+                zip_postal.replace("C.P.", "").replace("C.P", "")
             yield SgRecord(
                 store_number=_["id"],
                 location_name=_["name"],
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code="Mexico",
