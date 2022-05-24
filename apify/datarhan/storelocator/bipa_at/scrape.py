@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
-os.environ.pop('PROXY_PASSWORD')
+
+os.environ.pop("PROXY_PASSWORD")
 
 import re
 import json
