@@ -49,10 +49,24 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
 
             _hr = _.find("strong", string=re.compile(r"Shop Opening Hours"))
+            hoo = {}
+            temp = []
             hours = []
             if _hr:
                 for ho in _hr.find_parent().find_next_siblings("div"):
-                    hours += list(ho.stripped_strings)
+                    temp += list(ho.stripped_strings)
+            for hh in temp:
+                day1 = hh.replace("\xa0", " ").split("  ")[0].strip()
+                day2 = hh.replace("\xa0", " ").split("  ")[-1].strip()
+                if not hoo:
+                    hoo[day1] = []
+                    hoo[day2] = []
+                else:
+                    hoo[list(hoo.keys())[0]].append(day1)
+                    hoo[list(hoo.keys())[1]].append(day2)
+
+            for day, times in hoo.items():
+                hours.append(f"{day}: {', '.join(times)}")
 
             yield SgRecord(
                 page_url=base_url,
@@ -62,7 +76,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Republic of Maldives",
-                phone=phone,
+                phone=phone.replace("P", "").strip(),
                 latitude=coord[0],
                 longitude=coord[1],
                 locator_domain=locator_domain,
