@@ -14,7 +14,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
 
-log = sglog.SgLogSetup().get_logger(logger_name="bipa.at")
+logger = sglog.SgLogSetup().get_logger(logger_name="bipa.at")
 
 
 def fetch_data():
