@@ -37,13 +37,14 @@ def fetch_data():
             page_url = DOMAIN + loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
             schema = r.text.split(
                 '<script data-react-helmet="true" type="application/ld+json">'
             )[2].split("</script>", 1)[0]
             schema = schema.replace("\n", "")
             loc = json.loads(schema)
             location_name = strip_accents(loc["name"])
-            phone = MISSING
+            phone = soup.select_one("a[href*=tel]").text
             address = loc["address"]
             street_address = strip_accents(address["streetAddress"])
             city = strip_accents(address["addressLocality"])
