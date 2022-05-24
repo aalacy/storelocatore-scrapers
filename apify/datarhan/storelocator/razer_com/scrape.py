@@ -53,6 +53,8 @@ def fetch_data():
             )
         if not location_name:
             location_name = loc_dom.xpath('//h2[@class="header"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath("//h1/text()")
         location_name = location_name[0]
         raw_address = poi_html.xpath("text()")
         raw_address = [e.strip() for e in raw_address if e.strip()]
@@ -78,19 +80,20 @@ def fetch_data():
             phone = phone[0] if phone else ""
         location_type = ""
         geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')
-        geo = geo[0].split("ll=")[-1].split("&")[0].split(",") if geo else ""
+        if geo and "@" in geo[0]:
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
+                .split("/@")[-1]
+                .split(",")[:2]
+            )
+        else:
+            geo = geo[0].split("ll=")[-1].split("&")[0].split(",") if geo else ""
         if not geo:
             geo = (
                 loc_dom.xpath("//iframe/@src")[0]
                 .split("!2d")[-1]
                 .split("!3m")[0]
                 .split("!3d")
-            )
-        if "@" in geo[0]:
-            geo = (
-                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                .split("/@")[-1]
-                .split(",")[:2]
             )
         latitude = ""
         longitude = ""

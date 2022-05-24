@@ -50,6 +50,9 @@ def fetch_data(sgw: SgWriter):
             if street_address == "Opening Soon":
                 street_address = "<MISSING>"
                 hours_of_operation = "Coming Soon"
+            status = j.get("status")
+            if status == 0:
+                hours_of_operation = "Temporary closed"
 
             row = SgRecord(
                 locator_domain=locator_domain,

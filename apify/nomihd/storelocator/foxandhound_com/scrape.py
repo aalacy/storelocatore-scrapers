@@ -177,6 +177,8 @@ def fetch_data():
                 )
                 longitude = map_link.split("/")[-1].strip().split(",")[-1].strip()
 
+            if hours_of_operation.count("Closed") == 7:
+                continue
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
