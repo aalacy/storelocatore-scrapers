@@ -70,7 +70,6 @@ def fetch_data():
             for location in fetch_data_from_files(data_files, domain, url_country):
                 yield location
         except Exception as e:
-            print(e)
             for location in fetch_data_from_site(
                 home_sel, domain, url_country, session
             ):
