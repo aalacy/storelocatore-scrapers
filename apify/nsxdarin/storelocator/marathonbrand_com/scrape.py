@@ -1,7 +1,3 @@
-import os
-
-os.environ.pop("PROXY_PASSWORD", None)
-
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -15,9 +11,14 @@ headers = {
 
 def get_locations(retry=0):
     try:
-        session = SgRequests(verify_ssl=False)
+        session = SgRequests()
         url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
-        return session.get(url, headers=headers).iter_lines()
+        wayback_data = session.get(
+            f"http://archive.org/wayback/available?url={url}"
+        ).json()
+        data_url = wayback_data["archived_snapshots"]["closest"]["url"]
+
+        return session.get(data_url, headers=headers).iter_lines()
     except:
         if retry < 10:
             return get_locations(retry + 1)
@@ -34,13 +35,13 @@ def fetch_data():
             hours = "<MISSING>"
             website = "marathonabrand.com"
             typ = "<MISSING>"
-            lat = line.split(",")[7]
-            lng = line.split(",")[8]
+            lat = line.split(",")[8]
+            lng = line.split(",")[7]
             country = "US"
             phone = line.split(",")[6]
             zc = line.split(",")[5]
             zc = f"{zc[:5]}-{zc[5:]}"
-            loc = "<MISSING>"
+            loc = "https://www.marathonbrand.com/Stations/Station_Locator/"
             if phone == "":
                 phone = "<MISSING>"
             yield SgRecord(
