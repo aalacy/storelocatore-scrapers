@@ -2,7 +2,7 @@ import ssl
 import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
-from selenium import webdriver
+from selenium import webdriver  # noqa
 import undetected_chromedriver as uc  # noqa
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
