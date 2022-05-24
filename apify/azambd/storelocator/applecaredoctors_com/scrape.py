@@ -1,9 +1,9 @@
+import re
 from lxml import etree
-
-from sgrequests import SgRequests
 
 from sgpostal.sgpostal import parse_address_usa
 
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -82,16 +82,22 @@ def fetch_data():
             phone = phone[0].split(": ")[-1] if phone else MISSING
             location_type = MISSING
             try:
-                geo = (
-                    loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                    .split("=")[1]
-                    .split("&")[0]
-                    .split(",")
-                )
+                geolink = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
+                try:
+                    geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", geolink)[
+                        0
+                    ].split(",")
+                except:
+                    geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", geolink)[
+                        0
+                    ].split(",")
 
                 if len(geo) == 2:
                     latitude = geo[0]
                     longitude = geo[1]
+                else:
+                    latitude = MISSING
+                    longitude = MISSING
             except:
                 latitude = MISSING
                 longitude = MISSING
