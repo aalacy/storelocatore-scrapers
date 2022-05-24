@@ -315,6 +315,10 @@ def fetch_data_us_ca(idx, url, sgw: SgWriter):
     # Raw Address
     raw_address = ""
     raw_address = raw_address if raw_address else MISSING
+    xpath_cs = '//div[@class="location-details"]//div[contains(@class, "location-custom-message")]/text()'
+    coming_soon = "".join(sel_raw.xpath(xpath_cs))
+    if "coming" in coming_soon.lower():
+        location_type = "Coming Soon"
     row = SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,

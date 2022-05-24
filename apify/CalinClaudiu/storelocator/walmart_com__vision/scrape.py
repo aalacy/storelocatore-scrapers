@@ -214,6 +214,7 @@ def gen_hours(rec):
         for recz in newrec["horas"]:
             copyrec = newrec
             copyrec["horas"] = recz
+            copyrec["rawadd"] = recz.split(" - ", 1)[0]
             yield copyrec
 
     except Exception:
@@ -308,6 +309,7 @@ def scrape():
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["geoPoint", "longitude"],
@@ -323,6 +325,7 @@ def scrape():
         ),
         zipcode=sp.MappingField(
             mapping=["address", "postalCode"],
+            value_transform=lambda x: x.replace(" ", "-"),
         ),
         country_code=sp.MappingField(
             mapping=["address", "country"],
