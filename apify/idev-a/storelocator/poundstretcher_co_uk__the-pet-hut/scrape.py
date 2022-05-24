@@ -61,6 +61,8 @@ def fetch_data():
             if _address[0] == location_name:
                 _address = _address[1:]
 
+            raw_address = " ".join(_address)
+
             zip = _address[-1]
             if len(zip.split(",")) > 1:
                 zip = zip.split(",")[1]
@@ -83,7 +85,10 @@ def fetch_data():
                     street_address += " " + city.split("\\")[0]
 
                 location_type = "<MISSING>"
-                soup1 = bs(session.get(page_url).text, "html.parser")
+                res = session.get(page_url)
+                if res.status_code != 200:
+                    continue
+                soup1 = bs(res.text, "html.parser")
                 if soup1.select("div#store-address"):
                     store = soup1.select("div#store-address")[-1]
                     if store:
@@ -118,6 +123,7 @@ def fetch_data():
                     country_code=item["country"],
                     locator_domain=locator_domain,
                     hours_of_operation=_valid("; ".join(hours)),
+                    raw_address=raw_address,
                 )
 
 

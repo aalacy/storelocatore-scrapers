@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -37,6 +36,9 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             if street_address.startswith("#"):
                 street_address = street_address[1:]
+            city = poi["address"]["deligationOrCity"]
+            if city:
+                city = city.split(",")[0]
             hoo = [e.split("tienda:")[-1].strip() for e in raw_data if "Horario" in e]
             hoo = hoo[0].split("Horario:")[-1].split("Tienda:")[-1] if hoo else ""
 
@@ -55,6 +57,7 @@ def fetch_data():
                 latitude="",
                 longitude="",
                 hours_of_operation=hoo,
+                raw_address=raw_address,
             )
 
             yield item

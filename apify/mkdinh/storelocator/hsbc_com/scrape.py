@@ -90,7 +90,7 @@ def fetch_data_from_site(home_sel, domain, url_country, session):
         location_name = data["name"]
 
         address = data["address"]
-        street_address = address["streetAddress"]
+        street_address = address["streetAddress"].strip()
         city = address["addressLocality"]
         postal = address["postalCode"]
         country_code = address["addressCountry"]
@@ -135,7 +135,7 @@ def fetch_data_from_files(data_files, domain, url_country):
     locations = []
     for key in data_files.keys():
         url = data_files[key]
-        sleep(10)
+        sleep(5)
         stores_req = session.get(
             domain + url.replace(".cdata", ".udata"),
             headers=headers,
@@ -151,11 +151,16 @@ def fetch_data_from_files(data_files, domain, url_country):
             zip = store["address"].get("postcode", "<MISSING>")
             country_code = url_country.split(",")[2].strip()
 
-            cleaned_zip = re.sub(
-                rf"\s*({country_code}|SWIFT:)\s*", "", str(zip), re.IGNORECASE
-            )
-            if re.search("po box", cleaned_zip, re.IGNORECASE):
-                cleaned_zip = SgRecord.MISSING
+            if state == country_code:
+                state = None
+
+            cleaned_zip = SgRecord.MISSING
+            if zip != SgRecord.MISSING:
+                cleaned_zip = re.sub(
+                    rf"\s*({country_code}|SWIFT:)\s*", "", str(zip), re.IGNORECASE
+                )
+                if re.search("po box", cleaned_zip, re.IGNORECASE):
+                    cleaned_zip = SgRecord.MISSING
 
             phone = ""
             if "phoneNumber" in store:
@@ -165,6 +170,9 @@ def fetch_data_from_files(data_files, domain, url_country):
                 )
 
                 phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
+                phone = phone.rsplit("  ")[0]
+                if len(re.sub("[^0-9]", "", phone)) < 5:
+                    phone = phone_nums
 
             street_address = ""
             if "street" in store["address"]:
@@ -172,6 +180,7 @@ def fetch_data_from_files(data_files, domain, url_country):
                     store["address"]["street"]
                     .encode("ascii", "replace")
                     .decode("utf-8")
+                    .replace("\n", "")
                     .replace("?", "-")
                     .strip()
                     .replace("---", "-")
@@ -215,6 +224,10 @@ def fetch_data_from_files(data_files, domain, url_country):
                 else None
             )
 
+            raw_address = f"{address}, {city}"
+            if cleaned_zip != SgRecord.MISSING:
+                raw_address = f"{raw_address}, {cleaned_zip}"
+
             locations.append(
                 SgRecord(
                     locator_domain=locator_domain,
@@ -231,7 +244,7 @@ def fetch_data_from_files(data_files, domain, url_country):
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=f"{address}, {city}, {zip}",
+                    raw_address=raw_address,
                 )
             )
 
