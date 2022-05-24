@@ -36,6 +36,8 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "US"
+        if ad.find("Bahamas") != -1:
+            country_code = "Bahamas"
         city = a.city or "<MISSING>"
         adr = " ".join(d.xpath(".//*//text()")).replace("\n", "").strip()
         adr = " ".join(adr.split())
@@ -54,8 +56,10 @@ def fetch_data(sgw: SgWriter):
         cls = "".join(d.xpath('.//strong[contains(text(), "Closed due")]/text()'))
         if cls:
             hours_of_operation = "Closed"
-        if hours_of_operation.find("Opening") != -1:
+        if hours_of_operation.find("Opening for") != -1:
             hours_of_operation = "Coming Soon"
+        if hours_of_operation.find("Opening") != -1:
+            hours_of_operation = hours_of_operation.split("13th")[1].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
