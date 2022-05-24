@@ -56,6 +56,8 @@ def fetch_data(sgw: SgWriter):
             street_address = street_address.replace("\\", "").replace("/", "")
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            if street_address.split(", ")[-1].count(" ") == 0:
+                street_address = street_address.split(",")[0].strip()
             city = j.get("city")
             state = j.get("state")
             postal = j.get("postal")
