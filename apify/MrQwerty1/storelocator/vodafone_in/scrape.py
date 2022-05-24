@@ -2,101 +2,102 @@ import json
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
-def get_international(line):
+def get_street(line):
     adr = parse_address(International_Parser(), line)
-    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-        "None", ""
-    ).strip()
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
 
-    return street_address
+    return street
 
 
-def fetch_data(coords, sgw: SgWriter):
-    lat, lng = coords
-    api = f"https://www.myvi.in/bin/getStoreLocations?userlat={lat}&userlong={lng}"
-    r = session.get(api, headers=headers)
-    js = json.loads(r.json()["DXLSTOREDETAILS"])["storelist"]
+def fetch_data(sgw: SgWriter):
+    api = "https://www.myvi.in/bin/getStoreLocations"
+    search = DynamicGeoSearch(
+        expected_search_radius_miles=50, country_codes=[SearchableCountries.INDIA]
+    )
 
-    for j in js:
-        g = j.get("geographicLocationRefOrValue") or {}
-        location_name = g.get("name") or ""
-        try:
-            latitude = g["coordinates"][0]["latitude"]
-            longitude = g["coordinates"][0]["longitude"]
-        except:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+    for lat, lng in search:
+        params = {
+            "userlat": str(lat),
+            "userlong": str(lng),
+        }
+        r = session.get(api, headers=headers, params=params)
+        text = r.json()["DXLSTOREDETAILS"]
+        js = json.loads(text)["storelist"]
 
-        raw_address = j.get("oldAddressFreeText") or ""
-        street_address = get_international(raw_address)
-        postal = j.get("locality")
-        city = j.get("city")
-        state = j.get("circle")
+        for j in js:
+            raw_address = j.get("oldAddressFreeText")
+            a = j.get("address") or {}
 
-        _tmp = []
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
-        closed = j.get("closedOn") or ""
-        ex = ""
-        if "on" in closed:
-            ex = closed.split()[-1]
-        start = j.get("openTime")
-        end = j.get("closeTime")
-        for day in days:
-            if day != ex:
-                _tmp.append(f"{day}: {start}-{end}")
+            street_address = get_street(raw_address)
+            city = a.get("locality")
+            postal = a.get("postalCode")
+            state = a.get("subLocality")
+            country_code = "IN"
+            store_number = j.get("code")
+            location_name = j.get("name")
+            phone = j.get("primaryPhone")
 
-        hours_of_operation = ";".join(_tmp)
+            try:
+                g = j["geographicLocation"]["coordinates"][0]
+            except:
+                g = {}
+            latitude = g.get("latitude")
+            longitude = g.get("longitude")
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code="IN",
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            _tmp = []
+            hours = j.get("calendar") or []
+            for h in hours:
+                day = h.get("day") or ""
+                if "Special" in day:
+                    continue
+                inter = h.get("workingHours")
+                _tmp.append(f"{day}: {inter}")
 
-        sgw.write_row(row)
+            hours_of_operation = ";".join(_tmp)
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    locator_domain = "https://vodafone.in/"
+    page_url = "https://www.myvi.in/help-support/store-locator"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "max-age=0",
     }
-    locator_domain = "https://www.myvi.in/"
-    page_url = SgRecord.MISSING
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.INDIA],
-        expected_search_radius_miles=50,
-    )
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
-            ),
-            duplicate_streak_failure_factor=-1,
-        )
-    ) as writer:
-        for p in search:
-            fetch_data(p, writer)
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

@@ -1,61 +1,35 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     session = SgRequests()
     headers = {
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     }
     locator_domain = "ppgpaints.com"
 
+    search = DynamicZipSearch(
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.CANADA,
+            SearchableCountries.PUERTO_RICO,
+        ],
+        max_search_distance_miles=50,
+        expected_search_radius_miles=50,
+        max_search_results=10,
+    )
     dup_tracker = []
 
-    zipps = static_zipcode_list(radius=30, country_code=SearchableCountries.USA)
-    all_zips = []
-
-    for postcode in zipps:
-        all_zips.append(postcode)
-
-    all_zips.extend(["00921", "00957", "00961"])
-
-    for postcode in all_zips:
+    for postcode in search:
         base_link = (
             "https://www.ppgpaints.com/store-locator/search?value=%s&latitude=&longitude=&filter=Store"
             % postcode
@@ -66,6 +40,7 @@ def fetch_data():
 
             lat = loc["Latitude"]
             longit = loc["Longitude"]
+            search.found_location_at(lat, longit)
 
             page_url = "https://www.ppgpaints.com" + loc["LocationUrl"]
             if page_url in dup_tracker:
@@ -84,10 +59,12 @@ def fetch_data():
             ).strip()
             city = loc["City"]
             state = loc["State"]
-            if state == "VI":
-                continue
             zip_code = loc["PostalCode"]
             country_code = "US"
+            if state == "PR":
+                country_code = "PR"
+            if state == "VI":
+                country_code = "VI"
             store_number = location_name.split()[-1]
             if not store_number.isdigit():
                 store_number = "<MISSING>"
@@ -107,27 +84,25 @@ def fetch_data():
                 except:
                     hours = "<MISSING>"
 
-            yield [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone_number,
-                location_type,
-                lat,
-                longit,
-                hours,
-                page_url,
-            ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone_number,
+                    location_type=location_type,
+                    latitude=lat,
+                    longitude=longit,
+                    hours_of_operation=hours,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

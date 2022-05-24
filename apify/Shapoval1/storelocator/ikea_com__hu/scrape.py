@@ -21,18 +21,22 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         location_name = "".join(tree.xpath("//h1/text()"))
         ad = (
-            "".join(tree.xpath('//h2[text()="Cím"]/following-sibling::p[1]/text()[1]'))
+            "".join(
+                tree.xpath(
+                    '//h3[text()="Áruház"]/following-sibling::p[contains(text(), ",")][1]/text()[1]'
+                )
+            )
             .replace("\n", "")
             .strip()
         )
-
+        if ad.find("órán") != -1:
+            ad = ad.split("órán")[0].strip()
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -89,7 +93,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[.//span[contains(text(), "Go to")]]')
+    div = tree.xpath('//h1[text()="Stores"]/following::h2[1]//a')
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -125,18 +129,6 @@ def fetch_data(sgw: SgWriter):
         city = a.city or "<MISSING>"
         if location_name == "IKEA Praha-Zličín":
             city = "Zličín"
-        if page_url == "https://www.ikea.com/cz/en/stores/praha-cerny-most/":
-            street_address = (
-                " ".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            city = "Černý Most"
-            postal = "198 00"
         text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -168,6 +160,18 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
+        if page_url == "https://www.ikea.com/cz/en/stores/praha-cerny-most":
+            street_address = (
+                " ".join(
+                    tree.xpath(
+                        '//h2[text()="Address"]/following-sibling::p[1]/text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            city = "Černý Most"
+            postal = "198 00"
 
         row = SgRecord(
             locator_domain=locator_domain,

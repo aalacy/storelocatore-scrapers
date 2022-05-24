@@ -25,12 +25,6 @@ def fetch_data():
             '//h2[contains(text(), "Address")]/following-sibling::p/text()'
         )
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
-        geo = (
-            loc_dom.xpath('//a[contains(@href, "maps?ll")]/@href')[0]
-            .split("ll=")[-1]
-            .split("&")[0]
-            .split(",")
-        )
         hoo = loc_dom.xpath(
             '//h2[contains(text(), "Lobby Hours")]/following-sibling::p/text()'
         )
@@ -45,12 +39,12 @@ def fetch_data():
             city=raw_adr[-1].split(", ")[0],
             state=raw_adr[-1].split(", ")[-1].split()[0],
             zip_postal=raw_adr[-1].split(", ")[-1].split()[-1],
-            country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=geo[0],
-            longitude=geo[1],
+            location_type="",
+            latitude="",
+            longitude="",
             hours_of_operation=hoo,
         )
 

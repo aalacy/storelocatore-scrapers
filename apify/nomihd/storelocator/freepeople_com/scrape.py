@@ -104,7 +104,11 @@ def fetch_data():
         except:
             pass
 
-        country_code = store_json["addresses"]["iso2"]["country"]
+        try:
+            country_code = store_json["addresses"]["iso2"]["country"]
+        except:
+            country_code = store_json["country"]
+
         store_number = store_json["storeNumber"]
         phone = "<MISSING>"
         try:
@@ -112,7 +116,7 @@ def fetch_data():
         except:
             pass
 
-        if phone == "(???)???-???":
+        if phone == "(???)???-???" or phone == "(???) ???-????":
             phone = "<MISSING>"
 
         hours_of_operation = ""

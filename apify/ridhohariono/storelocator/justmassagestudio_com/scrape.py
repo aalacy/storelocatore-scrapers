@@ -1,7 +1,10 @@
-import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import re
 
 DOMAIN = "justmassagestudio.com"
@@ -15,35 +18,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = SgRecord.MISSING
 
 
 def pull_content(url):
@@ -52,17 +27,11 @@ def pull_content(url):
     return soup
 
 
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field.strip()
-
-
 def get_latlong(soup):
     pattern = re.compile(r"window\.wsb\[(.*)\]", re.MULTILINE | re.DOTALL)
     script = soup.find_all("script", text=pattern)
     if len(script) == 0:
-        return False
+        return MISSING, MISSING
     parse = re.search(
         r'"lat\\":\\"(-?\d+(\.\d+)?)\\",\\"lon\\":\\"\s*(-?\d+(\.\d+)?)\\"',
         script[3].string,
@@ -72,7 +41,7 @@ def get_latlong(soup):
             r'"lat\\":(-?\d+(\.\d+)?),\\"lon\\":\s*(-?\d+(\.\d+)?)', script[3].string
         )
     if not parse:
-        return "<MISSING>", "<MISSING>"
+        return MISSING, MISSING
     latitude = parse.group(1)
     longitude = parse.group(3)
     return latitude, longitude
@@ -81,10 +50,8 @@ def get_latlong(soup):
 def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = [BASE_URL + "el-segundo", BASE_URL + "westchester"]
-    locations = []
     for page_url in store_urls:
         soup = pull_content(page_url)
-        locator_domain = DOMAIN
         content = soup.find("div", {"data-aid": "CONTACT_INFO_CONTAINER_REND"})
         location_name = content.find("h4").text
         address = (
@@ -92,52 +59,52 @@ def fetch_data():
             .get_text(strip=True, separator=",")
             .split(",")
         )
-        street_address = handle_missing(address[0])
-        city = handle_missing(address[1])
+        street_address = address[0]
+        city = address[1]
         state_zip = address[2].split()
-        state = handle_missing(state_zip[0])
-        zip_code = handle_missing(state_zip[1])
-        phone = handle_missing(
-            content.find("a", {"data-aid": "CONTACT_INFO_PHONE_REND"}).text
-        )
+        state = state_zip[0]
+        zip_postal = state_zip[1]
+        phone = content.find("a", {"data-aid": "CONTACT_INFO_PHONE_REND"}).text
         hours_of_operation = (
             content.find("div", {"data-aid": "CONTACT_HOURS_CUST_MSG_REND"})
-            .get_text(strip=True, separator=",")
-            .replace("EVERYDAY,", "EVERYDAY: ")
-            .split(",")[0]
+            .get_text(strip=True, separator=" ")
+            .split("CLOSED ON:")[0]
+            .strip()
         )
-        store_number = "<MISSING>"
+        store_number = MISSING
         country_code = "US"
         location_type = "justmassagestudio"
         latitude, longitude = get_latlong(soup)
         log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

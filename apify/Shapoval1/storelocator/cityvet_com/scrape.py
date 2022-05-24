@@ -1,4 +1,3 @@
-import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -26,48 +25,26 @@ def get_data(url, sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    line = " ".join(
-        tree.xpath(
-            '//span[./i[@class="fas fa-map-marker-alt"]]/following-sibling::span/text()'
+    adr = (
+        "".join(
+            tree.xpath(
+                '//span[./i[@class="fas fa-map-marker-alt"]]/following-sibling::span/text()[2]'
+            )
         )
+        .replace(",", "")
+        .strip()
     )
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
+
+    street_address = " ".join(
+        tree.xpath(
+            '//span[./i[@class="fas fa-map-marker-alt"]]/following-sibling::span/text()[1]'
+        )
     ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
+    city = " ".join(adr.split()[:-2])
+    state = adr.split()[-2].strip()
+    postal = adr.split()[-1].strip()
     country_code = "US"
     location_name = "".join(tree.xpath("//h1/text()"))
 
@@ -127,7 +104,7 @@ def get_data(url, sgw: SgWriter):
         latitude=latitude,
         longitude=longitude,
         hours_of_operation=hours_of_operation,
-        raw_address=line,
+        raw_address=f"{street_address} {adr}",
     )
 
     sgw.write_row(row)

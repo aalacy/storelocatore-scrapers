@@ -9,6 +9,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgpostal.sgpostal import parse_address_intl
+
 
 def fetch_data(sgw: SgWriter):
 
@@ -29,40 +31,31 @@ def fetch_data(sgw: SgWriter):
         location_name = item.a.text.strip().title()
         link = item.a["href"]
 
-        city = ""
-        raw_address = item.p.text.split("\n")
+        raw_address = item.p.text.replace("\r\n", " ").replace("\n", " ")
+        addr = parse_address_intl(raw_address)
         try:
-            zip_code = raw_address[3].replace(",", "")
+            street_address = addr.street_address_1 + " " + addr.street_address_2
         except:
-            zip_code = raw_address[2].replace(",", "")
-        if len(zip_code) > 10:
-            zip_code = raw_address[2].replace(",", "").strip()
-        if zip_code.count(" ") > 1:
-            city = zip_code[: zip_code.find(" ")].strip()
-            zip_code = zip_code[zip_code.find(" ") + 1 :].strip()
+            street_address = addr.street_address_1
 
-        address_text = item.p.text
-        if city:
-            street_address = address_text[: address_text.find(city)].strip()
-        else:
-            for i, row in enumerate(raw_address):
-                if zip_code in row:
-                    city = raw_address[i - 1].strip()
-                    street_address = " ".join(raw_address[: i - 1])
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
 
-        if "," in city:
-            street_address = street_address + " " + city[: city.find(",")].strip()
-            city = city[city.find(",") + 1 :].strip()
+        if "London" in raw_address:
+            city = "London"
 
-        if street_address[-1:] == ",":
-            street_address = street_address[:-1]
-        street_address = street_address.replace("\n", " ").replace("–", "-").strip()
+        if len(street_address) < 15:
+            if city:
+                street_address = raw_address[: raw_address.find(city)].strip()
+            else:
+                if "West Suss" in raw_address:
+                    street_address = raw_address.split("West Suss")[0].strip()
 
-        if "Sussex" in zip_code:
-            city = city + " Sussex"
-            zip_code = zip_code.replace("Sussex", "").strip()
+        if "RH6 0PJ" in raw_address:
+            zip_code = "RH6 0PJ"
+        zip_code = zip_code.replace("BATTERSEA", "").strip()
 
-        state = "<MISSING>"
         country_code = "GB"
         store_number = "<MISSING>"
         latitude = ""
@@ -87,6 +80,7 @@ def fetch_data(sgw: SgWriter):
             .find_previous("p")
             .text.replace("Hours", "")
             .replace("–", "-")
+            .replace("\r\n", " ")
             .replace("\n", " ")
             .replace("—-", "")
             .split("(")[0]
@@ -134,6 +128,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
         )
 

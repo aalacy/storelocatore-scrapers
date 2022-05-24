@@ -42,57 +42,134 @@ def fetch_data(sgw: SgWriter):
             city = "".join(info[-2]).strip()
         if postal == "<MISSING>":
             postal = "".join(info[-1])
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        map_link = "".join(tree.xpath("//iframe/@src"))
         try:
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        try:
-            phone = (
-                "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
-                .split('"telephone": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-        except:
-            phone = "<MISSING>"
-        if phone == "<MISSING>":
-            phone = (
-                "".join(tree.xpath('//p[contains(text(), "Tel:")]/strong[1]/text()'))
-                or "<MISSING>"
-            )
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//*[text()="Opening Times"]/following-sibling::p[1]//text()'
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            map_link = "".join(tree.xpath("//iframe/@src"))
+            try:
+                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            try:
+                phone = (
+                    "".join(
+                        tree.xpath('//script[contains(text(), "telephone")]/text()')
+                    )
+                    .split('"telephone": "')[1]
+                    .split('"')[0]
+                    .strip()
                 )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
-        if hours_of_operation.find("Festive") != -1:
-            hours_of_operation = hours_of_operation.split("Festive")[0].strip()
-        if hours_of_operation.find("Opening Hours") != -1:
-            hours_of_operation = hours_of_operation.split("Opening Hours")[0].strip()
-        if hours_of_operation.find("New") != -1:
-            hours_of_operation = hours_of_operation.split("New")[0].strip()
-        if hours_of_operation == "<MISSING>":
+            except:
+                phone = "<MISSING>"
+            if phone == "<MISSING>":
+                phone = (
+                    "".join(
+                        tree.xpath('//p[contains(text(), "Tel:")]/strong[1]/text()')
+                    )
+                    or "<MISSING>"
+                )
             hours_of_operation = (
                 " ".join(
-                    tree.xpath('.//p[contains(text(), "Opening times:")]/strong/text()')
+                    tree.xpath(
+                        '//*[text()="Opening Times"]/following-sibling::p[1]//text()'
+                    )
                 )
                 .replace("\n", "")
-                .replace("\r", "")
                 .strip()
             )
-        if hours_of_operation == "Open":
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+            if hours_of_operation.find("Festive") != -1:
+                hours_of_operation = hours_of_operation.split("Festive")[0].strip()
+            if hours_of_operation.find("Opening Hours") != -1:
+                hours_of_operation = hours_of_operation.split("Opening Hours")[
+                    0
+                ].strip()
+            if hours_of_operation.find("New") != -1:
+                hours_of_operation = hours_of_operation.split("New")[0].strip()
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            './/p[contains(text(), "Opening times:")]/strong/text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .replace("\r", "")
+                    .strip()
+                )
+            if hours_of_operation == "Open":
+                hours_of_operation = "<MISSING>"
+            hours_of_operation = " ".join(hours_of_operation.split())
+        except:
+            phone = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
             hours_of_operation = "<MISSING>"
-        hours_of_operation = " ".join(hours_of_operation.split())
+        if page_url == "https://www.no38thepark.com/contact/":
+            page_url = "https://www.no38thepark.com/contact-us/"
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="c-page-footer__content"]//a[contains(@href, "tel")]//text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+            block = "".join(
+                tree.xpath('//div[@data-module="map"]/@data-module-options')
+            )
+            try:
+                latitude = block.split('"lat":')[1].split(",")[0].strip()
+                longitude = block.split('"lng":')[1].split("}")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+        if page_url == "https://www.culthotels.com/contact/":
+            r = session.get(page_url)
+            tree = html.fromstring(r.text)
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//a[contains(@href, "mailto")]/preceding-sibling::a[1]//text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+        if page_url == "https://www.cotswoldswheatsheaf.com/contact/":
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="c-text__content s-entry"]/p[2]/a[contains(@href, "tel")]/text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+            text = "".join(tree.xpath('//a[text()=" Open maps"]/@href'))
+            try:
+                if text.find("ll=") != -1:
+                    latitude = text.split("ll=")[1].split(",")[0]
+                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                else:
+                    latitude = text.split("@")[1].split(",")[0]
+                    longitude = text.split("@")[1].split(",")[1]
+            except IndexError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+        if (
+            page_url == "https://www.spreadeaglewandsworth.co.uk/"
+            and latitude == "<MISSING>"
+        ):
+            r = session.get("https://www.spreadeaglewandsworth.co.uk/contact-us/")
+            tree = html.fromstring(r.text)
+            map_link = "".join(tree.xpath("//iframe/@src"))
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

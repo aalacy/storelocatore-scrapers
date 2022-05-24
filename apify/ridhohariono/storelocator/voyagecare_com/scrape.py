@@ -45,7 +45,11 @@ def fetch_data():
             )
         city = row["properties"]["address1_city"] or MISSING
         state = MISSING
-        zip_postal = row["properties"]["address1_postalcode"]
+        zip_postal = row["properties"]["address1_postalcode"] or MISSING
+        if zip_postal != MISSING:
+            if len(zip_postal.split(" ")) < 2 or len(zip_postal) > 9:
+                city = zip_postal
+                zip_postal = MISSING
         phone = MISSING
         country_code = "UK"
         hours_of_operation = MISSING

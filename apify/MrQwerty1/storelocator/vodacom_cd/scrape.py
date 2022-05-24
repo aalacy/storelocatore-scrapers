@@ -1,54 +1,80 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgChrome
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_states():
-    with SgChrome() as fox:
-        fox.get(
-            "https://www.vodacom.cd/particulier/assisstance/nos-vodashops/nos-vodashops"
-        )
-        source = fox.page_source
-    tree = html.fromstring(source)
+    urls = []
+    r = session.get(
+        "https://www.vodacom.cd/integration/cms/getpage/portal?url=/particulier/assisstance/nos-vodashops/nos-vodashops"
+    )
+    text = r.json()["response"]["page"]["summaryMarkdown"][1][0]["content"].split(
+        "**]("
+    )[1:]
+    for t in text:
+        url = t.split(")")[0]
+        urls.append(url)
 
-    return tree.xpath("//markdown//a/@href")
+    return urls
 
 
 def get_additional():
     data = dict()
     states = get_states()
-    for state in states:
-        with SgChrome() as fox:
-            fox.get(f"{locator_domain}{state}")
-            source = fox.page_source
 
-        tree = html.fromstring(source)
-        tables = tree.xpath("//markdown[@_ngcontent-c7]/table")
-        for table in tables:
-            key = "".join(table.xpath(".//th/text()")).strip()
-            try:
-                phone = table.xpath(
-                    ".//td[contains(text(), 'phone')]/following-sibling::td/text()"
-                )[0].strip()
-            except:
-                phone = SgRecord.MISSING
+    for state in states:
+        r = session.get(
+            f"https://www.vodacom.cd/integration/cms/getpage/portal?url=/{state}"
+        )
+        js = r.json()["response"]["page"]["summaryMarkdown"][1]
+        for j in js:
+            text = j.get("content") or ""
+            if "|" not in text:
+                continue
+            line = text.split("|")
+            line = list(
+                filter(
+                    None,
+                    [
+                        li.replace("<br/>", "")
+                        .replace("---", "")
+                        .replace("<hr/>", "")
+                        .strip()
+                        for li in line
+                    ],
+                )
+            )
+            key = line.pop(0).lower()
 
             _tmp = []
-            hours = table.xpath(
-                ".//tr[./td[contains(text(), 'Heures')]]/td[2]/text()|.//tr[./td[contains(text(), 'Heures')]]/following-sibling::tr/td[2]/text()"
-            )
-            for h in hours:
-                if h[0].isdigit() or "phone" in h:
-                    continue
-                _tmp.append(h)
+            cnt = 0
+            phone = SgRecord.MISSING
+            recording = False
+            for li in line:
+                if recording:
+                    _tmp.append(li)
+                li = li.lower()
+
+                if "dimanche" in li:
+                    recording = False
+
+                if "téléphone" in li:
+                    if cnt + 1 != len(line):
+                        phone = line[cnt + 1]
+                    else:
+                        phone = li.split(":")[-1].strip()
+
+                if "heures" in li:
+                    recording = True
+                cnt += 1
+
+            if not phone[-1].isdigit():
+                phone = SgRecord.MISSING
+
             hoo = ";".join(_tmp)
+
             data[key] = {"phone": phone, "hoo": hoo}
 
     return data
@@ -65,7 +91,7 @@ def fetch_data(sgw: SgWriter):
     additional = get_additional()
 
     for j in js:
-        location_name = j.get("nameStructure")
+        location_name = j.get("nameStructure") or ""
         street_address = j.get("address") or ""
         if "(" in street_address:
             street_address = street_address.split("(")[0].strip()
@@ -74,12 +100,13 @@ def fetch_data(sgw: SgWriter):
         location_type = j.get("shopType")
         latitude = j.get("lat")
         longitude = j.get("lon")
+        key = location_name.lower()
         try:
-            phone = additional[location_name]["phone"]
+            phone = additional[key]["phone"]
         except:
             phone = SgRecord.MISSING
         try:
-            hours_of_operation = additional[location_name]["hoo"]
+            hours_of_operation = additional[key]["hoo"]
         except:
             hours_of_operation = SgRecord.MISSING
 
