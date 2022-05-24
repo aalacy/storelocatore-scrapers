@@ -49,6 +49,7 @@ def get_data(loc):
 
     zip_postal = pa.postcode
     zip_postal = zip_postal.strip() if zip_postal else MISSING
+    zip_postal = zip_postal.replace("C.P.", "")
     latitude = loc["latitud"]
     longitude = loc["longitud"]
     return (
@@ -114,7 +115,7 @@ def fetch_data():
                             location_type=MISSING,
                             latitude=latitude,
                             longitude=longitude,
-                            hours_of_operation=MISSING,
+                            hours_of_operation="<INACCESIBLE>",
                             raw_address=raw_address,
                         )
                 else:
@@ -142,7 +143,7 @@ def fetch_data():
                         location_type=MISSING,
                         latitude=latitude,
                         longitude=longitude,
-                        hours_of_operation=MISSING,
+                        hours_of_operation="<INACCESIBLE>",
                         raw_address=raw_address,
                     )
 

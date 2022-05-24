@@ -36,6 +36,7 @@ def fetch_data(sgw: SgWriter):
     )
     div = "".join(div[:-1])
     js = json.loads(div)
+
     for j in js:
 
         page_url = "https://www.gerryweber.com/en-eu/storefinder/"
@@ -86,6 +87,7 @@ def fetch_data(sgw: SgWriter):
             .replace("(Retouren)", "")
             .replace("Challenge", "")
             .replace("Kaarst", "")
+            .replace(" / 191944-311", "")
             .strip()
             or "<MISSING>"
         )

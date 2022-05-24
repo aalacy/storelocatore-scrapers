@@ -32,6 +32,8 @@ def fetch_data():
             country_code = _["country"]
             if country_code == "TX":
                 country_code = "US"
+            if _["state"] == "PR":
+                country_code = "US"
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
