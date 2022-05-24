@@ -13,7 +13,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if page_url.find("Corporativo") != -1:
             continue
-        with SgChrome(is_headless=True) as driver:
+        with SgFirefox(is_headless=True) as driver:
 
             driver.get(page_url)
             sleep(10)
