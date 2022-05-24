@@ -6,6 +6,7 @@ from selenium import webdriver
 import undetected_chromedriver as uc
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from selenium.webdriver.common.by import By
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from webdriver_manager.chrome import ChromeDriverManager
