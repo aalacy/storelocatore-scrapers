@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import json
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
@@ -15,15 +14,10 @@ headers = {
 
 
 def fetch_data():
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://fitnesstogether.com/personal-trainers-near-me"
-    r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("li", {"class": "list-title"})
+
     mylist = static_coordinate_list(10, SearchableCountries.USA)
     mylist = mylist + [("38.895,-77.03667")]
     for latnow, lngnow in mylist:
-
         url = (
             "https://fitnesstogether.com/locator?q=United%20States&lat="
             + str(latnow)
@@ -31,7 +25,7 @@ def fetch_data():
             + str(lngnow)
             + "&limit=5"
         )
-        print(url)
+
         try:
             loclist = session.get(url, headers=headers).json()["locations"]
         except:
