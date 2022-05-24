@@ -1,95 +1,49 @@
-import json
 import ssl
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from selenium import webdriver
+import undetected_chromedriver as uc
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgselenium.sgselenium import SgChrome
-from selenium.webdriver.common.by import By
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
-import tenacity
-import time
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 
-website = "therange_co_uk"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+ssl._create_default_https_context = ssl._create_unverified_context
 
-DOMAIN = "https://www.therange.co.uk"
+
+DOMAIN = "therange.co.uk"
+website = "https://www.therange.co.uk/"
+store_locator = f"{website}stores/"
 MISSING = SgRecord.MISSING
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-@tenacity.retry(wait=tenacity.wait_fixed(3))
-def get_with_retry(driver, url):
+def get_driver(url, driver=None):
+    log.info("Driver Initiation")
+    options = webdriver.ChromeOptions()
+    options.add_argument("start-maximized")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
+
     driver.get(url)
-    time.sleep(7)
-    return driver.page_source, driver
 
-
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 2:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
     return driver
 
 
 def fetch_data():
-    x = 0
-    while True:
-        x = x + 1
-        class_name = "storelist"
-        url = "https://www.therange.co.uk/stores/"
-        if x == 1:
-            driver = get_driver(url, class_name)
-        else:
-            driver = get_driver(url, class_name, driver=driver)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        loclist = soup.find("ul", {"id": "storelist"}).findAll("li")
-        log.info(f"Total Stores: {len(loclist)}")
-        if len(loclist) == 0:
-            continue
-        else:
-            break
-
+    driver = get_driver(store_locator)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    loclist = soup.find("ul", {"id": "storelist"}).findAll("li")
     for loc in loclist:
         page_url = "https://www.therange.co.uk" + loc.find("a")["href"]
         log.info(page_url)
-        response, driver_page_url = get_with_retry(driver, page_url)
+        driver = get_driver(page_url)
+        response = driver.page_source
         temp = json.loads(
             response.split('<script type="application/ld+json">')[1].split("</script>")[
                 0
@@ -118,7 +72,6 @@ def fetch_data():
         if "Closed-Closed" in hours_of_operation:
             continue
         try:
-            driver_page_url.switch_to.frame(0)
             geo_link = driver.find_element(
                 By.XPATH, '//div[@class="google-maps-link"]/a'
             ).get_attribute("href")
