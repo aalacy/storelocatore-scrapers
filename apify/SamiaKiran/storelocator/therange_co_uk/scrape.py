@@ -3,13 +3,13 @@ import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from selenium import webdriver
-import undetected_chromedriver as uc
+import undetected_chromedriver as uc  # noqa
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from selenium.webdriver.common.by import By
+from selenium.webdriver.common.by import By  # noqa
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeDriverManager  # noqa
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
