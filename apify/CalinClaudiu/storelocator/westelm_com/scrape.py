@@ -85,7 +85,7 @@ def fix_record(rec, host):
     try:
         k["address"] = rec["address"]["addrLine1"]
         try:
-            k["address"] = k["address"] + rec["address"]["addrLine2"]
+            k["address"] = k["address"] + ", " + rec["address"]["addrLine2"]
         except Exception:
             pass
     except Exception:

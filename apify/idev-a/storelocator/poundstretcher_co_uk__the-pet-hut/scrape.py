@@ -85,7 +85,10 @@ def fetch_data():
                     street_address += " " + city.split("\\")[0]
 
                 location_type = "<MISSING>"
-                soup1 = bs(session.get(page_url).text, "html.parser")
+                res = session.get(page_url)
+                if res.status_code != 200:
+                    continue
+                soup1 = bs(res.text, "html.parser")
                 if soup1.select("div#store-address"):
                     store = soup1.select("div#store-address")[-1]
                     if store:

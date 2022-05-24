@@ -36,7 +36,7 @@ def fetch_data():
                     in response.text
                 ):
                     continue
-                elif "will Open September 2022" in response.text:
+                elif "welcoming you in September, 2022" in response.text:
                     continue
                 soup = BeautifulSoup(response.content, "html.parser")
                 cont = json.loads(
