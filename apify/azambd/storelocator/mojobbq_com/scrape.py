@@ -25,8 +25,9 @@ def fetch_data():
         for key, _ in locations.items():
             if not key.startswith("RestaurantLocation:"):
                 continue
+            pagehrefs = _["customLocationContent"].split('href="')[1].split('">')[0]
             yield SgRecord(
-                page_url=base_url,
+                page_url="https://www.mojobbq.com" + pagehrefs,
                 store_number=_["id"],
                 location_name=_["name"],
                 street_address=_["streetAddress"],
