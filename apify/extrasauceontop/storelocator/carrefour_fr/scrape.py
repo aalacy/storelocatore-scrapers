@@ -3,9 +3,6 @@ from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import os
 import json
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_json(html_string):
@@ -37,7 +34,10 @@ def extract_json(html_string):
 
 def get_data():
     url = "https://www.carrefour.fr/magasin"
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
         driver.get(url)
         response = driver.page_source
         soup = bs(response, "html.parser")
@@ -50,7 +50,11 @@ def get_data():
         ]
 
     for url in region_urls:
-        with SgFirefox(block_third_parties=True) as driver:
+        with SgFirefox(
+            block_third_parties=True,
+            proxy_country="fr",
+        ) as driver:
+            driver.get(url)
             response = driver.page_source
             json_objects = extract_json(response)
             try:
@@ -80,9 +84,8 @@ def get_data():
                 state = "<MISSING>"
                 zipp = location["address"]["postalCode"]
 
-                with SgFirefox(block_third_parties=True) as browser:
-                    browser.get(page_url)
-                    phone_response = driver.page_source
+                driver.get(page_url)
+                phone_response = driver.page_source
 
                 phone_soup = bs(phone_response, "html.parser")
                 a_tags = phone_soup.find_all("a")
