@@ -20,7 +20,7 @@ def fetch_data():
             "initialDealershipState"
         ]["dealerships"]
         for _ in locations:
-            page_url = f"https://www.americancarcenter.com/dealership-detail/{['city']}-{_['state']}-{'-'.join(_['address'].upper().split())}-{_['id']}"
+            page_url = f"https://www.americancarcenter.com/dealership-detail/{_['city']}-{_['state']}-{'-'.join(_['address'].upper().split())}-{_['id']}"
             hours = []
             for day, hh in _["schedule"].items():
                 hours.append(f"{day}: {hh}")
