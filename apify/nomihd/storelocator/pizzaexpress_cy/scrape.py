@@ -18,7 +18,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://pizzaexpress.cy"
     search_url = "https://pizzaexpress.com.cy/find-restaurants/"
 
     with SgRequests() as session:
