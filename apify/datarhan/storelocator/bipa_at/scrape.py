@@ -6,13 +6,15 @@ os.environ.pop("PROXY_PASSWORD")
 import re
 import json
 from lxml import etree
-
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
+
+logger = sglog.SgLogSetup().get_logger(logger_name="bipa.at")
 
 
 def fetch_data():
@@ -38,6 +40,7 @@ def fetch_data():
                 "longitude": str(lng),
             }
             response = session.post(start_url, data=data, headers=headers)
+            logger.info(response.text)
             dom = etree.HTML(response.text)
 
             all_locations = dom.xpath("//@data-options")
