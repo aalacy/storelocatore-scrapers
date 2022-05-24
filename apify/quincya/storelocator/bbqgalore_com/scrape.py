@@ -42,6 +42,8 @@ def fetch_data(sgw: SgWriter):
         locator_domain = "bbqgalore.com"
 
         location_name = "Barbeques Galore " + item.find("h2").text.strip().title()
+        if "THE GRILLHOUSE WEST" in item.text.upper():
+            location_name = "THE GRILLHOUSE WEST"
 
         try:
             raw_address = list(item.find(class_="section__content").p.stripped_strings)

@@ -5,7 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import parse_address_intl
+
 
 session = SgRequests()
 headers = {
@@ -22,6 +22,7 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     cleanr = re.compile(r"<[^>]+>")
 
+    pattern = re.compile(r"\s\s+")
     page = 1
     dataobj = {
         "lat": "0",
@@ -62,26 +63,22 @@ def fetch_data():
             except:
                 phone = "<MISSING>"
             address = str(soup.find("div", {"class": "amlocator-info-popup"}))
-            address = (
-                re.sub(cleanr, "\n", address)
-                .replace(" address 2:", " ")
-                .replace(", ", " ")
-                .replace("\n", " ")
+
+            address = re.sub(cleanr, " ", address)
+            address = re.sub(pattern, " ", address).replace(" address 2:", " ").strip()
+
+            raw_address = address
+            r = session.get(link, headers=headers)
+            city = (
+                BeautifulSoup(r.text, "html.parser")
+                .find("span", {"class": "amlocator-text-city"})
+                .text.replace(",", "")
                 .strip()
             )
-            pa = parse_address_intl(address)
 
-            street_address = pa.street_address_1
-            street = street_address if street_address else MISSING
+            street, state = address.split(" " + city + " ,", 1)
 
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            pcode = zip_postal.strip() if zip_postal else MISSING
+            state, pcode = state.strip().split(" ", 1)
 
             yield SgRecord(
                 locator_domain="https://www.lcbo.com/",
@@ -98,7 +95,7 @@ def fetch_data():
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
-                raw_address=address,
+                raw_address=raw_address,
             )
 
 

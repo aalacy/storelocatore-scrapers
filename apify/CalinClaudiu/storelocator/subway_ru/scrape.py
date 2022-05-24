@@ -413,6 +413,9 @@ if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
 
     tocrawl = [
+        "kz",
+        "ir",
+        "sa",
         "bb",
         "bd",
         "bf",
@@ -449,7 +452,6 @@ if __name__ == "__main__":
         "fm",
         "fo",
         "ga",
-        "gb",
         "gd",
         "gf",
         "gg",

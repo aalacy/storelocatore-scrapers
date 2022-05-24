@@ -53,9 +53,7 @@ def fetch_data(sgw: SgWriter):
             if latitude == longitude:
                 latitude, longitude = "<MISSING>", "<MISSING>"
             phone = j.get("phone") or "<MISSING>"
-            r = http.get(url=page_url, headers=headers)
-            assert isinstance(r, httpx.Response)
-            assert 200 == r.status_code
+            r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             curr_date = date.today()
             next_date = curr_date + timedelta(days=1)

@@ -29,13 +29,19 @@ def fetch_data():
             city = loc["map_pin"]["city"]
         except:
             city = "<MISSING>"
-        pcode = loc["map_pin"]["post_code"]
+        try:
+            pcode = loc["map_pin"]["post_code"]
+        except:
+            pcode = loc["map_pin"]["address"].split(state + " ", 1)[1].split(",", 1)[0]
         store = loc["address"]["store_number"]
         street = (
             loc["address"]["address_line_1"]
             + " "
             + str(loc["address"]["address_line_2"])
         )
+        ltype = "<MISSING>"
+        if "Coming Soon" in street:
+            ltype = "Coming Soon"
         phone = loc["branch_information"]["phone_number"]
         link = loc["single_page"]
         hourlist = loc["opening_hours"]
@@ -53,7 +59,7 @@ def fetch_data():
             country_code="US",
             store_number=str(store),
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,

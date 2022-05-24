@@ -29,6 +29,10 @@ def fetch_data():
             .split('"team": []}},')
         )
         for loc in loclist:
+            if "Coming Soon" in loc:
+                continue
+            elif "OPENING ON MAY 4TH" in loc:
+                continue
             location_type = MISSING
             loc = loc.split(', "store_locator_custom_button_text')[0]
             loc = json.loads(loc + "}")

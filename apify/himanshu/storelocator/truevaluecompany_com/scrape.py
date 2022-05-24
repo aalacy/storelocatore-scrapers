@@ -33,7 +33,9 @@ def fetch_data(search, app_key):
                 session.get(json_url.format(app_key, zip), headers=_headers).text,
                 "lxml",
             ).select("poi")
+
             logger.info(f"[{search.current_country()}] [{zip}] {len(locations)}")
+
             for _ in locations:
                 street_address = get(_, "address1")
                 if get(_, "address2"):

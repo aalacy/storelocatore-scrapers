@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_usa
 import json
 
 DOMAIN = "malbeccuisine.com"
@@ -23,31 +22,6 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests(verify_ssl=False)
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
-
-
 def pull_content(url):
     log.info("Pull content => " + url)
     req = session.get(url, headers=HEADERS)
@@ -57,10 +31,25 @@ def pull_content(url):
     return soup
 
 
+def get_coord(data, phone):
+    for key, value in data.items():
+        if key.startswith("RestaurantLocation:"):
+            if phone == value["phone"]:
+                return value["lat"], value["lng"]
+    return MISSING, MISSING
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.find_all("script", {"type": "application/ld+json"})
+    more_info = json.loads(
+        soup.find("script", id="popmenu-apollo-state")
+        .string.replace("window.POPMENU_APOLLO_STATE = ", "")
+        .replace("};", "}")
+        .replace('" + "', "")
+        .strip()
+    )
     for row in contents:
         info = json.loads(row.string)
         location_name = info["name"]
@@ -72,8 +61,7 @@ def fetch_data():
         phone = info["address"]["telephone"]
         store_number = MISSING
         location_type = info["@type"]
-        latitude = MISSING
-        longitude = MISSING
+        latitude, longitude = get_coord(more_info, phone)
         hours_of_operation = (
             ",".join(info["openingHours"])
             .replace("Su", "Sunday:")
@@ -108,13 +96,7 @@ def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

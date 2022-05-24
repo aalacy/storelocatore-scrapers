@@ -73,6 +73,8 @@ def fetch_data():
             ).get_text(strip=True, separator="@@"),
         ).split("@@")
         location_name = info[0].replace("HOURS OF OPERATION", "").strip()
+        if "Contact Us" in location_name:
+            continue
         raw_address = (info[1] + ", " + info[2]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         hours_of_operation = " ".join(info[3:-1]).strip()

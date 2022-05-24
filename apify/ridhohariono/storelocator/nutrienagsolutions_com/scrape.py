@@ -55,6 +55,18 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.select("ul.locations li")
+    loc_types = [
+        "divisionoffice",
+        "retailbranch",
+        "storage",
+        "divisionstorage",
+        "terminal",
+        "tank",
+        "commissionedagent",
+        "seeddist",
+        "unknown",
+        "wholesalebranch",
+    ]
     for row in contents:
         location_name = row["data-title"].replace('"', "").strip()
         street_address = row["data-address"].replace("\n", ",").replace('"', "").strip()
@@ -83,14 +95,34 @@ def fetch_data():
         raw_address = row.find("div", {"class": "address-container"}).get_text(
             strip=True, separator=", "
         )
-        if "Divisionoffice" in raw_address:
-            location_type = "Divisionoffice"
-        elif "Retailbranch" in raw_address:
-            location_type = "Retailbranch"
-        elif "Storage" in raw_address:
-            location_type = "Storage"
         street_address, city, state, zip_postal = getAddress(raw_address)
-        street_address = street_address.replace(location_type, "").strip()
+        if location_type.lower() not in loc_types and "SCL" not in location_type:
+            for typ in loc_types:
+                if (
+                    typ in street_address.lower()
+                    or typ in row["data-city"]
+                    or typ in raw_address
+                ):
+                    temp_loc_type = typ.title()
+                    break
+            if (
+                "Suite" in location_type
+                or "P.O. Box" in location_type
+                or "Unit" in location_type
+                or "Units" in location_type
+                or "Block" in location_type
+            ):
+                street_address = (
+                    row["data-address"].replace("\n", ",").replace('"', "").strip()
+                    + " "
+                    + location_type
+                )
+            else:
+                street_address = location_type
+            if len(phone.split("-")) < 3:
+                phone = MISSING
+            location_type = temp_loc_type
+        street_address = street_address.replace(location_type, "").strip().rstrip(".")
         state = state.replace("(Greenfield)", "").strip()
         hours_of_operation = MISSING
         store_number = MISSING

@@ -65,6 +65,20 @@ def fetch_data(sgw: SgWriter):
 
         sgw.write_row(row)
 
+    row = SgRecord(
+        page_url="<MISSING>",
+        location_name="Earlham",
+        street_address="345 SW 2ND St",
+        city="Earlham",
+        state="IA",
+        zip_postal="50692",
+        country_code="US",
+        phone="515-758-2221",
+        locator_domain=locator_domain,
+    )
+
+    sgw.write_row(row)
+
 
 if __name__ == "__main__":
     locator_domain = "https://heartlandcoop.com/"

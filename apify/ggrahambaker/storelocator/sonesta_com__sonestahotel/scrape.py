@@ -75,13 +75,14 @@ def fetch_data():
     coords.append([18.0404, -63.1209])
     for lat, long in coords:
         url = API_URL.format(lat, long)
+        log.info(f"Pull data from => {url}")
         data = session.get(url, headers=HEADERS).json()
         for row in data:
-            if row["brand_code"] != "SHR":
-                continue
             page_url = BASE_URL + row["path"]
             location_name = row["name"].replace("&amp;", "&").strip()
-            raw_address = bs(row["address"], "lxml").get_text(strip=True).strip()
+            raw_address = (
+                bs(row["address"], "lxml").get_text(strip=True).strip().rstrip(",")
+            )
             street_address, city, state, zip_postal = getAddress(raw_address)
             phone = row["phone"].strip()
             hours_of_operation = MISSING
@@ -106,6 +107,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
