@@ -17,6 +17,7 @@ def fetch_data():
 
     mylist = static_coordinate_list(10, SearchableCountries.USA)
     mylist = mylist + [("38.895,-77.03667")]
+    linklist = []
     for latnow, lngnow in mylist:
         url = (
             "https://fitnesstogether.com/locator?q=United%20States&lat="
@@ -37,6 +38,9 @@ def fetch_data():
             title = loc["name"]
             store = loc["id"]
             link = "https://fitnesstogether.com/" + loc["slug"]
+            if link in linklist:
+                continue
+            linklist.append(link)
             street = loc["address"] + " " + loc["address_2"]
             city = loc["city"]
             state = loc["state"]
