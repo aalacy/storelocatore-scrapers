@@ -40,6 +40,8 @@ def fetch_data():
             pass
         street_address = street_address.replace("  ", " ")
 
+        country_code = "US"
+
         hoo = loc_dom.xpath(
             '//h2[contains(text(), "Hours of Operation")]/following-sibling::div[1]//text()'
         )
@@ -60,7 +62,7 @@ def fetch_data():
             city=poi["city"],
             state=poi["state"],
             zip_postal=poi["zipCode"],
-            country_code="",
+            country_code=country_code,
             store_number="",
             phone=poi["phoneNumber"],
             location_type="",

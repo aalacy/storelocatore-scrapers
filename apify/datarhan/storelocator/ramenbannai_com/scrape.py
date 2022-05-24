@@ -22,6 +22,8 @@ def fetch_data():
     for poi_html in all_locations:
         if poi_html.xpath('.//*[contains(text(), "OPENING SOON")]'):
             continue
+        if poi_html.xpath('.//font[@color="red" and contains(text(), "OPENING")]'):
+            continue
         store_url = start_url
         location_name = poi_html.xpath('.//p/span[@class="tenpo"]/text()')[0].split()
         location_name = [e.strip() for e in location_name if e.strip()]

@@ -24,13 +24,14 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
-    logger.info(f"{page_url}: {r.status_code}")
     if r.status_code != 200:
+        logger.info(f"{page_url}: {r}")
         return
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'var dejafull;')]/text()"))
     tex = text.split('var html = "')
     tex.pop(0)
+    logger.info(f"{page_url}: {len(tex)} records")
 
     for t in tex:
         source = t.split('";')[0]
@@ -39,7 +40,6 @@ def get_data(page_url, sgw: SgWriter):
         line = list(
             filter(None, [li.replace("Site Internet", "").strip() for li in line])
         )
-        logger.info(f"{page_url}: {line}")
         location_name = line.pop(0).replace("&#39;", "'")
 
         phone = SgRecord.MISSING
@@ -58,7 +58,10 @@ def get_data(page_url, sgw: SgWriter):
         latitude = t.split("parseFloat(")[1].split("),")[0].strip()
         longitude = t.split("parseFloat(")[2].split("));")[0].strip()
         xpath = f"""//div[./b[contains(text(), "{location_name}")]]/img/@title"""
-        location_type = "".join(tree.xpath(xpath)).replace("-", " ")
+        try:
+            location_type = tree.xpath(xpath)[0].replace("-", " ")
+        except IndexError:
+            location_type = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
@@ -80,6 +83,7 @@ def get_data(page_url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
+    logger.info(f"{len(urls)} URLs to crawl...")
 
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
@@ -96,7 +100,7 @@ if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LATITUDE})
         )
     ) as writer:
         fetch_data(writer)
