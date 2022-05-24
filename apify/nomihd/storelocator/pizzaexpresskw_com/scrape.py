@@ -121,14 +121,6 @@ def fetch_data():
     countries_sel = get_selector("https://www.pizzaexpresskw.com/directory")
     countries = countries_sel.xpath('//a[@class="Directory-listLink"]')
     for country in countries:
-        count = int(
-            "".join(country.xpath("@data-count"))
-            .strip()
-            .replace("(", "")
-            .replace(")", "")
-            .strip()
-        )
-
         country_url = domain + "".join(country.xpath("@href")).strip()
         log.info(country_url)
         states_sel = get_selector(country_url)
