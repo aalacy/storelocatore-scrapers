@@ -4,9 +4,14 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sglogging import SgLogSetup
+from webdriver_manager.chrome import ChromeDriverManager
 import re
 from urllib.parse import urljoin, urlparse
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("lithia")
 
@@ -18,8 +23,9 @@ _headers = {
 }
 
 
-def record_initial_requests(http):
-    soup = bs(http.get(base_url, headers=_headers).text, "lxml")
+def record_initial_requests(http, driver):
+    driver.get(base_url)
+    soup = bs(driver.page_source, "lxml")
     store_list = soup.select("li.info-window")
     logger.info(len(store_list))
     for _ in store_list:
@@ -72,14 +78,23 @@ def record_initial_requests(http):
             continue
         page_url = "https://" + urlparse(page_url).netloc
         logger.info(page_url)
+        is_chrome_try = False
         try:
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
         except:
             try:
-                page_url = "https://www." + urlparse(page_url).netloc
-                sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                if "www" not in page_url:
+                    page_url = "https://www." + urlparse(page_url).netloc
+                    sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                else:
+                    is_chrome_try = True
+                    driver.get(page_url)
+                    sp1 = bs(driver.page_source, "lxml")
             except:
-                if "www" in page_url:
+                if not is_chrome_try:
+                    driver.get(page_url)
+                    sp1 = bs(driver.page_source, "lxml")
+                else:
                     logger.info("wwwww ========")
                     yield _d(store, phone, hours, base_url)
                     continue
@@ -301,5 +316,6 @@ if __name__ == "__main__":
         )
     ) as writer:
         with SgRequests(proxy_country="us") as http:
-            for rec in record_initial_requests(http):
-                writer.write_row(rec)
+            with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
+                for rec in record_initial_requests(http, driver):
+                    writer.write_row(rec)
