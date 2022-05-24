@@ -5,7 +5,7 @@ import ssl
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -469,16 +469,22 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgChrome() as driver:
+    z = None
+    with SgFirefox(block_javascript=False) as driver:
         driver.get(url)
-        to_click = WebDriverWait(driver, 40).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+        time.sleep(30)
+        url = None
+        try:
+            to_click = WebDriverWait(driver, 60).until(
+                EC.visibility_of_element_located(
+                    (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+                )
             )
-        )
-        to_click.click()
+            to_click.click()
+        except Exception:
+            pass
 
-        input_field = WebDriverWait(driver, 10).until(
+        input_field = WebDriverWait(driver, 60).until(
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
@@ -488,9 +494,9 @@ def get_api_call(url):
         )
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
-        time.sleep(10)
+        time.sleep(30)
         try:
-            wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+            wait_for_loc = WebDriverWait(driver, 60).until(  # noqa
                 EC.visibility_of_element_located(
                     (
                         By.XPATH,
@@ -500,18 +506,19 @@ def get_api_call(url):
             )
         except Exception:
             logzilla.info(driver.page_source)
-            z = driver.requests
-            for i in z:
-                logzilla.info(i)
 
         time.sleep(10)
-        headers = {}
-        for r in driver.requests:
-            if "DoSearch2" in r.path:
-                url = r.url
-                headers = r.headers
-        time.sleep(10)
-        return url, headers
+        z = driver.requests
+    headers = {}
+    for r in z:
+        if "DoSearch2" in r.path:
+            url = r.url
+            headers = r.headers
+    if not url:
+        for i in z:
+            logzilla.info(i.path)
+
+    return url, headers
 
 
 def defuzz(record):
@@ -690,17 +697,15 @@ def fetch_data():
             try:
                 return get_api_call(url)
             except Exception as e:
-                logzilla.info(f"Handling this:\n{str(e)}")
-                retry_starting()
-                # shouldn't be to worried,
-                # worst case if their API changes crawl will timeout
-                # rather than just pull from the other (worse) data source
+                logzilla.error("nope\n", exc_info=e)
 
         if retry:
             retry_starting()
+
         return get_api_call(url)
 
     url, headers = rRetry(False)
+
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa

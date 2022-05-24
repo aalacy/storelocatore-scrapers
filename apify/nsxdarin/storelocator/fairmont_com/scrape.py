@@ -162,6 +162,36 @@ def fetch_data():
                 lat = "32.939137"
                 store = "GDM"
                 name = "Fairmont Grand Del Mar"
+            if "Banff" in name:
+                city = "Banff"
+            if "Carton House" in name:
+                city = "Maynooth"
+            if country == "Monaco":
+                city = "Monaco"
+            if country == "Singapore":
+                city = "Singapore"
+            if "Los Angeles" in name:
+                city = "Los Angeles"
+            if "Mara Safari Club" in name:
+                city = "Nairobi"
+            if "Taghazout Bay" in name:
+                city = "Taghazout"
+            if "Acapulco" in name:
+                city = "Acapulco"
+            if "Makkah Clock" in name:
+                city = "Mecca"
+            if "Fairmont Heritage Place Mayakoba" in name:
+                city = "Mayakoba"
+            if "Riviera Maya" in name:
+                city = "Riviera Maya"
+            if "/tremblant" in purl:
+                add = "3045 Chemin de la Chapelle"
+                city = "Mont Tremblant"
+                zc = "J8E1E1"
+            if "Baku" in city:
+                city = "Baku"
+                zc = "Az1006"
+            raw_address = add + " " + city + ", " + state + " " + zc
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -176,6 +206,7 @@ def fetch_data():
                 store_number=store,
                 latitude=lat,
                 longitude=lng,
+                raw_address=raw_address,
                 hours_of_operation=hours,
             )
         except:
@@ -242,6 +273,35 @@ def fetch_data():
                 lat = "<MISSING>"
             if lng == "":
                 lng = "<MISSING>"
+            if "Banff" in name:
+                city = "Banff"
+            if "Carton House" in name:
+                city = "Maynooth"
+            if country == "Monaco":
+                city = "Monaco"
+            if country == "Singapore":
+                city = "Singapore"
+            if "Los Angeles" in name:
+                city = "Los Angeles"
+            if "Mara Safari Club" in name:
+                city = "Nairobi"
+            if "Taghazout Bay" in name:
+                city = "Taghazout"
+            if "Acapulco" in name:
+                city = "Acapulco"
+            if "Makkah Clock" in name:
+                city = "Mecca"
+            if "Fairmont Heritage Place Mayakoba" in name:
+                city = "Mayakoba"
+            if "Riviera Maya" in name:
+                city = "Riviera Maya"
+            if "/tremblant" in purl:
+                add = "3045 Chemin de la Chapelle"
+                city = "Mont Tremblant"
+                zc = "J8E1E1"
+            if "Baku" in city:
+                city = "Baku"
+                zc = "Az1006"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -256,6 +316,7 @@ def fetch_data():
                 store_number=store,
                 latitude=lat,
                 longitude=lng,
+                raw_address=raw_address,
                 hours_of_operation=hours,
             )
         except:

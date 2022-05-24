@@ -28,6 +28,8 @@ def fetch_data(sgw: SgWriter):
             j.get("location_url")
             or f"https://store.petvalu.ca/location/{store_number}/"
         )
+        if not store_number:
+            store_number = page_url.split("/")[-2]
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lon") or "<MISSING>"
         phone = j.get("phonemap").get("phone") or "<MISSING>"
@@ -35,32 +37,35 @@ def fetch_data(sgw: SgWriter):
         hours = j.get("hours")[0].get("hours")
         tmp = []
         if hours:
-            for h in range(len(hours)):
-                day = (
-                    str(h)
-                    .replace("0", "Monday")
-                    .replace("1", "Tuesday")
-                    .replace("2", "Wednesday")
-                    .replace("3", "Thursday")
-                    .replace("4", "Friday")
-                    .replace("5", "Saturday")
-                    .replace("6", "Sunday")
-                )
-                opens = (
-                    str(hours[h][0][0])
-                    .replace(":00:00", ":00")
-                    .replace(":30:00", ":30")
-                    .strip()
-                )
-                closes = (
-                    str(hours[h][0][1])
-                    .replace(":00:00", ":00")
-                    .replace(":30:00", ":30")
-                    .strip()
-                )
-                line = f"{day} {opens} - {closes}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+            try:
+                for h in range(len(hours)):
+                    day = (
+                        str(h)
+                        .replace("0", "Monday")
+                        .replace("1", "Tuesday")
+                        .replace("2", "Wednesday")
+                        .replace("3", "Thursday")
+                        .replace("4", "Friday")
+                        .replace("5", "Saturday")
+                        .replace("6", "Sunday")
+                    )
+                    opens = (
+                        str(hours[h][0][0])
+                        .replace(":00:00", ":00")
+                        .replace(":30:00", ":30")
+                        .strip()
+                    )
+                    closes = (
+                        str(hours[h][0][1])
+                        .replace(":00:00", ":00")
+                        .replace(":30:00", ":30")
+                        .strip()
+                    )
+                    line = f"{day} {opens} - {closes}"
+                    tmp.append(line)
+                hours_of_operation = "; ".join(tmp)
+            except:
+                continue
 
         row = SgRecord(
             locator_domain=locator_domain,
