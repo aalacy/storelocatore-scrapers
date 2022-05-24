@@ -6,7 +6,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import International_Parser, parse_address
 
 from sgselenium.sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
