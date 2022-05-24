@@ -57,7 +57,7 @@ def fetch_data():
 
             hour_list = []
 
-            hours = store["hours"]["days"]
+            hours = store_json["hours"]["days"]
             for day, hour in hours.items():
                 hour_list.append(f'{day}: {hours[day]["open"]} - {hours[day]["close"]}')
 
