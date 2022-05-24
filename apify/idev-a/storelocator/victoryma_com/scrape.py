@@ -99,6 +99,10 @@ def fetch_data():
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
+                if not street_address:
+                    street_address = _["address"]
+                    if _["address2"]:
+                        street_address += " " + _["address2"]
                 yield SgRecord(
                     page_url=_["url"],
                     store_number=_["id"],
