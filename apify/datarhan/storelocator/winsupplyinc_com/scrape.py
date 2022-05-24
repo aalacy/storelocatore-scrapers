@@ -10,13 +10,8 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     domain = "winsupplyinc.com"
-
-    import requests
-
-    session = requests.Session()
-    proxies = {"https": "127.0.0.1:24000", "http": "127.0.0.1:24000"}
 
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -30,19 +25,13 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     }
     response = session.post(
-        post_url.format(str(int(time.time() * 1000))),
-        headers=headers,
-        data=body,
-        proxies=proxies,
-        verify=False,
+        post_url.format(str(int(time.time() * 1000))), headers=headers, data=body
     )
 
     body = '{"location":"10001","distance":"250","industryType":"","showroomOnly":false,"_dynSessConf":"%s"}'
     response = session.get(
         "https://www.winsupplyinc.com/rest/model/atg/rest/SessionConfirmationActor/getSessionConfirmationNumber",
         headers=headers,
-        proxies=proxies,
-        verify=False,
     )
     session_data = json.loads(response.text)
     session_no = session_data["sessionConfNo"]
@@ -54,8 +43,6 @@ def fetch_data():
             post_url.format(str(int(time.time() * 1000))),
             headers=headers,
             data=body % (code, session_no),
-            proxies=proxies,
-            verify=False,
         )
         data = json.loads(response.text)
 
