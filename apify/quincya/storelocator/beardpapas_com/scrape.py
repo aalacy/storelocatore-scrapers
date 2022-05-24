@@ -90,7 +90,7 @@ def fetch_data(sgw: SgWriter):
                 )
             except:
                 phone = re.findall(
-                    "[(\d)]{5} [\d]{3}-[\d]{4}",
+                    r"[(\d)]{5} [\d]{3}-[\d]{4}",
                     str(base.find_all(class_="row sqs-row")[1]),
                 )[0]
         location_type = "<MISSING>"
