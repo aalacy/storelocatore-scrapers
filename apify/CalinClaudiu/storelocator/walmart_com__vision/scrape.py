@@ -65,6 +65,8 @@ def grab_json(soup):
 def other_source(session, state):
     url = "https://www.walmart.com/store/directory"
     main = SgRequests.raise_on_err(session.get(url, headers=headers))
+    logger.info(f"{str(main.text.split('store-directory-container')[1]))}") # noqa
+    logger.info(f"{str(main.text)}") # noqa
     soup = b4(main.text, "lxml")
     allstates = (
         soup.find("div", {"class": "store-directory-container"})
