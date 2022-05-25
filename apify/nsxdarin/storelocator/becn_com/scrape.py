@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -13,7 +13,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-search = DynamicZipSearch(
+search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
     max_search_distance_miles=None,
     max_search_results=None,
@@ -21,9 +21,9 @@ search = DynamicZipSearch(
 
 
 def fetch_data():
-    for lat, lng in search:
-        x = lat
-        y = lng
+    for llat, llng in search:
+        x = llat
+        y = llng
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
         url = (
             "https://site.becn.com/api-man/StoreLocation?facets=&lat="
@@ -84,7 +84,9 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 
