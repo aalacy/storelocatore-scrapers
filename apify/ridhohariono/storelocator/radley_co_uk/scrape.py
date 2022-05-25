@@ -40,11 +40,11 @@ def fetch_data(sgw: SgWriter):
             )
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
-            country_code = "CA"
+            country_code = "GB"
             if postal.isdigit():
                 country_code = "US"
             city = a.city or "<MISSING>"
-            if country_code == "CA":
+            if country_code == "GB":
                 postal = "".join(ad[-1]).strip()
                 city = "".join(ad[-2]).strip()
                 street_address = " ".join(ad[:-2]).strip()
