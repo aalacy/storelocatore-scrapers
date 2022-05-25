@@ -25,7 +25,6 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
 
     locator_domain = "https://www.justtires.com"
-    final_links = []
 
     states = base.find(class_="browse-by-state-wrapper__list").find_all(
         class_="link-chevron"
