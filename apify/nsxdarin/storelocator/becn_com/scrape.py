@@ -58,7 +58,6 @@ def fetch_data():
                             country = "US"
                         typ = item.split('"branchname":"')[1].split('"')[0]
                         name = name + " " + typ
-                        storeinfo = name + "|" + add + "|" + lat
                         if phone == "":
                             phone = "<MISSING>"
                         if country == "US":
