@@ -1,3 +1,5 @@
+import re
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -7,58 +9,50 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "ginoseast_com"
+website = "farmerboys_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://www.ginoseast.com"
+DOMAIN = "https://www.farmerboys.com"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://www.ginoseast.com/locations"
+        pattern = re.compile(r"\s\s+")
+        url = "https://www.farmerboys.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("h3")
+        loclist = soup.findAll("div", {"class": "location"})
         for loc in loclist:
-            page_url = DOMAIN + loc.find("a")["href"]
+            page_url = DOMAIN + loc.find("a")["href"].replace(
+                "location-detail.php?loc=", ""
+            )
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
-            hours_of_operation = r.text.split(">Hours")[1].split("</div>")[0]
-            hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
+            schema = r.text.split("<script type='application/ld+json'>")[1].split(
+                "</script>", 1
+            )[0]
+            schema = schema.replace("\n", "")
+            schema = re.sub(pattern, "\n", schema)
+            loc = json.loads(schema, strict=False)
+            location_name = loc["name"]
+            address = loc["address"]
+            phone = loc["contactPoint"]["telephone"].replace("\n", " ")
+            street_address = address["streetAddress"]
+            city = address["addressLocality"]
+            state = MISSING
+            zip_postal = address["postalCode"]
+            country_code = address["addressCountry"]
             hours_of_operation = (
-                hours_of_operation.get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Now Open For Safe Indoor Dining Service", "")
-                .replace("NOW OPEN FOR DINE IN!", "")
-                .replace("Delivery available after 5pm", "")
-            )
-            if "Reserve" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("Reserve")[0]
-            phone = r.text.split('">Phone')[1].split("</p>")[0]
-            phone = BeautifulSoup(phone, "html.parser").text
-            address = r.text.split("Address")[1].split("</p>")[0]
-            address = (
-                BeautifulSoup(address, "html.parser")
+                BeautifulSoup(loc["openingHours"], "html.parser")
                 .get_text(separator="|", strip=True)
-                .split("|")
+                .replace("|", " ")
+                .replace(">/br>", " ")
             )
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            try:
-                zip_postal = address[1]
-            except:
-                zip_postal = MISSING
-            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
