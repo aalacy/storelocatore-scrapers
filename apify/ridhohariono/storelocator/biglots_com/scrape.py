@@ -94,7 +94,6 @@ def fetch_data():
         store_number = soup.find("button", {"class": "Hero-button js-favorite-store"})[
             "value"
         ]
-        print(store_number)
         phone = soup.find("div", {"id": "phone-main"})
         if not phone:
             phone = MISSING
