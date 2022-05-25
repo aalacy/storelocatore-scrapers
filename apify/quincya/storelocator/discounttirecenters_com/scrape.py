@@ -33,18 +33,21 @@ def fetch_data(sgw: SgWriter):
 
         locator_domain = "discounttirecenters.com"
 
-        if "COMING SOON" in base.find(id="dm_content").text.upper():
+        if (
+            "COMING SOON"
+            in base.find(id="dm_content").find(class_="dmRespColsWrapper").text.upper()
+        ):
             continue
 
-        location_name = " ".join(list(base.h1.stripped_strings))
+        location_name = (
+            " ".join(list(base.h1.stripped_strings)).replace("NEW LOCATION", "").strip()
+        )
         base.find("h4", attrs={"data-uialign": "center"})
 
         city = location_name.split(" in")[1].split(",")[0].strip()
         state = location_name.split(" in")[1].split(",")[1].strip()
-
-        raw_data = list(
-            base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
-        )
+        zip_code = ""
+        raw_data = list(base.find_all("h4")[-1].stripped_strings)
 
         hours_of_operation = ""
         if len(raw_data) > 1:
@@ -58,6 +61,8 @@ def fetch_data(sgw: SgWriter):
                 zip_code = "<MISSING>"
 
             phone = raw_data[-2]
+            if "," in phone:
+                phone = raw_data[-1]
 
             try:
                 hours_of_operation = " ".join(
@@ -98,6 +103,8 @@ def fetch_data(sgw: SgWriter):
                 )
                 street_address = new_raw_data2[0].split(city)[0].strip()
                 phone = new_raw_data2[1]
+                if not zip_code:
+                    zip_code = new_raw_data2[0].split(city)[1].strip().split()[1]
 
         if not hours_of_operation or "day" not in hours_of_operation:
             hours_of_operation = " ".join(
@@ -106,6 +113,8 @@ def fetch_data(sgw: SgWriter):
 
         if street_address[-1] == ",":
             street_address = street_address[:-1]
+
+        zip_code = zip_code.replace(",", "").strip()
 
         country_code = "US"
         store_number = "<MISSING>"
@@ -116,6 +125,10 @@ def fetch_data(sgw: SgWriter):
         )
         latitude = geo[0]
         longitude = geo[1]
+
+        if "4304 West Shaw" in street_address:
+            latitude = "36.808608"
+            longitude = "-119.86938"
 
         sgw.write_row(
             SgRecord(

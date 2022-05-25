@@ -7,6 +7,7 @@ from sgpostal import sgpostal as parser
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 website = "klass.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -27,84 +28,108 @@ headers = {
     "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
-data = '{ "distanceLimit": "20", "latitude": "53.59773759999999",  "longittude": "-2.1739569",  "type": "0",  "address": "53.59787386433848, -2.1736965179443"}'
-
 
 def fetch_data():
     # Your scraper here
     search_url = "https://www.klass.co.uk/storefinder.html"
+
     api_url = "https://www.klass.co.uk/storefinder.aspx/GetStoresWithinRange"
 
-    with SgRequests() as session:
-        api_res = session.post(api_url, headers=headers, data=data)
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.BRITAIN],
+            expected_search_radius_miles=100,
+        )
 
-        json_res = json.loads(api_res.text)
+        for lat, long in search:
+            log.info(f"pulling data for coordinates:{lat},{long}")
+            data = {
+                "distanceLimit": "100",
+                "latitude": lat,
+                "longittude": long,
+                "type": "0",
+                "address": f"{lat},{long}",
+            }
 
-        stores_str = json_res["d"]
-        stores = json.loads(stores_str)
+            api_res = session.post(api_url, headers=headers, data=json.dumps(data))
 
-        for no, store in enumerate(stores, 1):
+            json_res = json.loads(api_res.text)
 
-            locator_domain = website
+            stores_str = json_res["d"]
+            stores = json.loads(stores_str)
 
-            page_url = search_url
+            for no, store in enumerate(stores, 1):
 
-            location_name = store["Name"].strip()
+                locator_domain = website
 
-            location_type = str(store["Type"])
-            if location_type == "0":
-                location_type = "Standalone Stores"
-            elif location_type == "1":
-                location_type = "Klass Concessions"
+                page_url = search_url
 
-            raw_address = store["Address"]
+                location_name = store["Name"].strip()
 
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+                location_type = str(store["Type"])
+                if location_type == "0":
+                    location_type = "Standalone Stores"
+                elif location_type == "1":
+                    location_type = "Klass Concessions"
 
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
+                raw_address = (
+                    store["Address"]
+                    .replace("Address:", "")
+                    .strip()
+                    .replace(",,", ",")
+                    .strip()
+                )
 
-            city = formatted_addr.city
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-            state = formatted_addr.state
-            if not state:
-                state = raw_address.split(",")[-1].strip()
+                if street_address is not None:
+                    street_address = street_address.replace("Ste", "Suite")
 
-            zip = store["Postcode"]
-            country_code = "GB"
+                city = formatted_addr.city
 
-            phone = store["Phone"]
+                state = formatted_addr.state
+                if not state:
+                    state = raw_address.split(",")[-1].strip()
 
-            hour_info = store["OpeningTimes"]
+                zip = store["Postcode"]
+                country_code = "GB"
 
-            hours_of_operation = hour_info.replace("|", "; ").strip("; ")
+                phone = store["Phone"]
+                if phone and (phone == "." or phone == "0"):
+                    phone = "<MISSING>"
 
-            store_number = store["StoreId"]
+                hour_info = store["OpeningTimes"]
 
-            latitude, longitude = store["Latitude"], store["Longitude"]
-            if latitude == longitude:
-                latitude = longitude = "<MISSING>"
+                hours_of_operation = hour_info.replace("|", "; ").strip("; ")
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                store_number = store["StoreId"]
+
+                latitude, longitude = store["Latitude"], store["Longitude"]
+                if latitude == longitude:
+                    latitude = longitude = "<MISSING>"
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

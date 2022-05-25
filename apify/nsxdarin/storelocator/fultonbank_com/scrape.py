@@ -27,7 +27,7 @@ def fetch_data():
     typ = "<MISSING>"
     country = "US"
     addlist = []
-    loc = "<MISSING>"
+    loc = "https://www.fultonbank.com/Maps-and-Locations"
     store = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():

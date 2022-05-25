@@ -55,13 +55,13 @@ def fetch_data():
             location_name = store.find("span", {"itemprop": "name"}).text.strip()
         except:
             location_name = store.title.text.split("-")[0].strip()
-        city_content = store.find("span", {"itemprop": "addressLocality"})
+        city_content = store.find_all("span", {"itemprop": "addressLocality"})
         if not city_content:
             continue
         if len(city_content) > 1:
             street_address = (
                 store.find("span", {"itemprop": "streetAddress"}).text.strip()
-                + ", "
+                + " "
                 + city_content[0].text.strip()
             ).rstrip(",")
             city = city_content[1].text.strip().rstrip(",")
@@ -71,11 +71,7 @@ def fetch_data():
                 .text.strip()
                 .rstrip(",")
             )
-            city = (
-                store.find("span", {"itemprop": "addressLocality"})
-                .text.strip()
-                .rstrip(",")
-            )
+            city = city_content[0].text.strip().rstrip(",")
         state = MISSING
         zip_postal = (
             store.find("span", {"itemprop": "postalCode"}).text.replace(".", "").strip()

@@ -58,7 +58,7 @@ def fetch_data():
             raw_address = "<MISSING>"
 
             street_address = (
-                (store["Address1"] + "," + store["Address1"]).strip().strip(", ")
+                (store["Address1"] + "," + store["Address2"]).strip().strip(", ")
             )
 
             city = store["City"]

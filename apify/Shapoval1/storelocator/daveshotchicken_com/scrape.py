@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "https://www.daveshotchicken.com/locations"
-        location_name = "".join(d.xpath(".//h2/text()"))
+        location_name = "".join(d.xpath(".//h2//text()"))
         if "@" in location_name:
             continue
         info = d.xpath(".//h2/following-sibling::p/text()")
@@ -54,8 +54,7 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
         if hours_of_operation.find("Dining Room:") != -1:
             hours_of_operation = hours_of_operation.split("Dining Room:")[1].strip()
-
-        if "opening soon" in location_name:
+        if location_name.find("opening soon") and hours_of_operation == "<MISSING>":
             hours_of_operation = "Coming Soon"
 
         row = SgRecord(

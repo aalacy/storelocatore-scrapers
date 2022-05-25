@@ -41,7 +41,7 @@ def fetch_data():
 
     search_url = "https://www.dodgepr.com/concesionarios.html"
 
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 
@@ -75,6 +75,8 @@ def fetch_data():
 
             city = formatted_addr.city
             state = formatted_addr.state
+            if not state:
+                state = "PR"
             zip = formatted_addr.postcode
 
             country_code = "PR"
