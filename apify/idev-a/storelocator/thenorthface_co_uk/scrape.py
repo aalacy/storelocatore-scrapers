@@ -180,12 +180,12 @@ class ExampleSearchIteration(SearchIteration):
                     state=_v(state),
                     zip_postal=_.postalcode.text.strip(),
                     country_code=_.country.text.strip(),
-                    phone=phone,
+                    phone=_v(phone),
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours).replace("---", ", "),
+                    hours_of_operation=_v("; ".join(hours).replace("---", ", ")),
                 )
 
 

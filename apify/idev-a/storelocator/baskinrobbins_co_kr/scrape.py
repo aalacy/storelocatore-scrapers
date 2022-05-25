@@ -99,7 +99,6 @@ def fetch_data():
                 state_val = state.get_attribute("value")
                 if not state_val:
                     continue
-                del driver.requests
                 state.click()
                 driver.wait_for_request(gun_url, timeout=30)
                 cities = driver.find_elements(
@@ -110,7 +109,6 @@ def fetch_data():
                     gun_val = gun.get_attribute("value")
                     if not gun_val:
                         continue
-                    del driver.requests
                     gun.click()
                     time.sleep(1)
                     driver.find_element(

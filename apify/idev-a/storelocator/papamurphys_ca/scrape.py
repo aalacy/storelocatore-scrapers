@@ -57,12 +57,13 @@ def fetch_data():
                 hours.append(hh.text.strip())
 
             coord = link.script.text.split("location_y+'/")[1].split('"')[0].split(",")
+            state = link.find_parent().find_previous_sibling().text.strip()
             yield SgRecord(
                 page_url=base_url,
                 location_name=link.h2.text.strip(),
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
