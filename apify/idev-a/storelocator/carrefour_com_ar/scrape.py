@@ -4,10 +4,10 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import stop_after_attempt, retry
 import time
 from sglogging import SgLogSetup
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 import os
 
@@ -169,7 +169,6 @@ def fetch_br():
         checks.append(driver.find_element_by_css_selector("input#simple-check5"))
         checks.append(driver.find_element_by_css_selector("input#simple-check6"))
         for check in checks:
-            del driver.requests
             driver.execute_script("arguments[0].click();", check)
             time.sleep(10)
             driver.wait_for_request(br_json_url)

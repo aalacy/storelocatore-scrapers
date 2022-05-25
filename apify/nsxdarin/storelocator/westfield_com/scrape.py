@@ -43,7 +43,7 @@ def fetch_data():
         phone = ""
         lat = "<MISSING>"
         lng = "<MISSING>"
-        hours = "<MISSING>"
+        hours = ""
         for line2 in r2.iter_lines():
             if 'name="title" content="' in line2:
                 name = line2.split('name="title" content="')[1].split('"')[0]
