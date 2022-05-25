@@ -147,7 +147,12 @@ def get_data():
                     hours = ""
                     count = 0
                     for day in hours_parts["weekday"].keys():
-                        if hours_parts["weekday"][day]["not_open"] == "1" or start = hours_parts["weekday"][day]["open"].lower() == "closed":
+                        if (
+                            hours_parts["weekday"][day]["not_open"] == "1"
+                            or start
+                            == hours_parts["weekday"][day]["open"].lower()
+                            == "closed"
+                        ):
                             hours = hours + day + " closed" + ", "
                             count = count + 1
                         else:
@@ -155,14 +160,14 @@ def get_data():
                             end = hours_parts["weekday"][day]["close"]
 
                             hours = hours + day + " " + start + "-" + end + ", "
-                    
+
                     hours = hours[:-2]
                     if count == 7:
                         hours = "CLOSED"
-                
+
                 except Exception:
                     hours = "<MISSING>"
-                
+
                 yield {
                     "locator_domain": locator_domain,
                     "page_url": page_url,
