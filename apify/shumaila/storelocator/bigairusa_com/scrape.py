@@ -19,10 +19,15 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.find("section", {"data-id": "3d481e14"}).findAll("a")
+    t = 0
     for link in linklist:
         link = link["href"]
         if ("http") in link:
-            continue
+            if t == 0:
+                link = "https://www.bigairusa.com/columbus/"
+                t = 1
+            else:
+                continue
         else:
             link = "https://www.bigairusa.com" + link
         r = session.get(link, headers=headers)
@@ -31,6 +36,7 @@ def fetch_data():
         title = content.find("a").text
         phone = content.findAll("span")[-1].text
         hours = ""
+
         try:
             hourslist = (
                 "Monday "
@@ -80,41 +86,43 @@ def fetch_data():
         except:
 
             hrlink = link + "hours/"
+            try:
+                r2 = session.get(hrlink, headers=headers)
+                soup2 = BeautifulSoup(r2.text, "html.parser")
+                hourslist = (
+                    "MONDAY " + soup2.text.split("MONDAY", 1)[1].split("Holidays", 1)[0]
+                )
+                hourslist = re.sub(pattern, "\n", str(hourslist)).splitlines()
+                flag = 0
 
-            r2 = session.get(hrlink, headers=headers)
-            soup2 = BeautifulSoup(r2.text, "html.parser")
-            hourslist = (
-                "MONDAY " + soup2.text.split("MONDAY", 1)[1].split("Holidays", 1)[0]
-            )
-            hourslist = re.sub(pattern, "\n", str(hourslist)).splitlines()
-            flag = 0
+                for hr in hourslist:
 
-            for hr in hourslist:
+                    if (
+                        ("day" in hr.lower() and "-" not in hr)
+                        or ("closed" in hr.lower())
+                        or ("General" in hr)
+                        or (
+                            ("pm" in hr.lower() and "-" in hr)
+                            and ":" not in hr
+                            and "General" not in hr
+                        )
+                    ):
 
-                if (
-                    ("day" in hr.lower() and "-" not in hr)
-                    or ("closed" in hr.lower())
-                    or ("General" in hr)
-                    or (
-                        ("pm" in hr.lower() and "-" in hr)
-                        and ":" not in hr
-                        and "General" not in hr
-                    )
-                ):
-
-                    try:
-                        hr = hr.split("Cosmic", 1)[0]
-                    except:
-                        pass
-                    try:
-                        hr = hr.lower().split("toddler", 1)[0]
-                    except:
-                        pass
-                    try:
-                        hr = hr.lower().split(":", 1)[1].strip()
-                    except:
-                        pass
-                    hours = hours + hr + " "
+                        try:
+                            hr = hr.split("Cosmic", 1)[0]
+                        except:
+                            pass
+                        try:
+                            hr = hr.lower().split("toddler", 1)[0]
+                        except:
+                            pass
+                        try:
+                            hr = hr.lower().split(":", 1)[1].strip()
+                        except:
+                            pass
+                        hours = hours + hr + " "
+            except:
+                hours = "<MISSING>"
         hours = (
             hours.replace("General Admission ", "")
             .replace("*", "")
