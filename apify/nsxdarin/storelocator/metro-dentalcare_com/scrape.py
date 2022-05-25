@@ -1,5 +1,4 @@
 from sgrequests import SgRequests
-import json
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
