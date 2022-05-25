@@ -200,7 +200,6 @@ class ExampleSearchIteration(SearchIteration):
             time.sleep(30)
             soup = b4(driver.page_source, "lxml")
             locs = soup.find_all("div", {"data-map-marker": True})
-            print(locs)
             time.sleep(5)
             if not locs:
                 time.sleep(300)
@@ -255,10 +254,7 @@ def testfetch(
         time.sleep(30)
         soup = b4(driver.page_source, "lxml")
         locs = soup.find_all("div", {"data-map-marker": True})
-        print(locs)
         time.sleep(5)
-        if not locs:
-            time.sleep(300)
         for loc in locs:
             data = loc["data-map-marker"].split(",")
             yield {"lat": data[0], "lng": data[1], "link": data[-1]}
