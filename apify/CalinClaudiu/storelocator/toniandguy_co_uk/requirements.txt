@@ -5,6 +5,6 @@ sgrequests==0.3.5
 bs4==0.0.1
 sgpostal==0.1.0
 beautifulsoup4==4.7.1
-sgselenium==0.2.4
+sgselenium==0.3.5
 sgzip==0.11.0
 selenium==4.1.3
