@@ -69,7 +69,7 @@ def fetch_data():
                     .replace("|", "")
                 )
                 hours_of_operation = (
-                    soup.find("div", {"class": "opening vendredi"})
+                    soup.find("div", {"class": "opening"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )

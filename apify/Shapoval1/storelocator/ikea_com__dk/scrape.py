@@ -107,19 +107,24 @@ def fetch_data(sgw: SgWriter):
         postal = cp.split()[0].strip()
         phone = "<MISSING>"
         city = cp.split()[1].strip()
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         hours_of_operation = (
-            "".join(
-                tree.xpath('//strong[text()="Aukioloajat"]/following-sibling::text()')
+            " ".join(
+                tree.xpath('//h2[text()="Tavaratalo"]/following-sibling::*[1]//text()')
             )
             .replace("\n", "")
             .strip()
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("Palveluvarasto") != -1:
+            hours_of_operation = hours_of_operation.split("Palveluvarasto")[0].strip()
+        js_block = "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
+        j = json.loads(js_block)
+        latitude = j.get("geo").get("latitude")
+        longitude = j.get("geo").get("longitude")
 
         row = SgRecord(
             locator_domain=locator_domain,

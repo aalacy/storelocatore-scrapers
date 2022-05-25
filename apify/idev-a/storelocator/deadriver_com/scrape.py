@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sglogging import SgLogSetup
 import json
 
@@ -24,11 +24,11 @@ page_url = "https://www.deadriver.com/contact-us"
 
 
 def fetch_records(search):
-    # Need to add dedupe. Added it in pipeline.
     with SgRequests() as session:
         maxZ = search.items_remaining()
         total = 0
-        for code in search:
+        code_list = ["04947"] + [code for code in search]
+        for code in code_list:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
             logger.info(("Pulling Zip Code %s..." % code))
@@ -71,7 +71,7 @@ def fetch_records(search):
 
 if __name__ == "__main__":
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
+        country_codes=[SearchableCountries.USA], granularity=Grain_4()
     )
     with SgWriter(
         SgRecordDeduper(

@@ -49,7 +49,7 @@ def fetch_data():
                 .replace("|", " ")
             )
             log.info(location_name)
-            page_url = loc.find("a")["href"]
+            page_url = loc.findAll("a")[-1]["href"]
             page_url = "https://www.duckdonuts.com" + page_url
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -74,6 +74,8 @@ def fetch_data():
             except:
                 longitude = MISSING
                 latitude = MISSING
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
             try:
                 phone = loc.find("div", {"class": "phone"}).text
             except:

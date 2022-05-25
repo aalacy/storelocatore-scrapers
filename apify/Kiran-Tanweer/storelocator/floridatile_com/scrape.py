@@ -26,7 +26,8 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+            country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+            expected_search_radius_miles=500,
         )
         for lat, lng in search:
             payload = {
@@ -45,6 +46,7 @@ def fetch_data():
             stores_req = session.post(search_url, headers=headers, json=payload).json()
             for store in stores_req["data"]["searchLocations"]["edges"]:
                 title = store["node"]["name"]
+                log.info(title)
                 street = store["node"]["address"]
                 city = store["node"]["city"]
                 state = store["node"]["state"]
@@ -57,31 +59,30 @@ def fetch_data():
                 loc_type = store["node"]["locationType"]
                 if country == "Canada":
                     country = "CA"
-                if title.find("Corporate Office") == -1:
-
-                    yield SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url="https://www.floridatile.com/store-locator/",
-                        location_name=title,
-                        street_address=street.strip(),
-                        city=city.strip(),
-                        state=state.strip(),
-                        zip_postal=pcode,
-                        country_code=country,
-                        store_number=MISSING,
-                        phone=phone,
-                        location_type=loc_type,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=MISSING,
-                    )
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url="https://www.floridatile.com/store-locator/",
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode,
+                    country_code=country,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=loc_type,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=MISSING,
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}),
+        duplicate_streak_failure_factor=-1,
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

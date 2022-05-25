@@ -28,7 +28,7 @@ else:
 website = "bhv_fr"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-DOMAIN = "https://bhv.fr/"
+DOMAIN = "https://bhv.fr"
 MISSING = SgRecord.MISSING
 
 
@@ -81,7 +81,7 @@ def fetch_data():
         else:
             break
     for loc in loclist:
-        page_url = url + loc.find("a", string=re.compile("Voir le magasin"))["href"]
+        page_url = DOMAIN + loc.find("a", string=re.compile("Voir le magasin"))["href"]
         log.info(page_url)
         location_name = (
             loc.find("div", {"class": "search-store-name"})

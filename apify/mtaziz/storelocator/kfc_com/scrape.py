@@ -56,7 +56,7 @@ def extract_store_urls():
         locs = [url.replace("amp;", "").replace("&#39;", "'") for url in locs]
         logger.info(
             ("Found %s Locations and it contains Duplicate Locations." % str(len(locs)))
-        )  # noqa
+        )
     for i in locs:
         if "chickensandwich" not in i:
             locs_deduped.append(i)
@@ -67,117 +67,187 @@ def extract_store_urls():
 def fetch_data():
     locs = extract_store_urls()
     for idx, loc in enumerate(locs[0:]):
-        logger.info(f"Pulling the data from {idx} : {loc}")  # noqa
-        r2 = get_response(idx, loc)
-        if r2 is not None:
-            sel = html.fromstring(r2.text, "lxml")
-            json_raw = sel.xpath(
-                '//script[@id="js-map-config-dir-map-desktop-map"]/text()'
-            )[0]
-            data_json = json.loads(json_raw)
-            entities = data_json["entities"]
-            profile = entities[0]["profile"]
-            address = profile["address"]
+        try:
+            logger.info(f"Pulling the data from {idx} : {loc}")  # noqa
+            r2 = get_response(idx, loc)
+            if r2 is not None:
+                sel = html.fromstring(r2.text, "lxml")
+                json_raw = sel.xpath(
+                    '//script[@id="js-map-config-dir-map-desktop-map"]/text()'
+                )
+                json_raw = "".join(json_raw)
 
-            locator_domain = DOMAIN
-            page_url = loc
-            page_url = page_url if page_url else MISSING
+                if json_raw:
+                    try:
+                        data_json = json.loads(json_raw)
+                    except:
+                        logger.info(f"{json.loads(json_raw)}")
+                    entities = data_json["entities"]
+                    profile = entities[0]["profile"]
+                    address = profile["address"]
 
-            location_name = profile["name"]
-            location_name = location_name if location_name else MISSING
+                    locator_domain = DOMAIN
+                    page_url = loc
+                    page_url = page_url if page_url else MISSING
 
-            street_address = address["line1"]
-            street_address = street_address if street_address else MISSING
+                    location_name = profile["name"]
+                    location_name = location_name if location_name else MISSING
 
-            city = address["city"]
-            city = city if city else MISSING
+                    street_address = address["line1"]
+                    street_address = street_address if street_address else MISSING
 
-            state = address["region"]
-            state = state if state else MISSING
+                    city = address["city"]
+                    city = city if city else MISSING
 
-            zip_postal = address["postalCode"]
-            zip_postal = zip_postal if zip_postal else MISSING
+                    state = address["region"]
+                    state = state if state else MISSING
 
-            country_code = address["countryCode"]
-            country_code = country_code if country_code else MISSING
+                    zip_postal = address["postalCode"]
+                    zip_postal = zip_postal if zip_postal else MISSING
 
-            store_number = ""
-            store_number = profile["meta"]["id"]
-            store_number = store_number if store_number else MISSING
+                    country_code = address["countryCode"]
+                    country_code = country_code if country_code else MISSING
 
-            try:
-                main_phone = profile["mainPhone"]
-                phone = main_phone["display"]
-                phone = phone if phone else MISSING
-            except KeyError:
-                phone = MISSING
+                    store_number = ""
+                    store_number = profile["meta"]["id"]
+                    store_number = store_number if store_number else MISSING
 
-            try:
-                meta = profile["meta"]
-                location_type = meta["entityType"]
-                location_type = location_type if location_type else MISSING
-            except KeyError:
-                location_type = MISSING
+                    try:
+                        main_phone = profile["mainPhone"]
+                        phone = main_phone["display"]
+                        phone = phone if phone else MISSING
+                    except KeyError:
+                        phone = MISSING
 
-            y_ext_display_Coordinate = profile["yextDisplayCoordinate"]
+                    try:
+                        meta = profile["meta"]
+                        location_type = meta["entityType"]
+                        location_type = location_type if location_type else MISSING
+                    except KeyError:
+                        location_type = MISSING
 
-            try:
-                latitude = y_ext_display_Coordinate["lat"]
-                latitude = latitude if latitude else MISSING
-            except KeyError:
-                latitude = MISSING
+                    y_ext_display_Coordinate = profile["yextDisplayCoordinate"]
 
-            try:
-                longitude = y_ext_display_Coordinate["long"]
-                longitude = longitude if longitude else MISSING
-            except KeyError:
-                longitude = MISSING
+                    try:
+                        latitude = y_ext_display_Coordinate["lat"]
+                        latitude = latitude if latitude else MISSING
+                    except KeyError:
+                        latitude = MISSING
 
-            hours_of_operation = ""
-            hoo = []
-            c_hours_details = sel.xpath('//table[@class="c-hours-details"]/tbody/tr')
-            for tr in c_hours_details:
-                hrs_details = tr.xpath(".//td//text()")
-                hrs_details = " ".join(hrs_details)
-                hrs_details = hrs_details.replace("  -  ", " - ")
-                hoo.append(hrs_details)
-            hours_of_operation = "; ".join(hoo)
-            hours_of_operation = hours_of_operation if hours_of_operation else MISSING
-            raw_address = ""
-            raw_address = raw_address if raw_address else MISSING
+                    try:
+                        longitude = y_ext_display_Coordinate["long"]
+                        longitude = longitude if longitude else MISSING
+                    except KeyError:
+                        longitude = MISSING
 
-            item = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
-            yield item
+                    hours_of_operation = ""
+                    hoo = []
+                    c_hours_details = sel.xpath(
+                        '//table[@class="c-hours-details"]/tbody/tr'
+                    )
+                    for tr in c_hours_details:
+                        hrs_details = tr.xpath(".//td//text()")
+                        hrs_details = " ".join(hrs_details)
+                        hrs_details = hrs_details.replace("  -  ", " - ")
+                        hoo.append(hrs_details)
+                    hours_of_operation = "; ".join(hoo)
+                    hours_of_operation = (
+                        hours_of_operation if hours_of_operation else MISSING
+                    )
+                    raw_address = ""
+                    raw_address = raw_address if raw_address else MISSING
+
+                    item = SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_postal,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
+                    yield item
+                else:
+                    sta = ""
+                    lname = ""
+                    locname = sel.xpath('//*[@class="LocationName-brand"]/text()')
+                    if len(locname) == 2:
+                        lname = locname[0]
+                    if len(locname) == 1:
+                        lname = locname[0]
+                    if len(locname) == 0:
+                        lname = ""
+
+                    page_url = loc
+                    page_url = page_url if page_url else MISSING
+
+                    sta = sel.xpath('//*[@itemprop="streetAddress"]/@content')
+                    sta = "".join(sta)
+
+                    city = sel.xpath('//*[@itemprop="addressLocality"]/@content')
+                    city = "".join(city)
+
+                    state = sel.xpath('//*[@itemprop="addressRegion"]/text()')
+                    state = "".join(state)
+
+                    zip_code = sel.xpath('//*[@itemprop="postalCode"]/text()')
+                    zip_code = "".join(zip_code)
+
+                    addressCountry = sel.xpath('//*[@itemprop="addressCountry"]/text()')
+                    addressCountry = "".join(addressCountry)
+
+                    ph = sel.xpath('//*[@id="phone-main"]/text()')
+                    ph = "".join(ph)
+
+                    location_type = "restaurant"
+                    latitude = ""
+                    longitude = ""
+                    item2 = SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=page_url,
+                        location_name=lname,
+                        street_address=sta,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=addressCountry,
+                        store_number="",
+                        phone=ph,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation="",
+                        raw_address="",
+                    )
+                    logger.info(f"Record not having JSONDATA: {item2.as_dict()}")
+                    yield item2
+
+        except Exception as e:
+            logger.info(f"Please fix FetchRecords: {e} {loc}")
 
 
 def scrape():
     logger.info("Started")
     count = 0
-    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    deduper = SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.STREET_ADDRESS})
+    )
     with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
 
-    logger.info(f"No of records being processed: {count}")  # noqa
-    logger.info("Finished")  # noqa
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":

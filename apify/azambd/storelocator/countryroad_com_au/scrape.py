@@ -68,9 +68,21 @@ def parse_data(soup, page_url):
     data["street_address"] = street_address
     data["city"] = soup.select_one('span[itemprop="addressLocality"]').text
     data["state"] = soup.select_one('span[itemprop="addressRegion"]').text
-    data["country_code"] = "NZ" if "/nz/" in page_url else "AU"
+
+    if "/nz/" in page_url:
+        country_code = "NZ"
+    elif "/gt/" in page_url:
+        country_code = "ZA"
+    elif "/fs/" in page_url:
+        country_code = "ZA"
+    else:
+        country_code = "AU"
+
+    data["country_code"] = country_code
     data["zip_postal"] = soup.select_one('span[itemprop="postalCode"]').text
-    data["phone"] = soup.select_one('span[itemprop="telephone"]').text
+    phone = soup.select_one('span[itemprop="telephone"]').text
+    data["phone"] = phone
+    logger.info(f"Phone Number: {phone}")
     data["latitude"] = soup.select_one('div.coordinates meta[itemprop="latitude"]').get(
         "content"
     )

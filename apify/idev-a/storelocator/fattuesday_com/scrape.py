@@ -20,7 +20,7 @@ def fetch_data():
         locations = json.loads(
             bs(session.get(base_url, headers=_headers).text, "lxml")
             .select_one("section.locations-map")["x-data"]
-            .replace("locations(", "")[:-1]
+            .replace("locations2(", "")[:-1]
         )["locations"]
         for _ in locations:
             if (
@@ -32,7 +32,7 @@ def fetch_data():
 
             hours = []
             for hh in bs(_["hours"], "lxml").stripped_strings:
-                if "Hour" in hh or "Please" in hh:
+                if "Hour" in hh or "Please" in hh or "*" in hh:
                     break
                 hours.append(hh)
             if "coming" in _["hours"].lower():
