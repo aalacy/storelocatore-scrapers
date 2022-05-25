@@ -29,9 +29,15 @@ def fetch_data():
         )
         for loc in loclist:
             loc = BeautifulSoup(loc, "html.parser")
-            coords = loc.select_one("a[href*=maps]")["href"].split("@")[1].split(",")
-            latitude = coords[0]
-            longitude = coords[1]
+            try:
+                coords = (
+                    loc.select_one("a[href*=maps]")["href"].split("@")[1].split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             loc = loc.get_text(separator="|", strip=True).split("|")
             location_name = loc[0]
             log.info(location_name)
