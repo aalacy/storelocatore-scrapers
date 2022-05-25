@@ -22,7 +22,6 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    final_links = []
     locator_domain = "https://www.octapharmaplasma.com"
 
     states = base.find(class_="search_by_state").find_all("option")[1:]
