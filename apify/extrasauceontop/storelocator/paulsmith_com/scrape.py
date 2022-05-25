@@ -149,9 +149,7 @@ def get_data():
                     for day in hours_parts["weekday"].keys():
                         if (
                             hours_parts["weekday"][day]["not_open"] == "1"
-                            or start
-                            == hours_parts["weekday"][day]["open"].lower()
-                            == "closed"
+                            or hours_parts["weekday"][day]["open"].lower() == "closed"
                         ):
                             hours = hours + day + " closed" + ", "
                             count = count + 1
