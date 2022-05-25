@@ -17,15 +17,15 @@ def fetch_data():
     r = session.get(url, headers=headers)
     lines = r.iter_lines()
     for line in lines:
-        if '<div class="title">' in line:
-            title = line.split('"title">')[1].split("<")[0].replace("&#039;", "'")
-            coords.append(title + "|" + latlng)
         if "new google.maps.LatLng(" in line:
             latlng = (
                 line.split("new google.maps.LatLng(")[1].split(",")[0]
                 + "|"
                 + line.split(", ")[1].split(")")[0]
             )
+        if '<div class="title">' in line:
+            title = line.split('"title">')[1].split("<")[0].replace("&#039;", "'")
+            coords.append(title + "|" + latlng)
         if (
             'class="img-responsive" /><a href="https://www.leiszler.com/locations/location/'
             in line
