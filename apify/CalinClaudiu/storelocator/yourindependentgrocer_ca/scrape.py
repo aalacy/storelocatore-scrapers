@@ -5,7 +5,7 @@ import ssl
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -470,7 +470,7 @@ def url_fix(url):
 
 def get_api_call(url):
     z = None
-    with SgChrome(block_javascript=False) as driver:
+    with SgFirefox(block_javascript=False) as driver:
         driver.get(url)
         time.sleep(30)
         url = None
