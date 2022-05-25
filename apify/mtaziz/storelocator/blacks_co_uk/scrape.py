@@ -62,7 +62,6 @@ def fetch_records(idx, page_url, sgw: SgWriter):
         proxy_country="gb",
     )
     r1 = session1.get(yextpage_url, headers=headers)
-    page = html.fromstring(r1.text, "lxml")
     js = json.loads(r1.text.split("Yext._embed(")[-1].rstrip(")"))
     js_schema = js["entities"][0]["schema"]
     data = js_schema
