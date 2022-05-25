@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
 import us
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("")
 
@@ -46,13 +47,10 @@ def get_country_by_code(code=""):
 
 def fetch_data():
     for lat, lng in coords:
-        with SgRequests() as session:
+        with SgRequests(proxy_country="us") as session:
             locations = session.get(base_url.format(lat, lng), headers=_headers).json()
             logger.info(f"[{lat, lng}] {len(locations)}")
             for _ in locations:
-                street_address = _["address"]
-                if _["address2"]:
-                    street_address += " " + _["address2"]
                 logger.info(_["url"])
                 hours = []
                 addr = []
@@ -95,6 +93,16 @@ def fetch_data():
                 zip_postal = _["zip"]
                 if not zip_postal and addr:
                     zip_postal = addr[-1].split(",")[-1].strip().split()[-1].strip()
+
+                raw_address = ", ".join(addr)
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                if not street_address:
+                    street_address = _["address"]
+                    if _["address2"]:
+                        street_address += " " + _["address2"]
                 yield SgRecord(
                     page_url=_["url"],
                     store_number=_["id"],
@@ -109,7 +117,7 @@ def fetch_data():
                     phone=_["phone"],
                     locator_domain=locator_domain,
                     hours_of_operation=hours_of_operation,
-                    raw_address=", ".join(addr),
+                    raw_address=raw_address,
                 )
 
 

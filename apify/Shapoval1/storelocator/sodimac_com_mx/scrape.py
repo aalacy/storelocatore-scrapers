@@ -1,3 +1,8 @@
+import os
+
+os.environ.pop("PROXY_PASSWORD", None)
+os.environ.pop("PROXY_URL", None)
+
 from lxml import html
 from time import sleep
 from sgscrape.sgrecord import SgRecord
@@ -30,7 +35,6 @@ def fetch_data(sgw: SgWriter):
         with SgFirefox(is_headless=True) as driver:
 
             driver.get(page_url)
-            driver.refresh()
             sleep(10)
             iframe = driver.find_element_by_xpath(
                 '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'

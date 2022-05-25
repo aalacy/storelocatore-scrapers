@@ -31,6 +31,7 @@ def fetch_data(sgw: SgWriter):
     text = str(base).replace("\r", "").replace("\n", "").replace("\t", "")
     if '"@type":"Restaurant","' in text:
         items = text.split('"@type":"Restaurant","')
+        links = text.split('"url":')
         for item in items:
             lat = "<MISSING>"
             lng = "<MISSING>"
@@ -54,15 +55,6 @@ def fetch_data(sgw: SgWriter):
                 except:
                     state = "<MISSING>"
                 try:
-                    link = (
-                        "https://www.corkyskitchenandbakery.com/"
-                        + item.split('"slug":"')[1].split('"')[0]
-                    )
-                    store = link.split("/")[-1].split("-")[0]
-                except:
-                    link = url
-                    store = ""
-                try:
                     hours = (
                         item.split('"openingHours":["')[1]
                         .split("]")[0]
@@ -80,11 +72,28 @@ def fetch_data(sgw: SgWriter):
                 name = city
                 if "0000" in phone:
                     phone = "<MISSING>"
+
+                for link in links:
+                    url = (
+                        "https://www.corkyskitchenandbakery.com/"
+                        + link.split("/")[1].split('"')[0]
+                    )
+                    try:
+                        if (
+                            url.split("/")[-1].split("-")[1]
+                            in name.replace(" ", "").lower()
+                        ):
+                            break
+                    except:
+                        continue
+
+                store = url.split("/")[-1].split("-")[0]
+
                 if city != "<MISSING>":
                     sgw.write_row(
                         SgRecord(
                             locator_domain=website,
-                            page_url=link,
+                            page_url=url,
                             location_name=name,
                             street_address=add,
                             city=city,
