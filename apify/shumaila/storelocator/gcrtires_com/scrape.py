@@ -35,7 +35,7 @@ def fetch_data():
             pcode = loc["postalCode"]
             street = loc["streetAddress"]
             phone = loc["businessPhone"]
-            if "-" not in phone:
+            if "-" not in phone and len(phone) > 5:
                 phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:]
             store = loc["locationNo"]
             title = loc["tradeName"]
@@ -51,10 +51,13 @@ def fetch_data():
                 try:
                     closestr = loc[day + "Close"]
                 except:
-                    hours = hours + day + " " + " Close "
-
+                    hours = hours + day + " " + " Closed "
+                    continue
+                try:
                     close = int(closestr.split(":", 1)[0])
-                continue
+                except:
+                    hours = hours + day + " " + " Closed "
+                    continue
                 if close > 12:
                     close = close - 12
                 hours = (
