@@ -54,10 +54,7 @@ def get_data():
             )
         ]
 
-    print(region_urls)
-
     for url in region_urls:
-        print(url)
         with SgFirefox(
             block_third_parties=True,
             proxy_country="fr",
@@ -78,15 +75,6 @@ def get_data():
                 driver.get(sub_url)
                 response = driver.page_source
                 json_objects = extract_json(response)
-                try:
-                    json_objects[1]["search"]["data"]["stores"]
-                except Exception:
-                    pass
-
-                with open("file.txt", "w", encoding="utf-8") as output:
-                    json.dump(
-                        json_objects[1]["search"]["data"]["stores"], output, indent=4
-                    )
 
                 for location in json_objects[1]["search"]["data"]["stores"]:
                     locator_domain = "carrefour.fr"
