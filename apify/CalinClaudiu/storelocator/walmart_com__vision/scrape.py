@@ -65,8 +65,11 @@ def grab_json(soup):
 def other_source(session, state):
     url = "https://www.walmart.com/store/directory"
     main = SgRequests.raise_on_err(session.get(url, headers=headers))
-    toprint = str(main.text.split("store-directory-container")[1])
-    logger.info(f"{toprint}")  # noqa
+    try:
+        toprint = str(main.text.split("store-directory-container")[1])
+        logger.info(f"store-directory-container: {toprint}")  # noqa
+    except Exception:
+        pass
     logger.info(f"{str(main.text)}")  # noqa
     soup = b4(main.text, "lxml")
     allstates = (
