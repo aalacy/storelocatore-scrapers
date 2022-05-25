@@ -38,11 +38,30 @@ def fetch_data(sgw: SgWriter):
             hours = j.get("hours") or ""
 
             _tmp = []
-            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            for d, line in zip(days, hours.split(";")):
-                start_time = f'{line.split(",")[1][:2]}:{line.split(",")[1][2:]}'
-                end_time = f'{line.split(",")[2][:2]}:{line.split(",")[2][2:]}'
-                _tmp.append(f"{d}: {start_time} - {end_time}")
+            inters = {}
+            days = {
+                "1": "Mon",
+                "2": "Tue",
+                "3": "Wed",
+                "4": "Thu",
+                "5": "Fri",
+                "6": "Sat",
+                "7": "Sun",
+            }
+
+            for h in hours.split(";"):
+                if not h:
+                    continue
+
+                line = h.split(",")
+                start_time = f"{line[1][:2]}:{line[1][2:]}"
+                end_time = f"{line[2][:2]}:{line[2][2:]}"
+                inters[line[0]] = f"{start_time}-{end_time}"
+
+            for index, day in days.items():
+                inter = inters.get(index) or "Closed"
+                _tmp.append(f"{day}: {inter}")
+
             hours_of_operation = ";".join(_tmp)
 
             row = SgRecord(
