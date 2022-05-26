@@ -1,68 +1,70 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-           'x-requested-with': 'XMLHttpRequest'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "x-requested-with": "XMLHttpRequest",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.metro-dentalcare.com/wp-admin/admin-ajax.php'
-    payload = {'action': 'prov_search',
-               'data[search_type]': 'all',
-               'data[lat]': '45.0',
-               'data[lng]': '-93.0',
-               'data[sort_field]': 'dentist_last',
-               'data[sort_order]': 'ASC'
-               }
-    
-    r = session.post(url, headers=headers, data=payload)
-    website = 'metro-dentalcare.com'
-    typ = 'Office'
-    country = 'US'
-    array = json.loads(r.content)
-    for item in array['results']:
-        store = item['id']
-        phone = item['phone_primary']
-        name = item['name']
-        add = item['address1']
-        add2 = item['address2']
-        if add2 != '':
-            add = add + ' ' + add2
-        city = item['city']
-        state = item['state']
-        zc = item['postal_code']
-        lat = item['lat']
-        lng = item['lng']
-        hours = 'Mon: ' + json.dumps(item['hours']['Monday'])
-        hours = hours + '; ' + 'Tue: ' + json.dumps(item['hours']['Tuesday'])
-        hours = hours + '; ' + 'Wed: ' + json.dumps(item['hours']['Wednesday'])
-        hours = hours + '; ' + 'Thu: ' + json.dumps(item['hours']['Thursday'])
-        hours = hours + '; ' + 'Fri: ' + json.dumps(item['hours']['Friday'])
-        hours = hours + '; ' + 'Sat: ' + json.dumps(item['hours']['Saturday'])
-        hours = hours + '; ' + 'Sun: ' + json.dumps(item['hours']['Sunday'])
-        hours = hours.replace('["", ""]','Closed').replace('[','').replace('"','').replace(']','').replace(',',' -')
-        phone = phone.replace('\r\n',';').replace(';;',';').replace(';;',';').replace(';;',';').replace(';;',';').replace(';;',';')
-        phone = phone.replace('  PHONE','')
-        if ';' in phone:
-            try:
-                phone = phone.split(';')[0].strip().replace(') ',')').rsplit(' ',1)[1].replace(')',') ').strip()
-            except:
-                phone = phone.split(';')[0].strip()
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    url = "https://www.metro-dentalcare.com/"
+    r = session.get(url, headers=headers)
+    website = "metro-dentalcare.com"
+    typ = "Office"
+    country = "US"
+    lines = r.iter_lines()
+    store = "<MISSING>"
+    for line in lines:
+        if '<h3 class="office-card__title">' in line:
+            name = line.split('<h3 class="office-card__title">')[1].split("<")[0]
+        if 'ss="office-card__address">' in line:
+            g = next(lines)
+            h = next(lines)
+            add = g.split(">")[1].split("<")[0].strip()
+            csz = h.split(">")[1].split("<")[0].strip()
+            city = csz.split(",")[0]
+            state = csz.split(",")[1].strip().split(" ")[0]
+            zc = csz.rsplit(" ", 1)[1]
+        if '<a class="office-card__phone" href="tel:' in line:
+            phone = (
+                line.split('<a class="office-card__phone" href="tel:')[1]
+                .split(">")[1]
+                .split("<")[0]
+            )
+        if '<a class="office-card__website" href="' in line:
+            loc = line.split('<a class="office-card__website" href="')[1].split('"')[0]
+            hours = "<MISSING>"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
