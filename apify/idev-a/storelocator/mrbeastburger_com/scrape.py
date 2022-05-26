@@ -83,43 +83,39 @@ def request_with_retries(url):
         return session.get(url, headers=_headers)
 
 
-def get_driver():
-    return SgChrome(
+def fetch_data():
+    with SgChrome(
         executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
-    ).driver()
-
-
-def fetch_data():
-    driver = get_driver()
-    driver.get(base_url)
-    locations = bs(driver.page_source, "lxml").select("restaurant")
-    for _, page_url, ca in fetchConcurrentList(locations):
-        hours = []
-        if ca:
-            for hr in ca:
-                if not hr["label"]:
-                    for hh in hr["ranges"]:
-                        temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
-                        if temp not in hours:
-                            hours.append(temp)
-                    break
-        yield SgRecord(
-            page_url=page_url,
-            store_number=_["id"],
-            location_name=_["name"],
-            street_address=_["streetaddress"],
-            city=_["city"],
-            state=_["state"],
-            zip_postal=_["zip"],
-            latitude=_["latitude"],
-            longitude=_["longitude"],
-            country_code=_["country"],
-            phone=_["telephone"],
-            locator_domain=locator_domain,
-            hours_of_operation="; ".join(hours),
-        )
+    ) as driver:
+        driver.get(base_url)
+        locations = bs(driver.page_source, "lxml").select("restaurant")
+        for _, page_url, ca in fetchConcurrentList(locations):
+            hours = []
+            if ca:
+                for hr in ca:
+                    if not hr["label"]:
+                        for hh in hr["ranges"]:
+                            temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
+                            if temp not in hours:
+                                hours.append(temp)
+                        break
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=_["streetaddress"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                country_code=_["country"],
+                phone=_["telephone"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
