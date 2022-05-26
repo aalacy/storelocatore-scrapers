@@ -1,92 +1,120 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
 import json
-import sgzip
-import re
+
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('champschicken_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("champschicken.com")
 
 
+def fetch_data(sgw: SgWriter):
+    base_link = "https://champschicken.com/locations-list/"
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-def fetch_data():
+    final_links = []
+    locator_domain = "https://champschicken.com"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
-	session = SgRequests()
+    states = base.find(class_="sb-directory-list sb-directory-list-states").find_all(
+        "a"
+    )
+    for i in states:
+        state_link = locator_domain + i["href"]
+        logger.info(state_link)
 
-	locator_domain = "champschicken.com"
+        req = session.get(state_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-	data = []
-	found_poi = []
+        cities = base.find(
+            class_="sb-directory-list sb-directory-list-cities"
+        ).find_all("a")
+        for city in cities:
+            if "http" not in city["href"]:
+                city_link = locator_domain + city["href"]
+            else:
+                city_link = city["href"]
+            if "/locations/" in city_link:
+                final_links.append(city_link)
+            elif "/locations-list/" in city_link:
+                next_req = session.get(city_link, headers=headers)
+                next_base = BeautifulSoup(next_req.text, "lxml")
 
-	for coord_search in sgzip.coords_for_radius(50):
-		lat = coord_search[0]
-		lng = coord_search[1]
-		base_link = "https://mdsinternal.pfsbrands.com/store_locator/getstoresfull.php?lat=%s&lon=%s&brand=28" %(lat,lng)
+                next_locs = next_base.find(
+                    class_="sb-directory-list sb-directory-list-sites"
+                ).find_all("a")
 
-		req = session.get(base_link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+                for loc in next_locs:
+                    if "http" not in loc["href"]:
+                        fin_link = locator_domain + loc["href"]
+                    else:
+                        fin_link = loc["href"]
+                    if "/locations/" in fin_link:
+                        final_links.append(fin_link)
 
-		stores = json.loads(base.text)["stores"]
-		locator_domain = "champschicken.com"
+    logger.info("Processing " + str(len(final_links)) + " links ..")
+    for final_link in final_links:
+        if "location-name-city-state" in final_link:
+            continue
+        req = session.get(final_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        location_name = base.h1.text.strip()
 
-		for store in stores:
-			link = "https://champschicken.com/locations/" + store['name'].lower() + '-' + store['city'].lower() + '-' + store['state'].lower() + ".html"
-			link = link.replace(" ","-").replace("'","-").replace("-&-","-").replace("#","").replace(",","").replace("(","-").replace(")","-").replace(".-","-")
-			link = (re.sub('-+', '-', link)).strip()
-			if len(link.split("/")) == 6:
-				link = "/".join(link.split("/")[:-1]) + "-" + link.split("/")[-1]
-			if link in found_poi:
-				continue
-			logger.info(link)
-			found_poi.append(link)
-			location_name = "Champs Chicken - " + store['name']
-			try:
-				street_address = (store['street_1'] + " " + store['street_2']).strip()
-			except:
-				street_address = store['street_1'].strip()
-			if "Attn:" in street_address:
-				street_address = street_address[:street_address.find("Attn:")].strip()
-			city = store['city']
-			state = store['state']
-			zip_code = store['zip']
-			if not zip_code:
-				zip_code = "<MISSING>"
-			country_code = "US"
-			store_number = store['id']
-			location_type = "<MISSING>"
-			phone = store['phone']
-			if not phone:
-				phone = "<MISSING>"
-			try:
-				hours_of_operation = "Mon: " + store['monday_from'] + " " + store['monday_to'] + " " + "Tue: " + store['tuesday_from'] + " " + store['tuesday_to'] + " " + "Wed: " + store['wednesday_from'] + " " + store['wednesday_to']\
-				 + " " + "Thu: " + store['thursday_from'] + " " + store['thursday_to'] + " " + "Fri: " + store['friday_from'] + " " + store['friday_to'] + " " + "Sat: " + store['saturday_from'] + " " + store['saturday_to']\
-				 + " " + "Sun: " + store['sunday_from'] + " " + store['sunday_to']
-				hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-				if hours_of_operation == "Mon: Tue: Wed: Thu: Fri: Sat: Sun:":
-					hours_of_operation = "<MISSING>"
-			except:
-				hours_of_operation = "<MISSING>"
-			latitude = store['lat']
-			longitude = store['lon']
-			
-			data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	return data
+        script = base.find_all("script", attrs={"type": "application/ld+json"})[
+            -1
+        ].contents[0]
+        store = json.loads(script)
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+        street_address = store["address"]["streetAddress"]
+        city = store["address"]["addressLocality"]
+        state = store["address"]["addressRegion"]
+        zip_code = store["address"]["postalCode"]
+        country_code = store["address"]["addressCountry"]["name"]
 
-scrape()
+        phone = base.find(class_="lp-phone").text.strip()
+        store_number = ""
+        location_type = ""
+
+        try:
+            hours_of_operation = " ".join(
+                list(base.find(class_="hours-box").stripped_strings)
+            )
+        except:
+            hours_of_operation = ""
+
+        latitude = store["geo"]["latitude"]
+        longitude = store["geo"]["longitude"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

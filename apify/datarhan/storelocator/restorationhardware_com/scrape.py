@@ -30,6 +30,8 @@ def fetch_data():
         }
         try:
             response = session.post(start_url, json=body, headers=headers)
+            if response.status_code != 200:
+                continue
         except Exception:
             sleep(180)
             continue

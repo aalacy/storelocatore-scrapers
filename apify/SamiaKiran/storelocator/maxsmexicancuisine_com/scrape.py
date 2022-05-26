@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -29,23 +30,35 @@ def fetch_data():
         url = "https://www.maxsmexicancuisine.com/contact"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"data-testid": "richTextElement"})
+        loclist = soup.find("footer").select("a[href*=maps]")
+        r = session.get(DOMAIN, headers=headers)
+        hours_of_operation = r.text.split("Monday")[1].split("Get In Touch")[0]
+        hours_of_operation = "Monday " + BeautifulSoup(
+            hours_of_operation, "html.parser"
+        ).get_text(separator="|", strip=True).replace("|", " ")
         for loc in loclist:
-            if loc.find("h5") is None:
-                continue
-            location_name = loc.find("h5").text
-            log.info(location_name)
-            temp = loc.findAll("p")
-            hours_of_operation = " ".join(hour.text for hour in temp[0:4])
-            street_address = temp[4].text
-            coords = temp[4].find("a")["href"]
+            raw_address = loc.text
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            phone = r.text.split(city + ":")[1].split()
+            phone = phone[0] + " " + phone[1]
+            if "</span>" in phone:
+                phone = phone.split("</span>")[0]
+            coords = loc["href"]
             latitude, longitude = parse_geo(coords)
-            phone = temp[6].text
-            temp = temp[5].text.split()
-            city = temp[0].replace(",", "")
-            state = temp[1]
-            zip_postal = temp[2]
             country_code = "US"
+            location_name = city + ", " + state
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
@@ -56,11 +69,12 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
-                hours_of_operation=hours_of_operation.strip(),
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

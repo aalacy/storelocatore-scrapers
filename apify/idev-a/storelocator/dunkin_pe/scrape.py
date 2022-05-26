@@ -35,7 +35,7 @@ def _coord(links, raw_address):
                 .replace('"', "")
                 .replace(":", "")
             )
-            if lat == "cb":
+            if lat == "cb" or lat == "bR" or lat == "bO":
                 lat = ""
                 lng = ""
             break

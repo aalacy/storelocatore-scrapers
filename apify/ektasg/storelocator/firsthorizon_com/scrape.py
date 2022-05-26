@@ -44,7 +44,7 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             country_code = "US"
-            hours_of_operation = " ".join(x.text for x in loc.findAll("li"))
+            hours_of_operation = "; ".join(x.text for x in loc.findAll("li"))
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

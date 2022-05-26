@@ -1,1 +1,2 @@
---ignore StreetAddressHasStateName --ignore CountValidator --ignore StateLevelCountValidator --ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator (Data confirmed on website)
+Lat/lng removed from API (Set as <INACCESSIBLE>)
+--ignore StreetAddressHasStateName --ignore CountValidator --ignore StateLevelCountValidator --ignore StreetAddressHasNumber (Data confirmed on website)

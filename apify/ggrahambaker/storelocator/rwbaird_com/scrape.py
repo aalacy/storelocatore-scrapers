@@ -1,3 +1,4 @@
+import json
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -5,10 +6,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import json
 
 DOMAIN = "rwbaird.com"
 API_URL = "http://www.locatebaird.com/locator/api/InternalSearch"
+
 HEADERS = {
     "Host": "www.locatebaird.com",
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0",
@@ -35,98 +36,104 @@ MISSING = SgRecord.MISSING
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests(verify_ssl=False)
-
 
 def fetch_data():
-    log.info("Fetching store_locator data")
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=100
-    )
-    for zip_code in search:
-        url = "http://www.locatebaird.com/branch-results.htm?zipcode=" + str(zip_code)
-        HEADERS["Referer"] = url
-        PARAMS = {
-            "Locator": "BAIRD",
-            "City": "",
-            "Region": "",
-            "PostalCode": str(zip_code),
-            "Country": "USA",
-            "Company": " ",
-            "ProfileTypes": "Branch",
-            "DoFuzzyNameSearch": "0",
-            "SearchRadius": "100",
-        }
-        r = session.post(
-            API_URL,
-            headers=HEADERS,
-            data=json.dumps(PARAMS),
-            cookies=COOKIES,
+    with SgRequests(verify_ssl=False) as session:
+        log.info("Fetching store_locator data")
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], max_search_distance_miles=100
         )
-        log.info(f"Searching locations for => {zip_code}")
-        try:
-            res_json = json.loads(r.content)["Results"]
-        except:
-            continue
-        if not res_json:
-            continue
-        log.info(f"Found {len(res_json)} locations on => {zip_code}")
-        for loc in res_json:
-            location_name = loc["Company"]
-            store_number = loc["ProfileId"]
-            street_address = loc["Address1"] + " " + loc["Address2"]
-            street_address = street_address.strip()
-            city = loc["City"]
-            state = loc["Region"]
-            zip_postal = loc["PostalCode"]
-            country_code = "US"
-            latitude = loc["GeoLat"]
-            longitude = loc["GeoLon"]
-            more_loc = loc["XmlData"]["parameters"]
-            if more_loc["SiteIsLive"] == "0":
-                continue
-            try:
-                page_url = more_loc["Url"]
-            except:
-                page_url = "https://www.rwbaird.com/who-we-are/locations/"
-            if "LocalNumber" not in more_loc:
-                try:
-                    phone = more_loc["TollFreeNumber"]
-                except:
-                    phone = MISSING
-            else:
-                phone = more_loc["LocalNumber"]
-            location_type = MISSING
-            hours_of_operation = MISSING
-            log.info("Append {} => {}".format(location_name, street_address))
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+        for zip_code in search:
+            url = "http://www.locatebaird.com/branch-results.htm?zipcode=" + str(
+                zip_code
             )
+            HEADERS["Referer"] = url
+            PARAMS = {
+                "Locator": "BAIRD",
+                "City": "",
+                "Region": "",
+                "PostalCode": zip_code,
+                "Country": "USA",
+                "Company": " ",
+                "ProfileTypes": "Branch",
+                "DoFuzzyNameSearch": "0",
+                "SearchRadius": "100",
+            }
+            r = session.post(
+                API_URL,
+                headers=HEADERS,
+                data=json.dumps(PARAMS),
+                cookies=COOKIES,
+            )
+            log.info(f"Searching locations for => {zip_code}")
+            try:
+                res_json = json.loads(r.content)["Results"]
+            except:
+                continue
+            if not res_json:
+                continue
+            log.info(f"Found {len(res_json)} locations on => {zip_code}")
+            for loc in res_json:
+                location_name = loc["Company"]
+                store_number = loc["ProfileId"]
+                street_address = loc["Address1"] + " " + loc["Address2"]
+                street_address = street_address.strip()
+                city = loc["City"]
+                state = loc["Region"]
+                zip_postal = loc["PostalCode"]
+                country_code = "US"
+                latitude = loc["GeoLat"]
+                longitude = loc["GeoLon"]
+                more_loc = loc["XmlData"]["parameters"]
+                if more_loc["SiteIsLive"] == "0":
+                    continue
+                try:
+                    page_url = more_loc["Url"]
+                except:
+                    page_url = "https://www.rwbaird.com/who-we-are/locations/"
+                if "LocalNumber" not in more_loc:
+                    try:
+                        phone = more_loc["TollFreeNumber"]
+                    except:
+                        phone = MISSING
+                else:
+                    phone = more_loc["LocalNumber"]
+                location_type = MISSING
+                hours_of_operation = MISSING
+                log.info("Append {} => {}".format(location_name, street_address))
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumAndPageUrlId,
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for rec in fetch_data():
             writer.write_row(rec)
             count = count + 1
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -20,38 +20,64 @@ def fetch_data(sgw: SgWriter):
         assert 200 == r.status_code
         tree = html.fromstring(r.text)
         div = tree.xpath(
-            '//div[./h3[./span[contains(text(), "Lot")]]] | //div[./h3[./span[contains(text(), "G1")]]] | //div[./h3[./span[contains(text(), "170-")]]]'
+            '//div[./h3[./span[contains(text(), "Lot")]]] | //div[./h3[./span[contains(text(), "G1")]]] | //div[./h3[./span[contains(text(), "170-")]]] | //div[./h3[.//span[contains(text(), "L3")]]]'
         )
         for d in div:
             ad = "".join(d.xpath(".//text()")).replace("\n", "").strip()
             location_name = "".join(
-                d.xpath(
-                    './/following::span[text()="GRAND MENU"][1]/preceding::span[contains(@style, "font-size:24px")][1]//text()'
-                )
+                d.xpath('.//following::span[text()="MENU"][1]/preceding::h4[1]//text()')
             )
             a = parse_address(International_Parser(), ad)
             street_address = f"{a.street_address_1} {a.street_address_2}".replace(
                 "None", ""
             ).strip()
+            if street_address.find("Gardens Mall") != -1:
+                location_name = "".join(
+                    d.xpath(
+                        './/following::span[text()="MENU"][1]/preceding::h4[2]//text()'
+                    )
+                )
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
             country_code = "MY"
             city = a.city or "<MISSING>"
             phone = "".join(
                 d.xpath(
-                    './/following::span[text()="GRAND MENU"][1]/preceding::a[contains(@href, "tel")][1]//text()'
+                    './/following::span[text()="MENU"][1]/preceding::a[contains(@href, "tel")][1]//text()'
                 )
             )
             hours_of_operation = (
                 "".join(
                     d.xpath(
-                        './/following::span[text()="GRAND MENU"][1]/preceding::h3[./span[contains(text(), "PM")]][1]//text()'
+                        './/following::span[text()="MENU"][1]/preceding::h3[1]//text()'
                     )
                 )
                 .replace("\n", "")
                 .replace("PM", "PM ")
                 .strip()
             )
+            if hours_of_operation == "Opening Hours":
+                hours_of_operation = (
+                    "".join(
+                        d.xpath(
+                            './/following::span[text()="MENU"][1]/preceding::h3[2]//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .replace("PM", "PM ")
+                    .strip()
+                )
+            if street_address.find("Gardens Mall") != -1:
+                hours_of_operation = (
+                    "".join(
+                        d.xpath(
+                            './/following::span[text()="MENU"][1]/following::h3[5]//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .replace("PM", "PM ")
+                    .strip()
+                )
 
             row = SgRecord(
                 locator_domain=locator_domain,

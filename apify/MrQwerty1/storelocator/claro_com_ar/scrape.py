@@ -22,7 +22,9 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             j = j["fields"]
             location_name = j.get("title")
-            street_address = j.get("text")
+            street_address = j.get("text") or ""
+            if "," in street_address:
+                street_address = street_address.split(",")[0].strip()
             state = j.get("category")
             country_code = "AR"
 

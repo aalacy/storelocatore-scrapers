@@ -21,8 +21,7 @@ def get_urls():
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://newbalance.jp/"
     page_url = "".join(url)
-    if page_url.find("concept-store") != -1:
-        return
+
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
@@ -36,6 +35,8 @@ def get_data(url, sgw: SgWriter):
         location_name = "New Balance Factory Store"
     if slug == "Official Store":
         location_name = "New Balance Official Store"
+    if page_url == "https://company.newbalance.jp/store/concept-store/t-house":
+        location_name = "New Balance Concept Store"
     ad = "".join(tree.xpath('//p[@class="store_address"]/text()'))
 
     a = parse_address(International_Parser(), ad)
@@ -47,6 +48,9 @@ def get_data(url, sgw: SgWriter):
     postal = a.postcode or "<MISSING>"
     country_code = "JP"
     city = a.city or "<MISSING>"
+    if page_url == "https://company.newbalance.jp/store/official-store/tamagawa":
+        city = "東京"
+
     phone = (
         "".join(tree.xpath('//h3[text()="電話番号"]/following-sibling::p[1]/text()'))
         or "<MISSING>"

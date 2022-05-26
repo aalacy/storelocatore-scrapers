@@ -49,6 +49,10 @@ def fetch_data(sgw: SgWriter):
             _tmp = []
             intervals = j.get("hours") or {}
             for day, interval in intervals.items():
+                if "holiday" in day.lower():
+                    continue
+                if isinstance(interval, list):
+                    interval = interval.pop(0)
                 if interval.get("isClosed"):
                     _tmp.append(f"{day.capitalize()}: Closed")
                     continue
