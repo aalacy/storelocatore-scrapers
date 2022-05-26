@@ -18,6 +18,16 @@ from selenium.webdriver.chrome.options import Options  # noqa
 from bs4 import BeautifulSoup as b4
 import os
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -265,7 +275,7 @@ def fetch_records(http, state):
         lat = next_r.context.get("lat")
         lng = next_r.context.get("lng")
         url = next_r.url
-        page = SgRequests.raise_on_err(http.get(url))
+        page = SgRequests.raise_on_err(http.get(url, verify=False))
         try:
             soup = b4(page.text, "lxml")
             return ret_record(soup, url, lat, lng)
