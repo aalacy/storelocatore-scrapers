@@ -21,31 +21,31 @@ headers = {
 
 def fetch_data():
     search_urls = [
-        "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
-        "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",
-        "https://www.hsbc.ca/branch-locator/, https://www.hsbc.ca/branch-list/, Canada",
-        "https://www.hsbc.com.mx/contacto/sucursales/, https://www.hsbc.com.mx/contacto/directorio-de-sucursales/, Mexico",
-        "https://www.us.hsbc.com/branch-locator/, https://www.us.hsbc.com/branch-list/, United States",
-        "https://www.hsbc.com.au/branch-finder/, https://www.hsbc.com.au/branch-list/, Australia",
-        "https://www.hsbc.com.cn/en-cn/branch-finder/, https://www.hsbc.com.cn/en-cn/help/contact/branch-finder/lists/, China",
+        # "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
+    #     "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",
+    #     "https://www.hsbc.ca/branch-locator/, https://www.hsbc.ca/branch-list/, Canada",
+    #     "https://www.hsbc.com.mx/contacto/sucursales/, https://www.hsbc.com.mx/contacto/directorio-de-sucursales/, Mexico",
+    #     "https://www.us.hsbc.com/branch-locator/, https://www.us.hsbc.com/branch-list/, United States",
+    #     "https://www.hsbc.com.au/branch-finder/, https://www.hsbc.com.au/branch-list/, Australia",
+    #     "https://www.hsbc.com.cn/en-cn/branch-finder/, https://www.hsbc.com.cn/en-cn/help/contact/branch-finder/lists/, China",
         "https://www.hsbc.com.hk/branch-finder/, https://www.hsbc.com.hk/branch-finder/,  Hong Kong",
-        "https://www.hsbc.co.in/branch-finder/, https://www.hsbc.co.in/branch-list/,  India",
-        "https://www.hsbc.com.mo/branch-finder/, https://www.hsbc.com.mo/branch-list/, Macau",
-        "https://www.hsbc.com.my/branch-finder/, https://www.hsbc.com.my/branch-list/, Malaysia",
-        "https://www.hsbc.co.mu/branch-finder/, https://www.hsbc.co.mu/branch-list/,  Mauritius",
-        "https://www.hsbc.com.ph/branch-finder/, https://www.hsbc.com.ph/branch-list/, Philippines",
-        "https://www.hsbc.com.sg/branch-finder/, https://www.hsbc.com.sg/branch-list/, Singapore",
-        "https://www.hsbc.lk/branch-finder/, https://www.hsbc.lk/branch-list/, Sri Lanka",
-        "https://www.hsbc.com.tw/en-tw/branch-finder/, https://www.hsbc.com.tw/en-tw/branch-list/,   Taiwan",
-        "https://www.hsbc.am/en-am/branch-finder/,https://www.hsbc.am/en-am/branch-list/, Armenia",
-        "https://www.hsbc.gr/en-gr/branch-finder/,https://www.hsbc.gr/en-gr/branch-list/,Greece",
-        "https://www.hsbc.com.mt/branch-finder/, https://www.hsbc.com.mt/branch-list/, Malta",
-        "https://www.hsbc.co.uk/branch-finder/, https://www.hsbc.co.uk/branch-list/, UK",
-        "https://www.hsbc.com.bh/branch-finder/, https://www.hsbc.com.bh/branch-finder/, Bahrain",
-        "https://www.hsbc.com.eg/branch-finder/, https://www.hsbc.com.eg/branch-finder/, Egypt",
-        "https://www.hsbc.co.om/branch-finder/, https://www.hsbc.co.om/branch-finder/,  Oman",
-        "https://www.hsbc.com.qa/branch-finder/, https://www.hsbc.com.qa/branch-finder/, Qatar",
-        "https://www.hsbc.ae/branch-finder/, https://www.hsbc.ae/branch-finder/, UAE",
+    #     "https://www.hsbc.co.in/branch-finder/, https://www.hsbc.co.in/branch-list/,  India",
+    #     "https://www.hsbc.com.mo/branch-finder/, https://www.hsbc.com.mo/branch-list/, Macau",
+    #     "https://www.hsbc.com.my/branch-finder/, https://www.hsbc.com.my/branch-list/, Malaysia",
+    #     "https://www.hsbc.co.mu/branch-finder/, https://www.hsbc.co.mu/branch-list/,  Mauritius",
+    #     "https://www.hsbc.com.ph/branch-finder/, https://www.hsbc.com.ph/branch-list/, Philippines",
+    #     "https://www.hsbc.com.sg/branch-finder/, https://www.hsbc.com.sg/branch-list/, Singapore",
+    #     "https://www.hsbc.lk/branch-finder/, https://www.hsbc.lk/branch-list/, Sri Lanka",
+    #     "https://www.hsbc.com.tw/en-tw/branch-finder/, https://www.hsbc.com.tw/en-tw/branch-list/,   Taiwan",
+    #     "https://www.hsbc.am/en-am/branch-finder/,https://www.hsbc.am/en-am/branch-list/, Armenia",
+    #     "https://www.hsbc.gr/en-gr/branch-finder/,https://www.hsbc.gr/en-gr/branch-list/,Greece",
+    #     "https://www.hsbc.com.mt/branch-finder/, https://www.hsbc.com.mt/branch-list/, Malta",
+    #     "https://www.hsbc.co.uk/branch-finder/, https://www.hsbc.co.uk/branch-list/, UK",
+    #     "https://www.hsbc.com.bh/branch-finder/, https://www.hsbc.com.bh/branch-finder/, Bahrain",
+    #     "https://www.hsbc.com.eg/branch-finder/, https://www.hsbc.com.eg/branch-finder/, Egypt",
+    #     "https://www.hsbc.co.om/branch-finder/, https://www.hsbc.co.om/branch-finder/,  Oman",
+    #     "https://www.hsbc.com.qa/branch-finder/, https://www.hsbc.com.qa/branch-finder/, Qatar",
+    #     "https://www.hsbc.ae/branch-finder/, https://www.hsbc.ae/branch-finder/, UAE",
     ]
 
     for url_country in search_urls:
@@ -71,12 +71,12 @@ def fetch_data():
                 yield location
         except:
             for location in fetch_data_from_site(
-                home_sel, domain, url_country, session
+                home_sel, domain, session
             ):
                 yield location
 
 
-def fetch_data_from_site(home_sel, domain, url_country, session):
+def fetch_data_from_site(home_sel, domain, session):
     locations = []
     urls = home_sel.xpath(
         '//table[@class="desktop"]/tbody/tr/td/a[contains(@href, "branch-list")]/@href'
@@ -130,6 +130,25 @@ def fetch_data_from_site(home_sel, domain, url_country, session):
 
     return locations
 
+def resolve_phone(store):
+    if "phoneNumber" not in store:
+        return None
+        
+    phones = store["phoneNumber"]
+    phone_nums = phones.get("existingCustomers") or phones.get(
+        "newCustomers"
+    )
+
+    phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
+    phone = phone.rsplit("  ")[0]
+    if len(re.sub("[^0-9]", "", phone)) < 5:
+        phone = phone_nums
+    
+    match = re.search(r'(\(\d+\) \d+-\d+)', phone_nums)
+    if match:
+        phone = match.group(1)
+
+    return phone
 
 def fetch_data_from_files(data_files, domain, url_country):
     locations = []
@@ -162,17 +181,7 @@ def fetch_data_from_files(data_files, domain, url_country):
                 if re.search("po box", cleaned_zip, re.IGNORECASE):
                     cleaned_zip = SgRecord.MISSING
 
-            phone = ""
-            if "phoneNumber" in store:
-                phones = store["phoneNumber"]
-                phone_nums = phones.get("existingCustomers") or phones.get(
-                    "newCustomers"
-                )
-
-                phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
-                phone = phone.rsplit("  ")[0]
-                if len(re.sub("[^0-9]", "", phone)) < 5:
-                    phone = phone_nums
+            phone = resolve_phone(store)
 
             street_address = ""
             if "street" in store["address"]:
