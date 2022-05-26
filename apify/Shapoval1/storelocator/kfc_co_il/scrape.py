@@ -1,4 +1,3 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -22,23 +21,15 @@ def fetch_data(sgw: SgWriter):
     try:
         r = SgRequests.raise_on_err(session.get(api_url, headers=headers))
         tree = html.fromstring(r.text)
-        div = (
-            "".join(
-                tree.xpath(
-                    '//script[contains(text(), "var address_list_76c3d36 = ")]/text()'
-                )
-            )
-            .split("var address_list_76c3d36 = ")[1]
-            .split(";")[0]
-            .strip()
-        )
-        js = json.loads(div)
+        div = "".join(tree.xpath("//div/@data-positions"))
+        js = eval(div)
         for j in js:
+
             ad = "".join(j.get("address"))
-            info = j.get("infoWindow")
+            info = j.get("infowindow")
             a = html.fromstring(info)
             al = a.xpath("//*//text()")
-            page_url = "https://www.kfc.co.il/branches/"
+            page_url = "https://www.kfc.co.il/kfc-branches/"
             location_name = "".join(al[1]).strip()
             aa = parse_address(International_Parser(), ad)
             street_address = f"{aa.street_address_1} {aa.street_address_2}".replace(
@@ -46,11 +37,11 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             postal = aa.postcode or "<MISSING>"
             country_code = "IL"
-            city = ad.split(",")[-2].strip()
+            city = aa.city or "<MISSING>"
             latitude = j.get("lat")
             longitude = j.get("lng")
             hours_of_operation = "".join(al[-1]).strip()
-            r = session.get(page_url, headers=headers)
+            r = session.get("https://www.kfc.co.il/branches/", headers=headers)
             tree = html.fromstring(r.text)
             phone = (
                 "".join(
@@ -90,6 +81,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)

@@ -1,98 +1,82 @@
-import csv
-
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+log = sglog.SgLogSetup().get_logger(logger_name="lexus.com")
 
 
 def fetch_data():
     session = SgRequests()
-
+    domain = "lexus.com"
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
-        max_search_results=None,
+        expected_search_radius_miles=100,
     )
-    return_main_object = []
-    addresses = []
-    for zip_code in zips:
+    for code in zips:
+        log.info(f"fetching data for zipcode: {code}")
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
         }
-        r = session.get(
-            "https://www.lexus.com/rest/dealersByZipAndPma/" + str(zip_code),
+        data = session.get(
+            f"https://www.lexus.com/rest/lexus/dealers?experience=dealers&dealerSearchStrategy=expandFallback&zip={code}",
             headers=headers,
         )
-        data = r.json()["data"]
-        for store_data in data:
-            store = []
-            store.append(
-                "https://www.lexus.com/dealers/{}-{}".format(
-                    store_data["id"], store_data["dealerName"].replace(" ", "-").lower()
-                )
+        if data.status_code != 200:
+            continue
+        data = data.json()
+        if not data.get("dealers"):
+            continue
+        for poi in data["dealers"]:
+            hoo = ""
+            if poi.get("hoursOfOperation", {}).get("Sales"):
+                hoo = []
+                for day, hours in poi["hoursOfOperation"]["Sales"].items():
+                    hoo.append(f"{day}: {hours}")
+                hoo = " ".join(hoo)
+            store_number = poi["id"]
+            page_url = (
+                f"https://www.lexus.com/dealers/{store_number}-"
+                + poi["dealerDetailSlug"]
             )
-            store.append(store_data["dealerName"])
-            street_adr = store_data["dealerAddress"]["address1"]
-            if store_data["dealerAddress"]["address2"]:
-                street_adr += " " + store_data["dealerAddress"]["address2"]
-            store.append(street_adr)
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(store_data["dealerAddress"]["city"])
-            store.append(store_data["dealerAddress"]["state"])
-            store.append(store_data["dealerAddress"]["zipCode"])
-            store.append("US")
-            store.append(store_data["id"])
-            store.append(store_data["dealerPhone"])
-            store.append("lexus")
-            store.append(store_data["dealerLatitude"])
-            store.append(store_data["dealerLongitude"])
-            if store_data["hoursOfOperation"] != {} and store_data[
-                "hoursOfOperation"
-            ].get("Sales"):
-                hours = ""
-                store_hours = store_data["hoursOfOperation"]["Sales"]
-                for key in store_hours:
-                    hours = hours + " " + key + " " + store_hours[key]
-                store.append(hours if hours != "" else "<MISSING>")
-            else:
-                store.append("<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+
+            zips.found_location_at(poi["dealerLatitude"], poi["dealerLongitude"])
+            log.info(poi["dealerName"])
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["dealerName"],
+                street_address=poi["dealerAddress"]["address1"],
+                city=poi["dealerAddress"]["city"],
+                state=poi["dealerAddress"]["state"],
+                zip_postal=poi["dealerAddress"]["zipCode"],
+                country_code="",
+                store_number=store_number,
+                phone=poi["dealerPhone"],
+                location_type="",
+                latitude=poi["dealerLatitude"],
+                longitude=poi["dealerLongitude"],
+                hours_of_operation=hoo,
+            )
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath("./div[@class='listing-title']/text()")).strip()
         page_url = "".join(d.xpath("./div[@class='storemapdata']/@data-url"))
 
-        line = d.xpath("./div[@class='listing-address']/text()")
+        line = d.xpath("./div[@class='listing-address']/a/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = ", ".join(line[:-1])
         if street_address.endswith(","):
@@ -42,11 +42,22 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         _tmp = []
-        li = d.xpath(".//li[./span]")
-        for l in li:
-            day = "".join(l.xpath("./text()")).strip()
-            time = "".join(l.xpath("./span/text()")).strip()
-            _tmp.append(f"{day} {time}")
+        try:
+            hours = d.xpath(".//ul[@class='toggle-time2 store-specific-hours']")[
+                0
+            ].xpath(".//li[./span]")
+        except:
+            try:
+                hours = d.xpath(".//div[@class='store-listing-hours wh-hours']")[
+                    0
+                ].xpath(".//li[./span]")
+            except:
+                hours = []
+
+        for h in hours:
+            day = "".join(h.xpath("./span[1]/text()")).strip()
+            inter = "".join(h.xpath("./span[2]/text()")).strip()
+            _tmp.append(f"{day}: {inter}")
 
         hours_of_operation = ";".join(_tmp) or "Closed"
 
@@ -60,7 +71,6 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,

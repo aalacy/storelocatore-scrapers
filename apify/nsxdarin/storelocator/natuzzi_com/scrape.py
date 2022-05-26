@@ -1,6 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
 headers = {
@@ -10,167 +14,71 @@ headers = {
 logger = SgLogSetup().get_logger("natuzzi_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    url = "https://www.natuzzi.com/store-locator.html#wrapper_stores"
+    url = "https://api.natuzzi.com/api/storelocator/italia?language=en&store_code=us"
     r = session.get(url, headers=headers)
     website = "natuzzi.com"
     typ = "<MISSING>"
     loc = "<MISSING>"
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'id_store":"' in line:
-            items = line.split('id_store":"')
-            for item in items:
-                if '"title":"' in item:
-                    hours = "<MISSING>"
-                    typ = item.split('"type":"')[1].split('"')[0]
-                    store = item.split('"')[0]
-                    name = item.split('"title":"')[1].split('"')[0]
-                    add = item.split('"address":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    country = item.split('country":"')[1].split('"')[0]
-                    if country == "CA" or country == "US":
-                        if country == "CA":
-                            loc = "https://www.natuzzi.ca/store" + item.split(
-                                '<a target=\\"_blank\\" href=\\"\\/store'
-                            )[1].split('\\"')[0].replace("\\", "")
+    for item in json.loads(r.content):
+        store = item["slug"]
+        name = item["name"]
+        typ = item["type"]
+        zc = item["zipCode"]
+        city = item["city"]
+        country = item["country"]
+        state = item["stateProvince"]
+        if " - " in city:
+            city = city.split(" - ")[0]
+        phone = item["phoneNumber"]
+        add = item["address1"] + " " + item["address2"]
+        add = add.strip()
+        lat = item["lat"]
+        lng = item["lon"]
+        hours = ""
+        loc = "https://www.natuzzi.com/us/en/stores/" + store
+        r2 = session.get(loc, headers=headers)
+        logger.info(loc)
+        for line2 in r2.iter_lines():
+            if '"openingTimes":' in line2:
+                days = line2.split('"openingTimes":')[1].split('"key":"')
+                for day in days:
+                    if ',"value":"' in day:
+                        hrs = (
+                            day.split('"')[0]
+                            + ": "
+                            + day.split(',"value":"')[1].split('"')[0]
+                        )
+                        if hours == "":
+                            hours = hrs
                         else:
-                            loc = "https://www.natuzzi.us/store" + item.split(
-                                '<a target=\\"_blank\\" href=\\"\\/store'
-                            )[1].split('\\"')[0].replace("\\", "")
-                        try:
-                            state = (
-                                item.split('"geoloc_address":"')[1]
-                                .split('"')[0]
-                                .replace(", USA", "")
-                                .replace(",USA", "")
-                                .replace(", Canada", "")
-                                .rsplit(",", 1)[1]
-                                .strip()
-                                .split(" ")[0]
-                            )
-                        except:
-                            state = "<MISSING>"
-                    else:
-                        state = "<MISSING>"
-                    if country == "UK":
-                        country = "GB"
-                    if " " in state:
-                        state = state.split(" ")[0]
-                    phone = item.split('"phone":"')[1].split('"')[0]
-                    lat = item.split('"geoloc_lat":"')[1].split('"')[0]
-                    lng = item.split('"geoloc_lon":"')[1].split('"')[0]
-                    if country == "US" or country == "CA":
-                        zc = item.split('"zip":"')[1].split('"')[0]
-                        if "FL " in zc:
-                            state = "FL"
-                            zc = zc.split("FL")[1].strip()
-                        if "ON " in zc:
-                            state = "ON"
-                            zc = zc.split("ON")[1].strip()
-                        if phone == "":
-                            phone = "<MISSING>"
-                        if "Montreal" in city:
-                            state = "QC"
-                        if "Edmonton" in city:
-                            state = "AB"
-                        if "Burlington" in city:
-                            state = "ON"
-                        if "Coquitlam" in city:
-                            state = "BC"
-                        if "Victoria" in city:
-                            state = "BC"
-                        if "Winnipeg" in city:
-                            state = "MB"
-                        if "Greenvile" in city:
-                            state = "SC"
-                        if "Dallas" in city or "Houston" in city:
-                            state = "TX"
-                        if "Atlanta" in city:
-                            state = "GA"
-                        if city == "Bend":
-                            state = "OR"
-                        if "Las Vegas" in city:
-                            state = "NV"
-                        if (
-                            "Boca Raton" in city
-                            or "Fort Lauderdale" in city
-                            or "Miami" in city
-                        ):
-                            state = "FL"
-                        if "Los Angeles" in city:
-                            state = "CA"
-                        if "." not in lat:
-                            lat = "<MISSING>"
-                            lng = "<MISSING>"
-                        if " - " in phone:
-                            phone = phone.split(" - ")[0]
-                        logger.info(loc)
-                        r2 = session.get(loc, headers=headers)
-                        for line2 in r2.iter_lines():
-                            line2 = str(line2.decode("utf-8"))
-                            if ":00" in line2 and "PM" in line2:
-                                hours = (
-                                    line2.split("<p>")[1]
-                                    .split("</p>")[0]
-                                    .replace("<br />", "; ")
-                                )
-                        if "<" in hours and hours != "<MISSING>":
-                            hours = hours.split("<")[0]
-                        hours = hours.strip()
-                        if "Burlington" in city and "Ontario" in city:
-                            city = "Burlington"
-                        if "Stati" in state:
-                            state = "MO"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                            hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

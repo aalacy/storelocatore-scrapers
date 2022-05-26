@@ -9,7 +9,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "annsummers_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Accept": "application/json",
@@ -45,10 +44,13 @@ def fetch_data():
                 street_address = loc["address1"] + " " + loc["address2"]
             city = loc["city"]
             zip_postal = loc["postalCode"]
-            state = loc["stateCode"]
+            try:
+                state = loc["stateCode"]
+            except:
+                state = MISSING
             country_code = loc["countryCode"]
             yield SgRecord(
-                locator_domain="https://www.annsummers.com/",
+                locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),

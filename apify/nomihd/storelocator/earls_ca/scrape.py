@@ -6,10 +6,12 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "earls.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
@@ -73,6 +75,8 @@ def fetch_data():
         log.info(page_url)
 
         location_name = store["name"].strip()
+        if "Opening Winter" in store["orderingNotAvailableTitle"]:
+            continue
         street_address = store["address1"].strip()
 
         city = store["address2"].split(",")[0].strip()
@@ -134,7 +138,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

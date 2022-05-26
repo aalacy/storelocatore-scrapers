@@ -1,39 +1,12 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.pridestores.com"
     api_url = "https://www.pridestores.com/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw/find.ajax?gridAppId=3f7c87a7-aa4d-497a-b4a0-a2d817c3652e&instance=wixcode-pub.fe72f53d68984443e1013cf705aeaa52cdb39e8f.eyJpbnN0YW5jZUlkIjoiYTRkMTY0MzctN2FlOC00NjhlLWIyZjEtMjZjOWNhYTM2Yzg0IiwiaHRtbFNpdGVJZCI6IjAzNDgyY2Y0LWQxNTQtNDM4OC1hMDIzLTk0NGYzZjNlOGE3ZSIsInVpZCI6bnVsbCwicGVybWlzc2lvbnMiOm51bGwsImlzVGVtcGxhdGUiOmZhbHNlLCJzaWduRGF0ZSI6MTYxODg1NjExNzk5NywiYWlkIjoiMDJmMTUzYTgtMGY2ZS00Zjg1LWFkY2EtOWQ1Y2MzZGJjNDM5IiwiYXBwRGVmSWQiOiJDbG91ZFNpdGVFeHRlbnNpb24iLCJpc0FkbWluIjpmYWxzZSwibWV0YVNpdGVJZCI6ImJmNDc3NDBiLTMwMTAtNGY4Yy05YzI4LWY0NmE4MjYzNjNhYyIsImNhY2hlIjpudWxsLCJleHBpcmF0aW9uRGF0ZSI6bnVsbCwicHJlbWl1bUFzc2V0cyI6IlNob3dXaXhXaGlsZUxvYWRpbmcsSGFzRG9tYWluLEFkc0ZyZWUiLCJ0ZW5hbnQiOm51bGwsInNpdGVPd25lcklkIjoiMzY1ZTJhNjAtOGNlZS00ZDMwLWE0YTYtOWIyNTQ0NDRhYzNmIiwiaW5zdGFuY2VUeXBlIjoicHViIiwic2l0ZU1lbWJlcklkIjpudWxsfQ==&viewMode=site"
@@ -59,7 +32,6 @@ def fetch_data():
     for j in js["result"]["items"]:
 
         page_url = f"{locator_domain}{j.get('url')}".lower()
-        location_type = "<MISSING>"
         street_address = "".join(j.get("address"))
 
         phone = j.get("phone")
@@ -70,7 +42,6 @@ def fetch_data():
         if ad.find(",") != -1:
             city = ad.split(",")[0].strip()
             state = ad.split(",")[1].strip()
-        store_number = "<MISSING>"
         hours_of_operation = (
             f"Mon-Fri:{j.get('hours')} Sat:{j.get('satHours')} Sun:{j.get('sunHours')}"
         )
@@ -80,9 +51,13 @@ def fetch_data():
         r = session.get(page_url, headers=API_headers)
 
         tree = html.fromstring(r.text)
-        location_name = "".join(tree.xpath('//span[@style="font-size:47px"]//text()'))
-        if location_name.find("(") != -1:
-            location_name = location_name.split("(")[0].strip()
+        location_name = "".join(tree.xpath('//meta[@name="description"]/@content'))
+        if location_name.find("Welcome to the") != -1:
+            location_name = (
+                location_name.split("Welcome to the")[1].split("!")[0].strip()
+            )
+        if location_name.find("Welcome to") != -1:
+            location_name = location_name.split("Welcome to")[1].split("!")[0].strip()
         if street_address.find("10 Jennings") != -1:
             location_name = "Pride Hartford Truck Stop I-91"
         if street_address.find("234 East") != -1:
@@ -113,31 +88,27 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

@@ -1,39 +1,21 @@
-import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
 
+from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+log = SgLogSetup().get_logger("food4less.com")
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.food4less.com/storelocator-sitemap.xml"
 
@@ -47,82 +29,98 @@ def fetch_data():
 
     items = base.find_all("loc")
 
-    data = []
     locator_domain = "food4less.com"
 
+    log.info("Processing " + str(len(items)) + " links ...")
     for item in items:
         link = item.text
-        if "stores/details" in link:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
+        if "stores/search" in link:
+            continue
+        log.info(link)
+        for i in range(5):
             try:
-                script = (
-                    base.find("script", attrs={"type": "application/ld+json"})
-                    .contents[0]
-                    .replace("\n", "")
-                    .strip()
-                )
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+                break
             except:
-                continue
-            store = json.loads(script)
+                try:
+                    log.info("Retrying ..")
+                    session = SgRequests()
+                    time.sleep(5)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                    script = base.find(
+                        "script", attrs={"type": "application/ld+json"}
+                    ).contents[0]
+                    break
+                except:
+                    pass
 
-            location_name = store["name"]
+        store = json.loads(script)
 
-            try:
-                street_address = store["address"]["streetAddress"]
-                city = store["address"]["addressLocality"]
-                state = store["address"]["addressRegion"]
-                zip_code = store["address"]["postalCode"]
-            except:
-                raw_address = (
-                    base.find(class_="StoreAddress-storeAddressGuts")
-                    .get_text(" ")
-                    .replace(",", "")
-                    .replace(" .", ".")
-                    .split("  ")
-                )
-                street_address = raw_address[0].strip()
-                city = raw_address[1].strip()
-                state = raw_address[2].strip()
-                zip_code = raw_address[3].split("Get")[0].strip()
+        location_name = store["name"]
 
-            country_code = "US"
-            store_number = link.split("/")[-1]
-            location_type = "<MISSING>"
-            phone = store["telephone"]
-            if not phone:
-                phone = "<MISSING>"
-            hours_of_operation = store["openingHours"][0]
-            latitude = store["geo"]["latitude"]
-            longitude = store["geo"]["longitude"]
-
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+        try:
+            street_address = store["address"]["streetAddress"]
+            city = store["address"]["addressLocality"]
+            state = store["address"]["addressRegion"]
+            zip_code = store["address"]["postalCode"]
+        except:
+            raw_address = (
+                base.find(class_="StoreAddress-storeAddressGuts")
+                .get_text(" ")
+                .replace(",", "")
+                .replace(" .", ".")
+                .split("  ")
             )
+            street_address = raw_address[0].strip()
+            city = raw_address[1].strip()
+            state = raw_address[2].strip()
+            zip_code = raw_address[3].split("Get")[0].strip()
 
-    return data
+        country_code = "US"
+        store_number = link.split("/")[-1]
+        location_type = "<MISSING>"
+        phone = store["telephone"]
+        if not phone:
+            phone = "<MISSING>"
+
+        try:
+            hours_of_operation = " ".join(
+                list(
+                    base.find(
+                        class_="StoreInformation-dayAndHoursWrapper"
+                    ).stripped_strings
+                )
+            )
+        except:
+            hours_of_operation = ""
+
+        latitude = store["geo"]["latitude"]
+        longitude = store["geo"]["longitude"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
