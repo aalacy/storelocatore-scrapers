@@ -50,9 +50,9 @@ def fetchConcurrentSingle(link):
     page_url = locator_domain + "/locations" + link["url"].split("/menu")[-1]
     logger.info(page_url)
     try:
-        ca = request_with_retries(calendar_url.format(link["id"], mon, next_mon)).json()[
-            "calendar"
-        ]
+        ca = request_with_retries(
+            calendar_url.format(link["id"], mon, next_mon)
+        ).json()["calendar"]
     except:
         ca = None
     return link, page_url, ca
