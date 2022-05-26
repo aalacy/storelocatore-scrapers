@@ -145,6 +145,10 @@ def resolve_phone(store):
     if match:
         phone = match.group(1)
 
+    match = re.search(f'(\d+) o', phone)
+    if match:
+        phone = match.group(1)
+
     return phone
 
 
