@@ -40,15 +40,24 @@ def fetch_data():
         country_code = addr.country
         if country_code and len(country_code) > 2:
             country_code = ""
+        if " NL " in raw_address:
+            country_code = "NL"
+        city = addr.city
+        if city and len(city) == 2:
+            city = ""
+        if city:
+            city = city.split("/")[0]
+        zip_code = addr.postcode
+        street_address = raw_data[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_data[0],
-            city=addr.city,
+            street_address=street_address,
+            city=city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code=country_code,
             store_number="",
             phone=phone,

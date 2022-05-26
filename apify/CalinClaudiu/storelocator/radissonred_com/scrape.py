@@ -2,7 +2,7 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -294,8 +294,9 @@ def get_subpage(session, url):
 
 
 def initial(driver, url, state):
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(url)
+        time.sleep(30)
         try:
             locator = WebDriverWait(driver, 30).until(  # noqa
                 EC.visibility_of_element_located(
@@ -340,7 +341,7 @@ def record_initial_requests(state):
         "https://www.radissonhotels.com/en-us/destination",
         "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             initial(driver, url, state)
 
 

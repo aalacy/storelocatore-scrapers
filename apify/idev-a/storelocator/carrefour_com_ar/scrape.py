@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import stop_after_attempt, retry
 import time
 from sglogging import SgLogSetup
@@ -156,6 +157,7 @@ def get_url(url):
 
 def fetch_br():
     with SgChrome(
+        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
         is_headless=True,
     ) as driver:
@@ -167,7 +169,6 @@ def fetch_br():
         checks.append(driver.find_element_by_css_selector("input#simple-check5"))
         checks.append(driver.find_element_by_css_selector("input#simple-check6"))
         for check in checks:
-            del driver.requests
             driver.execute_script("arguments[0].click();", check)
             time.sleep(10)
             driver.wait_for_request(br_json_url)
