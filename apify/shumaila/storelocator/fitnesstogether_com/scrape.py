@@ -16,7 +16,14 @@ headers = {
 def fetch_data():
 
     mylist = static_coordinate_list(10, SearchableCountries.USA)
-    mylist = mylist + [("38.895", "-77.03667")]
+
+    mylist = mylist + [
+        ("38.895", "-77.03667"),
+        ("-117.2119253", "32.737944"),
+        ("-117.691168", "33.465728"),
+    ]
+    print(mylist)
+    input()
     linklist = []
     for latnow, lngnow in mylist:
         url = (
@@ -24,7 +31,7 @@ def fetch_data():
             + str(latnow)
             + "&lng="
             + str(lngnow)
-            + "&limit=5"
+            + "&limit=25"
         )
 
         try:
