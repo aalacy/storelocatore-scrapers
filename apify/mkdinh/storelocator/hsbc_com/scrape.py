@@ -70,9 +70,7 @@ def fetch_data():
             for location in fetch_data_from_files(data_files, domain, url_country):
                 yield location
         except:
-            for location in fetch_data_from_site(
-                home_sel, domain, session
-            ):
+            for location in fetch_data_from_site(home_sel, domain, session):
                 yield location
 
 
@@ -130,25 +128,25 @@ def fetch_data_from_site(home_sel, domain, session):
 
     return locations
 
+
 def resolve_phone(store):
     if "phoneNumber" not in store:
         return None
-        
+
     phones = store["phoneNumber"]
-    phone_nums = phones.get("existingCustomers") or phones.get(
-        "newCustomers"
-    )
+    phone_nums = phones.get("existingCustomers") or phones.get("newCustomers")
 
     phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
     phone = phone.rsplit("  ")[0]
     if len(re.sub("[^0-9]", "", phone)) < 5:
         phone = phone_nums
-    
-    match = re.search(r'(\(\d+\) \d+-\d+)', phone_nums)
+
+    match = re.search(r"(\(\d+\) \d+-\d+)", phone_nums)
     if match:
         phone = match.group(1)
 
     return phone
+
 
 def fetch_data_from_files(data_files, domain, url_country):
     locations = []
