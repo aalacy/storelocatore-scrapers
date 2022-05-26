@@ -49,8 +49,8 @@ def fetch_data(sgw: SgWriter):
         if str(city).find(",") != -1:
             state = str(city).split(",")[1].strip()
             city = str(city).split(",")[0].strip()
-        latitude = j.get("latitud") or "<MISSING>"
-        longitude = j.get("longitud") or "<MISSING>"
+        latitude = "".join(j.get("latitud")).replace(",", ".") or "<MISSING>"
+        longitude = "".join(j.get("longitud")).replace(",", ".") or "<MISSING>"
         phone = j.get("telefono") or "<MISSING>"
         if str(phone).find("/") != -1:
             phone = str(phone).split("/")[0].strip()
