@@ -340,7 +340,7 @@ def initial(url, state):
 def record_initial_requests(state):
     for url in [
         "https://www.radissonhotels.com/en-us/destination",
-        # "https://www.radissonhotelsamericas.com/en-us/destination",
+        "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
         initial(url, state)
 
