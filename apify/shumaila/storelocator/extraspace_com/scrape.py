@@ -15,17 +15,25 @@ headers = {
 def fetch_data():
 
     titlelist = []
-    for i in range(1, 7):
-        statelink = "https://www.extraspace.com/sitemap-" + str(i) + ".aspx"
+    url = "https://www.extraspace.com/sitemap/states/"
+    r = session.get(url, headers=headers)
+    statelist = r.text.split(
+        '"linkReference":"https://www.extraspace.com/sitemap/states/'
+    )[1:]
+
+    for st in statelist:
+        statelink = "https://www.extraspace.com/sitemap/states/" + st.split('"', 1)[0]
+
         try:
             r1 = session.get(statelink, headers=headers)
         except:
             pass
         soup1 = BeautifulSoup(r1.text, "html.parser")
-        maindiv1 = soup1.find("div", {"id": "acc-main"})
-        link_list = maindiv1.findAll("a")
+        link_list = soup1.select("a[href*=facilities]")
+
         for alink in link_list:
-            if alink.text.find("Extra Space Storage #") > -1:
+
+            if alink["href"].split("/")[-2].isdigit():
                 link = "https://www.extraspace.com" + alink["href"]
 
                 r2 = session.get(link, headers=headers)

@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@id="stores"]//ul/li[position()<4]/a')
+    div = tree.xpath('//div[@id="stores"]//ul/li[position()<5]/a')
     for d in div:
         slug = "".join(d.xpath(".//@href"))
         page_url = f"{locator_domain}{slug}"

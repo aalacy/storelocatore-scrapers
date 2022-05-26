@@ -40,6 +40,8 @@ def fetch_records(http):
         phone = _["tel"]
         if phone:
             phone = phone.split("/")[0].strip()
+        if addr["postcode"] and addr["postcode"].replace("-", "").isdigit():
+            continue
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],

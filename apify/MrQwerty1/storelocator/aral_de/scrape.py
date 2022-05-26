@@ -40,6 +40,7 @@ def fetch_data(coords, sgw: SgWriter):
 
         row = SgRecord(
             location_name=location_name,
+            page_url=page_url,
             street_address=street_address,
             city=city,
             state=state,
@@ -63,6 +64,7 @@ if __name__ == "__main__":
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     }
     locator_domain = "https://www.aral.de/"
+    page_url = "https://mein.aral.de/tankstellenfinder/"
     search = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
         expected_search_radius_miles=40,

@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def fetch_data(sgw: SgWriter):
@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
         state = j.get("bairro")
         postal = j.get("cep")
         country_code = "BR"
-        store_number = j.get("codigo")
+        store_number = j.get("id")
         location_name = j.get("nome")
         phone = j.get("telefoneUm")
         latitude = j.get("latitude")
@@ -65,5 +65,9 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
         fetch_data(writer)

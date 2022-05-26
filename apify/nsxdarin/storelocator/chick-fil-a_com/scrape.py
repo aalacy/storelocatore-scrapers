@@ -27,8 +27,8 @@ def get_data(zips, sgw: SgWriter):
 
     params = {
         "q": f"{zips}",
-        "per": "10",
-        "r": "1000",
+        "per": "50",
+        "r": "250",
     }
 
     r = session.get(
@@ -36,8 +36,10 @@ def get_data(zips, sgw: SgWriter):
         headers=headers,
         params=params,
     )
-
-    js = r.json()["response"]["entities"]
+    try:
+        js = r.json()["response"]["entities"]
+    except:
+        return
 
     for j in js:
 
@@ -48,7 +50,11 @@ def get_data(zips, sgw: SgWriter):
         city = a.get("address").get("city") or "<MISSING>"
         state = a.get("address").get("region") or "<MISSING>"
         postal = a.get("address").get("postalCode") or "<MISSING>"
-        country_code = "US"
+        if str(street_address).find("4531 Weitzel St Timnath CO80547") != -1:
+            street_address = str(street_address).split(f"{city}")[0].strip()
+        country_code = a.get("address").get("countryCode")
+        if country_code == "CA":
+            page_url = "https://www.chick-fil-a.com/locations"
         try:
             phone = a.get("mainPhone").get("display")
         except:
@@ -84,6 +90,11 @@ def get_data(zips, sgw: SgWriter):
         ):
             hours_of_operation = "Closed"
         store_number = a.get("meta").get("id") or "<MISSING>"
+        status = a.get("c_status")
+        if status == "FUTURE":
+            hours_of_operation = "Coming Soon"
+        if status == "TEMPORARY_CLOSE" and location_name != "Northpark Mall (IA)":
+            hours_of_operation = "TEMPORARY CLOSE"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -108,12 +119,12 @@ def get_data(zips, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=20,
-        expected_search_radius_miles=100,
+        max_search_distance_miles=70,
+        expected_search_radius_miles=70,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
         for future in futures.as_completed(future_to_url):
             future.result()

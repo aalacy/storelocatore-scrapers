@@ -38,7 +38,11 @@ def fetch_data(sgw: SgWriter):
         if hours:
             a = html.fromstring(hours)
             hours_of_operation = (
-                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+                " ".join(a.xpath("//*//text()"))
+                .replace("\n", "")
+                .replace("Store Hours", "")
+                .replace(";", "")
+                .strip()
             )
             hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.find("This Location Is Open!") != -1:

@@ -45,6 +45,7 @@ def fetch_data():
 
         headers1["referer"] = link
         r = session.post(plink, headers=headers1)
+
         soup = BeautifulSoup(r.text, "html.parser")
         coord = soup.find("iframe")["src"]
         soup = re.sub(cleanr, "\n", str(soup)).strip()
@@ -66,10 +67,12 @@ def fetch_data():
                 r.text.split('",null,[null,null,', 1)[1].split("]", 1)[0].split(",")
             )
         except:
-
-            lat, longt = (
-                r.text.split(",[[[")[2].split(",", 1)[1].split("]", 1)[0].split(",")
-            )
+            try:
+                longt, lat = (
+                    r.text.split(",[[[")[2].split(",", 1)[1].split("]", 1)[0].split(",")
+                )
+            except:
+                lat = longt = "<MISSING>"
         yield SgRecord(
             locator_domain="https://www.justabuck.com/",
             page_url=link,

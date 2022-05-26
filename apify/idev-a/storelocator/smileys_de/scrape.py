@@ -25,7 +25,7 @@ def fetch_data():
             logger.info(city_url)
             _ = bs(session.get(city_url, headers=_headers).text, "lxml")
             block = list(_.select_one("h2.storeItem__address").stripped_strings)[1:]
-            phone = block[-1]
+            phone = block[-1].replace("Telefon:", "")
             addr = block[:-1]
             if not addr:
                 continue

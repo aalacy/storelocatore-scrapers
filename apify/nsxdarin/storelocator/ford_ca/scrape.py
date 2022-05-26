@@ -14,13 +14,14 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.CANADA],
+    country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
 )
 
 
 def fetch_data():
-    with SgRequests(dont_retry_status_codes=([404]), proxy_country="ca") as session:
-        for code in search:
+
+    for code in search:
+        with SgRequests(dont_retry_status_codes=([404]), proxy_country="ca") as session:
             logger.info(code)
             url = (
                 "https://www.ford.ca/cxservices/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&postalCode="
@@ -37,6 +38,7 @@ def fetch_data():
                     for item in dealers:
                         lng = item["Longitude"]
                         lat = item["Latitude"]
+                        search.found_location_at(lat, lng)
                         name = item["Name"]
                         logger.info(name)
                         typ = item["dealerType"]
@@ -52,7 +54,7 @@ def fetch_data():
                         )
                         add = add.strip()
                         city = item["Address"]["City"]
-                        state = item["Address"]["State"]
+                        state = item["Address"].get("State", "<MISSING>")
                         country = item["Address"]["Country"][:2]
                         zc = item["Address"]["PostalCode"]
                         store = item["SalesCode"]

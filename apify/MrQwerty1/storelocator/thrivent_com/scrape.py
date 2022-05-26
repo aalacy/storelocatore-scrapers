@@ -121,6 +121,13 @@ def get_data(url, sgw: SgWriter, retry=0):
     ):
         hours_of_operation = "Closed"
 
+    if (
+        "only" in hours_of_operation.lower()
+        or "with" in hours_of_operation.lower()
+        or "appointment" in hours_of_operation.lower()
+    ):
+        hours_of_operation = SgRecord.MISSING
+
     row = SgRecord(
         page_url=page_url,
         location_name=location_name,

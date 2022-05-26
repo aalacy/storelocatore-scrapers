@@ -59,8 +59,6 @@ def fetch_data():
             temp_var = temp.rsplit("uur", 1)
             hours_of_operation = temp_var[0].replace("restaurant", "")
             hours_of_operation = hours_of_operation + "urr"
-            if "@" in hours_of_operation:
-                hours_of_operation = MISSING
             hours_of_operation = re.sub(pattern, "\n", hours_of_operation).replace(
                 "\n", " "
             )

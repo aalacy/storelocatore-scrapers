@@ -30,7 +30,7 @@ def fetch_data():
         url = (
             "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token="
             + api_token
-            + "&center=43.77166,-79.27583&coordinates=42.509130411498774,-76.93299552734257,45.0080893774996,-81.61866447265534&multi_account=false&page=1&pageSize=30"
+            + "&center=0,0&coordinates=-90,-180,90,180&multi_account=false&page=1&pageSize=35000"
         )
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:

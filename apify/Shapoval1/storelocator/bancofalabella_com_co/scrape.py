@@ -40,6 +40,8 @@ def fetch_data(sgw: SgWriter):
             f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
+        if street_address.find("Www") != -1:
+            continue
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "CO"

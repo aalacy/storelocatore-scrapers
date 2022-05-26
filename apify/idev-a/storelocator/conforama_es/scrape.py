@@ -42,6 +42,12 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            latitude = sp1.select_one('input[name="shop-latitude"]')["value"]
+            longitude = sp1.select_one('input[name="shop-longitude"]')["value"]
+            if latitude == "-999999":
+                latitude = ""
+            if longitude == "-999999":
+                longitude = ""
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.p.text.strip(),
@@ -50,6 +56,8 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Spain",
+                latitude=latitude,
+                longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=" ".join(hours),
                 raw_address=raw_address,

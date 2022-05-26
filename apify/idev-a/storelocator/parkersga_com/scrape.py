@@ -58,6 +58,17 @@ def fetch_data():
             if content[3].strip().isdigit():
                 zip_postal = content[3]
                 state = content[2]
+            hr = driver.find_elements_by_css_selector("div.dmGeoSVMoreInfo")
+            hours = []
+            if hr:
+                temp = hr[0].text.replace("Hours", "").strip().split("|")
+                for hh in temp:
+                    if "Check" in hh:
+                        break
+                    if "EXIT" in hh:
+                        continue
+                    hours.append(hh)
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=link.get_attribute("geoid"),
@@ -71,6 +82,7 @@ def fetch_data():
                 country_code=content[-2],
                 phone=content[-1],
                 locator_domain=locator_domain,
+                hours_of_operation="| ".join(hours),
                 raw_address=raw_address,
             )
 

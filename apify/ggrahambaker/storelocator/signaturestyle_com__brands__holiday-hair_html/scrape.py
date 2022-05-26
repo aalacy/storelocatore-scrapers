@@ -164,13 +164,13 @@ def fetch_data(sgw: SgWriter):
                 country_code = "US"
             store_number = page_url.split("-")[-1].split(".html")[0].strip()
 
-            location_name = "".join(
-                tree.xpath(
-                    '//div[@class="salon-address loc-details-edit"]//div[@class="h2 h3"]/text()'
-                )
-            ).replace("\n", "").strip() or "".join(
+            location_name = "".join(tree.xpath("//title/text()")).replace(
+                "\n", ""
+            ).strip() or "".join(
                 tree.xpath('//h1[@class="hidden-xs salontitle_salonsmalltxt"]/text()')
             )
+            if location_name.find("|") != -1:
+                location_name = location_name.split("|")[0].strip()
             phone = (
                 "".join(
                     tree.xpath(

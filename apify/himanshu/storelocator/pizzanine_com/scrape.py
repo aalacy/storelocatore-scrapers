@@ -1,141 +1,117 @@
-import csv
-from sgrequests import SgRequests
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pizzanine_com')
-
-
-
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "pizzanine_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', 'w') as output_file:
-        writer = csv.writer(output_file, delimiter=",")
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-
-        # logger.info("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
+DOMAIN = "https://pizzanine.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
-
-    base_url = "https://pizzanine.com"
-
-    return_main_object = []
-    addresses = []
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
-    r = session.get(
-        "https://api.storepoint.co/v1/15acd219ce19bf/locations?rq", headers=headers)
-
-    json_data = r.json()
-    # logger.info(json_data['results']['locations'])
-    for x in json_data['results']['locations']:
-
-        location_name = x['name']
-        address = x['streetaddress'].split(',')
-        # logger.info(len(address))
-        # logger.info(address)
-        if len(address) == 2:
-            # logger.info(len(address))
-            # logger.info(address)
-            street_address = " ".join(
-                x['streetaddress'].split(',')[0].split()[:-1])
-            city = "".join(x['streetaddress'].split(',')[0].split()[-1])
-            state_zipp = x['streetaddress'].split(',')[-1].split()
-            if len(state_zipp) == 1:
-                state = "".join(state_zipp)
-                zipp = "<MISSING>"
-            else:
-                state = "".join(state_zipp[0])
-                zipp = "".join(state_zipp[-1])
-            # logger.info(state, zipp)
-        elif len(address) == 3:
-            # logger.info(len(address))
-            # logger.info(address)
-            street_address = "".join(address[0])
-            city = "".join(address[1])
-            state_zipp = address[-1].split()
-            # logger.info(state_zipp)
-            # logger.info(len(state_zipp))
-            if len(state_zipp) == 1:
-                state = "".join(state_zipp)
-                zipp = "<MISSING>"
-            else:
-                state = "".join(state_zipp[0])
-                zipp = "".join(state_zipp[-1])
-            # logger.info(state, zipp)
-        else:
-            # logger.info(len(address))
-            # logger.info(address)
-            street_address = " ".join(address[:-2])
-            city = "".join(address[-2])
-            state = "".join(address[-1])
-            zipp = "<MISSING>"
-            # logger.info(street_address, city, state, zipp)
-        if x['phone'] is not None:
-            phone = x['phone']
-            # logger.info(phone)
-        else:
-            phone = "<MISSING>"
-        if x['loc_lat'] is not None:
-            latitude = x['loc_lat']
-            # logger.info(latitude)
-        else:
-            longitude = "<MISSING>"
-        if x['loc_long'] is not None:
-            longitude = x['loc_long']
-            # logger.info(longitude)
-        else:
-            longitude = "<MISSING>"
-        hours_of_operation = f'monday: {x["monday"]}' + "   " + f'tuesday: {x["tuesday"]}' + "  " + f'wednesday: {x["wednesday"]}' + "  " + \
-            f'thursday: {x["thursday"]}' + "    " + f'friday: {x["friday"]}' + \
-            "   " + f'saturday: {x["saturday"]}' + \
-            "    " + f'sunday: {x["sunday"]}'
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-        store = ["<MISSING>" if x == "" else x for x in store]
-
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-        logger.info("data = " + str(store))
-        logger.info(
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        return_main_object.append(store)
-    return return_main_object
+    if True:
+        url = "https://pizzanine.com/locations-order-online"
+        log.info("Fetching the token for the API.....")
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        token = soup.find("div", {"id": "storepoint-container"})["data-map-id"]
+        api_url = "https://api.storepoint.co/v1/" + token + "/locations?rq"
+        loclist = session.get(api_url, headers=headers).json()["results"]["locations"]
+        for loc in loclist:
+            location_name = loc["name"]
+            log.info(location_name)
+            store_number = loc["id"]
+            raw_address = loc["streetaddress"]
+            address = raw_address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            phone = loc["phone"]
+            country_code = "US"
+            latitude = loc["loc_lat"]
+            longitude = loc["loc_long"]
+            hours_of_operation = (
+                "Mon "
+                + loc["monday"]
+                + " Tue "
+                + loc["tuesday"]
+                + " Wed "
+                + loc["wednesday"]
+                + " Thu "
+                + loc["thursday"]
+                + " Fri "
+                + loc["friday"]
+                + " Sat "
+                + loc["saturday"]
+                + " Sun "
+                + loc["sunday"]
+            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

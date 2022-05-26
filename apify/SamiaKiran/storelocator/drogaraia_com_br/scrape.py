@@ -79,6 +79,10 @@ def fetch_data():
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+                zip_postal = zip_postal.replace("CEP", "")
+
+                if zip_postal == MISSING:
+                    zip_postal = raw_address.split("CEP:")[1].split("-")[0]
                 country_code = "BR"
                 yield SgRecord(
                     locator_domain=DOMAIN,

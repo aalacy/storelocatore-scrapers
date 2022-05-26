@@ -100,7 +100,7 @@ def fetch_data():
         for row in store_content:
             location_name = row.find(
                 "div", {"class": "locations__results-name"}
-            ).text.strip()
+            ).get_text(strip=True, separator=" ")
             search.found_location_at(lat, long)
             raw_address = (
                 location_name

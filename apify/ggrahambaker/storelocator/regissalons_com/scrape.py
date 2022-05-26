@@ -34,7 +34,7 @@ def get_data(coords, sgw: SgWriter):
             .split("|")[0]
             .strip()
         )
-        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        street_address = j.get("address2")
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"

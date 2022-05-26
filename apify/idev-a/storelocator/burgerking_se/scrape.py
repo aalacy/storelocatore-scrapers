@@ -21,7 +21,7 @@ base_url = (
 )
 payload = {
     "coordinates": {"latitude": 59.330311012767446, "longitude": 18.068330468145753},
-    "radius": 400000,
+    "radius": 1000000,
     "top": 500,
 }
 
