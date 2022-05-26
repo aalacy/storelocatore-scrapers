@@ -58,12 +58,14 @@ def fetch_data():
                     continue
                 temp = soup.findAll("div", {"class": "wpb_wrapper"})[1].findAll("h3")
                 try:
-                    raw_address = temp[0].get_text(separator="|", strip=True).split("|")
+                    raw_address = (
+                        temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                    )
                 except:
                     raw_address = (
                         soup.findAll("p")[1]
                         .get_text(separator="|", strip=True)
-                        .split("|")
+                        .replace("|", " ")
                     )
 
                 pa = parse_address_intl(raw_address)
@@ -98,6 +100,8 @@ def fetch_data():
                     hours_of_operation = MISSING
                 elif "Temporarily Closed" in hours_of_operation:
                     hours_of_operation = "Temporarily Closed"
+                if "Welcome to Good Family Food" in hours_of_operation:
+                    continue
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
