@@ -23,12 +23,16 @@ def fetch_data(sgw: SgWriter):
         store_number = "".join(d.xpath("./td[1]/text()")).strip()
         location_name = "".join(d.xpath("./td[2]/text()")).strip()
         street_address = "".join(d.xpath("./td[3]/text()")).strip()
-        city = "".join(d.xpath("./td[4]/text()")).strip()
-        if "," in city:
-            city = city.split(",")[0].strip()
         postal = "".join(d.xpath("./td[5]/text()")).strip()
-        state = "".join(d.xpath("./td[6]/text()")).strip()
-        phone = "".join(d.xpath("./td[7]/text()")).strip()
+        cs = "".join(d.xpath("./td[6]/text()")).strip().split(",")
+        city = cs.pop(0)
+        state = cs.pop()
+        try:
+            phone = d.xpath("./td[7]/text()")[0].strip()
+            if "//" in phone:
+                phone = phone.split("//")[0].strip()
+        except IndexError:
+            phone = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,

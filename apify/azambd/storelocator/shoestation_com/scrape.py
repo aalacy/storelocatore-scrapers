@@ -3,7 +3,10 @@ import ssl
 import time
 import json
 
-from sgselenium.sgselenium import SgFirefox
+from webdriver_manager.chrome import ChromeDriverManager  # noqa
+from selenium import webdriver  # noqa
+import undetected_chromedriver as uc  # noqa
+
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -19,9 +22,19 @@ MISSING = SgRecord.MISSING
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
+
+def get_driver(url, driver=None):
+    log.info("Driver Initiation")
+    options = webdriver.ChromeOptions()
+    options.add_argument("start-maximized")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
+
+    driver.get(url)
+
+    return driver
 
 
 def jsonjson(response):
@@ -40,9 +53,7 @@ def stringify_children(nodes):
 
 
 def fetch_stores():
-    with SgFirefox(block_third_parties=True, user_agent=user_agent) as driver:
-        driver.get(page_url)
-
+    with get_driver(page_url) as driver:
         time.sleep(30)
         body = html.fromstring(driver.page_source, "lxml")
         locations = jsonjson(driver.page_source)

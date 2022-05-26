@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -53,6 +53,61 @@ def revert_c_map(val):
     if val == "UK":
         return "gb"
     return val.lower()
+
+
+def _v(val):
+    if val:
+        return (
+            val.replace("&#xa0;", " ")
+            .replace("&#xa0", " ")
+            .replace("&#xb0;", "°")
+            .replace("&#xb4;", "'")
+            .replace("&#xba;", "º")
+            .replace("&#xc1;", "Á")
+            .replace("&#xc2;", "Â")
+            .replace("&#xc3;", "Ã")
+            .replace("&#xc4;", "Ä")
+            .replace("&#xc5;", "Å")
+            .replace("&#xc7;", "Ç")
+            .replace("&#xc8;", "È")
+            .replace("&#xc9;", "É")
+            .replace("&#xdf;", "ß")
+            .replace("&#xdc;", "Ü")
+            .replace("&#xd6;", "Ö")
+            .replace("&#xd7;", "×")
+            .replace("&#xd8;", "Ø")
+            .replace("&#xe0;", "à")
+            .replace("&#xe1;", "á")
+            .replace("&#xe2;", "â")
+            .replace("&#xe3;", "ã")
+            .replace("&#xe4;", "ä")
+            .replace("&#xe5;", "å")
+            .replace("&#xe6;", "æ")
+            .replace("&#xe7;", "ç")
+            .replace("&#xe8;", "è")
+            .replace("&#xe9;", "é")
+            .replace("&#xf2;", "ò")
+            .replace("&#xf3;", "ó")
+            .replace("&#xf6;", "ö")
+            .replace("&#xf7;", "÷")
+            .replace("&#xf8;", "ø")
+            .replace("&#xf9;", "ù")
+            .replace("&#xf1;", "ñ")
+            .replace("&#xfa;", "ú")
+            .replace("&#xfb;", "û")
+            .replace("&#xfc;", "ü")
+            .replace("&#xfd;", "ý")
+            .replace("&#x85;", "...")
+            .replace("&#x92;", "'")
+            .replace("&#x93;", '"')
+            .replace("&#x94;", '"')
+            .replace("&#x96;", "-")
+            .replace("&#x9a;", "š")
+            .replace("&amp;", "&")
+            .strip()
+        )
+    else:
+        return ""
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -121,18 +176,18 @@ class ExampleSearchIteration(SearchIteration):
                     found_location_at(latitude, longitude)
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.select_one("name").text.strip(),
-                    street_address=street_address,
-                    city=_.city.text.strip(),
-                    state=state,
+                    location_name=_v(_.select_one("name").text.strip()),
+                    street_address=_v(street_address),
+                    city=_v(_.city.text.strip()),
+                    state=_v(state),
                     zip_postal=_.postalcode.text.strip(),
                     country_code=_.country.text.strip(),
-                    phone=phone,
+                    phone=_v(phone),
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation=_v("; ".join(hours).replace("---", ", ")),
                 )
 
 
@@ -143,7 +198,16 @@ if __name__ == "__main__":
         c_list = [revert_c_map(cc) for cc in countries.keys()]
         with SgWriter(
             SgRecordDeduper(
-                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+                SgRecordID(
+                    {
+                        SgRecord.Headers.LATITUDE,
+                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.PHONE,
+                    }
+                )
+                .with_truncate(SgRecord.Headers.LATITUDE, 3)
+                .with_truncate(SgRecord.Headers.LONGITUDE, 3),
+                duplicate_streak_failure_factor=1000,
             )
         ) as writer:
             search_maker = DynamicSearchMaker(
