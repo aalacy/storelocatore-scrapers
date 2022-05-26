@@ -22,8 +22,7 @@ def fetch_data():
         ("-117.2119253", "32.737944"),
         ("-117.691168", "33.465728"),
     ]
-    print(mylist)
-    input()
+
     linklist = []
     for latnow, lngnow in mylist:
         url = (
