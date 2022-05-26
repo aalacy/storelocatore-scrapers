@@ -141,6 +141,9 @@ if __name__ == "__main__":
     }
     token = get_token()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         fetch_data(writer)
