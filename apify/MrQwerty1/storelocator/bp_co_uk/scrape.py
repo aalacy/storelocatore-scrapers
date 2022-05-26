@@ -83,9 +83,10 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     logger = sglog.SgLogSetup().get_logger(logger_name="bp.co.uk")
     CrawlStateSingleton.get_instance().save(override=True)
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     }
     locator_domain = "https://www.bp.co.uk/"
     page_url = "https://www.bp.com/en_gb/united-kingdom/home/products-and-services/our-sites/find-your-nearest-bp.html"

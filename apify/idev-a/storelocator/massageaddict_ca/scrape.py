@@ -29,7 +29,7 @@ def fetch_data():
                 "ul.clinicSearch li"
             )
             for _ in locations:
-                raw_address = list(_.select_one(".col-sm-8").stripped_strings)[-1]
+                raw_address = list(_.select("div.col-sm-8 a")[-1].stripped_strings)[0]
                 addr = parse_address_intl(raw_address)
                 street_address = addr.street_address_1
                 if addr.street_address_2:
