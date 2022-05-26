@@ -41,6 +41,10 @@ def fetch_data(sgw: SgWriter):
         )
         for y in cities:
             city_link = locator_domain + y["href"]
+            if "/PA/Norristown" in city_link:
+                city_link = "https://www.justtires.com/en-US/shop?latitude=40.121497&longitude=-75.3399048&street=&city=Norristown&state=PA&zip=&country=us"
+            if "/MD/Rockville" in city_link:
+                city_link = "https://www.justtires.com/en-US/shop?latitude=39.0839973&longitude=-77.1527578&street=&city=Rockville&state=MD&zip=&country=us"
             req = session.get(city_link, headers=headers)
             city_base = BeautifulSoup(req.text, "lxml")
             items = city_base.find_all(class_="store-results__results__item")
