@@ -49,9 +49,12 @@ max_workers = 32
 def fetchConcurrentSingle(link):
     page_url = locator_domain + "/locations" + link["url"].split("/menu")[-1]
     logger.info(page_url)
-    ca = request_with_retries(calendar_url.format(link["id"], mon, next_mon)).json()[
-        "calendar"
-    ]
+    try:
+        ca = request_with_retries(
+            calendar_url.format(link["id"], mon, next_mon)
+        ).json()["calendar"]
+    except:
+        ca = None
     return link, page_url, ca
 
 
@@ -94,13 +97,14 @@ def fetch_data():
     locations = bs(driver.page_source, "lxml").select("restaurant")
     for _, page_url, ca in fetchConcurrentList(locations):
         hours = []
-        for hr in ca:
-            if not hr["label"]:
-                for hh in hr["ranges"]:
-                    temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
-                    if temp not in hours:
-                        hours.append(temp)
-                break
+        if ca:
+            for hr in ca:
+                if not hr["label"]:
+                    for hh in hr["ranges"]:
+                        temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
+                        if temp not in hours:
+                            hours.append(temp)
+                    break
         yield SgRecord(
             page_url=page_url,
             store_number=_["id"],
