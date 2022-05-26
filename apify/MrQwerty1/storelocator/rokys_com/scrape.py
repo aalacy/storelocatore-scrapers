@@ -28,6 +28,8 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         raw_address = j.get("address")
         street_address, city, state, postal = get_international(raw_address)
+        if "SF" in postal:
+            postal = SgRecord.MISSING
         country_code = "PE"
         store_number = j.get("storeCode")
         location_name = j.get("storeName")
