@@ -43,6 +43,16 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = "<MISSING>"
         if info.find("Open") != -1:
             hours_of_operation = info.split("Open:")[1].strip()
+        phone = (
+            "".join(
+                d.xpath(
+                    './/h3/following-sibling::div[contains(text(), "Contact Customer")]/text()'
+                )
+            )
+            .split("at")[1]
+            .split()[0]
+            .strip()
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -54,7 +64,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
-            phone=SgRecord.MISSING,
+            phone=phone,
             location_type=SgRecord.MISSING,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
