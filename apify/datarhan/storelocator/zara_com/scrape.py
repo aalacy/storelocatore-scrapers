@@ -105,7 +105,7 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=30,
     )
 
     with SgWriter(
@@ -118,7 +118,7 @@ if __name__ == "__main__":
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
+                country_codes=[SearchableCountries.USA],
             )
 
             for rec in par_search.run():

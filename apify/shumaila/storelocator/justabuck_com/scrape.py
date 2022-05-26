@@ -68,7 +68,7 @@ def fetch_data():
             )
         except:
             try:
-                lat, longt = (
+                longt, lat = (
                     r.text.split(",[[[")[2].split(",", 1)[1].split("]", 1)[0].split(",")
                 )
             except:
