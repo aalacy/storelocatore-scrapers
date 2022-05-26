@@ -177,6 +177,7 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         prev_country = ""
         for cc in soup.select("div.country"):
+            continue
             country = cc.text.strip()
             if country != "Regions":
                 prev_country = country
@@ -222,7 +223,7 @@ def fetch_data():
                 if not _.a:
                     yield _dd(country_url, _, country)
                 else:
-                    page_url = _.a["href"]
+                    page_url = _.a["href"].strip()
                     if not page_url.startswith("http"):
                         page_url = locator_domain + _.a["href"]
                     logger.info(page_url)
