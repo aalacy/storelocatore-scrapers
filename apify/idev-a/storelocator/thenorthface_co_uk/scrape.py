@@ -59,6 +59,7 @@ def _v(val):
     if val:
         return (
             val.replace("&#xa0;", " ")
+            .replace("&#xa0", " ")
             .replace("&#xb0;", "°")
             .replace("&#xb4;", "'")
             .replace("&#xba;", "º")
@@ -103,6 +104,7 @@ def _v(val):
             .replace("&#x96;", "-")
             .replace("&#x9a;", "š")
             .replace("&amp;", "&")
+            .strip()
         )
     else:
         return ""
