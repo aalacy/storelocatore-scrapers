@@ -33,7 +33,7 @@ def fetch_data():
         for url in all_urls:
             page_url = urljoin(home_url, url)
             driver.get(page_url)
-            sleep(3)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
             location_name = loc_dom.xpath("//h1/text()")[0]
             for e in all_locations:
