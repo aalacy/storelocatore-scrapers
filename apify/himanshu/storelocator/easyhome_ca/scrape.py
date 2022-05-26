@@ -24,9 +24,7 @@ def fetch_data(sgw: SgWriter):
 
         k = json.loads(soup.text, strict=False)
         for index, i in enumerate(k):
-            tem_var = []
             st = i["address1"]
-            country = "CA"
             lat = i["latitude"]
             log = i["longitude"]
             postal = i["zip"].upper()
