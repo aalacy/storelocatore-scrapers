@@ -4,7 +4,11 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sgscrape import simple_scraper_pipeline as sp
 
 session = SgRequests()
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], granularity=Grain_8(), expected_search_radius_miles=45)
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    granularity=Grain_8(),
+    expected_search_radius_miles=45,
+)
 
 
 def get_data():
@@ -40,7 +44,7 @@ def get_data():
             longitude = location_properties["Longitude"]
             search.found_location_at(latitude, longitude)
             hours = location_properties["HoursOfOperation"]
-            
+
             loc_props = location["location"]["entity"]["properties"]
             for loc_property in loc_props:
                 if loc_property["name"] == "LocationType":
@@ -65,7 +69,7 @@ def get_data():
                         and store_number.replace("ATM", "")[:2] != "KB"
                     ):
                         location_type = "Partner ATM"
-            
+
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
@@ -107,7 +111,9 @@ def scrape():
             mapping=["store_number"], part_of_record_identity=True
         ),
         hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], part_of_record_identity=True),
+        location_type=sp.MappingField(
+            mapping=["location_type"], part_of_record_identity=True
+        ),
     )
 
     pipeline = sp.SimpleScraperPipeline(
@@ -115,7 +121,7 @@ def scrape():
         data_fetcher=get_data,
         field_definitions=field_defs,
         log_stats_interval=15,
-        duplicate_streak_failure_factor=-1
+        duplicate_streak_failure_factor=-1,
     )
     pipeline.run()
 
