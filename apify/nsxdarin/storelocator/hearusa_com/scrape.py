@@ -60,9 +60,11 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<h2 class="centers__header__title">' in line2:
-                name = line2.split('<h2 class="centers__header__title">')[1].split("<")[
-                    0
-                ].replace("&#8211;", "-")
+                name = (
+                    line2.split('<h2 class="centers__header__title">')[1]
+                    .split("<")[0]
+                    .replace("&#8211;", "-")
+                )
             if '"lat":"' in line2:
                 lat = line2.split('"lat":"')[1].split('"')[0]
                 lng = line2.split('"lng":"')[1].split('"')[0]
