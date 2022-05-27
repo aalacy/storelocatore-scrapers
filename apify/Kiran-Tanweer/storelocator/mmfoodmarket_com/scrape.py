@@ -1,12 +1,12 @@
-import json
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from bs4 import BeautifulSoup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import json
 
 
 session = SgRequests()
@@ -105,35 +105,47 @@ def fetch_data():
 
                         pcode = pcode.replace("-2A%231Lacombe", "T4L1Y8")
 
-                        yield SgRecord(
-                            locator_domain=DOMAIN,
-                            page_url=link,
-                            location_name=title,
-                            street_address=strt,
-                            city=city,
-                            state=state,
-                            zip_postal=pcode,
-                            country_code="CAN",
-                            store_number=storeid,
-                            phone=phone,
-                            location_type="Traditional",
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hoo,
-                        )
+                        title = title.strip()
+
+                        if (
+                            title == "Core-Mark-Powell River-Joyce Ave"
+                            or title == "Core-Mark-Ardmore-AB-892"
+                            or title == "Core-Mark-Grand Bend-Bluewater Hwy"
+                            or title == "Capital Foodservice-Parrsboro-Main Street"
+                            or title == "Core-Mark-Keremeos-Hwy 3A"
+                            or title == "Core-Mark-Lone Butte-BC-24"
+                        ):
+
+                            loc_type = "Express"
+                        else:
+                            loc_type = "Traditioal"
+                            yield SgRecord(
+                                locator_domain=DOMAIN,
+                                page_url=link,
+                                location_name=title,
+                                street_address=strt,
+                                city=city,
+                                state=state,
+                                zip_postal=pcode,
+                                country_code="CAN",
+                                store_number=storeid,
+                                phone=phone,
+                                location_type=loc_type,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hoo,
+                            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
-    ) as writer:
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

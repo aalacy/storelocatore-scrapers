@@ -12,7 +12,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("arbys.com")
+logger = SgLogSetup().get_logger("arbys_com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -35,44 +35,51 @@ def fetch_data(sgw: SgWriter):
         logger.info("Processing: " + main_link)
         req = session.get(main_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
-        state_count = int(base.find(class_="h2").text.split()[0])
+        state_count = int(base.h1.text.split()[0])
         next_items = base.find(class_="border-container-top").find_all(class_="ga-link")
         link_num = 0
         for next_item in next_items:
             link = next_item["href"]
             next_req = session.get(link, headers=headers)
             next_base = BeautifulSoup(next_req.text, "lxml")
-
-            other_links = next_base.find_all(class_="location-name ga-link")
+            try:
+                other_links = next_base.find_all(class_="location-name ga-link")
+            except:
+                continue
             for other_link in other_links:
                 new_link = other_link["href"]
                 if new_link not in final_links:
                     final_links.append(new_link)
                     link_num = link_num + 1
-        logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
-        if state_count - link_num > 8:
-            logger.info("RECHECK!")
-            session = SgRequests()
-            time.sleep(5)
-            logger.info("Processing: " + main_link)
-            req = session.get(main_link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            state_count = int(base.find(class_="h2").text.split()[0])
-            next_items = base.find(class_="border-container-top").find_all(
-                class_="ga-link"
-            )
-            link_num = 0
-            for next_item in next_items:
-                link = next_item["href"]
-                next_req = session.get(link, headers=headers)
-                next_base = BeautifulSoup(next_req.text, "lxml")
-
-                other_links = next_base.find_all(class_="location-name ga-link")
-                for other_link in other_links:
-                    new_link = other_link["href"]
-                    if new_link not in final_links:
-                        final_links.append(new_link)
-                        link_num = link_num + 1
+        for i in range(5):
+            logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
+            if state_count - link_num > 10 or link_num - state_count > 1:
+                logger.info("DIFF TOO BIG..RECHECK!")
+                session = SgRequests()
+                time.sleep(10 + i)
+                logger.info("Processing: " + main_link)
+                req = session.get(main_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                state_count = int(base.h1.text.split()[0])
+                next_items = base.find(class_="border-container-top").find_all(
+                    class_="ga-link"
+                )
+                link_num = 0
+                for next_item in next_items:
+                    link = next_item["href"]
+                    next_req = session.get(link, headers=headers)
+                    next_base = BeautifulSoup(next_req.text, "lxml")
+                    try:
+                        other_links = next_base.find_all(class_="location-name ga-link")
+                    except:
+                        continue
+                    for other_link in other_links:
+                        new_link = other_link["href"]
+                        if new_link not in final_links:
+                            final_links.append(new_link)
+                            link_num = link_num + 1
+            else:
+                break
 
     logger.info("Processing %s links ..." % (len(final_links)))
     for final_link in final_links:
@@ -87,7 +94,7 @@ def fetch_data(sgw: SgWriter):
         except:
             store = json.loads(script.split('"additiona')[0].strip()[:-1] + "}]")[0]
         try:
-            location_name = item.find(class_="h2").text.strip()
+            location_name = item.h1.text.strip()
         except:
             location_name = store["name"]
         street_address = store["address"]["streetAddress"].split("Eatonton,")[0].strip()

@@ -19,7 +19,9 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//div[@class="shopInfo section group"]')
 
     for d in div:
-
+        relocat = "".join(d.xpath('.//img[@alt="Mercer relocation"]/@alt'))
+        if relocat:
+            continue
         page_url = "https://www.babeland.com/content/c/Babeland_Store_Locations"
         location_name = "".join(d.xpath(".//h3/a/text()"))
         street_address = "".join(

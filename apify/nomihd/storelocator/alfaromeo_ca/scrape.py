@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -50,20 +50,22 @@ def fetch_data():
             phone = store["contactNumber"]
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_res.text)
+            hours_of_operation = "<MISSING>"
+            if not isinstance(store_res, SgRequestError):
+                store_sel = lxml.html.fromstring(store_res.text)
 
-            hours = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//div[@data-department-id="sales"]/div[@class="C_DD-tabs-hours"]//text()'
-                        )
-                    ],
+                hours = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[@data-department-id="sales"]/div[@class="C_DD-tabs-hours"]//text()'
+                            )
+                        ],
+                    )
                 )
-            )
-            hours_of_operation = "; ".join(hours).replace(".;", ":").strip()
+                hours_of_operation = "; ".join(hours).replace(".;", ":").strip()
 
             store_number = store["code"]
 

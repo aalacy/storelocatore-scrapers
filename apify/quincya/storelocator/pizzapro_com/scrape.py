@@ -24,14 +24,18 @@ def fetch_data(sgw: SgWriter):
             street_address = store[2]
         except:
             continue
-        city = store[0]
+        city = store[0].split("(")[0]
+        try:
+            city = city.split("/")[1].strip()
+        except:
+            pass
         state = store[1]
         if not state:
             continue
         zip_code = store[3]
         country_code = "US"
         location_type = ""
-        phone = store[4]
+        phone = store[4].split("/")[0]
         hours_of_operation = ""
         link = "https://pizzapro.com/store-locator"
         store_number = ""

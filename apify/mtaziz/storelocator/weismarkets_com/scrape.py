@@ -104,7 +104,7 @@ def fetch_data():
     for idx, ln_sn_purl in enumerate(page_urls[0:]):
         location_name, store_number, page_url = ln_sn_purl
         class_name2 = "hours-and-contact-header"
-        timeout = 20
+        timeout = 40
         driver = get_driver(page_url, class_name2, timeout)
         logger.info(f"[{idx}] Pulling the data for {page_url}")
         sel2 = html.fromstring(driver.page_source)

@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -16,24 +17,66 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./div/h3]")[1:]
+    div = tree.xpath('//div[@class="_1ncY2"] | //div[@class="_2Hij5"]')
 
     for d in div:
-        info = d.xpath(".//span/text()")
-        info = list(filter(None, [a.strip() for a in info]))
-        for i in info:
-            if "\u200b" in i:
-                info.remove(i)
 
-        location_name = "".join(info[0])
-        street_address = "".join(info[1]).replace(",", "").strip()
-        ad = "".join(info[2]).strip()
-        phone_list = d.xpath('.//a[contains(@href, "tel")]/@href')
+        location_name = (
+            "".join(d.xpath('.//span[@style="font-size:30px;"]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if not location_name:
+            continue
 
-        phone = "".join(phone_list[-1]).replace("tel:", "").strip()
-        state = ad.split(",")[1].strip()
-        country_code = "Canada"
-        city = ad.split(",")[0].strip()
+        ad = "".join(
+            d.xpath('.//span[@style="font-size:30px;"]/following::a[1]//text()')
+        )
+        if ad.find("1201") == -1:
+            ad = (
+                ad
+                + " "
+                + "".join(
+                    d.xpath(
+                        './/span[@style="font-size:30px;"]/following::a[1]/following::*[contains(text(), ",")][1]//text()'
+                    )
+                )
+            )
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        country_code = "CA"
+        city = a.city or "<MISSING>"
+        phone = (
+            "".join(d.xpath('.//a[contains(@href, "tel")]//text()'))
+            .replace("​", "")
+            .strip()
+            or "<MISSING>"
+        )
+        if location_name == "UNION STN":
+            phone = "".join(
+                d.xpath('.//following::a[contains(@href, "tel")][1]//text()')
+            )
+        if location_name == "ADELAIDE":
+            phone = "".join(
+                d.xpath('.//preceding::a[contains(@href, "tel")][1]//text()')
+            )
+        hours_of_operation = (
+            " ".join(
+                d.xpath(
+                    './/span[@style="font-family:oswald-extralight,oswald,sans-serif;"]//text()'
+                )
+            )
+            .replace("\n", "")
+            .replace("​", "")
+            .replace("URBAN EATERY LOWEST LEVEL", "")
+            .replace("TASTE MRKT UPPER LEVEL", "")
+            .strip()
+            or "<MISSING>"
+        )
         text = "".join(d.xpath('.//a[contains(@href, "/maps")]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -44,21 +87,6 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
-        hours_of_operation = (
-            " ".join(
-                d.xpath(
-                    './/span[@style="font-family:oswald-extralight,oswald,sans-serif;"]//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
-        )
-        tmpclz = "".join(
-            d.xpath('.//span[contains(text(), "TEMPORARILY CLOSED")]/text()')
-        )
-        if tmpclz:
-            hours_of_operation = "TEMPORARILY CLOSED"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -75,6 +103,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -83,6 +112,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)

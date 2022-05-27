@@ -19,25 +19,21 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="c-body-content-text" and h3]')
+    all_locations = dom.xpath("//div[h2]")
     for poi_html in all_locations:
-        location_name = " ".join(poi_html.xpath(".//h3/span/text()"))
-        if "אולם תצוגה" not in location_name:
-            continue
-        raw_address = poi_html.xpath(
-            './/div[@class="c-body-content-text__body ui-rich-text"]/p/text()'
-        )[0]
+        location_name = poi_html.xpath(".//h2/text()")[0]
+        raw_data = poi_html.xpath(".//h2/following-sibling::div[1]/p/text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        if not raw_data:
+            raw_data = poi_html.xpath(".//h2/following-sibling::div[1]/text()")
+            raw_data = [e.strip() for e in raw_data if e.strip()]
+        raw_address = raw_data[0]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address += ", " + addr.street_address_2
-        raw_data = poi_html.xpath(
-            './/div[@class="c-body-content-text__body ui-rich-text"]/p/text()'
-        )
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-        phone = [e.split(":")[-1].strip() for e in raw_data if "טלפון" in e][0]
-        hoo = [e for e in raw_data if "0 - " in e]
-        hoo = " ".join([e for e in hoo]).split("04-")[0].strip()
+            street_address += " " + addr.street_address_2
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
+        hoo = " ".join(raw_data).split("שעות פתיחה:")[-1]
 
         item = SgRecord(
             locator_domain=domain,

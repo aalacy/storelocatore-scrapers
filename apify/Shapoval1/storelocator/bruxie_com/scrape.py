@@ -16,7 +16,9 @@ def fetch_data(sgw: SgWriter):
         driver.get(api_url)
         a = driver.page_source
         tree = html.fromstring(a)
-        div = tree.xpath('//h2[text()="BRUXIE LOCATIONS"]/following-sibling::div/p')
+        div = tree.xpath(
+            '//h2[text()="BRUXIE LOCATIONS"]/following-sibling::div/p[./a]'
+        )
         for d in div:
             page_url = "https://bruxie.com/"
             location_name = (
@@ -61,6 +63,12 @@ def fetch_data(sgw: SgWriter):
                 " ".join(hours_of_operation.split()).replace("**NOW OPEN**", "").strip()
                 or "<MISSING>"
             )
+            location_type = "<MISSING>"
+            if hours_of_operation.find("**COMING SOON**") != -1:
+                hours_of_operation = hours_of_operation.replace(
+                    "**COMING SOON**", ""
+                ).strip()
+                location_type = "Coming Soon"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -73,7 +81,7 @@ def fetch_data(sgw: SgWriter):
                 country_code=country_code,
                 store_number=SgRecord.MISSING,
                 phone=phone,
-                location_type=SgRecord.MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,

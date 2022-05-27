@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import json
 
 website = "gordonsjewelers.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -97,8 +97,20 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours_of_operation = "<MISSING>"
+            hours = json.loads(
+                store_res.text.split("var storeInformation = ")[1]
+                .strip()
+                .split(";")[0]
+                .strip()
+                .replace("},", "}")
+                .strip()
+            )["openings"]
+            hours_list = []
+            for day in hours.keys():
+                time = hours[day]
+                hours_list.append(day + time)
 
+            hours_of_operation = "; ".join(hours_list).strip()
             latitude, longitude = (
                 "".join(store_sel.xpath('.//*[@itemprop="latitude"]//text()')).strip(),
                 "".join(store_sel.xpath('.//*[@itemprop="longitude"]//text()')).strip(),

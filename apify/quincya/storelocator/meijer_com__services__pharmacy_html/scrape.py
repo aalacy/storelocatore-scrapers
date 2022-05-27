@@ -47,9 +47,15 @@ def fetch_data(sgw: SgWriter):
         try:
             stores = session.get(base_link, headers=headers).json()["pointsOfService"]
         except:
-            session = SgRequests()
-            time.sleep(2)
-            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+            try:
+                session = SgRequests()
+                time.sleep(5)
+                stores = session.get(base_link, headers=headers).json()[
+                    "pointsOfService"
+                ]
+            except:
+                log.info("Error..No stores!")
+                continue
 
         for store in stores:
             location_name = store["displayName"]
@@ -60,7 +66,6 @@ def fetch_data(sgw: SgWriter):
             state = store["address"]["region"]["isocode"].replace("US-", "")
             zip_code = store["address"]["postalCode"]
             country_code = "US"
-            main_link = "https://www.meijer.com/services/pharmacy.html"
             latitude = store["geoPoint"]["latitude"]
             longitude = store["geoPoint"]["longitude"]
             search.found_location_at(latitude, longitude)
@@ -102,17 +107,28 @@ def fetch_data(sgw: SgWriter):
                             hours_of_operation = (
                                 hours_of_operation + " " + day_hours
                             ).strip()
-                    phone = i["phone"]
+                    try:
+                        phone = i["phone"]
+                    except:
+                        phone = ""
 
             if "pharmacy" not in location_type.lower():
                 continue
             if not phone:
-                phone = store["phone"]
+                try:
+                    phone = store["phone"]
+                except:
+                    phone = ""
+            page_url = (
+                "https://www.meijer.com/shopping/store-locator/"
+                + str(store_number)
+                + ".html"
+            )
 
             sgw.write_row(
                 SgRecord(
                     locator_domain=locator_domain,
-                    page_url=main_link,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,

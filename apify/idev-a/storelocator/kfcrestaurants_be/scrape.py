@@ -5,8 +5,9 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import re
 
-logger = SgLogSetup().get_logger("kfcrestaurants")
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -30,18 +31,21 @@ def fetch_data():
                 and _.select_one("p.p1").text.strip() == "Opent binnenkort"
             ):
                 continue
-            page_url = _.a["href"]
+            page_url = _.select("a")[-1]["href"]
             logger.info(page_url)
-
             res = session.get(page_url, headers=_headers)
             if res.status_code != 200:
                 continue
             sp1 = bs(res.text, "lxml")
-            raw_address = (
-                sp1.select_one("div.et_section_regular div.et_pb_text_inner p")
-                .text.replace(",", "")
-                .strip()
+            bb = list(
+                sp1.select_one(
+                    "div.et_section_regular div.et_pb_text_inner p"
+                ).stripped_strings
             )
+            raw_address = bb[0].replace(",", "").strip()
+            phone = ""
+            if len(bb) > 1:
+                phone = bb[-1]
             if "Bekijk Google Maps" == raw_address:
                 raw_address = sp1.select_one(
                     "div.et_section_regular div.et_pb_text_inner h2"
@@ -60,9 +64,7 @@ def fetch_data():
                 zip_postal = raw_address
             try:
                 coord = (
-                    sp1.select_one("div.et_section_regular div.et_pb_text_inner p a")[
-                        "href"
-                    ]
+                    sp1.find("a", string=re.compile(r"Bekijk Google Maps"))["href"]
                     .split("/@")[1]
                     .split("/data")[0]
                     .split(",")
@@ -79,10 +81,11 @@ def fetch_data():
                     )
                 except:
                     coord = ["", ""]
-            hours = [
-                ": ".join(hh.stripped_strings)
-                for hh in sp1.select("div.et_section_regular table tr")
-            ]
+            hours = []
+            for tr in sp1.select("div.et_section_regular table tr"):
+                td = list(tr.stripped_strings)
+                hours.append(": ".join(td))
+
             if not hours and sp1.select_one("div.et_section_regular .et_pb_text_1 p"):
                 hours = list(
                     sp1.select_one(
@@ -101,6 +104,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
+                phone=phone,
                 hours_of_operation="; ".join(hours)
                 .replace("–", "-")
                 .replace("\xa0", "")

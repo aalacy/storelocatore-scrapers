@@ -49,7 +49,8 @@ def fetch_data():
                 page_url = "https://www.bestandless.com.au/" + store["url"]
                 locator_domain = website
                 location_name = store["name"]
-
+                if "Fulham Gardens" in location_name:
+                    continue
                 street_address = store["address"]["line1"]
                 add_2 = store["address"]["line2"]
                 if add_2 is not None and len(add_2) > 0:
@@ -68,22 +69,24 @@ def fetch_data():
                 longitude = store["geoPoint"]["longitude"]
 
                 hours_of_operation = "<MISSING>"
-                hours = store["openingHours"]["weekDayOpeningList"]
-                hours_list = []
-                for hour in hours:
-                    day = hour["weekDay"]
-                    if hour["closed"] is True:
-                        time = "Closed"
-                    else:
-                        time = (
-                            hour["openingTime"]["formattedHour"]
-                            + " - "
-                            + hour["closingTime"]["formattedHour"]
-                        )
+                hours = store["openingHours"]
+                if hours:
+                    hours = hours["weekDayOpeningList"]
+                    hours_list = []
+                    for hour in hours:
+                        day = hour["weekDay"]
+                        if hour["closed"] is True:
+                            time = "Closed"
+                        else:
+                            time = (
+                                hour["openingTime"]["formattedHour"]
+                                + " - "
+                                + hour["closingTime"]["formattedHour"]
+                            )
 
-                    hours_list.append(day + ":" + time)
+                        hours_list.append(day + ":" + time)
 
-                hours_of_operation = "; ".join(hours_list).strip()
+                    hours_of_operation = "; ".join(hours_list).strip()
 
                 yield SgRecord(
                     locator_domain=locator_domain,

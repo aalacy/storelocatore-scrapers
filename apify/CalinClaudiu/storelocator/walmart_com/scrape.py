@@ -224,7 +224,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"],
+            mapping=["storeType", "name"], value_transform=add_walmart
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
