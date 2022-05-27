@@ -33,7 +33,7 @@ def get_urls():
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.aman.com{slug}"
     r = session.get(page_url)
-    if r.status_code == 403:
+    if r.status_code == 403 or "/destinations/" in page_url:
         return
     tree = html.fromstring(r.text)
     d = tree.xpath("//div[@class='grid grid--start']")[0]
