@@ -63,7 +63,9 @@ def fetch_data():
                     [x.strip() for x in store.xpath(".//table//text()")],
                 )
             )
-            hours_of_operation = "; ".join(hours[1:-1])
+            hours_of_operation = (
+                "; ".join(hours[1:-1]).strip().replace("Dine-in:", "").strip()
+            )
 
             latitude = longitude = "<MISSING>"
 

@@ -47,7 +47,11 @@ def fetch_data():
             for item in uklist:
                 if "</a></li>" in item:
                     locs.append("https://www.fairmont.com" + item.split('"')[0] + "|GB")
-    intllocs = []
+
+    intllocs = [
+        "https://www.fairmont.com/st-andrews-scotland/",
+        "https://www.fairmont.com/norfolk-hotel-nairobi/",
+    ]
     url = "https://www.fairmont.com/destinations/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -191,6 +195,11 @@ def fetch_data():
             if "Baku" in city:
                 city = "Baku"
                 zc = "Az1006"
+            if "3045 Chemin" in add:
+                state = "Quebec"
+            if "7713 King" in add:
+                lat = "24.809"
+                lng = "46.642"
             raw_address = add + " " + city + ", " + state + " " + zc
             yield SgRecord(
                 locator_domain=website,
@@ -211,6 +220,7 @@ def fetch_data():
             )
         except:
             pass
+
     for loc in intllocs:
         try:
             purl = loc
@@ -302,6 +312,11 @@ def fetch_data():
             if "Baku" in city:
                 city = "Baku"
                 zc = "Az1006"
+            if "3045 Chemin" in add:
+                state = "Quebec"
+            if "7713 King" in add:
+                lat = "24.809"
+                lng = "46.642"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
