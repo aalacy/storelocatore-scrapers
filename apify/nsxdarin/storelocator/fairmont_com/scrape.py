@@ -191,6 +191,8 @@ def fetch_data():
             if "Baku" in city:
                 city = "Baku"
                 zc = "Az1006"
+            if "3045 Chemin" in add:
+                state = "Quebec"
             raw_address = add + " " + city + ", " + state + " " + zc
             yield SgRecord(
                 locator_domain=website,
@@ -302,6 +304,8 @@ def fetch_data():
             if "Baku" in city:
                 city = "Baku"
                 zc = "Az1006"
+            if "3045 Chemin" in add:
+                state = "Quebec"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
