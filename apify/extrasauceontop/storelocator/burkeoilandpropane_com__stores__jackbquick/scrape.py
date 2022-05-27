@@ -29,51 +29,18 @@ def get_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        spans = grid.find_all("span", attrs={"style": "font-size:16px"})
+        address_div = (
+            grid.find_all("div", attrs={"class": "_1Q9if"})[1].text.strip().split("\n")
+        )
 
-        if len(spans) == 3:
-            city = spans[-1].text.strip().split(", ")[0]
+        phone = address_div[0]
+        address = address_div[1]
+        city = address_div[2].split(",")[0]
+        state = address_div[2].split(", ")[1].split(" ")[0]
+        zipp = address_div[2].split(", ")[1].split(" ")[-1]
 
-            address = spans[-2].text.strip()
-            state = spans[-1].text.strip().split(", ")[1].split(" ")[0]
-            try:
-                zipp = spans[-1].text.strip().split(", ")[1].split(" ")[1]
-            except Exception:
-                zipp = "<MISSING>"
-
-            phone = spans[0].text.strip().replace("Tel: ", "")
-
-        elif len(spans) == 2:
-            address = spans[-1].text.strip()
-            city = (
-                grid.find("p", attrs={"style": "line-height:1.5em;font-size:17px"})
-                .find("span")
-                .text.strip()
-            )
-            state = (
-                grid.find("p", attrs={"style": "line-height:1.5em;font-size:17px"})
-                .find_all("span")[-1]
-                .text.strip()
-                .split(" ")[-2]
-            )
-            zipp = (
-                grid.find("p", attrs={"style": "line-height:1.5em;font-size:17px"})
-                .find_all("span")[-1]
-                .text.strip()
-                .split(" ")[-1]
-            )
-            phone = spans[0].text.strip().replace("Tel: ", "")
-
-        else:
-            address_parts = [
-                part.replace(u"\xa0", u" ")
-                for part in spans[0].text.strip().split("\n")
-            ]
-            address = address_parts[1]
-            city = address_parts[-1].split(",")[0]
-            state = address_parts[-1].split(", ")[1].split(" ")[0]
-            zipp = address_parts[-1].split(", ")[1].split(" ")[1]
-            phone = address_parts[0].replace("Tel: ", "")
+        if state == zipp:
+            zipp = "<MISSING>"
 
         store_number = ""
         for character in location_name:

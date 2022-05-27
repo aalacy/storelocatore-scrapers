@@ -29,13 +29,19 @@ def fetch_data():
             page_url = DOMAIN + loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            log.info(f"Response Status: {r}")
             soup = BeautifulSoup(r.text, "html.parser")
+
             try:
-                loc = json.loads(
-                    soup.find("script", {"type": "application/ld+json"}).text
-                )
-            except:
+                schema = r.text.split('<script type="application/ld+json">', 1)[
+                    1
+                ].split("</script>", 1)[0]
+                schema = schema.replace("\n", "")
+                loc = json.loads(schema)
+            except Exception as e:
+                log.info(f"Error: {e}")
                 continue
+
             location_name = loc["name"]
             address = loc["address"]
             phone = loc["telephone"]

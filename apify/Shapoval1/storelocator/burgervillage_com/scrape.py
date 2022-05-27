@@ -2,13 +2,13 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
+    locator_domain = "https://www.burgervillage.com/"
     page_url = "https://www.burgervillage.com/locations/"
     session = SgRequests()
     headers = {
@@ -41,6 +41,9 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(d.xpath(".//ul/li//text()")).replace("\n", "").strip()
         )
+        cms = "".join(d.xpath('.//a[text()="Coming Soon"]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -65,6 +68,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://www.burgervillage.com/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
         fetch_data(writer)

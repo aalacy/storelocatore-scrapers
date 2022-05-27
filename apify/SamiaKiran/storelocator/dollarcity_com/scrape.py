@@ -65,15 +65,19 @@ def fetch_data():
             address = loc["ExtraData"]["Address"]
             phone = loc["ExtraData"]["Phone"]
             try:
-                street_address = strip_accents(
-                    address["AddressNonStruct_Line1"]
-                    + " "
-                    + address["AddressNonStruct_Line2"]
-                )
+                street_address = address["AddressNonStruct_Line1"]
+
             except:
-                street_address = strip_accents(address["AddressNonStruct_Line1"])
+                street_address = address["AddressNonStruct_Line2"]
+
+            street_address = strip_accents(street_address)
+            if "," in street_address:
+                street_address = street_address.split(",")[0]
             city = strip_accents(address["Locality"])
-            state = strip_accents(address["RegionName"])
+            try:
+                state = strip_accents(address["RegionName"])
+            except:
+                state = MISSING
             zip_postal = address["PostalCode"]
             if zip_postal is None:
                 zip_postal = MISSING
@@ -86,7 +90,10 @@ def fetch_data():
                 country = "colombia"
             elif "PE" in state_url:
                 country = "peru"
-            append_state = address["Region"].lower().replace(" ", "-")
+            try:
+                append_state = address["Region"].lower().replace(" ", "-")
+            except:
+                append_state = ""
             append_city = city.lower().replace(" ", "-").replace(".", "-").strip("-")
             append_location_name = location_name.lower().replace(" ", "-")
             page_url = (
@@ -98,9 +105,19 @@ def fetch_data():
                 + append_city
                 + "/"
                 + append_location_name
-            )
+            ).replace("//", "/")
             page_url = strip_accents(page_url)
             log.info(page_url)
+            raw_address = (
+                address["AddressNonStruct_Line1"]
+                + ", "
+                + city
+                + ", "
+                + state
+                + ", "
+                + zip_postal
+            )
+            raw_address = strip_accents(raw_address.replace(MISSING, ""))
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -116,6 +133,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

@@ -1,14 +1,11 @@
-import json
-from lxml import etree
 from urllib.parse import urljoin
-from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
@@ -16,78 +13,59 @@ def fetch_data():
 
     domain = "adecco.co.uk"
     start_url = "https://www.adecco.co.uk/find-a-branch/"
-    response = session.post(start_url)
-    dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@id="nav-tabContent"]//li/a/@href')
-    for url in list(set(all_locations)):
-        page_url = urljoin(start_url, url)
-        with SgFirefox() as driver:
-            driver.get(page_url)
-            sleep(5)
-            loc_dom = etree.HTML(driver.page_source)
-
-        data = loc_dom.xpath('//script[contains(text(), "Latitude")]/text()')
-        if data:
-            data = data[0].split("details =")[-1].split(";\n")[0]
-            poi = json.loads(data)[0]
+    all_codes = DynamicGeoSearch(
+        country_codes=[SearchableCountries.IRELAND, SearchableCountries.BRITAIN],
+        expected_search_radius_miles=500,
+    )
+    url = "https://www.adecco.co.uk/globalweb/branch/branchsearch"
+    for lat, lng in all_codes:
+        frm = {
+            "dto": {
+                "Latitude": lat,
+                "Longitude": lng,
+                "MaxResults": "100",
+                "Radius": "500",
+                "Industry": "ALL",
+                "RadiusUnits": "MILES",
+            }
+        }
+        hdr = {
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "content-type": "application/json; charset=UTF-8",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.41 Safari/537.36",
+            "x-requested-with": "XMLHttpRequest",
+        }
+        data = session.post(url, json=frm, headers=hdr).json()
+        for poi in data["Items"]:
+            page_url = urljoin(start_url, poi["ItemUrl"])
+            street_address = f'{poi["Address"]} {poi["AddressExtension"]}'
             hoo = []
             for e in poi["ScheduleList"]:
                 day = e["WeekdayId"]
-                opens = e["StartTime"].split("T")[-1].replace(":00:00", ":00")
-                closes = e["EndTime"].split("T")[-1].replace(":00:00", ":00")
-                hoo.append(f"{day} {opens} - {closes}")
-            hoo = ", ".join(hoo)
-            city = poi["City"]
-            location_name = poi["BranchName"]
-            street_address = poi["Address"]
-            state = poi["State"]
-            zip_code = poi["ZipCode"]
-            country_code = poi["CountryCode"]
-            store_number = poi["BranchCode"]
-            phone = poi["PhoneNumber"]
-            latitude = poi["Latitude"]
-            longitude = poi["Longitude"]
-        else:
-            data = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')
-            if not data:
-                continue
-            poi = json.loads(data[0])[0]
-            hoo = ""
-            city = poi["address"]["addressLocality"]
-            location_name = poi["name"]
-            street_address = poi["address"]["streetAddress"]
-            state = poi["address"]["addressRegion"]
-            zip_code = poi["address"]["postalCode"]
-            country_code = poi["address"]["addressCountry"]
-            store_number = ""
-            phone = poi["telephone"]
-            geo = (
-                loc_dom.xpath('//a[contains(@href, "maps/@")]/@href')[0]
-                .split("@")[-1]
-                .split(",")[:2]
+                opens = e["StartTime"].split("T")[-1].replace("0:00", "0")
+                closes = e["EndTime"].split("T")[-1].replace("0:00", "0")
+                hoo.append(f"{day}: {opens} - {closes}")
+            hoo = " ".join(hoo)
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["MetaTitle"],
+                street_address=street_address,
+                city=poi["City"],
+                state=poi["State"],
+                zip_postal=poi["ZipCode"],
+                country_code=poi["CountryCode"],
+                store_number=poi["BranchCode"],
+                phone=poi["PhoneNumber"],
+                location_type="",
+                latitude=poi["Latitude"],
+                longitude=poi["Longitude"],
+                hours_of_operation=hoo,
             )
-            latitude = geo[0]
-            longitude = geo[1]
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hoo,
-        )
-
-        yield item
+            yield item
 
 
 def scrape():

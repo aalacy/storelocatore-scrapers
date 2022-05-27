@@ -2,8 +2,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
+import re
+
 
 logger = SgLogSetup().get_logger("savidahealth")
 
@@ -13,50 +17,106 @@ _headers = {
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday-Sunday"]
 
+locator_domain = "https://savidahealth.com"
+base_url = "https://savidahealth.com/locations/"
+
 
 def fetch_data():
-    locator_domain = "https://savidahealth.com"
-    base_url = "https://savidahealth.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.vc_tta-panel table tbody tr")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            td = link.select("td")
-            if "Coming Soon" in td[1].text or not td[3].text.strip():
-                continue
-            page_url = td[2].a["href"]
-            times = [hh.text for hh in td[4:]]
-            hours = []
-            for x in range(6):
-                hours.append(f"{days[x]}: {times[x]}")
-            logger.info(page_url)
-            ss = json.loads(
-                session.get(page_url, headers=_headers)
-                .text.split("var wpsl_locator_single =")[1]
-                .split("var wpsl_locator_single =")[0]
-                .split("/* ]]")[0]
-                .strip()[:-1]
-            )
+        states = (
+            soup.find("a", string=re.compile(r"^Locations$"))
+            .find_next_sibling()
+            .select("ul li a")
+        )
+        logger.info(f"{len(states)} found")
+        for state in states:
+            state_url = state["href"]
+            logger.info(state_url)
+            sp0 = bs(session.get(state_url, headers=_headers).text, "lxml")
+            if "locations-2" in state_url:
+                links = sp0.select("table.tablepress tbody tr")
+                for link in links:
+                    td = link.select("td")
+                    page_url = td[2].a["href"]
+                    times = [hh.text for hh in td[4:]]
+                    hours = []
+                    for x in range(6):
+                        hours.append(f"{days[x]}: {times[x]}")
+                    logger.info(page_url)
+                    ss = json.loads(
+                        session.get(page_url, headers=_headers)
+                        .text.split("var wpsl_locator_single =")[1]
+                        .split("var wpsl_locator_single =")[0]
+                        .split("/* ]]")[0]
+                        .strip()[:-1]
+                    )
 
-            yield SgRecord(
-                page_url=page_url,
-                location_name=ss["title"],
-                street_address=ss["address"],
-                city=td[0].text.strip(),
-                state=ss["state"],
-                zip_postal=ss["zip"],
-                country_code="US",
-                phone=td[1].text.strip(),
-                locator_domain=locator_domain,
-                latitude=ss["latitude"],
-                longitude=ss["longitude"],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
-            )
+                    street_address = ss["address"].strip()
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=ss["title"],
+                        street_address=street_address,
+                        city=td[0].text.split(",")[0].strip(),
+                        state=ss["state"],
+                        zip_postal=ss["zip"],
+                        country_code="US",
+                        phone=td[1].text.strip(),
+                        locator_domain=locator_domain,
+                        latitude=ss["latitude"],
+                        longitude=ss["longitude"],
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
+                    )
+            else:
+                links = sp0.select("div.vc-ihe-panel")
+                for link in links:
+                    hours = []
+                    for hh in link.select("table.tablepress tr"):
+                        hours.append(f"{': '.join(hh.stripped_strings)}")
+
+                    page_url = link.find_next_sibling("div").a["href"]
+                    logger.info(page_url)
+                    ss = json.loads(
+                        session.get(page_url, headers=_headers)
+                        .text.split("var wpsl_locator_single =")[1]
+                        .split("var wpsl_locator_single =")[0]
+                        .split("/* ]]")[0]
+                        .strip()[:-1]
+                    )
+
+                    street_address = ss["address"].strip()
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
+
+                    phone = ss["phone"]
+                    if not phone and link.find_next_sibling("div").find(
+                        "a", href=re.compile(r"tel:")
+                    ):
+                        phone = (
+                            link.find_next_sibling("div")
+                            .find("a", href=re.compile(r"tel:"))
+                            .text.strip()
+                        )
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=ss["title"],
+                        street_address=street_address,
+                        city=ss["city"].split(",")[0],
+                        state=ss["state"],
+                        zip_postal=ss["zip"],
+                        country_code="US",
+                        phone=phone,
+                        locator_domain=locator_domain,
+                        latitude=ss["latitude"],
+                        longitude=ss["longitude"],
+                        hours_of_operation="; ".join(hours).replace("–", "-"),
+                    )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

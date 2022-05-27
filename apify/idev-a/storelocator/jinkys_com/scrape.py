@@ -1,30 +1,34 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
+    "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
+    "origin": "https://www.jinkys.com",
+    "referer": "https://www.jinkys.com/",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
 }
 
 locator_domain = "https://www.jinkys.com/"
-base_url = "https://www.jinkys.com/"
+base_url = "https://www.jinkys.com/graphql"
+
+payload = {
+    "operationName": "restaurantWithLocations",
+    "variables": {"restaurantId": 5630},
+    "extensions": {"operationId": "PopmenuClient/94a9b149c729821816fee7d97a05ecac"},
+}
 
 
 def fetch_data():
     with SgRequests() as session:
-        locations = json.loads(
-            bs(session.get(base_url, headers=_headers).text, "lxml")
-            .select_one("script#popmenu-apollo-state")
-            .text.split("window.POPMENU_APOLLO_STATE =")[1]
-            .strip()[:-1]
-        )
-        for key, _ in locations.items():
-            if not key.startswith("RestaurantLocation:"):
-                continue
+        locations = session.post(base_url, headers=_headers, json=payload).json()[
+            "data"
+        ]["restaurant"]["locations"]
+        for _ in locations:
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -33,7 +37,7 @@ def fetch_data():
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["postalCode"],
-                country_code="US",
+                country_code=_["country"] or "US",
                 phone=_.get("displayPhone"),
                 latitude=_.get("lat"),
                 longitude=_.get("lng"),

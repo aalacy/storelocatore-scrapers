@@ -23,6 +23,9 @@ def fetch_data():
         )
         for _ in locations:
             info = _["en"]
+            phone = info["phone"]
+            if info["phone_ext"]:
+                phone += " # " + info["phone_ext"]
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -33,7 +36,7 @@ def fetch_data():
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="CA",
-                phone=info["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
             )
 

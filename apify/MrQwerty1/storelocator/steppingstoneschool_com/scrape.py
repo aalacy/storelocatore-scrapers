@@ -1,128 +1,107 @@
-import csv
 import json
-
-from concurrent import futures
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
-def get_urls():
-    urls = []
-    geo = dict()
-    session = SgRequests()
-    r = session.get("https://www.steppingstoneschool.com/find-a-school/")
+def get_hoo(url):
+    r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
-    text = tree.xpath("//script[contains(text(), 'campuses.splice')]/text()")
-    for t in text:
-        t = t.split(", 0, ")[-1].split(");")[0]
-        j = json.loads(t)
+    hoo = "".join(tree.xpath("//li[./i[@class='fa fa-clock-o']]/text()")).strip()
+
+    return hoo
+
+
+def fetch_data(sgw: SgWriter):
+    api = "https://www.steppingstoneschool.com/find-a-school/"
+    r = session.get(api, headers=headers)
+    tree = html.fromstring(r.text)
+    sources = tree.xpath("//script[contains(text(), 'campuses.splice(')]/text()")
+
+    for source in sources:
+        s = source.split(",0,")[-1].split(");")[0]
+        j = json.loads(s)
+        raw_address = str(j.get("campus_address")).replace("&#039;", "'")
+        street_address, city, state, postal = get_address(raw_address)
+        country_code = "US"
+        store_number = j.get("campus_identifier")
+        location_name = j.get("campus_name")
         slug = j.get("campus_slug")
-        lat = j.get("lat") or "<MISSING>>"
-        lng = j.get("lng") or "<MISSING>"
-        geo[slug] = {"lat": lat, "lng": lng}
-        urls.append(f"https://www.steppingstoneschool.com/campuses/{slug}")
+        page_url = f"https://www.steppingstoneschool.com/campuses/{slug}/"
+        phone = j.get("campus_phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        hours_of_operation = get_hoo(page_url)
 
-    return geo, urls
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            raw_address=raw_address,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
 
-
-def get_data(page_url, geo):
-    locator_domain = "https://www.steppingstoneschool.com/"
-    slug = page_url.replace("https://www.steppingstoneschool.com/campuses/", "")
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1[@id='campus_name']/text()")).strip()
-    street_address = (
-        ", ".join(tree.xpath("//li[./i[@class='fa fa-map-marker']]/text()")).strip()
-        or "<MISSING>"
-    )
-    line = "".join(tree.xpath("//li[@class='second_address_line']/text()")).strip()
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//li[./i[@class='fa fa-phone']]/text()")).strip()
-        or "<MISSING>"
-    )
-    latitude = geo[slug].get("lat")
-    longitude = geo[slug].get("lng")
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        "".join(tree.xpath("//li[./i[@class='fa fa-clock-o']]/text()")).strip()
-        or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    geo, urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, geo): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.steppingstoneschool.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

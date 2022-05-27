@@ -1,6 +1,8 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -20,13 +22,12 @@ def fetch_data():
                 street_address += " " + _["address"]["line2"]
             if _["address"]["line3"]:
                 street_address += " " + _["address"]["line3"]
-            location_type = ""
-            if _["temporarily_closed"]:
-                location_type = "temporarily closed"
             hours = [
                 f"{hh['day']}: {hh['open_time']}:{hh['close_time']}"
                 for hh in _["open_hours"]
             ]
+            if _["temporarily_closed"]:
+                hours = ["temporarily closed"]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["store_code"],
@@ -39,14 +40,14 @@ def fetch_data():
                 longitude=_["address"]["longitude"],
                 country_code="CA",
                 phone=_["phone"],
-                location_type=location_type,
+                location_type=_["brand"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,39 +13,11 @@ headers = {
 logger = SgLogSetup().get_logger("skylinechili_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
     url = "https://locations.skylinechili.com/sitemap.xml"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://locations.skylinechili.com/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     website = "skylinechili.com"
@@ -56,13 +31,9 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         logger.info(loc)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '<p class="lp-param lp-param-uHK83o8zrV-paragraph paragraph">' in line2:
+            if "Skyline Chili</h2><" in line2:
                 name = (
-                    "Skyline Chili "
-                    + line2.split(
-                        '<p class="lp-param lp-param-uHK83o8zrV-paragraph paragraph">'
-                    )[1].split("<")[0]
+                    line2.split("Skyline Chili</h2><")[1].split('">')[1].split("<")[0]
                 )
             if '"addressLocality":"' in line2:
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
@@ -95,27 +66,29 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -37,14 +37,38 @@ def get_hoo(j, _any=False):
 
 def clean_phone(text):
     text = str(text).replace("?", "")
-    black_list = [",", ";", "/", "or", "mo", "cp", "-"]
+    start = text
+    black_list = [",", ";", "/", "or", "mo", "cp", "-", "    "]
     for b in black_list:
         if b in text.lower():
             text = text.lower().split(b)[0].strip()
     if ":" in text:
-        text = text.split(":")[-1].strip()
+        text = text.split(":")[0].strip()
     if "." in text:
         return SgRecord.MISSING
+    if text.endswith(")"):
+        text = "(".join(text.split("(")[:-1])
+
+    if len(text) < 6:
+        fixed = False
+        if ";" in start:
+            text = start.split(";")[0].strip()
+            fixed = True
+
+        if "/" in start:
+            text = start.split("/")[0].strip()
+            fixed = True
+
+        if "and" in start:
+            text = start.split("and")[0].strip()
+            fixed = True
+
+        if ":" in start:
+            text = start.split(":")[-1].strip()
+            fixed = True
+
+        if not fixed:
+            text = start
 
     return text
 
@@ -62,10 +86,15 @@ def fetch_data(sgw: SgWriter):
             if p.get("propertyKey") == "alias":
                 location_name = p.get("propertyValue")
                 break
-        street_address = j.get("street")
-        city = j.get("city")
-        state = j.get("state")
-        postal = j.get("zipCode")
+        street_address = j.get("street") or ""
+        city = j.get("city") or ""
+        if city in street_address:
+            street_address = street_address.split(city)[0].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        state = j.get("state") or ""
+        postal = j.get("zipCode") or ""
+        raw_address = f"{street_address} {city} {state} {postal}"
         country = j.get("country")
         phone = j.get("phoneNumber") or ""
         phone = clean_phone(phone)
@@ -89,6 +118,7 @@ def fetch_data(sgw: SgWriter):
             store_number=store_number,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)

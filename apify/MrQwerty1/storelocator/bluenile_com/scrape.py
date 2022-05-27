@@ -1,163 +1,113 @@
-import csv
-import ssl
-
+import time
 from lxml import html
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from urllib.parse import unquote
+from sglogging import SgLogSetup
+from sgselenium import SgChrome
+
+logger = SgLogSetup().get_logger("bluenile.com")
+
+try:
+    logger.info("_create_unverified_context")
+except AttributeError:
+    pass
+else:
+    logger.info("wah wah")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_driver(url, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-
-            break
-        except Exception as e:
-            driver.quit()
-            if x == 10:
-                raise Exception("Failed 10 times for the following reason: " + e)
-            continue
-    return driver
-
-
-def get_html():
-    url = "https://www.bluenile.com/"
-    class_name = "state-name"
-    driver = get_driver(url)
-
-    driver.execute_script(
-        "window.open('https://www.bluenile.com/jewelry-stores', 'tab2');"
-    )
-    driver.switch_to.window("tab2")
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.CLASS_NAME, class_name))
-    )
-
-    response = driver.page_source
-    driver.quit()
-
-    return response
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.bluenile.com/"
-
-    source = get_html()
+def get_urls(driver):
+    driver.get("https://www.bluenile.com/jewelry-stores")
+    driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
+    time.sleep(30)
+    driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
+    driver.refresh()
+    time.sleep(30)
+    driver.refresh()
+    time.sleep(30)
+    source = driver.page_source
     tree = html.fromstring(source)
-    divs = tree.xpath("//div[@class='store']")
-
-    for d in divs:
-        street_address = (
-            "".join(d.xpath(".//span[@itemprop='streetAddress']/text()")).strip()
-            or "<MISSING>"
-        )
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        city = (
-            "".join(d.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
-            or "<MISSING>"
-        )
-        state = (
-            "".join(d.xpath(".//span[@itemprop='addressRegion']/text()")).strip()
-            or "<MISSING>"
-        )
-        postal = (
-            "".join(d.xpath(".//span[@itemprop='postalCode']/text()")).strip()
-            or "<MISSING>"
-        )
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = (
-            "".join(d.xpath(".//a[@class='store-name']/@href")).strip() or "<MISSING>"
-        )
-        location_name = (
-            "".join(d.xpath(".//meta[@itemprop='name']/@content")).strip()
-            or "<MISSING>"
-        )
-        phone = (
-            "".join(d.xpath(".//meta[@itemprop='telephone']/@content")).strip()
-            or "<MISSING>"
-        )
-        latitude = "".join(d.xpath("./@data-lat")) or "<MISSING>"
-        longitude = "".join(d.xpath("./@data-lng")) or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            ";".join(d.xpath(".//meta[@itemprop='openingHours']/@content")).strip()
-            or "Coming Soon"
-        )
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+    return tree.xpath("//a[@class='store-name']/@href")
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    with SgChrome(
+        user_agent=user_agent, is_headless=True, seleniumwire_auto_config=False
+    ).driver() as driver:
+
+        urls = get_urls(driver)
+        for page_url in urls:
+            try:
+                driver.get(page_url)
+                logger.info(urls)
+                time.sleep(10)
+                source = driver.page_source
+                tree = html.fromstring(source)
+
+                location_name = "".join(
+                    tree.xpath("//h1[@itemprop='name']/text()")
+                ).strip()
+                street_address = "".join(
+                    tree.xpath("//span[@itemprop='streetAddress']/text()")
+                ).strip()
+                city = "".join(
+                    tree.xpath("//span[@itemprop='addressLocality']/text()")
+                ).strip()
+                state = "".join(
+                    tree.xpath("//span[@itemprop='addressRegion']/text()")
+                ).strip()
+                postal = "".join(
+                    tree.xpath("//span[@itemprop='postalCode']/text()")
+                ).strip()
+                phone = "".join(
+                    tree.xpath("//span[@itemprop='telephone']/text()")
+                ).strip()
+
+                try:
+                    text = unquote(
+                        "".join(
+                            tree.xpath("//a[contains(text(), 'View On Map')]/@href")
+                        )
+                    )
+                    latitude, longitude = text.split("/@")[1].split(",")[:2]
+                except IndexError:
+                    latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+                _tmp = []
+                hours = tree.xpath("//dl/dt")
+                for h in hours:
+                    day = "".join(h.xpath("./span[1]/text()")).strip()
+                    inter = "".join(
+                        h.xpath("./following-sibling::dd[1]/time/text()")
+                    ).strip()
+                    _tmp.append(f"{day} {inter}")
+
+                hours_of_operation = ";".join(_tmp)
+
+                row = SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code="US",
+                    phone=phone,
+                    latitude=latitude,
+                    longitude=longitude,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
+            except Exception as e:
+                logger.error(e)
 
 
 if __name__ == "__main__":
-    ssl._create_default_https_context = ssl._create_unverified_context
-    scrape()
+    locator_domain = "https://www.bluenile.com/"
+    user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firedriver/78.0"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -16,25 +16,29 @@ def fetch_data():
 
     all_locations = response["stores"]
     for poi in all_locations:
-        hoo = poi.get("openingHours")
-        if hoo == "Mo-So - closed":
-            if (
-                poi.get("comment")
-                and "Diese Filiale ist wegen Umbauarbeiten" in poi["comment"]
-            ):
-                hoo = "Temporarily closed"
+        hoo = []
+        for e in poi["openUntilSorted"]["openingHours"]:
+            day = e["day"]
+            if e.get("closed"):
+                hoo.append(f"{day}: closed")
             else:
-                continue
+                opens = e["openFormatted"]
+                closes = e["closeFormatted"]
+                hoo.append(f"{day}: {opens} - {closes}")
+        hoo = " ".join(hoo)
+        city = poi.get("city")
+        if city:
+            city = city.split(".,")[-1].split(",")[-1].strip()
 
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.hofer.at/de/filialen.html",
             location_name=poi["displayName"],
-            street_address=poi["streetAddress"],
-            city=poi["city"],
-            state=SgRecord.MISSING,
-            zip_postal=poi["postalCode"],
-            country_code=poi["countryCode"],
+            street_address=poi.get("streetAddress"),
+            city=city,
+            state="",
+            zip_postal=poi.get("postalCode"),
+            country_code=poi.get("countryCode"),
             store_number=poi["storeId"],
             phone=poi.get("phoneNumber"),
             location_type=poi["storeType"],
