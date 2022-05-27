@@ -165,7 +165,7 @@ def fetch_data_from_files(data_files, domain, url_country):
 
         for store in stores:
             locator_domain = website
-            location_name = re.sub('\n', '', store["name"])
+            location_name = re.sub("\n", "", store["name"])
 
             city = store["address"].get("townOrCity", "<MISSING>")
             state = store["address"].get("stateRegionCounty", "<MISSING>")
