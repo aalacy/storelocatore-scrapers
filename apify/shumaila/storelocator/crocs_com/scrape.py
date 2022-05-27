@@ -106,9 +106,9 @@ def fetch_locations(lat, lng):
                     hours = hours + day + " " + loc[day] + " "
             except:
                 hours = "<MISSING>"
-        phone = phone.replace("t. ", "").replace("?", "").strip()
         if len(phone) < 3:
             phone = "<MISSING>"
+        phone = phone.replace("t. ", "").replace("?", "").strip()
         locations.append(
             SgRecord(
                 locator_domain="https://www.crocs.com/",
