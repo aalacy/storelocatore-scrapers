@@ -893,6 +893,7 @@ def scrape():
             mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
             multi_mapping_concat_with=" ",
             is_required=False,
+            part_of_record_identity=True,
         ),
     )
 
