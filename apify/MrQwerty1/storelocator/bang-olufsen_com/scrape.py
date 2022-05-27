@@ -17,6 +17,8 @@ def get_urls():
         check = tree.xpath("//loc")
         links = tree.xpath("//loc[contains(text(), '/en/')]/text()")
         for link in links:
+            if "/headphones" in link or "/home-theater" in link:
+                continue
             if "united-states" not in link:
                 if link.count("/") >= 6:
                     urls.append(link)

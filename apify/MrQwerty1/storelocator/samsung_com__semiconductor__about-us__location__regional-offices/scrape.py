@@ -39,6 +39,7 @@ def fetch_data(sgw: SgWriter):
 
         raw_address = "".join(_tmp)
         street_address, city, state, postal = get_international(raw_address)
+        country = raw_address.split(",")[-1].strip()
 
         row = SgRecord(
             page_url=page_url,
@@ -47,6 +48,7 @@ def fetch_data(sgw: SgWriter):
             city=city,
             state=state,
             zip_postal=postal,
+            country_code=country,
             locator_domain=locator_domain,
             raw_address=raw_address,
         )

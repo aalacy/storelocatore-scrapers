@@ -1,12 +1,14 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2()
+    )
 
     session = SgRequests()
 

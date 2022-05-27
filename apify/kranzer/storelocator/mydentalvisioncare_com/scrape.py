@@ -3,7 +3,7 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent import futures
 
@@ -14,18 +14,20 @@ def get_urls():
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
     r = session.get(
-        "https://kidsdentalvisioncare.com/sitemaps-1-section-locations-1-sitemap.xml",
+        "https://kidsdentalvisioncare.com/sitemaps-1-sitemap.xml",
         headers=headers,
     )
     tree = html.fromstring(r.content)
-    return tree.xpath("//url/loc/text()")
+    return tree.xpath("//loc/text()")
 
 
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://kidsdentalvisioncare.com/"
     page_url = "".join(url)
+
     if page_url.count("/") != 6:
         return
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
@@ -63,22 +65,10 @@ def get_data(url, sgw: SgWriter):
         .strip()
     )
     hours_of_operation = " ".join(hours_of_operation.split())
-    js = "".join(tree.xpath('//div[@class="gm-map"]/@data-dna'))
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
+    js = "".join(tree.xpath('//script[@type="application/ld+json"]/text()'))
     j = json.loads(js)
-    for coord in j:
-        try:
-            coord_temp = coord["options"]["infoWindowOptions"]["content"]
-        except:
-            continue
-        coord_tem = html.fromstring(coord_temp)
-        coord_temp = "".join(coord_tem.xpath("//*//text()"))
-        if postal in coord_temp:
-            coord = coord["locations"]
-            latitude = str(coord).split("'lat': ")[1].split(",")[0]
-            longitude = str(coord).split("'lng': ")[1].split(",")[0]
-            break
+    latitude = j.get("@graph")[0].get("geo").get("latitude")
+    longitude = j.get("@graph")[0].get("geo").get("longitude")
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -110,5 +100,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)

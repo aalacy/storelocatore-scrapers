@@ -4,10 +4,14 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sglogging import SgLogSetup
+from webdriver_manager.chrome import ChromeDriverManager
 import re
 from urllib.parse import urljoin, urlparse
-from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("lithia")
 
@@ -19,11 +23,11 @@ _headers = {
 }
 
 
-def record_initial_requests(http, state):
-    soup = bs(http.get(base_url, headers=_headers).text, "lxml")
+def record_initial_requests(http, driver):
+    driver.get(base_url)
+    soup = bs(driver.page_source, "lxml")
     store_list = soup.select("li.info-window")
     logger.info(len(store_list))
-    total = 0
     for _ in store_list:
         page_url = _.strong.a["href"]
         street_address = (
@@ -67,62 +71,30 @@ def record_initial_requests(http, state):
             country_code=country_code,
             raw_address=raw_address,
         )
-        total += 1
-        state.push_request(SerializableRequest(url=page_url, context={"store": store}))
-
-    logger.info(f"[total +++++++++++] {total}")
-    return True
-
-
-def _ddc_hr(sp1):
-    hours = []
-    phone = sp1.select_one("li.phone1 span.value").text.strip()
-    if sp1.select("ul.ddc-hours  li"):
-        hours = [
-            ": ".join(hh.stripped_strings)
-            for hh in sp1.select("ul.ddc-hours")[0].select("li")
-        ]
-
-    return phone, hours
-
-
-def _d(store, phone, hours, page_url):
-    return SgRecord(
-        page_url=page_url,
-        store_number=store["id"],
-        location_name=store["location_name"],
-        street_address=store["street_address"],
-        city=store["city"],
-        state=store["state"],
-        zip_postal=store["zip_postal"],
-        latitude=store["latitude"],
-        longitude=store["longitude"],
-        country_code=store["country_code"],
-        phone=phone,
-        locator_domain=locator_domain,
-        hours_of_operation="; ".join(hours).replace("\u200b", ""),
-        raw_address=store["raw_address"],
-    )
-
-
-def fetch_records(http, state):
-    for next_r in state.request_stack_iter():
-        store = next_r.context.get("store")
         phone = ""
         hours = []
-        if next_r.url == "#":
+        if page_url == "#":
             yield _d(store, phone, hours, base_url)
             continue
-        page_url = "https://" + urlparse(next_r.url).netloc
+        page_url = "https://" + urlparse(page_url).netloc
         logger.info(page_url)
+        is_chrome_try = False
         try:
             sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
         except:
             try:
-                page_url = "https://www." + urlparse(next_r.url).netloc
-                sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                if "www" not in page_url:
+                    page_url = "https://www." + urlparse(page_url).netloc
+                    sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                else:
+                    is_chrome_try = True
+                    driver.get(page_url)
+                    sp1 = bs(driver.page_source, "lxml")
             except:
-                if "www" in next_r.url:
+                if not is_chrome_try:
+                    driver.get(page_url)
+                    sp1 = bs(driver.page_source, "lxml")
+                else:
                     logger.info("wwwww ========")
                     yield _d(store, phone, hours, base_url)
                     continue
@@ -167,11 +139,14 @@ def fetch_records(http, state):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
+                res2 = http.get(
+                    contact_url,
+                    headers=_headers,
+                )
+                if res2.status_code != 200:
+                    continue
                 sp2 = bs(
-                    http.get(
-                        contact_url,
-                        headers=_headers,
-                    ).text,
+                    res2.text,
                     "lxml",
                 )
                 if sp2.select_one("li.phone-main a"):
@@ -296,8 +271,38 @@ def fetch_records(http, state):
         yield _d(store, phone, hours, page_url)
 
 
+def _ddc_hr(sp1):
+    hours = []
+    phone = sp1.select_one("li.phone1 span.value").text.strip()
+    if sp1.select("ul.ddc-hours  li"):
+        hours = [
+            ": ".join(hh.stripped_strings)
+            for hh in sp1.select("ul.ddc-hours")[0].select("li")
+        ]
+
+    return phone, hours
+
+
+def _d(store, phone, hours, page_url):
+    return SgRecord(
+        page_url=page_url,
+        store_number=store["id"],
+        location_name=store["location_name"],
+        street_address=store["street_address"],
+        city=store["city"],
+        state=store["state"],
+        zip_postal=store["zip_postal"],
+        latitude=store["latitude"],
+        longitude=store["longitude"],
+        country_code=store["country_code"],
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours).replace("\u200b", ""),
+        raw_address=store["raw_address"],
+    )
+
+
 if __name__ == "__main__":
-    state = CrawlStateSingleton.get_instance()
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -310,9 +315,7 @@ if __name__ == "__main__":
             )
         )
     ) as writer:
-        with SgRequests() as http:
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records(http, state):
-                writer.write_row(rec)
+        with SgRequests(proxy_country="us") as http:
+            with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
+                for rec in record_initial_requests(http, driver):
+                    writer.write_row(rec)

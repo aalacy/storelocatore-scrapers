@@ -111,15 +111,29 @@ def get_data(page_url, sgw: SgWriter):
     longitude = MISSING
     country_code = "US"
 
-    location_name = get_text(body, "//h1/text()")
+    try:
+        location_name = body.xpath('//h1[@class="entry_title"]/text()')[0]
+    except:
+        location_name = get_text(body, "//h1/text()")
+
     # Website has some Test pages which are not useful for data, skipped these
     if "TEST" not in str(location_name) and "Test Clinic" not in str(location_name):
 
         raw_address = body.xpath('//div[@class="col col_4_of_12"]/p/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
         raw_address = ", ".join(raw_address)
+        if raw_address == ",  -":
+            raw_address = MISSING
+
         street_address, city, state, zip_postal = get_address(raw_address)
         phone = get_text(body, '//a[contains(@href, "tel:")]/@href', "tel:")
+        if "ext" in phone.lower():
+            phone = (phone.lower()).split("ext")[0]
+        if "or" in phone.lower():
+            phone = (phone.lower()).split("or")[0]
+        if "()" in phone:
+            phone = phone.replace("()", "")
+
         hours = body.xpath('//div[@class="col col_12_of_12 hours"]/ul/li')
         hours_list = []
         for hour in hours:
@@ -132,6 +146,9 @@ def get_data(page_url, sgw: SgWriter):
 
         # To handle PO BOX address where lib failed
         if "p.o" in raw_address.lower():
+            street_address = raw_address.split(",")[0]
+
+        if street_address is MISSING and "box" in raw_address.lower():
             street_address = raw_address.split(",")[0]
 
         row = SgRecord(

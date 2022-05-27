@@ -1,10 +1,12 @@
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -31,53 +33,39 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["items"]:
-        store_url = "https://evereve.com/stores/" + poi["url_key"]
-        location_name = poi["name"]
+        poi_html = etree.HTML(poi["popup_html"])
+        page_url = poi_html.xpath('//a[@class="amlocator-link"]/@href')[0]
+        location_name = poi_html.xpath('//a[@class="amlocator-link"]/text()')[0]
         if "Coming Soon" in location_name:
             continue
-        street_address = poi["address"]
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["url_key"].split("/")[0]
-        state = state.upper() if state else "<MISSING>"
-        zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["country"]
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        if poi["schedule_array"]:
-            for day, hours in poi["schedule_array"].items():
-                opens = "{}:{}".format(hours["from"]["hours"], hours["from"]["minutes"])
-                closes = "{}:{}".format(hours["to"]["hours"], hours["to"]["minutes"])
-                hours_of_operation.append(f"{day} {opens} - {closes}")
-        hours_of_operation = (
-            " ".join(hours_of_operation).replace("00:00 - 00:00", "closed")
-            if hours_of_operation
-            else "<MISSING>"
-        )
+        street_address = poi_html.xpath("//div/text()")[1]
+        zip_code = poi_html.xpath("//div/text()")[2].split()[-1]
+        raw_address = poi_html.xpath("//div/text()")[2]
+        addr = parse_address_intl(raw_address)
+        city = addr.city
+        state = addr.state
+        phone = poi_html.xpath("//div/text()")[-2]
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath('//div[@class="amlocator-schedule-table"]//span/text()')
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            country_code="",
+            store_number=poi["id"],
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            location_type="",
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item

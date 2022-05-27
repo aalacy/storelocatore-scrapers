@@ -17,7 +17,7 @@ def fetch_data():
     domain = "murrays.co.uk"
 
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=10
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng))
@@ -34,6 +34,11 @@ def fetch_data():
                 street_address += ", " + addr.street_address_2
             hoo = etree.HTML(poi_html.xpath("@data-opening-hours")[0]).xpath("//text()")
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            zip_code = addr.postcode
+            if not zip_code:
+                zip_code = raw_address.split(", ")[-1]
+                if len(zip_code.split()) > 2:
+                    zip_code = " ".join(zip_code.split()[-2:])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -42,7 +47,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_code,
                 country_code="",
                 store_number="",
                 phone=phone,

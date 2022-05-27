@@ -10,53 +10,46 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.triumph-motorcycles.co.za/"
-    api_url = "https://www.triumph-motorcycles.co.za/data/visitor-centre/maps/42bf00a9-937e-4c12-a751-5d387ca03648/markers?page=1"
+    api_url = "https://www.triumph-motorcycles.co.za/api/v2/places/alldealers?LanguageCode=en-ZA&SiteLanguageCode=en-ZA&Skip=0&Take=50&CurrentUrl=www.triumph-motorcycles.co.za"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()
+    js = r.json()["DealerCardData"]["DealerCards"]
     for j in js:
 
-        page_url = (
-            "https://www.triumph-motorcycles.co.za/dealers/south-africa/locate-a-dealer"
-        )
-        location_name = str(j.get("Title"))
+        location_name = j.get("Title")
         latitude = j.get("Latitude")
         longitude = j.get("Longitude")
-        ad = str(j.get("AddressText")).replace("<br/>", " ").strip()
-        ad = " ".join(ad.split())
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        ad = f"{j.get('AddressLine1')} {j.get('AddressLine1') or ''}".replace(
+            "None", ""
+        ).strip()
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
         state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
+        postal = j.get("PostCode") or "<MISSING>"
         country_code = "ZA"
-        city = a.city or "<MISSING>"
-        slug = str(j.get("AddressText")).split("<br/>")[0].replace(",", "").strip()
-        phone = (
-            "".join(
-                tree.xpath(
-                    f'//p[contains(text(), "{slug}")]/following-sibling::p[1]/text()'
-                )
-            )
-            .replace("\n", "")
-            .replace(":", "")
-            .strip()
-        )
+        city = j.get("City") or "<MISSING>"
+        slug = j.get("DealerUrl")
+        page_url = f"https://www.triumph-motorcycles.co.za{slug}"
+        phone = j.get("Phone") or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
         hours_of_operation = (
             " ".join(
-                tree.xpath(
-                    f'//p[contains(text(), "{slug}")]/following-sibling::p[last()]/text()'
-                )
+                tree.xpath('//ul[@class="dealer-location__opening-times"]/li//text()')
             )
-            .replace("\n", " ")
+            .replace("\n", "")
             .strip()
         )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if city == "<MISSING>" and ad.find("Gqeberha") != -1:
+            city = "Gqeberha"
+        if ad.find("CAPE TOWN") != -1:
+            city = "CAPE TOWN"
 
         row = SgRecord(
             locator_domain=locator_domain,

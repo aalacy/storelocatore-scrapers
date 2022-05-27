@@ -141,12 +141,13 @@ def fetch_data():
         "Meaford",
     ]
     coords = []
+
     for city in cities:
         logger.info("Pulling City %s..." % city)
         payload = {
             "action": "load_map",
             "search[postal]": city,
-            "search[config][map_height]": "201.5px",
+            "search[config][map_height]": "97px",
             "search[map_case]": "load_locations_from_postal_code",
         }
         r = session.post(url, headers=headers, data=payload)
@@ -242,6 +243,8 @@ def fetch_data():
                 lat = "<MISSING>"
             if lng == "":
                 lng = "<MISSING>"
+            if "-514-brock-st-n" in loc:
+                add = "514 Brock St N"
             yield SgRecord(
                 locator_domain=website,
                 page_url=lurl,

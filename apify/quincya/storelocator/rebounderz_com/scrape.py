@@ -46,6 +46,8 @@ def fetch_data(sgw: SgWriter):
         for i in all_links:
             if i.text.split(",")[0] in item.text:
                 link = "https://www.rebounderz.com" + i["href"]
+                if "apopka" in link:
+                    link = "https://www.rebounderz.com/city/wekiva-springs"
                 break
 
         req = session.get(link, headers=headers)

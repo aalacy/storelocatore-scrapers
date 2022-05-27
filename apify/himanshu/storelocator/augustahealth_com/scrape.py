@@ -33,8 +33,11 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[-2] if len(phone) > 1 else phone[0]
+        zip_code = addr.postcode
         hoo = poi_html.xpath('.//div[@class="location__body"]//text()')
-        hoo = " ".join([e.strip() for e in hoo if e.strip() and "Hours" not in e])
+        hoo = " ".join(
+            [e.strip() for e in hoo if e.strip() and "Hours" not in e]
+        ).split(zip_code)[-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -43,7 +46,7 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state=addr.state,
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code=addr.country,
             store_number="",
             phone=phone,

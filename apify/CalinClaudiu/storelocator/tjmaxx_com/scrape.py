@@ -179,11 +179,11 @@ if __name__ == "__main__":
     tocrawl.append(SearchableCountries.CHRISTMAS_ISLAND)
     tocrawl.append(SearchableCountries.AUSTRALIA)
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    tocrawl = tocrawl + SearchableCountries.SovereigntyGroups["UK"]
     search = DynamicGeoSearch(
         country_codes=tocrawl,
         granularity=Grain_1_KM(),
-        expected_search_radius_miles=0.621371,
-        max_search_results=25,
+        expected_search_radius_miles=1.242742,
     )
     with SgWriter(
         deduper=SgRecordDeduper(

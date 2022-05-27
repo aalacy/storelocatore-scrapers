@@ -1,10 +1,26 @@
 import re
+from slugify import slugify
 from concurrent import futures
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+
+
+def get_coords():
+    out = dict()
+    r = session.get(
+        "https://locations.getsunmedhemp.com/page-data/sq/d/1092280806.json"
+    )
+    js = r.json()["data"]["locations"]["nodes"]
+    for j in js:
+        key = slugify(str(j.get("street")))
+        lat = j.get("lat") or SgRecord.MISSING
+        lng = j.get("lon") or SgRecord.MISSING
+        out[key] = (lat, lng)
+
+    return out
 
 
 def get_urls():
@@ -39,6 +55,8 @@ def get_data(api, sgw: SgWriter):
     location_name = j.get("name")
     city = j.get("city")
     street_address = j.get("street") or ""
+    key = slugify(street_address)
+    latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
     postal = j.get("postal_code") or ""
     street_address = " ".join(street_address.split())
     if f"{city}," in street_address:
@@ -66,6 +84,8 @@ def get_data(api, sgw: SgWriter):
         zip_postal=postal,
         country_code="US",
         store_number=store_number,
+        latitude=latitude,
+        longitude=longitude,
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
@@ -77,7 +97,7 @@ def get_data(api, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -91,5 +111,6 @@ if __name__ == "__main__":
         "Accept": "*/*",
     }
     session = SgRequests()
+    coords = get_coords()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

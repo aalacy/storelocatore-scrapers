@@ -10,13 +10,11 @@ import ssl
 import time
 
 try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
+    _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 DOMAIN = "weldom.fr"
@@ -131,7 +129,7 @@ def fetch_data():
     driver.implicitly_wait(10)
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.FRANCE],
-        expected_search_radius_miles=15,
+        expected_search_radius_miles=30,
         max_search_results=5,
     )
     coords = [x for x in search]

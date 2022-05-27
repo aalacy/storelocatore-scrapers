@@ -24,7 +24,10 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 7:
                 locs.append(lurl)
-    urls = ["https://www.avis.com/en/locations/us"]
+    urls = [
+        "https://www.avis.com/en/locations/us",
+        "https://www.avis.com/en/locations/ca",
+    ]
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -47,22 +50,22 @@ def fetch_data():
                     locs.append(lurl)
     for loc in locs:
         time.sleep(3)
-        LocFound = True
-        logger.info("Pulling Location %s..." % loc)
-        website = "avis.com"
-        typ = "<MISSING>"
-        hours = ""
-        name = ""
-        store = loc.rsplit("/", 1)[1]
-        city = ""
-        add = ""
-        state = ""
-        zc = ""
-        country = ""
-        phone = ""
-        lat = ""
-        lng = ""
         try:
+            LocFound = True
+            logger.info("Pulling Location %s..." % loc)
+            website = "avis.com"
+            typ = "<MISSING>"
+            hours = ""
+            name = ""
+            store = loc.rsplit("/", 1)[1]
+            city = ""
+            add = ""
+            state = ""
+            zc = ""
+            country = ""
+            phone = ""
+            lat = ""
+            lng = ""
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
                 if "&amp; Nearby Locations" in line2:

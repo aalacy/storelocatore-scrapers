@@ -38,6 +38,13 @@ session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
+def is_numeric(string):
+    if string is None:
+        return False
+    string = f"{string}".strip()
+    return string.isnumeric()
+
+
 def request_with_retries(url, retry=1):
     try:
         response = session.get(url, headers=headers)
@@ -256,10 +263,44 @@ def fetch_data():
                 )
                 if len(hours_of_operation) > 0:
                     hours_of_operation = hours_of_operation[0]
+                    hours_of_operation = (
+                        hours_of_operation.replace("\\n", " ")
+                        .replace("\\N", " ")
+                        .strip()
+                    )
+                    if hours_of_operation.lower() in ["to", "closed to closed"]:
+                        hours_of_operation = MISSING
+                    if hours_of_operation.lower().startswith("to "):
+                        hours_of_operation = MISSING
                 else:
                     hours_of_operation = MISSING
                 if location_name == MISSING or raw_address == MISSING:
                     continue
+
+                if is_numeric(state):
+                    state = MISSING
+                    if zip_postal == MISSING:
+                        zip_postal = f"{state}"
+
+                if is_numeric(city):
+                    city = MISSING
+                    if zip_postal == MISSING:
+                        zip_postal = f"{city}"
+
+                if city.lower() in ["pin", "code", "pin code"]:
+                    city = MISSING
+                if " pin code" in city.lower():
+                    parts = city.lower().split("pin code")
+                    city = parts[0]
+                    if len(parts) > 1 and is_numeric(parts[1].strip()):
+                        zip_postal = parts[1].strip()
+                if " pin" in city.lower():
+                    city = (
+                        city.replace(" pin", "")
+                        .replace(" Pin", "")
+                        .replace(" PIN", "")
+                        .strip()
+                    )
 
                 yield SgRecord(
                     locator_domain=website,

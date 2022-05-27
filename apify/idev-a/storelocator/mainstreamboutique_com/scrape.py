@@ -15,14 +15,21 @@ _headers = {
 
 
 def _p(val):
-    return (
-        val.replace("(", "")
+    if (
+        val
+        and val.replace("(", "")
         .replace(")", "")
+        .replace("+", "")
         .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
         .replace(" ", "")
         .strip()
         .isdigit()
-    )
+    ):
+        return val
+    else:
+        return ""
 
 
 def fetch_data():
@@ -84,18 +91,21 @@ def fetch_data():
                 elif "COMING SOON" in sp1.select("div.shg-row > div")[1].text:
                     continue
                 else:
-                    hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
-                    for x in range(0, len(hh), 2):
-                        hours.append(f"{hh[x]} {hh[x+1]}")
-                phone = (
-                    sp1.select("div.shg-row > div")[2]
-                    .p.text.strip()
-                    .split(":")[-1]
-                    .strip()
-                )
-
-                if not _p(phone):
-                    phone = ""
+                    txt = sp1.select("div.shg-row > div")[1].text
+                    if "temporarily closed" in txt.lower():
+                        hours = ["Temporarily Closed"]
+                    else:
+                        hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[
+                            1:
+                        ]
+                        for x in range(0, len(hh), 2):
+                            hours.append(f"{hh[x]} {hh[x+1]}")
+                phone = ""
+                for pp in sp1.select("div.shg-row > div")[2].select("p"):
+                    if not pp.text.strip():
+                        continue
+                    phone = pp.text.strip().split(":")[-1].strip()
+                    break
                 zip_postal = ""
                 if _.select_one("span.postal_zip"):
                     zip_postal = _.select_one("span.postal_zip").text.strip()
@@ -119,7 +129,7 @@ def fetch_data():
                 zip_postal=zip_postal,
                 country_code=_.select_one("span.country").text,
                 locator_domain=locator_domain,
-                phone=phone,
+                phone=_p(phone),
                 hours_of_operation="; ".join(hours),
                 raw_address=" ".join(_addr),
             )

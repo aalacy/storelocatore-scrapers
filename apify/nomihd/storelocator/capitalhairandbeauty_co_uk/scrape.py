@@ -81,7 +81,7 @@ def fetch_data():
             )
         )
         if len(phone) > 0:
-            phone = phone[0].replace("(ex1)", "").strip()
+            phone = phone[0].replace("(ex1)", "").strip().split("(")[0].strip()
 
         store_number = "<MISSING>"
 

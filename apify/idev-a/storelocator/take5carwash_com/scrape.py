@@ -16,14 +16,14 @@ _headers = {
 }
 
 locator_domain = "https://www.take5carwash.com"
-base_url = "https://www.take5carwash.com/_next/static/chunks/pages/_app-b3b72997d9522810ee10.js"
+base_url = "https://www.take5carwash.com/_next/static/chunks/pages/contact-forms/Form1-a5f0ab6bedb62f90fca3.js"
 json_url = "https://dbrgenipc.interplay.iterate.ai/api/v1/carwash/allstores"
 
 
 def fetch_data():
     with SgRequests() as session:
         _headers["apikey"] = (
-            session.get(base_url).text.split("apikey:")[1].split("}")[0].strip()[1:-1]
+            session.get(base_url).text.split("apiKey:")[1].split("}")[0].strip()[1:-1]
         )
         pageload = {"lat": "35.562", "lng": "-77.4045"}
         locations = session.post(json_url, headers=_headers, json=pageload).json()[
@@ -49,6 +49,7 @@ def fetch_data():
                 longitude=_["store_long"],
                 country_code="US",
                 phone=_["store_phone"],
+                location_type=_["BU"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=_["geo_address"],
