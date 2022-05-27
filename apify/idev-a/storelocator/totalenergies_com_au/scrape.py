@@ -112,9 +112,9 @@ def parse_cn(raw_address):
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(1, 11):
-            for b in range(26):
-                for c in range(20):
+        for a in range(1, 15):
+            for b in range(30):
+                for c in range(30):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
