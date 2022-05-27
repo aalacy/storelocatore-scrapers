@@ -100,7 +100,7 @@ def fetch_data(driver):
     count = 0
     for region in all_regions:
         count = count + 1
-        log.info(f"{count}. Scrapping region {region}")
+        log.info(f"{count}. Scrapping region ...")
         all_regions = driver.find_elements(
             by=By.XPATH,
             value='//select[@name="region"]/following-sibling::div[1]//div[@class="option"]',
@@ -128,14 +128,14 @@ def fetch_data(driver):
         random_sleep(driver)
 
         state_items = get_items(driver, MISSING)
-        log.info(f"  total items from state = {len(state_items)}")
+        log.info(f"total items from state = {len(state_items)}")
 
         all_cities = driver.find_elements(
             by=By.XPATH,
             value='//select[@name="city"]/following-sibling::div[1]//div[contains(@class,"option")]',
         )
         log.info(
-            f"  total items from state = {len(state_items)}; cities = {len(all_cities)}"
+            f"total items from state = {len(state_items)}; cities = {len(all_cities)}"
         )
 
         city_count = 0
@@ -152,10 +152,10 @@ def fetch_data(driver):
                 continue
 
             all_cities[city_count - 1].click()
-            log.info(f"    {city_count}. Scrapping city {city_name}...")
+            log.info(f"{city_count}. Scrapping city {city_name}...")
             random_sleep(driver)
             city_items = get_items(driver, city_name)
-            log.info(f"        city items = {len(city_items)}")
+            log.info(f"city items = {len(city_items)}")
             city_store_count = city_store_count + len(city_items)
             for item in city_items:
                 yield item
