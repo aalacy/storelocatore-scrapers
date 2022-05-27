@@ -6,13 +6,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import gzip
-from io import StringIO
 from io import BytesIO
-import xml.etree.ElementTree as ET
 from sgpostal.sgpostal import parse_address_usa
 from lxml import html
 import json
-import re
 import ssl
 
 
