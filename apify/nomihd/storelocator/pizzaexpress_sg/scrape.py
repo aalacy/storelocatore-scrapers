@@ -52,7 +52,7 @@ def fetch_data():
                 raw_address = raw_address[0]
 
             street_address = ", ".join(raw_address.split(",")[:-1]).strip()
-            city = "<MISSING>"
+            city = raw_address.split(",")[-1].strip().split(" ")[0].strip()
             state = "<MISSING>"
             zip = raw_address.split(",")[-1].strip().split(" ")[-1].strip()
 
@@ -74,12 +74,18 @@ def fetch_data():
                 if len(sections) > 0:
                     hours_of_operation = "".join(sections[-1].xpath("text()")).strip()
 
-            latitude = "".join(
-                store_sel.xpath('//meta[@property="og:latitude"]//@content')
-            ).strip()
-            longitude = "".join(
-                store_sel.xpath('//meta[@property="og:longitude"]//@content')
-            ).strip()
+            latitude = (
+                store_req.text.split("markerLat&quot;:")[1]
+                .strip()
+                .split(",")[0]
+                .strip()
+            )
+            longitude = (
+                store_req.text.split("markerLng&quot;:")[1]
+                .strip()
+                .split(",")[0]
+                .strip()
+            )
 
             yield SgRecord(
                 locator_domain=locator_domain,
