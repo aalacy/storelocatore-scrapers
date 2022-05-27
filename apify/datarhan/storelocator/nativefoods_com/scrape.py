@@ -10,7 +10,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://nativefoods.com/locations/"
     domain = "nativefoods.com"
     hdr = {
@@ -25,8 +25,10 @@ def fetch_data():
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')[0]
-        poi = json.loads(poi)
+        poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
+        if not poi:
+            continue
+        poi = json.loads(poi[0])
         hoo = loc_dom.xpath('//div[@class="hours"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()][1:])
 

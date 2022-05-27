@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,11 +9,9 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://www.miniso.com/EN/map"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "miniso.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -33,11 +30,10 @@ def fetch_data():
             "pageindex": "1",
             "pagesize": "500",
         }
-        all_locations = session.post(url, data=frm).json()
 
+        all_locations = session.post(url, data=frm).json()
         for poi in all_locations:
             location_name = poi["StoreName"]
-            location_name = location_name if location_name else "<MISSING>"
             addr = parse_address_intl(poi["LinkAddr"])
             street_address = addr.street_address_1
             if addr.street_address_2 and street_address:
@@ -50,17 +46,8 @@ def fetch_data():
                 continue
             street_address = street_address.replace("<*B1-143/144/145>", "")
             city = addr.city
-            city = city if city else "<MISSING>"
             state = addr.state
-            state = state if state else "<MISSING>"
             zip_code = addr.postcode
-            zip_code = zip_code if zip_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -71,13 +58,13 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_code,
                 country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=poi["LinkAddr"],
+                store_number="",
+                phone="",
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation="",
+                raw_address=" ".join(poi["LinkAddr"].split()),
             )
 
             yield item

@@ -1,8 +1,9 @@
-import csv
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("redlion_com__guesthouse")
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -10,57 +11,32 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     url = "https://www.redlion.com/sitemap.xml"
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if "<loc>https://www.redlion.com/guesthouse" in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") > 3:
                 locs.append(lurl)
     for loc in locs:
-        logger.info(("Pulling Location %s..." % loc))
         loc2 = (
             loc.replace("www.redlion.com/", "www.redlion.com/page-data/")
             + "/page-data.json"
         )
         r2 = session.get(loc2, headers=headers)
-        website = "redlion.com/guesthouse"
+        website = "https://www.redlion.com/"
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '{"hotel":{"name":"' in line2:
                 name = line2.split('{"hotel":{"name":"')[1].split('"')[0]
                 country = line2.split('"country_code":"')[1].split('"')[0]
-                store = line2.split('"crs_code":"')[1].split('"')[0]
+                try:
+                    store = line2.split('"crs_code":"')[1].split('"')[0]
+                except:
+                    store = ""
                 phone = line2.split('"phone":"')[1].split('"')[0]
                 add = line2.split('"address_line1":"')[1].split('"')[0]
                 city = line2.split('"locality":"')[1].split('"')[0]
@@ -68,29 +44,28 @@ def fetch_data():
                 zc = line2.split('"postal_code":"')[1].split('"')[0]
                 lat = line2.split('{"lat":')[1].split(",")[0]
                 lng = line2.split('"lon":')[1].split("}")[0]
-                hours = "<MISSING>"
-                typ = "Red Lion Guesthouse"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                hours = ""
+                typ = ""
+
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        store_number=store,
+                        phone=phone,
+                        location_type=typ,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+                )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

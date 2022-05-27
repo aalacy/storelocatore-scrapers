@@ -1,12 +1,14 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2()
+    )
 
     session = SgRequests()
 
@@ -22,12 +24,11 @@ def get_data():
         soup = bs(response, "html.parser")
 
         grids = soup.find_all("div", attrs={"class": "geolocation-location js-hide"})
-        location_grids = soup.find_all("div", attrs={"class": "e-grid-column"})
-        website_grids = soup.find_all("a", attrs={"rel": "bookmark"})
         x = 0
         for grid in grids:
             locator_domain = "salvationarmy.org.uk"
-            page_url = "salvationarmy.org.uk" + website_grids[x]["href"]
+
+            page_url = "salvationarmy.org.uk" + grid.find_all("p")[-1].find("a")["href"]
             country_code = "UK"
 
             location_name = grid.find(
@@ -74,8 +75,9 @@ def get_data():
 
             store_number = grid["id"]
 
-            location_grid = location_grids[x]
-            location_type = location_grid.find("p").text.strip()
+            location_type = grid["data-icon"].split("/")[-1].split(".")[0].split("_")[0]
+            if location_type == "corps":
+                location_type = "Church"
             search.found_location_at(latitude, longitude)
             x = x + 1
 
@@ -104,12 +106,8 @@ def scrape():
         location_name=sp.MappingField(
             mapping=["location_name"], part_of_record_identity=True
         ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=sp.MultiMappingField(
             mapping=["street_address"], part_of_record_identity=True
         ),

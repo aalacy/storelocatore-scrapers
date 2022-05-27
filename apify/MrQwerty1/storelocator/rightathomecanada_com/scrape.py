@@ -1,158 +1,155 @@
-import csv
-import re
-
-from concurrent import futures
 from lxml import html
+from typing import List
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or ""
+    state = adr.state
+    postal = adr.postcode
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.rightathomecanada.com/locations")
-    tree = html.fromstring(r.content)
+    r = session.get("https://www.rightathomecanada.com/about-us/locations")
+    tree = html.fromstring(r.text)
 
     return set(
-        tree.xpath(
-            "//a[@style='font-size: 20px; line-height: 1.3; color: #00556e;']/@href"
-        )
+        tree.xpath("//div[@class='para']//a[not(contains(@href, 'tel:'))]/@href")
     )
 
 
-def get_data(u):
-    session = SgRequests()
-    r = session.get(u)
+def write(data: dict, sgw: SgWriter):
+    row = SgRecord(
+        page_url=data.get("page_url"),
+        location_name=data.get("location_name"),
+        street_address=data.get("street_address"),
+        city=data.get("city"),
+        state=data.get("state"),
+        zip_postal=data.get("postal"),
+        country_code="CA",
+        phone=data.get("phone"),
+        locator_domain=locator_domain,
+        raw_address=data.get("raw_address"),
+    )
+
+    sgw.write_row(row)
+
+
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://www.rightathomecanada.com{slug}"
+    if "-kent" in page_url:
+        return
+    r = session.get(page_url)
     tree = html.fromstring(r.text)
-    locator_domain = "https://www.rightathomecanada.com"
-    line = tree.xpath("//div[@style='float:left']")[0].xpath(".//text()")
 
-    _tmp = []
-    add = False
-    for l in line:
-        li = l.replace("\xa0", "").replace("</br>", "").replace("\u2028", " ").strip()
-        if li.startswith("#") or li[0].isdigit():
-            _tmp.append(li)
-            add = True
-            continue
-        elif li.find(",") != -1:
-            _tmp.append(li)
-            if len(li.split()) == 2:
-                _tmp.append(line[line.index(l) + 1].strip())
-            break
-        if add:
-            _tmp.append(li)
+    location_name = tree.xpath("//h1/text()")[0].strip()
+    phone = "".join(
+        tree.xpath(
+            "//button[contains(@aria-label, 'search')]/preceding-sibling::a/text()"
+        )
+    ).strip()
+    street_address, city = SgRecord.MISSING, SgRecord.MISSING
+    state, postal = SgRecord.MISSING, SgRecord.MISSING
+    raw_address = SgRecord.MISSING
 
-    if _tmp:
-        if len(_tmp) == 2:
-            street_address = _tmp[0]
-        else:
-            street_address = " ".join(_tmp[:2])
+    data = {
+        "page_url": page_url,
+        "location_name": location_name,
+        "phone": phone,
+        "street_address": street_address,
+        "city": city,
+        "state": state,
+        "postal": postal,
+        "raw_address": raw_address,
+    }
 
-        line = _tmp[-1]
-        if len(line) == 7:
-            postal = line
-            line = _tmp[-2]
-        else:
-            postal = line[-7:]
-        city = line.split(",")[0]
-        line = line.split(",")[1].strip()
-        state = line.replace(postal, "")
-
-    else:
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        postal = "<MISSING>"
-
-    phone = tree.xpath("//div[@class='mobiletel']/a/text()")[0]
-    if phone.find("or") != -1:
-        phone = phone.split(" or ")[0]
-    try:
-        text = "".join(tree.xpath("//text()"))
-        latitude = re.findall(r'"latitude": "(\d{2,3}.\d+)"', text)[0]
-        longitude = re.findall(r'"longitude": "(-?\d{2,3}.\d+)"', text)[0]
-    except:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    page_url = u
-    country_code = "CA"
-    location_name = (
-        "".join(tree.xpath("//p[@class='page-description']/text()"))
-        .replace("-", "")
-        .strip()
+    line = tree.xpath(
+        "//ul[.//a[contains(text(), 'Contact Us')]]/preceding-sibling::div[@class='para']//text()"
     )
-    if location_name.find("what we do") != -1:
-        location_name = f"Right at Home in {city}"
-    store_number = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    line = list(
+        filter(None, [l.replace("\xa0", " ").replace("\t", " ").strip() for l in line])
+    )
+    if len(line) > 1:
+        try:
+            line = line[: line.index("Phone:")]
+        except:
+            cnt = 0
+            for li in line:
+                if "Phone:" in li:
+                    break
+                cnt += 1
+            line = line[:cnt]
+        if "Right" in line[0] or "Greater" in line[0]:
+            line.pop(0)
+        for li in line:
+            if "Right" in li:
+                ismultiple = True
+                break
+        else:
+            ismultiple = False
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        if not ismultiple:
+            raw_address = " ".join(line)
+            street_address, city, state, postal = get_international(raw_address)
+            data["street_address"] = street_address
+            data["city"] = city
+            data["state"] = state
+            data["postal"] = postal
+            data["raw_address"] = raw_address
+            write(data, sgw)
+        else:
+            _tmp = []  # type: List[str]
+            records = []
+            for li in line:
+                if "Right" in li:
+                    records.append(_tmp)
+                    _tmp = []
+                _tmp.append(li)
+            else:
+                records.append(_tmp)
 
-    return row
+            for record in records:
+                if "Right" in record[0]:
+                    data["location_name"] = record.pop(0)
+                raw_address = " ".join(record)
+                street_address, city, state, postal = get_international(raw_address)
+                if state in postal:
+                    postal = postal.replace(state, "").strip()
+                data["street_address"] = street_address
+                data["city"] = city
+                data["state"] = state
+                data["postal"] = postal
+                data["raw_address"] = raw_address
+                write(data, sgw)
+    else:
+        write(data, sgw)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.rightathomecanada.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)

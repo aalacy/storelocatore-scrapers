@@ -57,6 +57,14 @@ def fetch_data(sgw: SgWriter):
         ):
             continue
 
+        if (
+            "coming early"
+            in base.find(
+                class_="et_pb_section et_pb_section_1 et_section_regular"
+            ).text.lower()
+        ):
+            continue
+
         location_name = base.h1.text.upper().strip()
 
         raw_address = list(base.p.stripped_strings)

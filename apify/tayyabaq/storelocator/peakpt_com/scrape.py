@@ -1,68 +1,118 @@
-import csv
-import requests
-from bs4 import BeautifulSoup
-from lxml import html
+import re
 import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            if row:
-                writer.writerow(row)
+session = SgRequests()
+website = "peakpt_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://peakpt.com/"
+MISSING = SgRecord.MISSING
+
+
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
-    #Driver
-    url ='http://www.peakpt.com/contact.html'
-    r = requests.get(url)
-    tree = html.fromstring(r.content)
-    soup = BeautifulSoup(r.content, 'html.parser')
-    store = soup.findAll("a", href=lambda href: href and href.startswith("javascript:window.scrollTo(0,0)"))
-    for n in range(0,len(store)):
-        a=store[n].get_text()
-        if ('Directions' not in a) and (a!="") and ('Top' not in a):
-            street_address.append(store[n].get_text().strip().split(",")[0].split('   ')[0])
-            tagged = usaddress.tag(store[n].get_text())[0]
+    if True:
+        pattern = re.compile(r"\s\s+")
+        url = "http://www.peakpt.com/contact.html"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("div", {"id": "ph_contact_addresses"}).findAll(
+            "div", {"class": "address-box"}
+        )
+        coords_list = r.text.split('<script type="text/javascript" >')[2].split(
+            "</script>"
+        )[0]
+        for idx, loc in enumerate(loclist):
+            address = (
+                loc.find("div", {"class": "address-full"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            log.info(street_address)
+            phone = loc.select_one("a[href*=tel]").text
+            location_name = MISSING
+            lat = "latitudes[" + str(idx) + "] = '"
+            lng = "longitudes[" + str(idx) + "] = '"
+            latitude = coords_list.split(lat)[1].split("'")[0]
+            longitude = coords_list.split(lng)[1].split("'")[0]
             try:
-                city.append(tagged['PlaceName'])
+                hours_of_operation = (
+                    loc.find("div", {"class": "wdaytable"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                hours_of_operation = re.sub(pattern, "\n", hours_of_operation)
+                hours_of_operation = hours_of_operation.replace("\n", " ")
             except:
-                city.append('<MISSING>')
-    stores = soup.findAll("div", {"class": "address-full"})
-    for n in range(0,len(stores)):
-        state.append(stores[n].get_text().split(",")[1])
-        zipcode.append(stores[n].get_text().split(",")[2])
-    phones = soup.findAll("div", {"class": "address-line-idphone"})
-    for n in range(0,len(phones)):
-        phone.append(phones[n].get_text().split("Phone:")[1])
-    hours = soup.findAll("div", {"class": "address-line-idhours"})
-    for n in range(0,len(street_address)):
-        try:
-            hours_of_operation.append(hours[n].get_text().strip())
-        except:
-            hours_of_operation.append('<MISSING>')
-    for n in range(0,len(street_address)): 
-        data.append([
-            'http://www.peakpt.com',
-            '<MISSING>',
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
-            hours_of_operation[n]
-        ])
-    return data
+                hours_of_operation = MISSING
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
-   
-scrape()
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
