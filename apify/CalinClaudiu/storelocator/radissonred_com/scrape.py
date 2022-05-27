@@ -293,10 +293,11 @@ def get_subpage(session, url):
     return data
 
 
-def initial(driver, url, state):
+def initial(url, state):
+    reqs = None
     with SgChrome() as driver:
         driver.get(url)
-        time.sleep(30)
+        time.sleep(10)
         try:
             locator = WebDriverWait(driver, 30).until(  # noqa
                 EC.visibility_of_element_located(
@@ -319,21 +320,21 @@ def initial(driver, url, state):
             except Exception:
                 logzilla.error(f"{driver.page_source}")
 
-        time.sleep(15)
+        time.sleep(10)
         reqs = list(driver.requests)
-        for r in reqs:
-            x = r.url
-            if "zimba" in x and "hotels?" in x:
-                body = selw.utils.decode(
-                    r.response.body,
-                    r.response.headers.get("Content-Encoding", "identity"),
-                )
-                if body:
-                    son = json.loads(body)
-                    for item in son["hotels"]:
-                        state.push_request(
-                            SerializableRequest(url=item["overviewPath"], context=item)
-                        )
+    for r in reqs:
+        x = r.url
+        if "hotels?" in x:
+            body = selw.utils.decode(
+                r.response.body,
+                r.response.headers.get("Content-Encoding", "identity"),
+            )
+            if body:
+                son = json.loads(body)
+                for item in son["hotels"]:
+                    state.push_request(
+                        SerializableRequest(url=item["overviewPath"], context=item)
+                    )
 
 
 def record_initial_requests(state):
@@ -341,8 +342,7 @@ def record_initial_requests(state):
         "https://www.radissonhotels.com/en-us/destination",
         "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        with SgChrome() as driver:
-            initial(driver, url, state)
+        initial(url, state)
 
 
 def data_fetcher(session, state):
