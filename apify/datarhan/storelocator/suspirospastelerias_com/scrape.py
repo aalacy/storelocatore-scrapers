@@ -17,11 +17,34 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
+        if "Coming Soon" in poi["name"]:
+            continue
         raw_address = poi["address"]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        zip_code = addr.postcode
+        if zip_code:
+            zip_code = (
+                zip_code.replace("C.P.", "")
+                .replace("AZ.", "")
+                .replace("C.P", "")
+                .replace("CP", "")
+                .replace("CP.", "")
+                .replace("C. P.", "")
+                .replace(".", "")
+            )
+            if "SECC" in zip_code:
+                zip_code = ""
+            if len(zip_code) < 4:
+                zip_code = ""
+        phone = poi["phoneNumber"]
+        if phone and str(phone.strip()) == "0000000000":
+            phone = ""
+        state = addr.state
+        if state:
+            state = state.replace(".", "")
 
         item = SgRecord(
             locator_domain=domain,
@@ -29,11 +52,11 @@ def fetch_data():
             location_name=poi["name"],
             street_address=street_address,
             city=poi["city"]["name"],
-            state=addr.state,
-            zip_postal=addr.postcode,
+            state=state,
+            zip_postal=zip_code,
             country_code=poi["city"]["country"],
             store_number="",
-            phone=poi["phoneNumber"],
+            phone=phone,
             location_type="",
             latitude=poi["latitude"],
             longitude=poi["longitude"],

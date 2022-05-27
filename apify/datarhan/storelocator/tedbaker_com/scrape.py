@@ -91,6 +91,12 @@ def fetch_data():
                 zip_code = zip_code[:5]
             if phone and len(phone) < 4:
                 phone = ""
+            location_type = ""
+            booking = poi_html.xpath("@data-url-appointment")
+            if booking and "TedBaker" in booking[0]:
+                location_type = "TedBaker"
+            if "outlet" in location_name.lower():
+                location_type = "TedBaker"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -103,7 +109,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number="",
                 phone=phone,
-                location_type="",
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hoo,

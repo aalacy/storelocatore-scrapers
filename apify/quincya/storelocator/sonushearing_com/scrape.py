@@ -40,7 +40,9 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "sonushearing.com"
     items = base.find_all(class_="font_8")
-    drop_items = base.find(id="DrpDwnMn14").find_all("a")
+    drop_items = base.find(id="DrpDwnMn14").find_all("a") + base.find(
+        id="DrpDwnMn15"
+    ).find_all("a")
 
     for item in items:
         if item.a:
@@ -69,6 +71,13 @@ def fetch_data(sgw: SgWriter):
         if "We are now seeing" in location_name:
             continue
 
+        if len(location_name) > 60 or "888" in location_name:
+            location_name = (
+                base.find("meta", attrs={"name": "description"})["content"]
+                .split("offers")[0]
+                .strip()
+            )
+
         rows = base.find_all("div", attrs={"data-testid": "richTextElement"})
 
         for row in rows:
@@ -80,7 +89,7 @@ def fetch_data(sgw: SgWriter):
         if "phone:" not in row.text.lower():
             raw_address = list(base.find(class_="font_8").stripped_strings)
 
-        street_address = " ".join(raw_address[:-1]).strip()
+        street_address = " ".join(raw_address[:-1]).replace("\xa0", "").strip()
         city_line = raw_address[-1].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
@@ -138,6 +147,11 @@ def fetch_data(sgw: SgWriter):
                     break
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
+        if "all for" in hours_of_operation:
+            hours_of_operation = ""
+        hours_of_operation = (
+            hours_of_operation.replace("Hours:", "").split("Week")[0].strip()
+        )
 
         try:
             geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_link)[

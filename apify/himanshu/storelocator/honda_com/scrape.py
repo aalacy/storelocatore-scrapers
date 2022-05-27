@@ -70,6 +70,8 @@ def get_data(zips, sgw: SgWriter):
         if hours:
             for h in hours:
                 typ = h.get("Type")
+                if typ != "Sales":
+                    continue
                 operation_hours = h.get("OperationHours")
                 tmp.append(typ)
                 for i in operation_hours:
@@ -81,7 +83,7 @@ def get_data(zips, sgw: SgWriter):
                     "; ".join(tmp)
                     .replace("Service;", "Service")
                     .replace("Parts;", "Parts")
-                    .replace("Sales;", "Sales")
+                    .replace("Sales;", "")
                     .strip()
                 )
         if (
