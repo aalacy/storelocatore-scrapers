@@ -11,21 +11,17 @@ def fetch_data():
     start_urls = {
         "Austria": "https://www.lexus.at/api/dealers/all",
         "Hungary": "https://www.lexus.hu/api/dealers/all",
-        "Italy": "https://www.lexus.it/api/dealers/all",
         "Latvia": "https://lv.lexus.lv/api/dealers/all",
         "Lithuania": "https://lt.lexus.lt/api/dealers/all",
         "Poland": "https://www.lexus-polska.pl/api/dealers/all",
-        "Portugal": "https://www.lexus.pt/api/dealers/all",
     }
 
     loc_url = {
         "at": "https://www.lexus.at/forms/find-a-retailer",
         "hu": "https://www.lexus.hu/",
-        "it": "https://www.lexus.it/",
         "lv": "https://lv.lexus.lv/",
         "lt": "https://lt.lexus.lt",
         "pl": "https://www.lexus-polska.pl/",
-        "pt": "https://www.lexus.pt",
     }
 
     hdr = {
@@ -33,7 +29,6 @@ def fetch_data():
     }
     for country, start_url in start_urls.items():
         data = session.get(start_url, headers=hdr).json()
-
         for poi in data["dealers"]:
             location_type = ", ".join(poi["services"])
             if "ShowRoom" not in location_type:
@@ -51,7 +46,9 @@ def fetch_data():
                     for h in e["slots"]:
                         hours.append(f'{h["openFrom"]} - {h["openTo"]}')
                     hoo.append(f'{e["day"]}: {", ".join(hours)}')
-            hoo = " ".join(hoo)
+            hoo = " ".join(hoo).strip()
+            if hoo.endswith("Sunday:"):
+                hoo += " closed"
 
             item = SgRecord(
                 locator_domain=start_url.split("/")[2].replace("www.", ""),
