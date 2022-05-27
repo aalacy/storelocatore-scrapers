@@ -55,17 +55,16 @@ def getAddress(raw_address):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all(
-        "div",
-        {
-            "class": "col content-box-wrapper content-wrapper-background link-area-box content-icon-wrapper-yes icon-hover-animation-fade"
-        },
+    contents = soup.select(
+        "div.col.content-box-wrapper.content-wrapper-background.link-area-box.content-icon-wrapper-yes.icon-hover-animation-fade"
     )
     phone = soup.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
     for row in contents:
+        if "Who we are" in row.text.strip() or "About our Doctor" in row.text.strip():
+            continue
         location_name = row.find("h2", {"class": "content-box-heading"}).text.strip()
         raw_address = " ".join(
-            row.find("p", {"class": "p1"})
+            row.find("p")
             .text.replace("US,", "")
             .replace("US", "")
             .replace(", United States", "")

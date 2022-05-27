@@ -31,6 +31,13 @@ def fetch_data():
                 page_url = DOMAIN + loc["href"]
                 log.info(page_url)
                 response = session.get(page_url, headers=headers)
+                if (
+                    "We look forward to welcoming guests in late Summer, 2022"
+                    in response.text
+                ):
+                    continue
+                elif "welcoming you in September, 2022" in response.text:
+                    continue
                 soup = BeautifulSoup(response.content, "html.parser")
                 cont = json.loads(
                     soup.find("script", {"type": "application/ld+json"}).text
