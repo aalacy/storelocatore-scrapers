@@ -41,6 +41,11 @@ def fetch_data():
                 if res.status_code != 200:
                     continue
                 sp2 = bs(res.text, "lxml")
+                if (
+                    sp2.select_one("a.overlay-btn")
+                    and "OPENING SOON" in sp2.select_one("a.overlay-btn").text
+                ):
+                    continue
                 _hr = sp2.find("", string=re.compile(r"^Hours"))
                 if _hr:
                     hours = list(
