@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+
 
 session = SgRequests()
 headers = {
@@ -12,13 +14,14 @@ headers = {
 
 def fetch_data():
 
-    urllist = [
-        "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=39.27451781299348&map_center_lng=-76.81424000000064&map_distance_diag=2894.9778656173057&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4",
-        "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=60.946062671857504&map_center_lng=-149.89490000000052&map_distance_diag=1823.6235546997798&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=anchorage&zoom_level=4&forced_coords=1",
-        "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=20.88015885416428&map_center_lng=-156.50000000000045&map_distance_diag=893.2380425349288&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=HI96793&zoom_level=6&forced_coords=1",
-    ]
-    for url in urllist:
-        data_list = session.get(url, headers=headers).json()["markers"]
+    start_url = "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat={}&map_center_lng={}&map_distance_diag=500&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4"
+    all_coords = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
+    )
+    for lat, lng in all_coords:
+        data_list = session.get(start_url.format(lat, lng), headers=headers).json()[
+            "markers"
+        ]
         weeklist = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
         for store in data_list:
             ccode = store["country"]

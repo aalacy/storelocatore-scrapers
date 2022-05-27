@@ -66,7 +66,12 @@ def fetch_data():
             else:
                 full_address.append(info)
 
-        raw_address = ", ".join(full_address)
+        raw_address = (
+            ", ".join(full_address)
+            .strip()
+            .replace("(Beside South Entrance)", "")
+            .strip()
+        )
 
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1

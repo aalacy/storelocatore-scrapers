@@ -40,8 +40,10 @@ def fetch_data():
         page_url = search_url
         store_info = ",".join(store_list[index].xpath("p/text()"))
         locator_domain = website
-        location_name = "".join(markers[index].xpath("@name")).strip()
         raw_address = "".join(markers[index].xpath("@address")).strip()
+        location_name = raw_address.split(",")[0].strip()
+        raw_address = ", ".join(raw_address.split(",")[1:]).strip()
+
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:

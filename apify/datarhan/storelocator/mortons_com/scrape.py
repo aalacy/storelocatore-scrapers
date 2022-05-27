@@ -1,51 +1,19 @@
 import re
-import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "mortons.com"
+    domain = "mortons.com"
     start_url = "https://www.mortons.com/locations/"
-
     response = session.get(start_url)
     dom = etree.HTML(response.text)
     data = dom.xpath("//script[contains(text(), locations)]/text()")
@@ -60,59 +28,77 @@ def fetch_data():
         loc_dom = etree.HTML(loc_reponse.text)
 
         location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
         street_address = poi["street"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
-        city = city if city else "<MISSING>"
         state = poi["state"]
-        state = state if state else "<MISSING>"
-        if len(state) != 2:
-            continue
         zip_code = poi["postal_code"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
         store_number = poi["id"]
         phone = poi["phone_number"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
         latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
         hoo = loc_dom.xpath('//div[h2[@class="h1"]]/p[2]//text()')
-        hoo = [e.strip() for e in hoo if e.strip() and "We " not in e]
-        hours_of_operation = (
-            " ".join(hoo).split("Parties")[0].split("Inside")[0].strip()
-            if hoo
-            else "<MISSING>"
+        if hoo and "NOW OPEN FOR DINE-IN" in hoo[0]:
+            hoo = loc_dom.xpath('//p[strong[contains(text(), "Dining Room")]]//text()')
+            hoo = " ".join(hoo).split("Dining Room")[-1].split("Private")[0]
+        elif hoo and "Open For Lunch Daily" in hoo[0]:
+            hoo = loc_dom.xpath('//p[strong[contains(text(), "Dining Room")]]//text()')
+            hoo = " ".join(hoo).split("Dining Room")[-1].split("Private")[0]
+        elif hoo and "Located two" in hoo[1]:
+            hoo = loc_dom.xpath(
+                '//p[strong[contains(text(), "Dining Room")]]/following-sibling::p[1]/text()'
+            )
+            hoo = " ".join(hoo)
+        else:
+            hoo = [e.strip() for e in hoo if e.strip() and "We " not in e]
+            hours_of_operation = (
+                " ".join(hoo)
+                .split("Parties")[0]
+                .split("Inside")[0]
+                .split("General")[0]
+                .split("Proper")[0]
+                .replace("Dining Room", "")
+                .split("Located")[0]
+                .strip()
+                if hoo
+                else ""
+            )
+        country_code = "US"
+        if len(state) > 2:
+            country_code = state
+            state = ""
+        if len(zip_code.split()) == 2:
+            country_code = "CA"
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

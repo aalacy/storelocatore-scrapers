@@ -1,42 +1,18 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 log = SgLogSetup().get_logger("comforcare.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     states = [
         "AL",
@@ -97,7 +73,6 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
     locator_domain = "comforcare.com"
 
     for state in states:
@@ -124,7 +99,10 @@ def fetch_data():
             if not phone:
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
-                phone = base.find(class_="location__phone").a.text.strip()
+                try:
+                    phone = base.find(class_="location__phone").a.text.strip()
+                except:
+                    phone = ""
             hours_of_operation = "<MISSING>"
             latitude = store["latitude"]
             longitude = store["longitude"]
@@ -133,32 +111,25 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

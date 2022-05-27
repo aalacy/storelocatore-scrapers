@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "marysmountaincookies.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -28,7 +30,7 @@ def fetch_data():
         page_url = "https://marysmountaincookies.com" + store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
-        if "Opening Soon" in store_req.text:
+        if "Opening Soon" in store_req.text or "COMING SOON" in store_req.text:
             continue
         store_sel = lxml.html.fromstring(store_req.text)
 
@@ -52,6 +54,8 @@ def fetch_data():
             if len(raw_address) <= 0:
                 raw_address = ", ".join(temp_address[0].xpath("a/text()")).strip()
 
+            if len(raw_address) <= 0:
+                raw_address = ", ".join(temp_address[0].xpath("span/a/text()")).strip()
         raw_address = raw_address.replace("local store6055", "local store, 6055")
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
@@ -76,7 +80,7 @@ def fetch_data():
         country_code = "US"
 
         phone = store_sel.xpath(
-            '//section[@id="section_2"]//li[@class="icon-phone"][1]/text()'
+            '//section[@id="section_2"]//li[@class="icon-phone"][1]//text()'
         )
         if len(phone) > 0:
             phone = phone[0].strip()
@@ -91,16 +95,26 @@ def fetch_data():
             if is_found is False:
                 if "icon-hours" == "".join(hours[index].xpath("@class")).strip():
                     is_found = True
-                    hours_list.append("".join(hours[index].xpath(".//text()")).strip())
+                    hours_list.append(
+                        "".join(hours[index].xpath(".//text()"))
+                        .strip()
+                        .replace("\n", "; ")
+                        .strip()
+                    )
             else:
                 if len("".join(hours[index].xpath("@class")).strip()) <= 0:
-                    hours_list.append("".join(hours[index].xpath(".//text()")).strip())
+                    hours_list.append(
+                        "".join(hours[index].xpath(".//text()"))
+                        .strip()
+                        .replace("\n", "; ")
+                        .strip()
+                    )
 
         hour2 = "".join(
             store_sel.xpath(
                 '//section[@id="section_2"]//ul[./li[@class="icon-hours"]]/text()'
             )
-        )
+        ).strip()
         if hour2:
             hours_list.append(hour2)
 
@@ -135,7 +149,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -10,64 +10,89 @@ import json
 website = "pizzahut.de"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "Connection": "keep-alive",
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "X-Requested-With": "XMLHttpRequest",
+    "authority": "fb-eu.tictuk.com",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+    "accept": "application/json, text/plain, */*",
+    "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
     "sec-ch-ua-mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "origin": "https://pizzahut.de",
+    "sec-fetch-site": "cross-site",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
-
-    search_url = "https://pizzahut.de/restaurants/getRestaurants"
+    search_url = "https://pizzahut.de/de/store-locator.json"
     with SgRequests() as session:
-        stores_req = session.get(search_url, headers=headers)
-        stores = json.loads(stores_req.text)
-        for store in stores:
 
-            page_url = "<MISSING>"
-            if store["url"]:
-                page_url = "https://pizzahut.de/restaurants/" + store["url"]
-            location_name = store["name"]
+        stores_req = session.get(
+            search_url,
+            headers=headers,
+        )
+
+        stores = json.loads(stores_req.text)["chainStores"]["msg"]
+        for store in stores:
+            location_name = store["title"]["de_DE"]
+            page_url = (
+                "https://pizzahut.de/de/store-locator/"
+                + location_name.replace(" ", "_").strip()
+            )
             location_type = "<MISSING>"
             locator_domain = website
 
-            street_address = store["addressStreet"]
-            if store["addressStreetNo"]:
-                street_address = street_address + " " + store["addressStreetNo"]
+            raw_address = (
+                store["address"]["formatted"]
+                .strip()
+                .replace(", Deutschland", "")
+                .strip()
+            )
+            street_address = raw_address.split(",")[0].strip()
+            city = state = zip = "<MISSING>"
 
-            city = store["addressCity"]
-            state = store["addressProvince"]
-            zip = store["addressPostalCode"]
+            if len(raw_address.split(",")) > 1:
+                city = raw_address.split(",")[-1].strip().split(" ", 1)[-1].strip()
+                zip = raw_address.split(",")[-1].strip().split(" ")[0].strip()
 
-            country_code = "DE"
+            country_code = store["address"]["countryCode"]
             store_number = store["id"]
-            log.info(store_number)
-            phone = store["phoneNo"]
+            phone = store["contact"]["phone"]
             hours_list = []
             try:
-                for hour in store["workingHours"]["workingHoursOfDays"]:
-                    day = hour["day"]
-                    time = (
-                        hour["workIntervals"][0]["from"]
-                        + " - "
-                        + hour["workIntervals"][0]["to"]
-                    )
-                    hours_list.append(day + ": " + time)
+                hours = store["openingHours"][0]
+                if "de" in hours:
+                    hours = hours["de"]
+                elif "en" in hours:
+                    hours = hours["en"]
+                for index in range(0, len(hours)):
+                    if index == 0:
+                        day = "Sun"
+                    if index == 1:
+                        day = "Mon"
+                    if index == 2:
+                        day = "Tue"
+                    if index == 3:
+                        day = "Wed"
+                    if index == 4:
+                        day = "Thu"
+                    if index == 5:
+                        day = "Fri"
+                    if index == 6:
+                        day = "Sat"
+
+                    tim = hours[index][0]
+
+                    hours_list.append(day + ": " + tim)
             except:
                 pass
 
             hours_of_operation = "; ".join(hours_list).strip()
-
-            latitude = store["geoLat"]
-            longitude = store["geoLng"]
+            latitude = store["address"]["latLng"]["lat"]
+            longitude = store["address"]["latLng"]["lng"]
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -84,6 +109,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import us
 
 website = "milkandhoney.com"
@@ -83,7 +85,13 @@ def fetch_data():
         log.info(page_url)
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
-
+        if (
+            "Coming Soon"
+            in "".join(
+                store_sel.xpath('//div[@class="location-page"]//strong/text()')
+            ).strip()
+        ):
+            continue
         location_name = "".join(store_sel.xpath("//title/text()")).strip()
 
         store_info = list(
@@ -112,7 +120,11 @@ def fetch_data():
                         )
                     ],
                 )
-            )[-1].strip()
+            )
+            if len(phone) > 0:
+                phone = phone[-1].strip()
+            else:
+                phone = "<MISSING>"
 
         location_type = "<MISSING>"
 
@@ -129,12 +141,12 @@ def fetch_data():
         )
 
         hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+        if hours_of_operation.count("Check back soon") == 7:
+            hours_of_operation = "<MISSING>"
 
         map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 
         latitude, longitude = get_latlng(map_link)
-
-        raw_address = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -151,14 +163,15 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

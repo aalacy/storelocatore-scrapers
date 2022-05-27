@@ -1,102 +1,149 @@
-import csv
-from bs4 import BeautifulSoup
-import re
-import json
-import time
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('truevaluecompany_com')
+logger = SgLogSetup().get_logger("")
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+locator_domain = "https://truevaluecompany.com"
+base_url = "https://hosted.where2getit.com/truevalue/index_responsive.html"
+json_url = "https://hosted.where2getit.com/truevalue/rest/locatorsearch?like=0.22822414982857775&lang=en_US"
+
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+coords = [
+    (40.75368539999999, -73.9991637),
+    (3.216264063853835, 23.092478837961707),
+    (8.873924062928575, -67.8303725109154),
+    (-25.180938219545883, -62.55693492432918),
+    (26.57294931161124, 5.997752650887076),
+    (58.8956478624396, 47.8336901788746),
+    (62.827134824567196, 116.03681483952685),
+    (31.488776327650406, 104.43525246284652),
+    (-19.161622877728977, 129.57197119797826),
+    (38.56848203215075, -85.29390630160187),
+    (45.724319857723856, -112.27632804234958),
+    (54.254731096987264, -2.022207494535218),
+    (52.364631082042784, -8.17455121392394),
+    (62.28025825907213, -104.37084024056514),
+    (29.40527629075857, 42.05494108989879),
+    (63.403394833977075, 25.883066178234056),
+    (46.697782314730006, 65.60962839573575),
+]
 
 
-session = SgRequests() 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def get(_, key):
+    if _.get(key):
+        return _.get(key).strip()
+    return ""
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
-        # Body
-        for row in data:
-            writer.writerow(row)
-def fetch_data():
-    address = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
-    base_url = "https://truevalue.com/"
-    location_url = "https://stores.truevalue.com/"
-    r = session.get(location_url,headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    data = (soup.find_all("div",{"class":"itemlist"}))
-    for i in data:
-        link_1 = (i.find("a")['href'])
-        r1 = session.get(link_1,headers=headers)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        data1 = (soup1.find_all("div",{"class":"itemlist"}))
-        for i1 in data1:
-            link_2 = (i1.find("a")['href'])
-            r2 = session.get(link_2,headers=headers)
-            soup2 = BeautifulSoup(r2.text,"lxml")
-            data2 = (soup2.find_all("script",{"type":"application/ld+json"})[-1]).text
-            json_data = json.loads(data2)
-            link_3 = (json_data['url'])
-            # logger.info(link_3)
-            r3 = session.get(link_3,headers=headers)
-            soup3 = BeautifulSoup(r3.text,"lxml")
-            try:
-                data_3 = (soup3.find_all("script",{"type":"application/ld+json"})[-1]).text.replace(" //if applied, use the tmpl_var to retrieve the database value","").replace("  // starts services list","").replace(', ]',' ]')
-                data3 = re.sub("\s+"," ", str(data_3))
-                json_data1 = json.loads(data3)
-                location_name = json_data1['name']
-                street_address = (json_data1['address']['streetAddress'])
-                city = (json_data1['address']['addressLocality'])
-                state = (json_data1['address']['addressRegion'])
-                zipp = (json_data1['address']['postalCode'])
-                country_code = (json_data1['address']['addressCountry'])
-                store_number = json_data1['@id']
-                phone = json_data1['telephone']
-                location_type = json_data1['@type']
-                latitude = (json_data1['geo']['latitude'])
-                longitude = (json_data1['geo']['longitude'])
-                hours_of_operation = str(json_data1['openingHoursSpecification']).replace("'","").replace("{","").replace("}","").replace("[","").replace("]","").replace("opens","").replace("closes","").replace("OpeningHoursSpecification","").replace("dayOfWeek","").replace("@type","").replace(": , : ","").replace(", : - "," - ").replace(", :","").replace("Monday, , Tuesday, , Wednesday, , Thursday, , Friday, , Saturday, , Sunday, ","<MISSING>")
-                page_url =json_data1['url']
-            except:
-                location_name = soup3.find("meta",{"property":"og:title"})['content']
-                street_address = soup3.find("meta",{"property":"business:contact_data:street_address"})['content']
-                city = soup3.find("meta",{"property":"business:contact_data:locality"})['content']
-                state = soup3.find("meta",{"property":"business:contact_data:region"})['content']
-                zipp = soup3.find("meta",{"property":"business:contact_data:postal_code"})['content']
-                country_code = soup3.find("meta",{"property":"business:contact_data:country_name"})['content']
-                phone = soup3.find("meta",{"property":"business:contact_data:phone_number"})['content']
-                location_type = "HardwareStore"
-                latitude = soup3.find("meta",{"property":"place:location:latitude"})['content']
-                longitude = soup3.find("meta",{"property":"place:location:longitude"})['content']
-                hours_of_operation = soup3.find("div",{"id":"all_hours"}).text.replace("\n","").replace("\r","").replace("\t","").replace("PM","PM, ").strip().lstrip().rstrip().replace("Sun","Sunday").replace("Sat","Saturday").replace("Fri","Friday").replace("Mon","Monday").replace("Tue","Tuesday").replace("Wed","Wednesday").replace("Thu","Thurseday")
-                page_url =soup3.find("meta",{"property":"business:contact_data:website"})['content']
-                store_number = page_url.split("/")[-1]
-                # logger.info("---------------------done data---------------------------")
 
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else"<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[2] in address :
-                continue
-            address.append(store[2])
-            store = [x.strip() if type(x) == str else x for x in store]
-            yield store 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+def fetch_data(app_key):
+    for coord in coords:
+        with SgRequests() as session:
+            payload = {
+                "request": {
+                    "appkey": app_key,
+                    "formdata": {
+                        "geoip": "false",
+                        "dataview": "store_default",
+                        "limit": 10000,
+                        "atleast": 1,
+                        "geolocs": {
+                            "geoloc": [
+                                {
+                                    "addressline": "",
+                                    "country": "",
+                                    "latitude": coord[0],
+                                    "longitude": coord[1],
+                                    "state": "",
+                                    "province": "",
+                                    "city": "",
+                                    "address1": "",
+                                    "postalcode": "",
+                                }
+                            ]
+                        },
+                        "searchradius": "5000",
+                        "radiusuom": "",
+                        "where": {},
+                        "false": "0",
+                    },
+                }
+            }
+            locations = session.post(json_url, headers=_headers, json=payload).json()[
+                "response"
+            ]["collection"]
+
+            logger.info(f"[{coord}] {len(locations)}")
+
+            for _ in locations:
+                street_address = get(_, "address1")
+                if get(_, "address2"):
+                    street_address += " " + get(_, "address2")
+                hours = []
+                for day in days:
+                    day = day.lower()
+                    open = get(_, f"{day}_open_time")
+                    close = get(_, f"{day}_close_time")
+                    if open:
+                        hours.append(f"{day}: {open} {close}")
+
+                location_type = ""
+                if get(_, "carpetcleanerrental") == "1":
+                    location_type = "rental store"
+                if get(_, "hg") == "1":
+                    location_type = "garden center"
+                if get(_, "keycutting") == "1":
+                    location_type = "Hardware store"
+
+                yield SgRecord(
+                    page_url=get(_, "tvurl")
+                    or "https://www.truevaluecompany.com/store-locator",
+                    store_number=get(_, "dealerid"),
+                    location_name=get(_, "name"),
+                    street_address=street_address,
+                    city=get(_, "city"),
+                    state=get(_, "state"),
+                    zip_postal=get(_, "postalcode"),
+                    country_code=get(_, "country"),
+                    phone=get(_, "phone"),
+                    latitude=get(_, "latitude"),
+                    longitude=get(_, "longitude"),
+                    location_type=location_type,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
+
+
+if __name__ == "__main__":
+    app_key = None
+    with SgRequests() as session:
+        app_key = (
+            session.get(base_url, headers=_headers)
+            .text.split("<appkey>")[1]
+            .split("</appkey>")[0]
+        )
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LOCATION_TYPE,
+                }
+            ),
+            duplicate_streak_failure_factor=100,
+        )
+    ) as writer:
+        results = fetch_data(app_key)
+        for rec in results:
+            writer.write_row(rec)

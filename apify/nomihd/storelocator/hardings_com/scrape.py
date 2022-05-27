@@ -2,7 +2,6 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import us
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -23,7 +22,10 @@ def fetch_data():
         stores_req = session.get(search_url, headers=headers)
         stores = json.loads(
             "["
-            + stores_req.text.split("var stores = [")[1].strip().split("}];")[0].strip()
+            + stores_req.text.split("var locations = [")[1]
+            .strip()
+            .split("}];")[0]
+            .strip()
             + "}]"
         )
 
@@ -31,19 +33,13 @@ def fetch_data():
             page_url = search_url
 
             locator_domain = website
-            location_name = store["retailerName"]
-            if location_name == "":
-                location_name = "<MISSING>"
-
+            location_name = store["name"]
             street_address = store["address1"]
             city = store["city"]
             state = store["state"]
             zip = store["zipCode"]
 
-            country_code = "<MISSING>"
-            if us.states.lookup(state):
-                country_code = "US"
-
+            country_code = "US"
             store_number = store["storeID"]
             phone = store["phone"]
 
@@ -51,12 +47,6 @@ def fetch_data():
             latitude = store["latitude"]
             longitude = store["longitude"]
 
-            if latitude == "" or latitude is None:
-                latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
-                longitude = "<MISSING>"
-
-            hours_of_operation = ""
             hours_list = []
             try:
                 hours = store["hourInfo"].split(";")
@@ -82,6 +72,8 @@ def fetch_data():
                 )
                 .strip()
                 .split(";;")[0]
+                .strip()
+                .split("Pharmacy")[0]
                 .strip()
             )
 

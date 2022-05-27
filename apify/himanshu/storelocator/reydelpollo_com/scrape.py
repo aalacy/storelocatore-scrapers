@@ -7,8 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-
-    locator_domain = "https://reydelpollo.com"
+    locator_domain = "reydelpollo.com"
     api_url = "https://reydelpollo.com/locations/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -57,12 +56,11 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation=hours_of_operation,
             raw_address=address,
         )
-
         sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:

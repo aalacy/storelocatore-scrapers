@@ -81,6 +81,10 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
+        try:
+            hours = hours.split("DOWNLOA", 1)[0]
+        except:
+            pass
         yield SgRecord(
             locator_domain="http://beefsteakveggies.com",
             page_url=link,

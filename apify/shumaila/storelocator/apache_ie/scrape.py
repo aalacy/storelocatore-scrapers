@@ -49,6 +49,8 @@ def fetch_data():
             hours = hours + hr["key"] + " " + hr["value"] + " "
         phone = loc["phone_number"]
         link = "https://www.apache.ie" + loc["details_url"]
+        state = city
+        city = title
 
         yield SgRecord(
             locator_domain="https://www.apache.ie",
@@ -56,7 +58,7 @@ def fetch_data():
             location_name=title,
             street_address=street.strip(),
             city=city.strip(),
-            state=SgRecord.MISSING,
+            state=state,
             zip_postal=pcode.strip(),
             country_code="IE",
             store_number=str(store),

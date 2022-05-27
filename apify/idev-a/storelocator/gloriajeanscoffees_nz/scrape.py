@@ -57,7 +57,10 @@ def fetch_data():
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
-                street_address=street_address,
+                street_address=street_address.replace("Khartoum Place", "")
+                .replace("Westfield Manukau", "")
+                .replace("The Base Shopping Centre Te Rapa", "")
+                .replace("Westfield Chartwell", ""),
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,

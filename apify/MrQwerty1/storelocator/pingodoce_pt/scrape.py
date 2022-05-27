@@ -11,14 +11,16 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["data"]["stores"]
 
     for j in js:
-        location_name = j.get("name")
+        location_name = j.get("name") or ""
+        location_name = location_name.replace("&amp;", "&")
         latitude = j.get("lat")
         longitude = j.get("long")
-        raw_address = j.get("address")
         phone = j.get("contact")
         page_url = j.get("permalink")
         store_number = j.get("id")
-        street_address = j.get("address")
+        street_address = f'{j.get("address")} {j.get("number") or ""}'.replace(
+            "\n", " "
+        ).strip()
         city = j.get("county")
         state = j.get("district")
         postal = j.get("postal_code") or ""
@@ -28,7 +30,7 @@ def fetch_data(sgw: SgWriter):
 
         _tmp = []
         try:
-            hours = j["schedules"]["full"]
+            hours = j["schedules"]["full"] or dict()
         except KeyError:
             hours = dict()
 
@@ -53,7 +55,6 @@ def fetch_data(sgw: SgWriter):
             longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
         sgw.write_row(row)

@@ -143,7 +143,7 @@ def fetchData():
             x = x + 1
             store_number = MISSING
             location_type = MISSING
-            page_url = MISSING
+            page_url = "https://www.pinkberry.pe/estatico/zonasreparto"
 
             location_name = store["location_name"]
             log.info(f"Pulling info:Location#{x}. {location_name}")
@@ -163,6 +163,8 @@ def fetchData():
                 .strip()
             )
             street_address, city, state, zip_postal = getAddress(addr)
+            if " " in zip_postal:
+                zip_postal = zip_postal.split()[-1]
             raw_address = f"{addr}"
 
             yield SgRecord(

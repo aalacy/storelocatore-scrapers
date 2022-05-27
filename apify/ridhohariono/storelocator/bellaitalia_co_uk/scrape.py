@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -7,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "bellaitalia.co.uk"
 BASE_URL = "https://www.bellaitalia.co.uk"
-API_STORES = "https://api.bigtablegroup.com/pagedata/?brandKey=bellaitalia&path=/spaces/com0r9vws8o2/entries?access_token=f99c643342fea1841fda74418f0263d3af7b096dc78413cb9747c6bf5221beaf%26select=fields.storeId,fields.title,fields.slug,fields.city,fields.description,fields.addressLocation,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.phoneNumber,fields.email,fields.hours,fields.alternativeHours%26content_type=restaurant%26include=1"
+API_STORES = "https://api.bigtablegroup.com/pagedata/?brandKey=bella&path=/spaces/com0r9vws8o2/entries?access_token=f99c643342fea1841fda74418f0263d3af7b096dc78413cb9747c6bf5221beaf%26select=fields.storeId,fields.title,fields.slug,fields.city,fields.description,fields.addressLocation,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.phoneNumber,fields.email,fields.hours,fields.alternativeHours%26content_type=restaurant%26include=1"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -16,11 +17,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
+MISSING = SgRecord.MISSING
 
 
 def get_hours(id, includes):
@@ -59,7 +56,13 @@ def get_hours(id, includes):
                     + row["fields"]["sundayClose"],
                 ]
             )
-    return "<MISSING>" if not hoo else ", ".join(hoo[0])
+    return MISSING if not hoo else ", ".join(hoo[0])
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
 
 def fetch_data():
@@ -70,18 +73,20 @@ def fetch_data():
             BASE_URL, row["fields"]["city"], row["fields"]["slug"]
         )
         location_name = row["fields"]["title"]
+        if location_name == "Shaftesbury Avenue - COMING SOON":
+            location_name = "Shaftesbury Avenue"
         if "addressLine2" in row["fields"] and len(row["fields"]["addressLine2"]) > 0:
             street_address = "{}, {}".format(
                 row["fields"]["addressLine1"], row["fields"]["addressLine2"]
             )
         else:
             street_address = row["fields"]["addressLine1"]
-        city = handle_missing(row["fields"]["city"])
-        state = handle_missing(row["fields"]["county"])
-        zip_code = handle_missing(row["fields"]["postCode"])
+        city = row["fields"]["city"]
+        state = row["fields"]["county"]
+        zip_code = row["fields"]["postCode"]
         country_code = "GB"
         store_number = row["fields"]["storeId"]
-        phone = handle_missing(row["fields"]["phoneNumber"])
+        phone = row["fields"]["phoneNumber"]
         if "We're temporarily closed" in row["fields"]["description"]:
             location_type = "TEMP_CLOSED"
         elif "We're open for Delivery & Collection" in row["fields"]["description"]:
@@ -93,7 +98,13 @@ def fetch_data():
                 row["fields"]["hours"]["sys"]["id"], store_details["includes"]
             )
         else:
-            hours_of_operation = "<MISSING>"
+            store = pull_content(page_url)
+            hours_of_operation = (
+                store.find("div", {"class": "opening-hours"})
+                .get_text(strip=True, separator=", ")
+                .replace("Opening Hours,", "")
+                .strip()
+            )
         latitude = row["fields"]["addressLocation"]["lat"]
         longitude = row["fields"]["addressLocation"]["lon"]
         log.info("Append {} => {}".format(location_name, street_address))

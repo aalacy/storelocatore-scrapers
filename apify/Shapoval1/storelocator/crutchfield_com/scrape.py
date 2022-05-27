@@ -64,7 +64,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 d.xpath(
-                    './/following-sibling::div[contains(@id, "storeHours")][1]//table//tr/td//text()'
+                    './/following-sibling::h5[contains(text(), "Hours")][1]/following-sibling::table[1]//tr/td//text()'
                 )
             )
             .replace("\n", "")
