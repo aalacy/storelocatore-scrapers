@@ -214,7 +214,7 @@ def scrape():
         locator_domain=ConstantField(url),
         page_url=MappingField(
             mapping=["slug"],
-            value_transform=lambda x: "https://www.sobeys.com/stores/" + x + "/",
+            value_transform=lambda x: "https://sobeyspharmacy.com/stores/" + x + "/",
         ),
         location_name=MappingField(mapping=["title", "rendered"]),
         latitude=MappingField(
@@ -238,7 +238,7 @@ def scrape():
         ),
         city=MappingField(mapping=["location", "address", "city"], is_required=False),
         state=MappingField(
-            mapping=["location", "address", "province"], is_required=False
+            mapping=["store_details", "store_sub_region", "slug"], is_required=False
         ),
         zipcode=MappingField(
             mapping=["location", "address", "postal_code"], is_required=False
