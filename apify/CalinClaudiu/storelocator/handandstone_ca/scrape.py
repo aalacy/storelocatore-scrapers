@@ -18,7 +18,6 @@ def para(tup):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     k = {}
-    print(tup[1])
     page = None
     with SgRequests() as session:
         page = SgRequests.raise_on_err(session.get(tup[1], headers=headers)).text
@@ -29,7 +28,7 @@ def para(tup):
             "script", {"type": "application/ld+json", "class": False}
         )
         script = script[0]
-        data = json.loads(script.text)
+        k = json.loads(script.text)
     except Exception as e:
         logzilla.error(f"{str(e)}", exc_info=e)
         #'name'
@@ -66,7 +65,7 @@ def fetch_data():
     grabit = utils.parallelize(
         search_space=[[counter, i["url"]] for counter, i in enumerate(son)],
         fetch_results_for_rec=para,
-        max_threads=1,
+        max_threads=10,
         print_stats_interval=10,
     )
     for i in grabit:
