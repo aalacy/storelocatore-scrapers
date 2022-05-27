@@ -13,6 +13,8 @@ from tenacity import retry, stop_after_attempt
 import random
 import time
 
+session = SgRequests(proxy_country="gb", dont_retry_status_codes_exceptions=[429])
+
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
 def get_response(api_url):
