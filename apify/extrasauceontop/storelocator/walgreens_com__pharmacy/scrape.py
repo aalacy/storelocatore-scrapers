@@ -123,10 +123,10 @@ def get_data():
 
             if pharm_closed == "yes":
                 continue
-            
-            if page_url+store_number in page_urls_store_numbers:
+
+            if page_url + store_number in page_urls_store_numbers:
                 continue
-            page_urls_store_numbers.append(page_url+store_number)
+            page_urls_store_numbers.append(page_url + store_number)
 
             yield {
                 "locator_domain": locator_domain,
