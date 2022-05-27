@@ -1,91 +1,79 @@
-import csv
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.justforpetstores.co.uk"
-    api_url = "https://www.justforpetstores.co.uk/wp-admin/admin-ajax.php?action=store_search&lat=52.9547832&lng=-1.1581086&max_results=5&search_radius=50&autoload=1"
+    locator_domain = "https://justforpets.co.uk/"
+    api_url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/10020/stores.js?callback=SMcallback2"
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js_block = r.text.split("SMcallback2(")[1].split("}]})")[0].strip() + "}]}"
+    js = json.loads(js_block)
+    for j in js["stores"]:
 
-    for j in js:
-        street_address = f"{j.get('address')} {j.get('address2')}".strip()
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = j.get("country")
-        store_number = "<MISSING>"
-        page_url = j.get("permalink") or "<MISSING>"
-        location_name = j.get("store") or "<MISSING>"
+        ad = j.get("address")
+        page_url = "https://justforpets.co.uk/find-a-store/"
+        location_name = j.get("name") or "<MISSING>"
+        b = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{b.street_address_1} {b.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = b.state or "<MISSING>"
+        postal = b.postcode or "<MISSING>"
+        country_code = "UK"
+        city = b.city or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours = j.get("hours")
-        tree = html.fromstring(hours)
-        days = tree.xpath("//table")
-        tmp = []
-        for d in days:
-            day = " ".join(d.xpath(".//*/text()"))
-            tmp.append(day)
-        hours_of_operation = ";".join(tmp) or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        hours = j.get("custom_field_1")
+        if hours:
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation.split())
+                .replace("Opening Times:", "")
+                .strip()
+            )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

@@ -1,101 +1,128 @@
-import usaddress
-from sglogging import sglog
-from bs4 import BeautifulSoup
+import re
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
 
-session = SgRequests()
-website = "stopandgostores.com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+DOMAIN = "stopandgostores.com"
+BASE_URL = "https://www.stopandgostores.com"
+LOCATION_URL = "https://www.stopandgostores.com/locations"
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
 }
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+session = SgRequests()
+
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
+    soup = bs(req.content, "lxml")
+    return soup
 
 
 def fetch_data():
-    url = "https://www.stopandgostores.com/locations"
-    r = session.get(url)
-    soup = BeautifulSoup(r.text, "html.parser")
-    stores = soup.find_all("div", {"role": "gridcell"})
-    for store in stores:
-        location_name = store.find("h2").text
-        log.info(location_name)
-        temp_list = store.find_all("p")
-        if len(temp_list) > 3:
-            temp_list = temp_list[:-1]
-            phone = temp_list[-1].text
-            address = " ".join(x.text for x in temp_list[:-1])
-        elif len(temp_list) == 3:
-            phone = temp_list[-1].text
-            address = " ".join(x.text for x in temp_list[:-1])
-        elif len(temp_list) == 2:
-            temp_list = store.findAll("p")
-            address = temp_list[0].get_text(separator="|", strip=True).replace("|", " ")
-            phone = temp_list[-1].text
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("div._1ozXL")
+    for row in contents:
+        info = re.sub(
+            r"OH(\d{5})",
+            r"OH,\1",
+            row.get_text(strip=True, separator="@@").replace("\xa0", ""),
+            flags=re.IGNORECASE,
+        ).split("@@")
+        location_name = info[0].strip()
+        if len(info) > 2:
+            raw_address = ", ".join(info[1:-1]).strip()
+            phone = info[-1].strip()
         else:
-            temp_list = store.find("p").get_text(separator="|", strip=True).split("|")
-            phone = temp_list[-1]
-            address = " ".join(x for x in temp_list[:-1])
-        address = address.replace(",", " ")
-        address = usaddress.parse(address)
-        i = 0
-        street_address = ""
-        city = ""
-        state = ""
-        zip_postal = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street_address = street_address + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                zip_postal = zip_postal + " " + temp[0]
-            i += 1
+            phone = re.search(r"(\d{3,4}-\d{3,4}-\d{3,4})", info[1])
+            if phone:
+                phone = phone.group(1)
+                raw_address = info[1].replace(phone, "").strip()
+            else:
+                raw_address = info[1].strip()
+                phone = MISSING
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        store_number = MISSING
+        country_code = "US"
+        location_type = MISSING
+        latitude = MISSING
+        longitude = MISSING
+        hours_of_operation = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
-            locator_domain="https://stopandgostores.com/",
-            page_url="https://www.stopandgostores.com/locations",
-            location_name=location_name.strip(),
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
-            country_code="US",
-            store_number="<MISSING>",
-            phone=phone.strip(),
-            location_type="<MISSING>",
-            latitude="<MISSING>",
-            longitude="<MISSING>",
-            hours_of_operation="<MISSING>",
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
 def scrape():
-    log.info("Started")
+    log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

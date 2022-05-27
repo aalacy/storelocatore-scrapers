@@ -13,7 +13,7 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or ""
     state = adr.state
     postal = adr.postcode
     country = adr.country
@@ -33,14 +33,21 @@ def get_urls():
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.aman.com{slug}"
     r = session.get(page_url)
+    if r.status_code == 403:
+        return
     tree = html.fromstring(r.text)
     d = tree.xpath("//div[@class='grid grid--start']")[0]
 
     location_name = "".join(d.xpath(".//h3/text()")).strip()
     raw_address = " ".join("".join(d.xpath(".//address[not(./a)]/text()")).split())
-    if "Opening" in raw_address:
+    iscoming = tree.xpath(
+        "//h1/preceding-sibling::p[contains(text(), 'Opening') or contains(text(), 'OPENING')]"
+    )
+    if "Opening" in raw_address or "Coming" in raw_address or iscoming:
         return
     street_address, city, state, postal, country_code = get_international(raw_address)
+    if not city:
+        city = SgRecord.MISSING
     if city[0].isdigit():
         postal = city
         city = SgRecord.MISSING
@@ -71,7 +78,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker  (UK)
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+             latitude             longitude                               street_address  num_addrs
+63  51.63350897955623  -0.13538373084917701  {85 Service Rte No 2, 92 Chase Side Osidge}          2

@@ -1,87 +1,81 @@
 from bs4 import BeautifulSoup
-import csv
-import string,json
-import re, time, usaddress
-
+import re
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('juiceland_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
-def fetch_data():    
-    data = []
-    p = 0
-    url = 'https://www.juiceland.com/all-locations/'
-    r = session.get(url, headers=headers, verify=False)  
-    soup =BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find('main').findAll('h4')
-    for link in linklist:
-        title = link.text
-        link = link.find('a')['href']
-        #logger.info(link)
-        r = session.get(link, headers=headers, verify=False)  
-        soup =BeautifulSoup(r.text, "html.parser")
-        loc = str(soup).split('"locations":[',1)[1].split(']};',1)[0]
-        loc = json.loads(loc)
-        street = loc['address']
-        city = loc['city']
-        state = loc['state']
-        pcode = loc['zip']
-        lat = loc['lat']
-        longt = loc['lng']
-        store = loc['id']
-        hours = soup.find('div',{'class':'single-wpsl__right-hours'}).text.replace('\nStore Hours:\n','').replace('\n',' ').replace('\r','').strip()
+def fetch_data():
+    url = "https://www.juiceland.com/all-locations/"
+    pattern = re.compile(r"\s\s+")
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    loclist = soup.findAll("div", {"class": "location-list-block__content"})
+    for loc in loclist:
+        title = loc.find("h4").text
+
+        link = loc.find("a")["href"]
+
         try:
-            hours = hours.split('Shop')[0]
+            street = loc.find("span", {"class": "address"}).text.replace(",", "")
         except:
-            pass
-        phone = soup.find('span',{'class':'phone'}).text
-        data.append([
-                        'https://www.juiceland.com/',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                        ])
-        #logger.info(p,data[p])
-        #input()
-        p += 1
-           
-    
-            
-    return data
+            street = "<MISSING>"
+        city = loc.find("span", {"class": "city"}).text.replace(",", "")
+        state = loc.find("span", {"class": "state"}).text.replace(",", "")
+        pcode = loc.find("span", {"class": "zip"}).text.replace(",", "")
+        try:
+            phone = loc.find("span", {"class": "phone"}).text.replace(",", "")
+        except:
+
+            phone = "<MISSING>"
+        try:
+            hours = loc.find("div", {"class": "single-wpsl__right-hours"}).text.strip()
+            hours = re.sub(pattern, " ", hours).replace("Store Hours: ", "").strip()
+        except:
+            hours = "<MISSING>"
+        r = session.get(link, headers=headers)
+        try:
+            lat = r.text.split('"lat":"', 1)[1].split('"', 1)[0]
+            longt = r.text.split('"lng":"', 1)[1].split('"', 1)[0]
+        except:
+            lat = longt = "<MISSING>"
+        if "Temp Closed" in title:
+
+            hours = "Temp Closed"
+        yield SgRecord(
+            locator_domain="https://www.juiceland.com",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours.replace("\n", " ").strip(),
+        )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

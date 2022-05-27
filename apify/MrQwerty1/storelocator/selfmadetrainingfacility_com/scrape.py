@@ -5,33 +5,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
-
-
-def get_urls():
-    urls = set()
-
-    r = session.get(
-        "https://www.selfmadetrainingfacility.com/locations", headers=headers
-    )
-    tree = html.fromstring(r.text)
-    states = tree.xpath(
-        "//div[contains(@class, 'brz-row__container')]/preceding-sibling::div[1]//a[@class='brz-a']/@href"
-    )
-    for state in states:
-        url = f"https://www.selfmadetrainingfacility.com{state}"
-        req = session.get(url, headers=headers)
-        root = html.fromstring(req.text)
-        links = root.xpath(
-            "//div[contains(@class, 'brz-columns') and .//picture]//a[contains(@class, 'brz-a')]/@href"
-        )
-        for link in links:
-            link = link.strip()
-            if link == "/home" or link.find(".com") != -1:
-                continue
-            urls.add(f"https://www.selfmadetrainingfacility.com{link}")
-
-    return urls
 
 
 def get_address(line):
@@ -49,12 +22,10 @@ def get_address(line):
         "StreetNamePostType": "address1",
         "CornerOf": "address1",
         "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
         "USPSBoxGroupID": "address1",
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -65,9 +36,9 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = SgRecord.MISSING
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
     city = a.get("city")
     state = a.get("state")
     postal = a.get("postal")
@@ -75,59 +46,47 @@ def get_address(line):
     return street_address, city, state, postal
 
 
-def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath(
-            "//span[@class='brz-cp-color8' and contains(text(), 'Self Made')]/text()"
-        )
-    ).strip()
-    raw_address = "".join(
-        tree.xpath(
-            "//h4[./span[contains(text(), 'Address')]]/following-sibling::p//text()"
-        )
-    ).strip()
-    if "Soon" in raw_address:
-        return
-    street_address, city, state, postal = get_address(raw_address)
-    phone = "".join(
-        tree.xpath(
-            "//h4[./span[contains(text(), 'Phone')]]/following-sibling::p//text()"
-        )
-    ).strip()
-
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code="US",
-        phone=phone,
-        locator_domain=locator_domain,
-        raw_address=raw_address,
-    )
-
-    sgw.write_row(row)
-
-
 def fetch_data(sgw: SgWriter):
-    urls = get_urls()
+    api = "https://selfmadetrainingfacility.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
+    r = session.get(api)
+    tree = html.fromstring(r.content)
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    divs = tree.xpath("//store/item")
+    for d in divs:
+        location_name = "".join(d.xpath("./location/text()")).strip()
+        page_url = "".join(d.xpath("./website/text()"))
+        raw_address = "".join(d.xpath("./address/text()")).strip()
+        street_address, city, state, postal = get_address(raw_address)
+        store_number = "".join(d.xpath("./storeid/text()"))
+        phone = "".join(d.xpath("./telephone/text()")).strip()
+        latitude = "".join(d.xpath("./latitude/text()"))
+        longitude = "".join(d.xpath("./longitude/text()"))
+        hours_of_operation = "".join(d.xpath("./operatinghours/text()")).replace(
+            "<br>", ""
+        )
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.selfmadetrainingfacility.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+    locator_domain = "https://selfmadetrainingfacility.com/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)

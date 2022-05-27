@@ -1,21 +1,19 @@
-from sgscrape.sgrecord import SgRecord
-import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import CrawlStateSingleton
-from concurrent import futures
-from sglogging import sglog
+import json
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-locator_domain = "crocs_com"
-log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
-def get_data(coord, sgw: SgWriter):
-    lat, lng = coord
+def fetch_locations(lat, lng):
     headers = {
         "Connection": "keep-alive",
         "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
@@ -40,7 +38,7 @@ def get_data(coord, sgw: SgWriter):
                 "geoip": False,
                 "dataview": "store_default",
                 "order": "tblstoretype DESC,_distance",
-                "limit": 100000,
+                "limit": 100,
                 "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
                 "searchradius": "100",
                 "radiusuom": "mile",
@@ -63,8 +61,9 @@ def get_data(coord, sgw: SgWriter):
             data=json.dumps(data),
         ).json()["response"]["collection"]
     except:
-        return
+        return []
     weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
+    locations = []
     for loc in loclist:
         title = loc["name"]
         store = loc["clientkey"]
@@ -74,60 +73,88 @@ def get_data(coord, sgw: SgWriter):
         pcode = loc["postalcode"]
         lat = loc["latitude"]
         longt = loc["longitude"]
-        street = loc["address1"] + " " + str(loc["address2"])
-        street = street.replace("None")
+        try:
+            street = loc["address1"] + " " + str(loc["address2"])
+
+            street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
+        except:
+            return []
+        street = street.replace("None", "")
         ccode = loc["country"]
         ltype = "Outlet"
         hours = "<MISSING>"
+
         if loc["crocsoutlet"] == 0:
             ltype = "Dealer"
 
             link = "<MISSING>"
         else:
             hours = ""
-            link = (
-                "https://locations.crocs.com/" + state + "-" + city + "-" + str(store)
+            try:
+                link = (
+                    "https://locations.crocs.com/"
+                    + state
+                    + "-"
+                    + city
+                    + "-"
+                    + str(store)
+                )
+            except:
+                link = "<MISSING>"
+            try:
+                for day in weeklist:
+                    hours = hours + day + " " + loc[day] + " "
+            except:
+                hours = "<MISSING>"
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        phone = phone.replace("t. ", "").replace("?", "").strip()
+        locations.append(
+            SgRecord(
+                locator_domain="https://www.crocs.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
+                country_code=ccode,
+                store_number=str(store),
+                phone=phone,
+                location_type=ltype,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
             )
-            for day in weeklist:
-                hours = hours + day + " " + loc[day] + " "
-        yield SgRecord(
-            locator_domain="https://www.crocs.com/",
-            page_url=link,
-            location_name=title,
-            street_address=street.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=pcode.strip(),
-            country_code=ccode,
-            store_number=str(store),
-            phone=phone,
-            location_type=ltype,
-            latitude=str(lat),
-            longitude=str(longt),
-            hours_of_operation=hours,
         )
+    return locations
 
 
-def fetch_data(sgw: SgWriter):
+def fetch_data():
 
-    coords = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+    mylist = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL,
+        expected_search_radius_miles=10,
+        max_search_distance_miles=100,
+    )
+    search = list(mylist)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {
-            executor.submit(get_data, coord, sgw): coord for coord in coords
-        }
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
+        for future in as_completed(futures):
+            yield from future.result()
 
 
-if __name__ == "__main__":
+def scrape():
 
-    CrawlStateSingleton.get_instance().save(override=True)
-    session = SgRequests()
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
-        fetch_data(writer)
+
+scrape()

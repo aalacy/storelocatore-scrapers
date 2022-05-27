@@ -1,3 +1,4 @@
+import time
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -23,7 +24,8 @@ def fetch_data(sgw: SgWriter):
     base_url = "https://www.upgas.com/locations"
     with SgFirefox() as driver:
         driver.get(base_url)
-        WebDriverWait(driver, 10).until(
+        time.sleep(10)
+        WebDriverWait(driver, 30).until(
             EC.presence_of_element_located(
                 (By.XPATH, "//ul[@class='dmGeoMLocList']/li/a")
             )
@@ -43,6 +45,8 @@ def fetch_data(sgw: SgWriter):
             street_address = f"{a.street_address_1} {a.street_address_2}".replace(
                 "None", ""
             ).strip()
+            if street_address.isdigit() or street_address == "<MISSING>":
+                street_address = ad.split(",")[0].strip()
             state = a.state or "<MISSING>"
             zip_postal = a.postcode or "<MISSING>"
             country_code = "US"
