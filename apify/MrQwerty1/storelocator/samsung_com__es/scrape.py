@@ -65,6 +65,9 @@ def fetch_data(sgw: SgWriter):
             if c == "CA":
                 state = postal.split()[0]
                 postal = postal.replace(state, "").strip()
+
+            if "," in postal:
+                postal = postal.replace(",", "").strip()
             store_number = j.get("id")
             location_name = j.get("name")
             location_type = j.get("brandType")

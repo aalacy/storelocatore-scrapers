@@ -64,9 +64,6 @@ def fetch_data():
                 phone=phone.replace("\u200e", ""),
                 latitude=coord[0],
                 longitude=coord[1],
-                hours_of_operation=_.select_one("div.outlet-operating")
-                .text.split("Last")[0]
-                .strip(),
                 locator_domain=locator_domain,
                 raw_address=raw_address,
             )
