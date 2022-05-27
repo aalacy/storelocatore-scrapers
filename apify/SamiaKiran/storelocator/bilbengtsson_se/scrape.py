@@ -1,4 +1,3 @@
-import re
 import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -30,7 +29,6 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        pattern = re.compile(r"\s\s+")
         url = "https://bilbengtsson.se/kontakt"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -49,11 +47,12 @@ def fetch_data():
                 BeautifulSoup(hours_of_operation, "html.parser")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("\n", "")
             )
-            hours_of_operations = strip_accents(
-                re.sub(pattern, "\n", hours_of_operations)
-            )
-            hours_of_operations = hours_of_operations.replace("\n", " ")
+
+            hours_of_operations = hours_of_operations.split("Bilförsäljning:")[1].split(
+                "Butik"
+            )[0]
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
