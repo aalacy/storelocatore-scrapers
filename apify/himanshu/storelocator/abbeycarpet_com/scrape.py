@@ -82,7 +82,7 @@ def fetch_data(sgw: SgWriter):
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=10,
         max_search_results=5,
-        granularity=Grain_1_KM,
+        granularity=Grain_1_KM(),
     )
 
     with futures.ThreadPoolExecutor(max_workers=5) as executor:
