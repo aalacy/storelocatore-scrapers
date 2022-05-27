@@ -85,13 +85,15 @@ def fetch_data(driver):
     driver.get(page_url)
     random_sleep(driver)
     try:
-        driver.find_element_by_xpath(
-            '//a[@class="btn btn_red age_popup_btn age_popup_btn--agree"]'
+        driver.find_element(
+            by=By.XPATH,
+            value='//a[@class="btn btn_red age_popup_btn age_popup_btn--agree"]',
         ).click()
     except Exception:
         pass
-    all_regions = driver.find_elements_by_xpath(
-        '//select[@name="region"]/following-sibling::div[1]//div[@class="option"]'
+    all_regions = driver.find_elements(
+        by=By.XPATH,
+        value='//select[@name="region"]/following-sibling::div[1]//div[@class="option"]',
     )
     log.info(f"Total regions = {len(all_regions)}")
 
@@ -99,29 +101,38 @@ def fetch_data(driver):
     for region in all_regions:
         count = count + 1
         log.info(f"{count}. Scrapping region {region}")
-        all_regions = driver.find_elements_by_xpath(
-            '//select[@name="region"]/following-sibling::div[1]//div[@class="option"]'
+        all_regions = driver.find_elements(
+            by=By.XPATH,
+            value='//select[@name="region"]/following-sibling::div[1]//div[@class="option"]',
         )
 
-        driver.find_element_by_xpath('//div[@class="item_select_city"]').click()
+        driver.find_element(
+            by=By.XPATH, value='//div[@class="item_select_city"]'
+        ).click()
         try:
-            driver.find_element_by_xpath(
-                '//a[@class="btn btn_red age_popup_btn age_popup_btn--agree"]'
+            driver.find_element(
+                by=By.XPATH,
+                value='//a[@class="btn btn_red age_popup_btn age_popup_btn--agree"]',
             ).click()
         except Exception:
             pass
-        driver.find_element_by_xpath('//div[@class="item_select_city"]').click()
+        driver.find_element(
+            by=By.XPATH, value='//div[@class="item_select_city"]'
+        ).click()
         random_sleep(driver)
         all_regions[count - 1].click()
         random_sleep(driver)
-        driver.find_element_by_xpath('//div[@class="bl_selects_city"]/div[2]').click()
+        driver.find_element(
+            by=By.XPATH, value='//div[@class="bl_selects_city"]/div[2]'
+        ).click()
         random_sleep(driver)
 
         state_items = get_items(driver, MISSING)
         log.info(f"  total items from state = {len(state_items)}")
 
-        all_cities = driver.find_elements_by_xpath(
-            '//select[@name="city"]/following-sibling::div[1]//div[contains(@class,"option")]'
+        all_cities = driver.find_elements(
+            by=By.XPATH,
+            value='//select[@name="city"]/following-sibling::div[1]//div[contains(@class,"option")]',
         )
         log.info(
             f"  total items from state = {len(state_items)}; cities = {len(all_cities)}"
@@ -131,8 +142,9 @@ def fetch_data(driver):
         city_store_count = 0
         for city in all_cities:
             city_count = city_count + 1
-            all_cities = driver.find_elements_by_xpath(
-                '//select[@name="city"]/following-sibling::div[1]//div[contains(@class,"option")]'
+            all_cities = driver.find_elements(
+                by=By.XPATH,
+                value='//select[@name="city"]/following-sibling::div[1]//div[contains(@class,"option")]',
             )
 
             city_name = all_cities[city_count - 1].text.strip()
@@ -148,8 +160,8 @@ def fetch_data(driver):
             for item in city_items:
                 yield item
 
-            driver.find_element_by_xpath(
-                '//div[@class="bl_selects_city"]/div[2]'
+            driver.find_element(
+                by=By.XPATH, value='//div[@class="bl_selects_city"]/div[2]'
             ).click()
             random_sleep(driver)
 
@@ -165,7 +177,7 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     CrawlStateSingleton.get_instance().save(override=True)
     start = time.time()
-    with SgFirefox() as driver:
+    with SgFirefox(block_third_parties=False) as driver:
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
         ) as writer:
