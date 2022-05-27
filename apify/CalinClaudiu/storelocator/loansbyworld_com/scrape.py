@@ -6,6 +6,9 @@ from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from bs4 import BeautifulSoup as b4
+from sglogging import sglog
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def gimme_hours(soup):
@@ -36,8 +39,11 @@ def fetch_data():
         headers["Content-Type"] = "application/json"
         data = str('{"location":"' + f"{long}" + '","radius":1000}')
 
-        resp = session.post(url, headers=headers, data=data).json()
-        if resp["error"]:
+        resp = session.post(url, headers=headers, data=data)
+        try:
+            resp = resp.json()
+        except Exception as e:
+            logzilla.error(f"{str(url)} \n {str(e)}", exc_info=e)
             return []
         return resp["data"]
 

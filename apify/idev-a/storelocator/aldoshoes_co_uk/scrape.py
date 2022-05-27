@@ -43,6 +43,9 @@ def fetch_data():
             hours = []
             if info.select_one(".hours"):
                 hours = list(info.select_one(".hours").stripped_strings)[1:]
+            phone = ""
+            if info.select_one(".phone"):
+                phone = info.select_one(".phone").text.strip()
             yield SgRecord(
                 page_url=base_url,
                 location_name=info.select_one(".name").text.split("-")[0].strip(),
@@ -51,7 +54,7 @@ def fetch_data():
                 state=state,
                 zip_postal=info.select_one(".postal_zip").text.strip(),
                 country_code=info.select_one(".country").text.strip(),
-                phone=info.select_one(".phone").text.strip(),
+                phone=phone,
                 latitude=_["lat"],
                 longitude=_["lng"],
                 locator_domain=locator_domain,

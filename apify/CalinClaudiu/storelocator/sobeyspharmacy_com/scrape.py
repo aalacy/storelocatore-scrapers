@@ -189,13 +189,32 @@ def nice_hours(x):
     return x
 
 
+def fix_comma(x):
+    h = []
+
+    x = x.replace("None", "")
+    try:
+        x = x.split(",")
+        for i in x:
+            if len(i) > 1:
+                h.append(i)
+        h = ", ".join(h)
+    except:
+        h = x
+
+    if len(h) < 2:
+        h = SgRecord.MISSING
+
+    return h
+
+
 def scrape():
     url = "https://sobeyspharmacy.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(
             mapping=["slug"],
-            value_transform=lambda x: "https://www.sobeys.com/stores/" + x + "/",
+            value_transform=lambda x: "https://sobeyspharmacy.com/stores/" + x + "/",
         ),
         location_name=MappingField(mapping=["title", "rendered"]),
         latitude=MappingField(
@@ -215,10 +234,11 @@ def scrape():
             ],
             multi_mapping_concat_with=", ",
             part_of_record_identity=True,
+            value_transform=fix_comma,
         ),
         city=MappingField(mapping=["location", "address", "city"], is_required=False),
         state=MappingField(
-            mapping=["location", "address", "province"], is_required=False
+            mapping=["store_details", "store_sub_region", "slug"], is_required=False
         ),
         zipcode=MappingField(
             mapping=["location", "address", "postal_code"], is_required=False

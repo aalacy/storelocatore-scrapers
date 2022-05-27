@@ -10,6 +10,10 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from tenacity import retry, stop_after_attempt
+import random
+import time
+
+session = SgRequests(proxy_country="gb", dont_retry_status_codes_exceptions=[429])
 
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
@@ -33,8 +37,9 @@ class ExampleSearchIteration(SearchIteration):
     ) -> Iterable[SgRecord]:
 
         lat, lng = coord
-        api = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
-        r = get_response(api)
+        api_url = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
+        r = session.get(api_url, headers=headers)
+        time.sleep(random.randint(1, 4))
         js = r.json()
         logger.info(f"From {lat, lng} stores = {len(js)}")
         if js:
