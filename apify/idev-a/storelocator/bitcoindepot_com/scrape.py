@@ -74,7 +74,7 @@ def fetch_records(http):
 
         if street_address.endswith("USA"):
             addr = street_address.split(",")
-            street_address = ", ".join(addr[:-2])
+            street_address = ", ".join(addr[:-3])
         yield SgRecord(
             page_url=base_url,
             location_name=_["name"],
@@ -88,6 +88,7 @@ def fetch_records(http):
             country_code=country_code,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=_["address"],
         )
 
 

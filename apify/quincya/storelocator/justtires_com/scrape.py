@@ -84,13 +84,16 @@ def fetch_data(sgw: SgWriter):
 
                 req = session.get(final_link, headers=headers)
                 page = BeautifulSoup(req.text, "lxml")
-                hours_of_operation = " ".join(
-                    list(
-                        page.find(id="my-store-id")
-                        .find(class_="nav-my-store__schedule")
-                        .stripped_strings
-                    )
-                ).replace("(Holiday Hours, May 30 th ) ", "")
+                try:
+                    hours_of_operation = " ".join(
+                        list(
+                            page.find(id="my-store-id")
+                            .find(class_="nav-my-store__schedule")
+                            .stripped_strings
+                        )
+                    ).replace("(Holiday Hours, May 30 th ) ", "")
+                except:
+                    hours_of_operation = ""
 
                 sgw.write_row(
                     SgRecord(
