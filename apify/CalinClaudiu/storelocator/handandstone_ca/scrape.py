@@ -31,9 +31,6 @@ def para(tup):
         k = json.loads(script.text)
     except Exception as e:
         logzilla.error(f"{str(e)}", exc_info=e)
-        #'name'
-        #'@type'
-        #'openingHours'
         z = soup.find(
             "div", {"class": lambda x: x and all(i in x for i in ["col12", "stoney"])}
         )
