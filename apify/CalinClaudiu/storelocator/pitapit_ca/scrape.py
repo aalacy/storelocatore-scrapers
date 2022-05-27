@@ -1,20 +1,18 @@
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sgscrape.simple_scraper_pipeline import MissingField
-from sgscrape.simple_scraper_pipeline import MultiMappingField
+from sgscrape.sgwriter import SgWriter
 from sgscrape import sgpostal as parser
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from bs4 import BeautifulSoup as b4
 
 
 from sglogging import sglog
-logzilla = sglog.SgLogSetup().get_logger(logger_name='pita*2')
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="pita*2")
 
 
-def parse_soup(soup,url):
+def parse_soup(soup, url):
     page_url = SgRecord.MISSING
     location_name = SgRecord.MISSING
     street_address = SgRecord.MISSING
@@ -32,15 +30,46 @@ def parse_soup(soup,url):
 
     page_url = url
     try:
-        location_name = soup.find('div',{'class':lambda x : x and all(i in x for i in["fusion-title", "title", "fusion-title-1", "fusion-sep-none", "fusion-title-text", "fusion-title-size-one"])})
-        location_name = location_name.find('h1').text.strip()
+        location_name = soup.find(
+            "div",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-title",
+                        "title",
+                        "fusion-title-1",
+                        "fusion-sep-none",
+                        "fusion-title-text",
+                        "fusion-title-size-one",
+                    ]
+                )
+            },
+        )
+        location_name = location_name.find("h1").text.strip()
     except Exception:
         pass
 
-
     try:
-        raw_address = soup.find('div',{'class':lambda x : x and all(i in x for i in["fusion-layout-column", "fusion_builder_column", "fusion-builder-column-14", "fusion_builder_column_1_2", "1_2", "fusion-flex-column"])})
-        raw_address = ' '.join(list(raw_address.find('p').stripped_strings))
+        raw_address = soup.find(
+            "div",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-layout-column",
+                        "fusion_builder_column",
+                        "fusion-builder-column-14",
+                        "fusion_builder_column_1_2",
+                        "1_2",
+                        "fusion-flex-column",
+                    ]
+                )
+            },
+        )
+        raw_address = " ".join(list(raw_address.find("p").stripped_strings))
     except Exception:
         pass
     parsed = parser.parse_address_intl(raw_address)
@@ -54,45 +83,95 @@ def parse_soup(soup,url):
             else street_address
         )
         city = parsed.city if parsed.city else SgRecord.MISSING
-        state =  parsed.state if parsed.state else SgRecord.MISSING
+        state = parsed.state if parsed.state else SgRecord.MISSING
         zip_postal = parsed.postcode if parsed.postcode else SgRecord.MISSING
-        country_code = str(record["address"]["countryCode"])
+        country_code = parsed.country if parsed.country else SgRecord.MISSING
     except Exception:
         pass
 
     try:
-        store_number = soup.find('a',{'class':lambda x : x and all(i in x for i in["fusion-button", "button-flat", "fusion-button-default-size", "button-custom", "button-8", "fusion-button-span-no", "fusion-button-default-type", "transparent-btn-icon"])})
-        store_number = store_number.find('span').text.strip()
-        store_number = store_number.split('@',1)[0]
+        store_number = soup.find(
+            "a",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-button",
+                        "button-flat",
+                        "fusion-button-default-size",
+                        "button-custom",
+                        "button-8",
+                        "fusion-button-span-no",
+                        "fusion-button-default-type",
+                        "transparent-btn-icon",
+                    ]
+                )
+            },
+        )
+        store_number = store_number.find("span").text.strip()
+        store_number = store_number.split("@", 1)[0]
     except Exception:
         pass
     try:
-        phone = soup.find('a',{'class':lambda x : x and all(i in x for i in["fusion-button", "button-flat", "fusion-button-default-size", "button-custom", "button-7", "fusion-button-span-no", "fusion-button-default-type", "transparent-btn-icon"])})
-        phone = phone.find('span').text.strip()
+        phone = soup.find(
+            "a",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-button",
+                        "button-flat",
+                        "fusion-button-default-size",
+                        "button-custom",
+                        "button-7",
+                        "fusion-button-span-no",
+                        "fusion-button-default-type",
+                        "transparent-btn-icon",
+                    ]
+                )
+            },
+        )
+        phone = phone.find("span").text.strip()
     except Exception:
         pass
 
     try:
-        hours_of_operation = soup.find('div',{'class':lambda x : x and all(i in x for i in["fusion-layout-column", "fusion_builder_column", "fusion-builder-column-16", "fusion_builder_column_1_2", "1_2", "fusion-flex-column"])})
-        #hours_of_operation = ' '.join(list(hours_of_operation.stripped_strings))
-        hours_of_operation = hours_of_operation.find_all('p')
+        hours_of_operation = soup.find(
+            "div",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-layout-column",
+                        "fusion_builder_column",
+                        "fusion-builder-column-16",
+                        "fusion_builder_column_1_2",
+                        "1_2",
+                        "fusion-flex-column",
+                    ]
+                )
+            },
+        )
+        # hours_of_operation = ' '.join(list(hours_of_operation.stripped_strings))
+        hours_of_operation = hours_of_operation.find_all("p")
         temphr = []
         for i in hours_of_operation:
-            block = ''
-            if 'day' in i.text:
+            block = ""
+            if "day" in i.text:
                 block = i.text.strip()
-                block = block + ' '
+                block = block + " "
             if any(z.isdigit() for z in i.text):
-                block = block + '- '
+                block = block + "- "
                 block = block + i.text.strip()
             temphr.append(block)
-        hours_of_operation = ', '.join(temphr)
-                
-                
-            
+        hours_of_operation = ", ".join(temphr)
+
     except Exception:
         pass
-    
+
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
@@ -115,28 +194,49 @@ def parse_soup(soup,url):
 def fetch_data(sess):
     def search_api(session):
         url = "https://pitapit.ca/locations/"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'}
-
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+        }
 
         resp = SgRequests.raise_on_err(session.get(url, headers=headers))
-        soup = b4(resp.text, 'lxml')
-        links = soup.find_all('a', {'class':lambda x : x and all (i in x for i in["fusion-button","button-flat","fusion-button-default-size","button-custom","fusion-button-span-no","fusion-button-default-type"]),
-                                    'href': True})
+        soup = b4(resp.text, "lxml")
+        links = soup.find_all(
+            "a",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-button",
+                        "button-flat",
+                        "fusion-button-default-size",
+                        "button-custom",
+                        "fusion-button-span-no",
+                        "fusion-button-default-type",
+                    ]
+                ),
+                "href": True,
+            },
+        )
 
         for link in links:
-            if 'https://pitapit.ca/restaurants/' in link['href']:
-                yield link['href']
+            if "https://pitapit.ca/restaurants/" in link["href"]:
+                yield link["href"]
+
     def fetch_sub(session, url):
         headers = {}
-        headers["user-agent"] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
         resp = SgRequests.raise_on_err(session.get(url, headers=headers))
-        soup = b4(resp.text, 'lxml')
-        return parse_soup(soup,url)
+        soup = b4(resp.text, "lxml")
+        return parse_soup(soup, url)
 
     for result in search_api(sess):
         k = fetch_sub(sess, result)
         yield k
-   
+
+
 def fix_comma(x):
     h = []
 
