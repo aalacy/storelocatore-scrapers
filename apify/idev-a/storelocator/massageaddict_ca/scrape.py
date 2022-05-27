@@ -36,8 +36,6 @@ def fetch_data():
                     street_address += " " + addr.street_address_2
                 hours = []
                 page_url = urljoin(locator_domain, _.a["href"])
-                if "guelph-speedvalestevenson" not in page_url:
-                    continue
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers)
                 if res.status_code != 200:
