@@ -155,7 +155,7 @@ def parse_soup(soup, url):
                 )
             },
         )
-        # hours_of_operation = ' '.join(list(hours_of_operation.stripped_strings))
+
         hours_of_operation = hours_of_operation.find_all("p")
         temphr = []
         for i in hours_of_operation:
