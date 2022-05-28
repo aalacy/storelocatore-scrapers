@@ -1,0 +1,34 @@
+--ignore CountryCodeFillRateChecker (AU)
+
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+Found 1 concerning rows. Examples:
+                                        street_address              REASON  rowNumber
+103  Go41,Dfo Perth,Site 5,Air, Port West,Dunreath ...  ADDR_HAS_NO_NUMBER        103
+
+
+--ignore GeoConsistencyValidator (NOT US STATE)
+Found 14 concerning rows. Examples:
+     zip state                REASON  rowNumber
+93  6154    WA  ZIPCODE_NOT_IN_STATE         93
+94  6107    WA  ZIPCODE_NOT_IN_STATE         94
+95  6010    WA  ZIPCODE_NOT_IN_STATE         95
+96  6164    WA  ZIPCODE_NOT_IN_STATE         96
+97  6000    WA  ZIPCODE_NOT_IN_STATE         97
+
+
+--ignore CountryValidator (NOT US ZIP)
+Found 15 concerning rows. Examples:
+   state        phone   zip                  REASON  rowNumber
+39    NT  08 89452979  0810  INVALID_CA_POSTAL_CODE         39
+93    WA  08 93163704  6154          INVALID_US_ZIP         93
+94    WA  08 93582592  6107          INVALID_US_ZIP         94
+95    WA  08 92846740  6010          INVALID_US_ZIP         95
+96    WA  089 4143567  6164          INVALID_US_ZIP         96
+
+
+--ignore LatLngDuplicationValidator (Confirmed on website)
+Found 2 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude  longitude                                     street_address  num_addrs
+12  -27.49930  152.97270  {Shop 2A-081 T2 Domestic, Terminal, Syd Kingsf...          2
+49  -33.85590  151.07670  {Shop 3/031 Homebush Cnr, 3 - 5 Underwood Road...          2

@@ -1,3 +1,4 @@
+from xml.etree import ElementTree as ET
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -12,17 +13,60 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+website = "https://storelocations.ae.com"
+
+MISSING = "<MISSING>"
+
+
+def getXMLRoot(text):
+    return ET.fromstring(text)
+
+
+def getXMLObjectVariable(Object, varNames, noVal=MISSING, noText=False):
+    Object = [Object]
+    for varName in varNames.split("."):
+        value = []
+        for element in Object[0]:
+            if varName == element.tag:
+                value.append(element)
+        if len(value) == 0:
+            return noVal
+        Object = value
+
+    if noText is True:
+        return Object
+    if len(Object) == 0 or Object[0].text is None:
+        return MISSING
+    return Object[0].text
+
+
+def request_with_retries(url):
+    r = session.get(url, headers=headers)
+    return r
+
+
+def fetchStores():
+    response = request_with_retries(f"{website}/sitemap.xml")
+    data = getXMLRoot(
+        response.text.replace('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"', "")
+    )
+    links = []
+    for url in getXMLObjectVariable(data, "url", [], True):
+        links.append(getXMLObjectVariable(url, "loc"))
+    return links
+
+
+page_urls = fetchStores()
+
 
 def fetch_data():
-    locs = ["https://storelocations.ae.com/us/ky/louisville/4801/c564-outer-loop.html"]
-    url = "https://storelocations.ae.com/sitemap.xml"
-    r = session.get(url, headers=headers)
-    for line in str(r.content).split("\\n"):
-        if 'hreflang="en" href="' in line:
-            lurl = line.split('hreflang="en" href="')[1].split('"')[0]
-            count = lurl.count("/")
-            if count >= 6:
-                locs.append(lurl)
+    page_urls.append(
+        "https://storelocations.ae.com/us/ky/louisville/4801/c564-outer-loop.html"
+    )
+    locs = []
+    for page in page_urls:
+        if page.count("/") >= 6 and ".com/es/" not in page and ".com/fr/" not in page:
+            locs.append(page)
     for loc in locs:
         try:
             logger.info("Pulling Location %s..." % loc)
@@ -49,11 +93,14 @@ def fetch_data():
                         if '"intervals":' in day:
                             dname = day.split('"')[0]
                             try:
-                                hrs = (
-                                    day.split('"start":')[1].split("}")[0]
-                                    + "-"
-                                    + day.split('"end":')[1].split(",")[0]
-                                )
+                                if '"isClosed":true' in day:
+                                    hrs = "Closed"
+                                else:
+                                    hrs = (
+                                        day.split('"start":')[1].split("}")[0]
+                                        + "-"
+                                        + day.split('"end":')[1].split(",")[0]
+                                    )
                                 if hours == "":
                                     hours = dname + ": " + hrs
                                 else:
@@ -108,6 +155,44 @@ def fetch_data():
                 name = "OFFLINE"
             if "American Eagle Store" in name and "Aerie" not in name:
                 name = "American Eagle"
+            if "American Eagle Outfitters" in name and "Aerie" not in name:
+                name = "American Eagle"
+            if "Unsubscribed" in name:
+                name = "Unsubscribed"
+            add = add.replace("&amp;", "&")
+            hours = hours.replace("{:", "").strip()
+            if city == "Winnipeg":
+                add = add.replace("Suite CRU-101", "").strip()
+            if country != "CA" and country != "US":
+                state = "<MISSING>"
+            name = name.replace("&#39;", "'")
+            add = add.replace("&#39;", "'")
+            city = city.replace("&#39;", "'")
+            hours = (
+                hours.replace("1000", "10:00")
+                .replace("1030", "10:30")
+                .replace("1100", "11:00")
+                .replace("1130", "11:30")
+                .replace("1200", "12:00")
+                .replace("1230", "12:30")
+                .replace("15", "15:")
+                .replace("16", "16:")
+                .replace("17", "17:")
+                .replace("18", "18:")
+                .replace("19", "19:")
+                .replace("20", "20:")
+                .replace("21", "21:")
+                .replace("22", "22:")
+                .replace("23", "23:")
+                .replace("900", "9:00")
+                .replace("930", "9:30")
+                .replace("800", "8:00")
+                .replace("830", "8:30")
+                .replace("700", "7:00")
+                .replace("730", "7:30")
+                .replace("600", "6:00")
+                .replace("630", "6:30")
+            )
             if city != "":
                 yield SgRecord(
                     locator_domain=website,

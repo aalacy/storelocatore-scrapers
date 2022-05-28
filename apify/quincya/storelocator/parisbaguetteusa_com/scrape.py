@@ -15,13 +15,13 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://parisbaguette.com/wp-admin/admin-ajax.php?action=store_search&lat=40.51296&lng=-74.40854&max_results=500&search_radius=50&autoload=1"
 
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     stores = session.get(base_link, headers=headers).json()
 
     locator_domain = "https://parisbaguette.com"
 
     for store in stores:
-        location_name = store["store"].replace("#038;", "")
+        location_name = store["store"].replace("#038;", "").replace("&#8211;", "-")
         street_address = (store["address"] + " " + store["address2"]).strip()
         city = store["city"]
         state = store["state"]
@@ -50,6 +50,9 @@ def fetch_data(sgw: SgWriter):
                     ).stripped_strings
                 )
             ).title()
+        hours_of_operation = hours_of_operation.replace(
+            "Mon Tue Wed Thu Fri Sat Sun", ""
+        )
         latitude = store["lat"]
         longitude = store["lng"]
         if store["markup"]["coming_soon"]:

@@ -1,46 +1,24 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.odwlogistics.com"
     api_url = "https://www.odwlogistics.com/locations-and-reach"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    session = SgRequests()
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//a[text()="Learn More"]')
@@ -48,66 +26,81 @@ def fetch_data():
 
         page_url = "https://www.odwlogistics.com" + "".join(d.xpath(".//@href"))
 
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        with SgFirefox() as driver:
 
-        location_name = "".join(tree.xpath('//h2[@class="hero__title title"]/text()'))
+            driver.get(page_url)
+            driver.implicitly_wait(3)
+            driver.maximize_window()
+            driver.switch_to.frame(0)
+            try:
+                WebDriverWait(driver, 1).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, '//div[@class="address"]')
+                    )
+                )
+            except:
+                driver.switch_to.default_content()
+            try:
+                ad = driver.find_element_by_xpath('//div[@class="address"]').text
+                ll = driver.find_element_by_xpath(
+                    '//div[@class="google-maps-link"]/a'
+                ).get_attribute("href")
+            except:
+                ad = "<MISSING>"
+                ll = "<MISSING>"
+            ll = "".join(ll)
+            ad = "".join(ad)
+            driver.switch_to.default_content()
 
-        location_type = "".join(
-            tree.xpath('//ul[@class="location__specs"]/li[1]/text()')
-        ).strip()
-        street_address = (
-            "".join(tree.xpath('//ul[@class="location__specs"]/li[4]/text()'))
-            or "<MISSING>"
-        )
-        if street_address == "<MISSING>":
-            street_address = "".join(
-                tree.xpath('//ul[@class="location__specs"]/li[2]/text()')
+            location_name = driver.find_element_by_xpath(
+                '//h2[@class="hero__title title"]'
+            ).text
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
             )
-        city_state = location_name
-        if city_state.find("|") != -1:
-            city_state = city_state.split("|")[0].strip()
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "US"
+            city = a.city or "<MISSING>"
+            phone = driver.find_element_by_xpath(
+                '//ul[@class="location__specs"]//a[contains(@href, "tel")]'
+            ).text
+            location_type = driver.find_element_by_xpath(
+                '//ul[@class="location__specs"]/li[1]'
+            ).text
+            try:
+                latitude = ll.split("ll=")[1].split(",")[0].strip()
+                longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
-        state = city_state.split(",")[1].strip()
-        postal = "<MISSING>"
-        country_code = "USA"
-        city = city_state.split(",")[0].strip()
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        phone = "".join(
-            tree.xpath(
-                '//ul[@class="location__specs"]//a[contains(@href, "tel")]/text()'
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=SgRecord.MISSING,
             )
-        )
-        hours_of_operation = "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.LOCATION_TYPE})
+        )
+    ) as writer:
+        fetch_data(writer)

@@ -11,7 +11,7 @@ locator_domain = "https://www.mannings.com.hk/"
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.mannings.com.hk/store-finder/storefilter?q=&page=0&pharmacySelectedOption=&areaSelectedOption=&Selectedservices=&storetype=gnc&selectedPickableOption=&userLat=&userLong="
+    api_url = "https://www.mannings.com.hk/store-finder/storefilter?q=&page=0&pharmacySelectedOption=&areaSelectedOption=&Selectedservices=&storetype=mannings&selectedPickableOption=&userLat=&userLong="
     with SgFirefox() as driver:
         driver.get(api_url)
 
@@ -36,15 +36,20 @@ def fetch_data(sgw: SgWriter):
             location_type = "GNC"
             phone = j.get("phone")
             days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            hours_of_operation = "<MISSING>"
+            hours = j.get("openings")
             tmp = []
-            for d in days:
-                day = d
-                times = j.get("openings").get(f"{d}")
-                line = f"{day} {times}"
-                tmp.append(line)
-            hours_of_operation = (
-                "; ".join(tmp).replace("Sat  - ; Sun  -", "").strip() or "<MISSING>"
-            )
+            if hours:
+                for d in days:
+                    day = d
+                    times = j.get("openings").get(f"{d}")
+                    line = f"{day} {times}"
+                    tmp.append(line)
+                hours_of_operation = (
+                    "; ".join(tmp).replace("Sat  - ; Sun  -", "").strip() or "<MISSING>"
+                )
+            if str(location_name).find("Temporarily closed") != -1:
+                hours_of_operation = "Temporarily closed"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -68,6 +73,10 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
         fetch_data(writer)

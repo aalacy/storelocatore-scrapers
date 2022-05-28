@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -21,8 +21,9 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = f"http://gumbyspizza.com{''.join(d.xpath('.//@href'))}"
+        if page_url == "http://gumbyspizza.com/college-station":
+            page_url = "https://www.gumbyspizzaaggieland.com/store-info/"
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -48,15 +49,16 @@ def fetch_data(sgw: SgWriter):
         postal = "<MISSING>"
         country_code = "US"
         city = a.city or "<MISSING>"
-
-        if ad != ",":
+        if ad != "," and ad != "<MISSING>":
             city = ad.split(",")[0].strip()
             postal = ad.split(",")[1].strip()
-        if location_name == "Gumby's Pizza, University Of Wisconsin - Madison ":
-            state = "Wisconsin"
+        if city.find("(") != -1:
+            city = city.split("(")[0].strip()
+        if location_name.find(",") != -1 and street_address != "<MISSING>":
+            state = location_name.split(",")[-1].strip()
+        if location_name.find("Madison") != -1:
             city = "Madison"
-        if location_name.find("Gumby's Pizza,") == -1:
-            state = location_name.split(",")[1].strip()
+
         map_link = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
@@ -78,6 +80,60 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        if page_url == "https://www.gumbyspizzaaggieland.com/store-info/":
+            ad = (
+                "".join(tree.xpath('//p[./a[contains(@href, "tel")]]/text()[last()]'))
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("Address:", "")
+                .strip()
+            )
+            street_address = " ".join(ad.split(",")[0].split()[:-2]).strip()
+            city = " ".join(ad.split(",")[0].split()[-2:]).strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
+            phone = "".join(
+                tree.xpath(
+                    '//p[./a[contains(@href, "tel")]]//a[contains(@href, "tel")]/text()'
+                )
+            )
+            location_name = f"Gumby's Pizza {city}, {state}"
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//div[./p[contains(text(), "am")]]/p[contains(text(), "am")]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            map_link = "".join(tree.xpath("//iframe/@src"))
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+
+        if street_address == "<MISSING>":
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//span[text()="at"]/following-sibling::span//text() | //h1/following-sibling::text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            ad = " ".join(ad.split())
+            if ad.find("| Wings,") != -1:
+                ad = ad.split("| Wings,")[1].strip()
+            street_address = ad.split(",")[0].strip()
+            city = ad.split(",")[1].strip()
+            state = ad.split(",")[2].split()[0].strip()
+            postal = ad.split(",")[2].split()[1].strip()
+            phone = (
+                " ".join(tree.xpath("//h1/following-sibling::text()[2]"))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -102,6 +158,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)
