@@ -335,6 +335,9 @@ def initial(url, state):
                     state.push_request(
                         SerializableRequest(url=item["overviewPath"], context=item)
                     )
+    logzilla.info(f"{reqs}")
+    for i in reqs:
+        logzilla.info(f"{i.url}")
 
 
 def record_initial_requests(state):
@@ -343,6 +346,7 @@ def record_initial_requests(state):
         "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
         initial(url, state)
+    return True
 
 
 def data_fetcher(session, state):

@@ -1,8 +1,8 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import SgLogSetup
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as b4
-from cloudscraper import CloudScraper as CloudScraper
-
+import json
 
 logger = SgLogSetup().get_logger("raisingcanes_com")
 
@@ -14,19 +14,20 @@ headers = {
 def fetch_data():
     def from_sitemap(session):
         url = "https://www.raisingcanes.com/sitemap.xml"
-        data = session.get(url)
-        soup = b4(data.text, "lxml")
+        session.get(url)
+        soup = b4(session.page_source, "lxml")
         links = soup.find_all("url")
         for link in links:
             if "https://www.raisingcanes.com/location/" in link.loc.text:
                 yield link.loc.text.rsplit("/", 1)[-1]
 
-    with CloudScraper() as session:
+    with SgChrome() as session:
         for index in from_sitemap(session):
             url = str(
                 f"https://www.raisingcanes.com/page-data/location/{index}/page-data.json"
             )
-            data = session.get(url).json()
+            session.get(url)
+            data = json.loads(session.page_source)
             yield data["result"]["data"]
 
 
