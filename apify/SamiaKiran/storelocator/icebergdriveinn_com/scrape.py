@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -29,34 +29,26 @@ def fetch_data():
         )
         for loc in loclist:
             try:
-                location_name = loc.find("h3").text
+                location_name = loc.find("h3").text.replace("(Shake Shop Location)", "")
             except:
                 continue
             log.info(location_name)
-            temp = loc.findAll("div", {"data-gemlang": "en"})
-            if len(temp) == 3:
-                if "(" in temp[1].text:
-                    address = temp[1].text.split("(")
+            temp = loc.findAll("p")
+            if "Monday" in loc.text:
+                address = temp[0].text.split("(")
+                try:
                     phone = "(" + address[1]
-                    address = address[0]
-                    hours_of_operation = " ".join(
-                        x.get_text(separator="|", strip=True).replace("|", " ")
-                        for x in temp[2:]
-                    )
-                else:
-                    address = (
-                        temp[0].get_text(separator="|", strip=True).replace("|", " ")
-                    )
-                    phone = temp[1].text
-                    address = address[0]
-                    hours_of_operation = " ".join(
-                        x.get_text(separator="|", strip=True).replace("|", " ")
-                        for x in temp[2:]
-                    )
+                except:
+                    phone = MISSING
+                address = address[0]
+                hours_of_operation = " ".join(
+                    x.get_text(separator="|", strip=True).replace("|", " ")
+                    for x in temp[2:]
+                )
+
             else:
-                address = temp[1].get_text(separator="|", strip=True).split("|")
-                phone = address[-1]
-                address = " ".join(x for x in address[:-1])
+                address = temp[0].text + " " + temp[1].text
+                phone = temp[-1].text
                 hours_of_operation = MISSING
             phone = phone.replace("Delivery through DoorDash", "")
             address = address.replace(",", " ").replace("99Fillmore", "99 Fillmore")
@@ -106,18 +98,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

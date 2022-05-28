@@ -20,25 +20,36 @@ else:
 
 
 logger = SgLogSetup().get_logger("hollandandbarrett_com")
-DOMAIN = "https://www.hollandandbarrett.com"
-URL_LOCATION = "https://www.hollandandbarrett.com/stores/"
+DOMAIN = "hollandandbarrett.com"
+STORE_LOCATOR = "https://www.hollandandbarrett.com/stores/"
 MISSING = SgRecord.MISSING
+API_ENDPOINT_URL = (
+    "https://stores.assets.hollandandbarrett.com/page-data/stores/page-data.json"
+)
 
-user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-headers = {"User-Agent": user_agent}
+headers_special = {
+    "authority": "stores.assets.hollandandbarrett.com",
+    "method": "GET",
+    "path": "/page-data/stores/page-data.json",
+    "scheme": "https",
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "origin": "https://www.hollandandbarrett.com",
+    "referer": "https://www.hollandandbarrett.com/",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+}
 
-session = SgRequests()
 
-
-def get_country_code(zip_postal):
+def get_country_code(idx, zip_postal):
     pgeo_uk = pgeocode.Nominatim("GB")
     pgeo_ie = pgeocode.Nominatim("IE")
     pgeo_uk_results = pgeo_uk.query_postal_code(zip_postal)
-    logger.info(f"pgeo uk results type: {type(pgeo_uk_results)}")
+    logger.info(f"[{idx}] PgeoUKResultsType: {type(pgeo_uk_results)}")
     pgeo_uk_results_nan_replaced = pgeo_uk_results.fillna("")
-    logger.info(f"pgeo uk results type: {pgeo_uk_results_nan_replaced}")
     country_code_uk = pgeo_uk_results_nan_replaced.country_code
-    logger.info(f"Country Code UK: {country_code_uk}")
+    logger.info(f"[{idx}] CountryCodeUK: {country_code_uk}")
 
     # Netherlands Postal Code Regex Pattern
     pattern_postal_code_nl = r"^(?:NL-)?(?:[1-9]\d{3} ?(?:[A-EGHJ-NPRTVWXZ][A-EGHJ-NPRSTVWXZ]|S[BCEGHJ-NPRTVWXZ]))$"
@@ -57,7 +68,7 @@ def get_country_code(zip_postal):
         country_code_ie = pgeo_ie_results_nan_replaced.country_code
         if country_code_ie:
             country_code = country_code_ie
-            logger.info(f"Country Code for Ireland found: {country_code}")
+            logger.info(f"[{idx}] CountryCodeForIrelandFound: {country_code}")
         else:
             ccnl = re.findall(pattern_postal_code_nl, zip_postal)
             if ccnl:
@@ -72,28 +83,22 @@ def get_country_code(zip_postal):
 
 
 def fetch_data(http: SgRequests):
-    start_url = (
-        "https://cdn1.assets.hollandandbarrett.com/page-data/stores/page-data.json"
-    )
-    response = http.get(start_url, headers=headers)
+    response = http.get(API_ENDPOINT_URL, headers=headers_special)
     page_data = json.loads(response.text)
     data_json = page_data["result"]["pageContext"]["storeDetails"]
     for idx, data in enumerate(data_json[0:]):
         data_store = data["store"]
         data_store = json.loads(data_store)
-        logger.info(f"Data: {data}")
-        logger.info(f"Store Data {idx}: {data_store}\n\n")
-        locator_domain = DOMAIN
+        logger.info(f"[{idx}] StoreData {data_store}\n")
         location_name = data_store["branchName"]
         location_name = location_name if location_name else MISSING
         slug = data["slug"]
-        page_url = f"{URL_LOCATION}{slug}"
+        page_url = f"{STORE_LOCATOR}{slug}"
         street_address = data_store["addressLine1"]
         street_address = street_address if street_address else MISSING
         city_raw = data_store["town"]
         city_town = data_store["town"]
         city = city_town if city_town else MISSING
-
         state = data_store["county"]
         if state is not None:
             state = state
@@ -117,7 +122,7 @@ def fetch_data(http: SgRequests):
                 city = "Netherlands"
         zip_postal = zip_postal if zip_postal else MISSING
         if MISSING not in zip_postal:
-            country_code = get_country_code(zip_postal)
+            country_code = get_country_code(idx, zip_postal)
         else:
             country_code = MISSING
 
@@ -166,7 +171,7 @@ def fetch_data(http: SgRequests):
         if str(state) == str(0):
             state = MISSING
         yield SgRecord(
-            locator_domain=locator_domain,
+            locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,

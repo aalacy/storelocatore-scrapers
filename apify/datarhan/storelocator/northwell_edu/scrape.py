@@ -6,10 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sglogging import SgLogSetup
-from sgselenium import SgChrome, SgSelenium
-from webdriver_manager.chrome import ChromeDriverManager
-
-
 import ssl
 
 
@@ -29,16 +25,16 @@ logger = SgLogSetup().get_logger(logger_name="northwell_edu")
 start_url = "https://www.northwell.edu/api/locations/108781?browse_all=true"
 
 
-def get_headers_for(url: str) -> dict:
-    with SgChrome(executable_path=ChromeDriverManager().install()) as chrome:
-        headers = SgSelenium.get_default_headers_for(chrome, url)
-    return headers  # type: ignore
+hdr = {
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+}
 
 
 def get_api_urls():
     with SgRequests() as http:
         response = http.get(start_url, headers=hdr)
         logger.info(f"Pulling API Endpoin URLs[HTTP {response.status_code} OK!]")
+        logger.info(f"Source: {response.text}")
         data = json.loads(response.text)
         start = int(data["showing"].get("start"))
         total = data["showing"].get("total")
@@ -143,6 +139,4 @@ def scrape():
 
 
 if __name__ == "__main__":
-    hdr = get_headers_for(start_url)
-    logger.info(f"Headers: {hdr}")
     scrape()
