@@ -92,15 +92,6 @@ def fetch_data():
                 for store in stores:
                     location_name = store.find("h4").text.strip()
                     location_name = location_name.replace("&#8211;", "-")
-                    for geo in coords["pois"]:
-                        title = geo["title"]
-                        title = title.replace("&#8211;", "-")
-                        if location_name.strip() == title.strip():
-                            lat = geo["point"]["lat"]
-                            lng = geo["point"]["lng"]
-                        else:
-                            lng = MISSING
-                            lat = MISSING
                     details = store.find("p")
                     details = str(details)
                     details = details.replace("</p>", "")
@@ -132,6 +123,14 @@ def fetch_data():
                     state = parsed.state if parsed.state else "<MISSING>"
                     pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
+                    for geo in coords["pois"]:
+                        title = geo["title"]
+                        title = title.replace("&#8211;", "-")
+                        if location_name.strip() == title.strip():
+                            lat = geo["point"]["lat"]
+                            lng = geo["point"]["lng"]
+                            continue
+
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=r.url,
@@ -153,7 +152,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    deduper = SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+    )
     with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:

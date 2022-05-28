@@ -2,59 +2,64 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.timpson.co.uk/storefinder/locator/get/51.5072178/-0.1275862/1"
-    r = session.post(api, headers=headers, data=data)
-    js = r.json()["locations"]
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=200
+    )
+    for lat, lng in search:
+        api = f"https://www.timpson.co.uk/storefinder/locator/get/{lat}/{lng}/1"
+        r = session.post(api, headers=headers, data=data)
+        js = r.json()["locations"]
 
-    for j in js:
-        page_url = f'https://www.timpson.co.uk/stores/{j.get("url")}'
-        location_name = j.get("name")
-        street_address = j.get("street1")
-        city = j.get("city")
-        postal = j.get("zip")
-        store_number = j.get("store_no")
-        phone = j.get("phone")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        for j in js:
+            page_url = f'https://www.timpson.co.uk/stores/{j.get("url")}'
+            location_name = j.get("name")
+            street_address = j.get("street1")
+            city = j.get("city")
+            postal = j.get("zip")
+            store_number = j.get("store_no")
+            phone = j.get("phone")
+            latitude = j.get("lat")
+            longitude = j.get("lng")
 
-        _tmp = []
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
+            _tmp = []
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
 
-        for i in range(1, 8):
-            time = j.get(f"opening_{i}")
-            day = days[i - 1]
-            _tmp.append(f"{day}: {time}")
+            for i in range(1, 8):
+                time = j.get(f"opening_{i}")
+                day = days[i - 1]
+                _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp)
+            hours_of_operation = ";".join(_tmp)
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            zip_postal=postal,
-            country_code="GB",
-            store_number=store_number,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-        )
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code="GB",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
@@ -75,9 +80,7 @@ if __name__ == "__main__":
         "TE": "trailers",
     }
 
-    data = {"start": "3000"}
+    data = {"start": "1000"}
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)

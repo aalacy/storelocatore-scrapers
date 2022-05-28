@@ -28,6 +28,7 @@ def fetch_data():
             page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            store_number = r.text.split('"storeID":"')[1].split('"')[0]
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h2").text
             address = (
@@ -46,6 +47,8 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Currently Closed", "")
             )
+            if "Facility not staffed" in hours_of_operation:
+                hours_of_operation = MISSING
             coords = soup.find("div", {"id": "map-info"})
             latitude = coords["data-lat"]
             longitude = coords["data-lng"]
@@ -59,7 +62,7 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
                 latitude=latitude,

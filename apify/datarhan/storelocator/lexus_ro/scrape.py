@@ -1,5 +1,5 @@
-import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -19,34 +19,31 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@data-gt-action="view-dealer"]/@href')
-    for page_url in all_locations:
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
-        poi = json.loads(data)
-        hoo = loc_dom.xpath(
-            '//div[@class="c-dealer-contact-card__opening-times"]//text()'
-        )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo)
+    all_locations = dom.xpath('//div[@class="dealer-details"]')
+    for poi_html in all_locations:
+        page_url = poi_html.xpath('.//a[@data-gt-action="view-dealer"]/@href')[0]
+        page_url = urljoin(start_url, page_url)
+        location_name = poi_html.xpath(".//h2/text()")[0]
+        raw_address = poi_html.xpath('.//li[@class="address"]/text()')[0]
+        zip_code = poi_html.xpath(".//@data-gt-dealerzipcode")[0]
+        phone = poi_html.xpath('.//a[@data-gt-action="call-dealer"]/text()')
+        phone = phone[0].split(",")[0].split("/")[0] if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            location_name=location_name,
+            street_address=raw_address.split(" - ")[0],
+            city=raw_address.split(" - ")[1],
             state="",
-            zip_postal=poi["address"]["postalCode"],
+            zip_postal=zip_code,
             country_code="RO",
             store_number="",
-            phone=poi["telephone"].split(",")[0].split("/")[0],
-            location_type=poi["@type"],
-            latitude=poi["geo"]["latitude"],
-            longitude=poi["geo"]["longitude"],
-            hours_of_operation=hoo,
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
         )
 
         yield item

@@ -123,8 +123,11 @@ def fetch_data(sgw: SgWriter):
             block = "".join(
                 tree.xpath('//div[@data-module="map"]/@data-module-options')
             )
-            latitude = block.split('"lat":')[1].split(",")[0].strip()
-            longitude = block.split('"lng":')[1].split("}")[0].strip()
+            try:
+                latitude = block.split('"lat":')[1].split(",")[0].strip()
+                longitude = block.split('"lng":')[1].split("}")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
         if page_url == "https://www.culthotels.com/contact/":
             r = session.get(page_url)
             tree = html.fromstring(r.text)

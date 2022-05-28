@@ -25,23 +25,25 @@ def fetch_data(sgw: SgWriter):
     base_url = "https://www.mitsubishi-motors.ca/"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
+        "content-type": "application/json",
+        "accept": "*/*",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
     }
 
-    link = "https://www.mitsubishi-motors.ca/api/ev_dealer.json"
-    json_data = session.get(link, headers=headers).json()
+    link = "https://www-graphql.prod.mipulse.co/prod/graphql?operationName=searchDealer&variables=%7B%22latitude%22%3A45.5590338%2C%22longitude%22%3A-73.76806979999999%2C%22service%22%3A%22all%22%2C%22filters%22%3Anull%2C%22radius%22%3A5000%2C%22market%22%3A%22ca%22%2C%22language%22%3A%22en%22%2C%22path%22%3A%22%2Fca%2Fen%2Fcar-dealerships-near-me%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22f7616c572bb78067379f8499a3b1ff997833b2add64464fe1bb782821f259160%22%7D%7D"
+    json_data = session.get(link, headers=headers).json()["data"]["searchDealer"]
 
     for loc in json_data:
-        address = loc["CompanyAddress"].strip()
-        name = loc["CompanyName"].strip()
-        city = loc["CompanyCity"].strip().capitalize()
-        state = loc["ProvinceAbbreviation"].strip()
-        zipp = loc["CompanyPostalCode"].replace("S4R R8R", "S4R 0X3")
-        phone = loc["CompanyPhone"].strip()
-        lat = loc["Latitude"]
-        lng = loc["Longitude"]
-        page_url = loc["PrimaryDomain"]
-        storeno = loc["CompanyId"]
+        name = loc["name"]
+        address = loc["address"]["addressLine1"]
+        city = loc["address"]["city"]
+        state = loc["address"]["district"]
+        zipp = loc["address"]["postalArea"].replace("OL3", "0L3")
+        phone = loc["phone"]["phoneNumber"]
+        lat = loc["address"]["latitude"]
+        lng = loc["address"]["longitude"]
+        page_url = loc["url"]
+        storeno = loc["id"]
 
         hours = ""
         log.info(page_url)
@@ -345,6 +347,21 @@ def fetch_data(sgw: SgWriter):
                     pass
             if not hours:
                 try:
+                    hours = (
+                        " ".join(
+                            list(
+                                soup1.find_all(class_="space-y-4")[-1].stripped_strings
+                            )
+                        )
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                    if "lundi" not in hours.lower():
+                        hours = ""
+                except:
+                    pass
+            if not hours:
+                try:
                     if (
                         "Today"
                         in soup1.find(class_="top-bar")
@@ -367,6 +384,8 @@ def fetch_data(sgw: SgWriter):
             .replace("of Operation", "")
             .replace(":  Mon", "Mon")
             .replace("Dealership hours of operation", "")
+            .replace("& Leasing", "")
+            .replace(":  - New", "")
             .split("Tell us")[0]
             .split("Avisez-nous")[0]
             .split("See All")[0]

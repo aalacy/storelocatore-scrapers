@@ -11,7 +11,7 @@ def get_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], granularity=Grain_4()
     )
-
+    page_urls_store_numbers = []
     for search_code in search:
         if len(str(search_code)) == 4:
             search_code = "0" + str(search_code)
@@ -53,7 +53,8 @@ def get_data():
                     log.info(search_code)
                     log.info(location_name)
                     log.info(page_url)
-                    raise Exception
+                    hours = "<MISSING>"
+                    break
                 try:
                     hours_response = session.get(page_url).text
                     hours_soup = bs(hours_response, "html.parser")
@@ -122,6 +123,10 @@ def get_data():
 
             if pharm_closed == "yes":
                 continue
+
+            if page_url + store_number in page_urls_store_numbers:
+                continue
+            page_urls_store_numbers.append(page_url + store_number)
 
             yield {
                 "locator_domain": locator_domain,

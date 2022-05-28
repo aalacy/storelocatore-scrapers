@@ -92,21 +92,18 @@ def fetch_data(sgw: SgWriter):
                 else:
                     location_type = i["storeFeatureServiceType"]
                 if "GAS" in i["storeFeatureServiceType"].upper():
-                    if i["openingSchedule"]["is24Hrsand365Days"]:
-                        hours_of_operation = "24hrs Daily"
-                    else:
-                        raw_hours = i["openingSchedule"]["weekDayOpeningList"]
-                        for raw_hour in raw_hours:
-                            day = raw_hour["weekDay"]
-                            if raw_hour["closed"]:
-                                day_hours = day + " Closed"
-                            else:
-                                open_ = raw_hour["openingTime"]["formattedHour"]
-                                close = raw_hour["closingTime"]["formattedHour"]
-                                day_hours = day + " " + open_ + "-" + close
-                            hours_of_operation = (
-                                hours_of_operation + " " + day_hours
-                            ).strip()
+                    raw_hours = i["openingSchedule"]["weekDayOpeningList"]
+                    for raw_hour in raw_hours:
+                        day = raw_hour["weekDay"]
+                        if raw_hour["closed"]:
+                            day_hours = day + " Closed"
+                        else:
+                            open_ = raw_hour["openingTime"]["formattedHour"]
+                            close = raw_hour["closingTime"]["formattedHour"]
+                            day_hours = day + " " + open_ + "-" + close
+                        hours_of_operation = (
+                            hours_of_operation + " " + day_hours
+                        ).strip()
 
             if "GAS" not in location_type:
                 continue

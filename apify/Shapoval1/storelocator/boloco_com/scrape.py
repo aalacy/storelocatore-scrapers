@@ -8,76 +8,37 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.boloco.com"
-    page_url = "https://www.boloco.com/locations/"
+    locator_domain = "https://boloco.com/"
+    page_url = "https://boloco.com/locations/"
     session = SgRequests()
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./h4]")
-
+    div = tree.xpath('//span[text()="order now"]')
     for d in div:
 
-        location_name = (
-            "".join(d.xpath(".//p[1]//text() | .//p[1]/span//text()"))
-            .replace("\n", "")
-            .strip()
-        )
-        street_address = "".join(d.xpath('.//span[@class="address"]/text()'))
-        if street_address.find("OPEN") != -1:
-            street_address = street_address.split("DELIVERY")[1].strip()
-        city = "".join(d.xpath('.//span[@class="town"]/text()')).split(",")[0]
-        state = (
-            "".join(d.xpath('.//span[@class="town"]/text()')).split(",")[1].split()[0]
-        )
+        location_name = "".join(d.xpath(".//preceding::h2[1]//text()"))
+        ad = "".join(d.xpath(".//preceding::h2[1]/following::p[1]/text()[1]"))
+        street_address = " ".join(ad.split(",")[0].split()[:-1]).strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
-        postal = (
-            "".join(d.xpath('.//span[@class="town"]/text()')).split(",")[1].split()[1]
-        )
-        page_url = (
-            "".join(d.xpath('.//a[contains(text(), "DETAILS")]/@href'))
-            or "https://www.boloco.com/locations/"
-        )
-        if page_url == "http://www.boloco.com/atlantic-wharf/":
-            page_url = "https://www.boloco.com/locations/"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        city = ad.split(",")[0].split()[-1].strip()
         phone = (
-            "".join(d.xpath('.//span[@class="links"]//span[@class="phone"]/text()'))
+            "".join(d.xpath(".//preceding::h2[1]/following::p[1]/text()[2]"))
             .replace("\n", "")
-            .replace("-----", "")
-            .strip()
-        ) or "<MISSING>"
-        if phone == "<MISSING>":
-            phone = (
-                "".join(d.xpath('.//span[@class="phone"]/text()'))
-                .replace("\n", "")
-                .replace("-----", "")
-                .strip()
-            ) or "<MISSING>"
-        if phone.find("Closed") != -1:
-            phone = phone.split("Closed")[0]
-        hours_of_operation = (
-            "".join(d.xpath('.//p[.//strong[contains(text(), "Sun")]]//text()'))
-            .replace(": -", " Closed")
             .strip()
         )
-
-        hours_of_operation = " ".join(hours_of_operation.split())
-        tmp = "".join(d.xpath('.//strong[text()="CLOSED TEMPORARILY"]/text()'))
-        if tmp:
+        hours_of_operation = (
+            " ".join(d.xpath(".//preceding::p[1]//text()")).replace("\n", "").strip()
+        )
+        tmp_cls = (
+            " ".join(d.xpath(".//preceding::p[2]//text()")).replace("\n", "").strip()
+        )
+        if "hibernating" in tmp_cls:
             hours_of_operation = "Temporarily Closed"
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
-        if page_url != "https://www.boloco.com/locations/":
-            session = SgRequests()
-            r = session.get(page_url)
-            tree = html.fromstring(r.text)
-            map_link = "".join(tree.xpath("//iframe/@src"))
-            try:
-                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-            except:
-                latitude, longitude = "<MISSING>", "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -91,9 +52,10 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

@@ -18,16 +18,27 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_states = dom.xpath('//p/a[@data-brz-link-type="external"]/@href')
+    all_states = dom.xpath('//a[@class="brz-a brz-container-link"]/@href')
     for url in all_states:
         url = urljoin(start_url, url)
         response = session.get(url)
         dom = etree.HTML(response.text)
         all_locations = dom.xpath(
-            '//div[@id]/a[@data-custom-id and span and @data-brz-link-type="external"]/@href'
+            '//div[@class="brz-tabs__item--content"]//a[@data-brz-link-type="external"]/@href'
         )
-        all_locations = [e for e in all_locations if len(e.split("/")) == 5]
-        for page_url in all_locations:
+        if not all_locations:
+            all_locations = dom.xpath('//h5/a[@data-brz-link-type="external"]/@href')
+        if not all_locations:
+            all_locations = []
+            all_urls = dom.xpath(
+                '//div[@id]/a[@data-brz-link-type="external" and span]/@href'
+            )
+            for url in all_urls:
+                if url == "https://www.maplestreetbiscuits.com/":
+                    break
+                all_locations.append(url)
+
+        for page_url in list(set(all_locations)):
             if not page_url:
                 continue
             passed = True
@@ -63,7 +74,9 @@ def fetch_data():
                     '//h1[span[contains(text(), "WELCOME TO")]]/following-sibling::h1/span/text()'
                 )
             raw_data = [e.strip() for e in raw_data if e.strip()]
-            location_name = page_url.split("/")[-2].replace("-", " ").capitalize()
+            if page_url.endswith("/"):
+                page_url = page_url[:-1]
+            location_name = page_url.split("/")[-1].replace("-", " ").capitalize()
             if not raw_data:
                 street_address = "<INACCESSIBLE>"
                 city = "<INACCESSIBLE>"
@@ -82,6 +95,16 @@ def fetch_data():
                 city = raw_address[1].split(", ")[0]
                 state = raw_address[1].split(", ")[-1].split()[0]
                 zip_code = raw_address[1].split(", ")[-1].split()[-1]
+                if "No." in raw_address[1]:
+                    street_address += " " + raw_address[1]
+                    city = ""
+                    zip_code = ""
+                    state = ""
+                if "Unit" in city:
+                    street_address += " " + raw_address[1]
+                    city = ""
+                    zip_code = ""
+                    state = ""
                 phone = [e.strip() for e in raw_data if e.split("-")[0].isdigit()]
                 if not phone:
                     phone = [e.strip() for e in raw_data if "(" in e]

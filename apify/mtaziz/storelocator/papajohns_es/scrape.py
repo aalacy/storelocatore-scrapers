@@ -67,7 +67,6 @@ def get_all_api_endpoint_urls(http: SgRequests):
 
 def fetch_records():
     with SgRequests() as http:
-
         all_urls = get_all_api_endpoint_urls(http)
         for urlnum, api_endpoint_url in enumerate(all_urls[0:]):
             total_pages, data_json = get_page_count_and_store_data(
@@ -107,8 +106,14 @@ def fetch_records():
 
                 country_code = aeu_domain.split(".")[-1].upper()
                 logger.info(f"[{idx}] country_code: {country_code}")
-
-                store_number = _["zendesk_id"]
+                store_number = ""
+                if "zendesk_id" in _:
+                    store_number = _["zendesk_id"]
+                else:
+                    if "id" in _:
+                        store_number = _["id"]
+                    else:
+                        store_number = MISSING
                 logger.info(f"[{idx}] store_number: {store_number}")
 
                 phone = _["phone"]

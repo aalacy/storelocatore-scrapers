@@ -93,11 +93,14 @@ def fetch_data():
                         if '"intervals":' in day:
                             dname = day.split('"')[0]
                             try:
-                                hrs = (
-                                    day.split('"start":')[1].split("}")[0]
-                                    + "-"
-                                    + day.split('"end":')[1].split(",")[0]
-                                )
+                                if '"isClosed":true' in day:
+                                    hrs = "Closed"
+                                else:
+                                    hrs = (
+                                        day.split('"start":')[1].split("}")[0]
+                                        + "-"
+                                        + day.split('"end":')[1].split(",")[0]
+                                    )
                                 if hours == "":
                                     hours = dname + ": " + hrs
                                 else:
@@ -165,6 +168,31 @@ def fetch_data():
             name = name.replace("&#39;", "'")
             add = add.replace("&#39;", "'")
             city = city.replace("&#39;", "'")
+            hours = (
+                hours.replace("1000", "10:00")
+                .replace("1030", "10:30")
+                .replace("1100", "11:00")
+                .replace("1130", "11:30")
+                .replace("1200", "12:00")
+                .replace("1230", "12:30")
+                .replace("15", "15:")
+                .replace("16", "16:")
+                .replace("17", "17:")
+                .replace("18", "18:")
+                .replace("19", "19:")
+                .replace("20", "20:")
+                .replace("21", "21:")
+                .replace("22", "22:")
+                .replace("23", "23:")
+                .replace("900", "9:00")
+                .replace("930", "9:30")
+                .replace("800", "8:00")
+                .replace("830", "8:30")
+                .replace("700", "7:00")
+                .replace("730", "7:30")
+                .replace("600", "6:00")
+                .replace("630", "6:30")
+            )
             if city != "":
                 yield SgRecord(
                     locator_domain=website,

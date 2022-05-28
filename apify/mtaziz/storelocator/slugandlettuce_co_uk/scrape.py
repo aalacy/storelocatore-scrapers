@@ -95,13 +95,27 @@ def fetch_records(postcode, sgw: SgWriter):
                 sta = sta2
             else:
                 sta = MISSING
+            a1 = _["Address1"] or "<MISSING>"
+            a2 = _["Address2"] or "<MISSING>"
+            tc = _["TownCity"] or "<MISSING>"
+            pc = _["PostCode"] or "<MISSING>"
+            ra = f"{a1} {a2}, {tc}, {pc}"
+            ra1 = ra.replace("<MISSING>", "")
+            ra2 = ra1.split(",")
+            ra3 = [" ".join(i.split()) for i in ra2]
+            ra4 = [i for i in ra3 if i]
+            ra5 = ", ".join(ra4)
+            city = ""
+            city = _["TownCity"]
+            if " - " in city:
+                city = city.split(" - ")[0].rstrip()
 
             item = SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=_["UnitName"] or MISSING,
                 street_address=sta,
-                city=_["TownCity"] or MISSING,
+                city=city,
                 state=_["County"] or MISSING,
                 zip_postal=_["PostCode"] or MISSING,
                 country_code="GB",
@@ -111,7 +125,7 @@ def fetch_records(postcode, sgw: SgWriter):
                 latitude=_["lat"] or MISSING,
                 longitude=_["lng"] or MISSING,
                 hours_of_operation=hours_of_operation,
-                raw_address=MISSING,
+                raw_address=ra5,
             )
             sgw.write_row(item)
 
