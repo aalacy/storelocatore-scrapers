@@ -23,17 +23,16 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
     }
     all_locations = session.get(start_url, headers=hdr).json()
-
     home_url = "https://www.br.dk/kundeservice/find-din-br/"
     with SgFirefox() as driver:
         driver.get(home_url)
-        sleep(3)
+        sleep(10)
         dom = etree.HTML(driver.page_source)
         all_urls = dom.xpath('//div[@class="cta"]/a/@href')
         for url in all_urls:
             page_url = urljoin(home_url, url)
             driver.get(page_url)
-            sleep(5)
+            sleep(15)
             loc_dom = etree.HTML(driver.page_source)
             location_name = loc_dom.xpath("//h1/text()")[0]
             for e in all_locations:

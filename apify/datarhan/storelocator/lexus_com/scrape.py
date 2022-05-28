@@ -19,7 +19,7 @@ def fetch_data():
 
     for poi in data["dealers"]:
         page_url = "https://www.lexus.com/dealers/{}-{}".format(
-            poi["id"], poi["dealerName"].lower()
+            poi["id"], poi["dealerName"].lower().replace(" ", "-")
         )
         location_name = poi["dealerName"]
         street_address = poi["dealerAddress"]["address1"]
