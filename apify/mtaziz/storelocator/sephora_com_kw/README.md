@@ -1,5 +1,5 @@
-# `sephora_qa`
-`sephora_qa` crawler has been written following `sephora_cz`,
+# `sephora_com_kw` Crawler
+`sephora_com_kw` crawler has been written following `sephora_cz`,
 
 
 # NOTE ( Informational ) on `sephora_cz`
@@ -25,3 +25,4 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.sa/en/store",
     "https://www.sephora.se/butiker/",
 ] 
+
