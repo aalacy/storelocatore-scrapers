@@ -11,6 +11,15 @@ import ssl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
@@ -68,7 +77,6 @@ def get_store_urls_per_country(all_stores_url, web, domain_name, country_name):
     r = get_response_store_locator(all_stores_url)
     sel = html.fromstring(r.text, "lxml")
     links = sel.xpath('//li[contains(@data-e2e, "storeLocator-list-item")]/a/@href')
-    store_url = {}
     links_full = []
     for link in links:
         new = web + link
