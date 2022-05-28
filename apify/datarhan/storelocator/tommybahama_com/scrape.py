@@ -70,7 +70,7 @@ def fetch_data():
             street_address=street_address,
             city=city,
             state=raw_data[1].split(", ")[1].split()[0],
-            zip_postal=raw_data[1].split(", ")[1].split()[1],
+            zip_postal=" ".join(raw_data[1].split(", ")[1].split()[1:]),
             country_code=country_code,
             store_number="",
             phone=phone,
