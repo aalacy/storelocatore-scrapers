@@ -46,6 +46,12 @@ def fetch_data():
                     and "OPENING SOON" in sp2.select_one("a.overlay-btn").text
                 ):
                     continue
+
+                if (
+                    sp2.select_one("div.cms-content-custom h1")
+                    and "OPENING" in sp2.select_one("div.cms-content-custom h1").text
+                ):
+                    continue
                 _hr = sp2.find("", string=re.compile(r"^Hours"))
                 if _hr:
                     hours = list(
