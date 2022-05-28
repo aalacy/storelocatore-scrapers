@@ -101,6 +101,9 @@ def _d(page_url, res, country):
         state = sp1.select_one('meta[itemprop="addressRegion"]')["content"]
     if sp1.select_one('meta[itemprop="postalCode"]'):
         zip_postal = sp1.select_one('meta[itemprop="postalCode"]')["content"]
+
+    if "BARCELONA" == zip_postal:
+        zip_postal = ""
     return SgRecord(
         page_url=page_url,
         location_name=sp1.select_one("div.store-full-info h3").text.strip(),
@@ -132,19 +135,23 @@ def _d1(page_url, _, res, country):
     hours = [
         ": ".join(hh.stripped_strings) for hh in sp1.select("table.business_hours tr")
     ]
+    zip_postal = addr.postcode
+    if "BARCELONA" == zip_postal:
+        zip_postal = ""
     return SgRecord(
         page_url=page_url,
         location_name=_.h2.text.strip(),
         street_address=_addr[0],
         city=addr.city,
         state=addr.state,
-        zip_postal=addr.postcode,
+        zip_postal=zip_postal,
         country_code=country,
         phone=phone,
         latitude=_["data-lat"],
         longitude=_["data-lng"],
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours),
+        raw_address=" ".join(_addr),
     )
 
 
@@ -157,18 +164,22 @@ def _dd(page_url, _, country):
         phone = _addr[-1]
         del _addr[-1]
     addr = parse_address_intl(" ".join(_addr))
+    zip_postal = addr.postcode
+    if "BARCELONA" == zip_postal:
+        zip_postal = ""
     return SgRecord(
         page_url=page_url,
         location_name=_.h2.text.strip(),
         street_address=_addr[0],
         city=addr.city,
         state=addr.state,
-        zip_postal=addr.postcode,
+        zip_postal=zip_postal,
         country_code=country,
         phone=phone,
         latitude=_["data-lat"],
         longitude=_["data-lng"],
         locator_domain=locator_domain,
+        raw_address=" ".join(_addr),
     )
 
 
@@ -177,7 +188,6 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         prev_country = ""
         for cc in soup.select("div.country"):
-            continue
             country = cc.text.strip()
             if country != "Regions":
                 prev_country = country
