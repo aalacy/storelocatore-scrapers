@@ -21,7 +21,6 @@ def fetch_data():
     for poi in data["places"]["locations"]:
         page_url = poi["contacts"]["url"]
         loc_response = session.get(page_url, headers=hdr)
-        print(poi)
         city = poi["postalAddress"]["city"]
         hoo = ""
         if loc_response.status_code == 200:
