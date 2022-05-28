@@ -78,6 +78,22 @@ def fetch_data():
                     add = add.strip()
                 except:
                     add = add.strip()
+                add = (
+                    add.split("N The")[0]
+                    .replace("SUITE", "Suite")
+                    .replace("STE", "Suite")
+                    .replace("Ste", "Suite")
+                    .replace("Sumner Plaza", "")
+                    .strip()
+                )
+                if add.count("Suite") > 1:
+                    add = add[: add.rfind("Suite")].strip()
+                if add.count("Building") > 1:
+                    add = add[: add.rfind("Building")].strip()
+                if add.count("Unit") > 1:
+                    add = add[: add.rfind("Unit")].strip()
+                if add.count("# ") > 1:
+                    add = add[: add.rfind("# ")].strip()
             if "Customers:" in line2:
                 if "New Customers:" in line2:
                     phone = line2.split("New Customers:")[1].split("<")[0].strip()
@@ -95,7 +111,7 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-        hours = hours.split("; Sun")[0]
+        hours = hours.split("; Sun")[0].strip()
 
         if lat != "" and lng != "":
             search.found_location_at(lat, lng)
