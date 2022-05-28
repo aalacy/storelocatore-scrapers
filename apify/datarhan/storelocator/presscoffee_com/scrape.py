@@ -1,4 +1,5 @@
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -23,6 +24,8 @@ def fetch_data():
         if poi_html.xpath('.//p[contains(text(), "Coming Soon")]'):
             continue
 
+        page_url = poi_html.xpath('.//a[@class="btn--main"]/@href')[0]
+        page_url = urljoin(start_url, page_url)
         location_name = poi_html.xpath(".//h1/text()")[0].strip()
         raw_address = poi_html.xpath(".//h1/following-sibling::a[1]/text()")[-1].strip()
         if raw_address == "SEE MORE":
@@ -42,19 +45,13 @@ def fetch_data():
                 './/div[@class="iwt-content__content-number"]/text()'
             )
         phone = phone[-1].strip() if phone else ""
-        hoo = poi_html.xpath('.//p[strong[contains(text(), "Mon –")]]//text()')
-        if not hoo:
-            hoo = poi_html.xpath('.//p[contains(text(), "Mon ")]//text()')
-        if not hoo:
-            hoo = poi_html.xpath(
-                './/div[@class="iwt-content__content-time"]//p//text()'
-            )
+        hoo = poi_html.xpath('.//div[@class="iwt-content__content-time"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo).replace(" (Temporary)", "") if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
