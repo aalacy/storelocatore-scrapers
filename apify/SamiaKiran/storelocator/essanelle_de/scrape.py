@@ -45,7 +45,7 @@ def fetch_data():
             city = strip_accents(loc["city"])
             state = strip_accents(loc["state"])
             zip_postal = loc["zip"]
-            country_code = "US"
+            country_code = "DE"
             latitude = loc["lat"]
             longitude = loc["lng"]
             hours_of_operation = html.unescape(loc["hours"])
