@@ -29,9 +29,10 @@ MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("sephora_qa")  # noqa
 
 headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36"
 }
-MAX_WORKERS = 5
+
+MAX_WORKERS = 1
 
 LOCATION_URLS_GRID = ["https://www.sephora.qa/qa/en/store"]
 
