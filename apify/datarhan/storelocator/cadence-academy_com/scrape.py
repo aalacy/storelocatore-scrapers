@@ -76,7 +76,6 @@ def fetch_data():
             street_address = new_street_address[0]
         phone = store_dom.xpath('//div[@itemprop="telephone"]/a/text()')
         phone = phone[0] if phone else ""
-        location_type = store_dom.xpath("//li/@itemtype")[0].split("/")[-1]
         hours_of_operation = store_dom.xpath(
             '//div[@itemprop="openingHours"]/span/text()'
         )
