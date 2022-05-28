@@ -116,10 +116,10 @@ def get_hours(js1):
 
 def fetch_records(storenum, store, sgw: SgWriter):
     # Store URL example data
-    # Store URL: https://www.jdsports.co.uk/store-locator/as-gatwick-south/735/,
-    # Website: https://www.jdsports.co.uk,
-    # Domain: jdsports.co.uk,
-    # Country: UK
+    # Store URL - https://www.jdsports.co.uk/store-locator/as-gatwick-south/735/,
+    # Website - https://www.jdsports.co.uk,
+    # Domain - jdsports.co.uk,
+    # Country - UK.
     store_url, site, domain, country = store
     logger.info(f"[{storenum}] PullingContentFrom: {store_url}")
 
