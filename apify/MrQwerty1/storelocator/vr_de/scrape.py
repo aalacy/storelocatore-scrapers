@@ -35,8 +35,8 @@ def fetch_data(sgw: SgWriter):
             for day, inters in hours.items():
 
                 _t = []
-                for i in inters:
-                    _t.append(f'{"-".join(i)}')
+                for inter in inters:
+                    _t.append(f'{"-".join(inter)}')
 
                 _tmp.append(f'{day}: {"|".join(_t)}')
 
