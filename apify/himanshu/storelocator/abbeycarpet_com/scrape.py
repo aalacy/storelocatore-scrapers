@@ -48,7 +48,6 @@ def get_data(zipps, sgw: SgWriter):
 
             page_url = api_url
             location_name = "".join(d.xpath("./p[1]/text()")) or "<MISSING>"
-            print(location_name)
             street_address = "".join(d.xpath("./p[2]/text()")) or "<MISSING>"
             ad = "".join(d.xpath("./p[3]/text()"))
             city = ad.split(",")[0].strip()
