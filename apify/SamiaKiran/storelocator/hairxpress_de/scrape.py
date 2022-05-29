@@ -40,7 +40,7 @@ def fetch_data():
                 street_address = loc["street"] + " " + loc["street2"]
             except:
                 street_address = loc["street"]
-            street_address = strip_accents(street_address)
+            street_address = html.unescape((strip_accents(street_address)))
             log.info(location_name)
             city = strip_accents(loc["city"])
             state = strip_accents(loc["state"])
