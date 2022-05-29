@@ -48,6 +48,7 @@ def get_data(zipps, sgw: SgWriter):
 
             page_url = api_url
             location_name = "".join(d.xpath("./p[1]/text()")) or "<MISSING>"
+            print(location_name)
             street_address = "".join(d.xpath("./p[2]/text()")) or "<MISSING>"
             ad = "".join(d.xpath("./p[3]/text()"))
             city = ad.split(",")[0].strip()
@@ -80,12 +81,12 @@ def get_data(zipps, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
+        max_search_distance_miles=1,
         max_search_results=5,
         granularity=Grain_1_KM(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()
