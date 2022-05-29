@@ -39,6 +39,8 @@ def fetch_data():
                 loc.get_text(separator="|", strip=True).split("|")[0]
             )
             page_url = loc.findAll("a")[-1]["href"]
+            if "beautyhairshop" in page_url:
+                continue
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
