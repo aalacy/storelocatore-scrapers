@@ -23,7 +23,7 @@ def fetch_data():
             SearchableCountries.GERMANY,
             SearchableCountries.POLAND,
         ],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=100,
     )
     for lat, lng in all_coords:
         start_url = f"https://back-scus.azurewebsites.net/branch-locator/find/defaultView?config=%7B%22coords%22%3A%5B{lat}%2C{lng}%5D%7D&globalSearch=true"
