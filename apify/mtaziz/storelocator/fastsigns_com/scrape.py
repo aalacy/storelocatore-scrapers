@@ -58,7 +58,6 @@ def get_hours(page_url_, xpath_hours):
 def fetch_records(storenum, _, sgw: SgWriter):
     purl = _["page_url"]
     logger.info(f"[{storenum}] Pulling the hours from {purl}")
-    # xpath_extended_hours = '//*[contains(@id, "ExtendedHours")]/div[@class="popup"]/ul/li'
     xpath_extended_hours = '//ul[li[*[contains(text(), "Monday")]]]/li'
     hours_of_operation = get_hours(purl, xpath_extended_hours)
     if "Coming Soon" in _["hours_of_operation"]:
