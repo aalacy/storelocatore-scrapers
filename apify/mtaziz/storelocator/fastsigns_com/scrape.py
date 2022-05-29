@@ -33,13 +33,11 @@ headers_c = {
 }
 
 
-def get_hours(page_url_):
+def get_hours(page_url_, xpath_hours):
     with SgRequests() as s1:
         rpg = s1.get(page_url_, headers=headers_c)
         data_app_json = html.fromstring(rpg.text, "lxml")
-        hours_popup = data_app_json.xpath(
-            '//*[@id="OfficeInfo_ExtendedHours"]/div[@class="popup"]/ul/li'
-        )
+        hours_popup = data_app_json.xpath(xpath_hours)
         hours_ = []
         for hpop in hours_popup:
             dtime = hpop.xpath(".//text()")
@@ -53,7 +51,10 @@ def get_hours(page_url_):
 def fetch_records(storenum, _, sgw: SgWriter):
     purl = _["page_url"]
     logger.info(f"[{storenum}] Pulling the hours from {purl}")
-    hours_of_operation = get_hours(purl)
+    xpath_extended_hours = (
+        '//*[contains(@id, "ExtendedHours")]/div[@class="popup"]/ul/li'
+    )
+    hours_of_operation = get_hours(purl, xpath_extended_hours)
     if "Coming Soon" in _["hours_of_operation"]:
         hours_of_operation = "Coming Soon"
     item = SgRecord(
