@@ -1,7 +1,4 @@
-import html
-import unicodedata
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -9,56 +6,51 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "hairxpress_de"
+website = "oncueexpress_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://www.hairxpress.de"
+DOMAIN = "https://oncueexpress.com"
 MISSING = SgRecord.MISSING
-
-
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
 
 
 def fetch_data():
     if True:
-        url = "https://www.hairxpress.de/wp-content/plugins/store-locator/sl-xml.php"
+        url = "https://oncueexpress.com/locations/"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("marker")
+        token = r.text.split('"nonce":"')[2].split('"')[0]
+        api_url = (
+            "https://oncueexpress.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce="
+            + token
+            + "&lang=&load_all=1&layout=1"
+        )
+        loclist = session.get(api_url, headers=headers).json()
         for loc in loclist:
-            location_name = strip_accents(loc["name"])
-            phone = loc["phone"]
-            try:
-                street_address = loc["street"] + " " + loc["street2"]
-            except:
-                street_address = loc["street"]
-            street_address = html.unescape((strip_accents(street_address)))
+            location_name = loc["title"]
             log.info(location_name)
-            city = strip_accents(loc["city"])
-            state = strip_accents(loc["state"])
-            zip_postal = loc["zip"]
-            country_code = "DE"
+            store_number = loc["id"]
+            phone = loc["phone"]
+            street_address = loc["street"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["postal_code"]
+            country_code = "US"
             latitude = loc["lat"]
             longitude = loc["lng"]
-            hours_of_operation = html.unescape(loc["hours"])
+            hours_of_operation = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://www.hairxpress.de/#salonfinder",
+                page_url=url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
                 state=state,
                 zip_postal=zip_postal,
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone,
                 location_type=MISSING,
                 latitude=latitude,
@@ -71,7 +63,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
