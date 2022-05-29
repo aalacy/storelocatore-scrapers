@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sglogging import sglog
 
+
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
     max_search_results=45,
@@ -60,6 +61,7 @@ def fetch_data():
             country_code = "US"
             latitude = loc["latitude"]
             longitude = loc["longitude"]
+            search.found_location_at(latitude, longitude)
             phone = loc["phone"]
             hour_list = loc["operations"]
             hours_of_operation = ""
@@ -67,6 +69,15 @@ def fetch_data():
                 day = hour["day"]
                 time = hour["hour"]
                 hours_of_operation = hours_of_operation + " " + day + " " + time
+
+            if hours_of_operation == "":
+                hour_list = loc["showroom"]
+                hours_of_operation = ""
+                for hour in hour_list:
+                    day = hour["day"]
+                    time = hour["hour"]
+                    hours_of_operation = hours_of_operation + " " + day + " " + time
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

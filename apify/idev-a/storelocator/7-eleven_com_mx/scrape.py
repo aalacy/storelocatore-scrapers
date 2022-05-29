@@ -1,7 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
@@ -35,23 +34,23 @@ def fetch_data():
         driver.get(base_url)
         locations = json.loads(bs(driver.page_source, "lxml").text)["results"]
         for _ in locations:
-            addr = parse_address_intl(_["full_address"] + ", Mexico")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            addr = _["full_address"].replace("S/N", "").split(",")
+            if "C.P" in addr[-1] or addr[-1].strip().isdigit():
+                zip_postal = addr[-1].replace("C.P.", "").replace("C.P", "")
+                del addr[-1]
             yield SgRecord(
                 store_number=_["id"],
                 location_name=_["name"],
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                street_address=", ".join(addr[:-2]),
+                city=addr[-2].strip(),
+                state=addr[-1].strip(),
+                zip_postal=zip_postal,
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 country_code="Mexico",
                 locator_domain=locator_domain,
                 hours_of_operation=_["open_hours"],
-                raw_address=_["full_address"],
+                raw_address=_["full_address"].replace("S/N", ""),
             )
 
 

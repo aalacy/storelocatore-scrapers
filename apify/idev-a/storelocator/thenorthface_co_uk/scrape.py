@@ -58,27 +58,53 @@ def revert_c_map(val):
 def _v(val):
     if val:
         return (
-            val.replace("&#xe5;", "å")
-            .replace("&#xe4;", "ä")
+            val.replace("&#xa0;", " ")
+            .replace("&#xa0", " ")
+            .replace("&#xb0;", "°")
+            .replace("&#xb4;", "'")
+            .replace("&#xba;", "º")
+            .replace("&#xc1;", "Á")
+            .replace("&#xc2;", "Â")
+            .replace("&#xc3;", "Ã")
             .replace("&#xc4;", "Ä")
             .replace("&#xc5;", "Å")
-            .replace("&#xdf;", "ß")
-            .replace("&#xfc;", "ü")
-            .replace("&#xdc;", "Ü")
-            .replace("&#xb0;", "°")
-            .replace("&#x93;", '"')
-            .replace("&#x94;", '"')
-            .replace("&#xf2;", "ò")
-            .replace("&#xf3;", "ó")
             .replace("&#xc7;", "Ç")
+            .replace("&#xc8;", "È")
+            .replace("&#xc9;", "É")
+            .replace("&#xdf;", "ß")
+            .replace("&#xdc;", "Ü")
             .replace("&#xd6;", "Ö")
+            .replace("&#xd7;", "×")
+            .replace("&#xd8;", "Ø")
+            .replace("&#xe0;", "à")
+            .replace("&#xe1;", "á")
+            .replace("&#xe2;", "â")
+            .replace("&#xe3;", "ã")
+            .replace("&#xe4;", "ä")
+            .replace("&#xe5;", "å")
+            .replace("&#xe6;", "æ")
             .replace("&#xe7;", "ç")
             .replace("&#xe8;", "è")
-            .replace("&#xf6;", "ö")
             .replace("&#xe9;", "é")
+            .replace("&#xf2;", "ò")
+            .replace("&#xf3;", "ó")
+            .replace("&#xf6;", "ö")
+            .replace("&#xf7;", "÷")
+            .replace("&#xf8;", "ø")
+            .replace("&#xf9;", "ù")
+            .replace("&#xf1;", "ñ")
+            .replace("&#xfa;", "ú")
+            .replace("&#xfb;", "û")
+            .replace("&#xfc;", "ü")
             .replace("&#xfd;", "ý")
+            .replace("&#x85;", "...")
+            .replace("&#x92;", "'")
+            .replace("&#x93;", '"')
+            .replace("&#x94;", '"')
+            .replace("&#x96;", "-")
             .replace("&#x9a;", "š")
             .replace("&amp;", "&")
+            .strip()
         )
     else:
         return ""
@@ -123,7 +149,7 @@ class ExampleSearchIteration(SearchIteration):
                     location_type = "the north face outletstore"
 
                 phone = (
-                    _.phone.text.strip().split("or")[0].split(";")[0].split("and")[0]
+                    _.phone.text.strip().split("or")[0].split("and")[0]
                     if _.phone is not None and _.phone.text.strip() != "TBD"
                     else "<MISSING>"
                 )
@@ -156,12 +182,12 @@ class ExampleSearchIteration(SearchIteration):
                     state=_v(state),
                     zip_postal=_.postalcode.text.strip(),
                     country_code=_.country.text.strip(),
-                    phone=phone,
+                    phone=_v(phone).split(";")[0],
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours).replace("---", ", "),
+                    hours_of_operation=_v("; ".join(hours).replace("---", ", ")),
                 )
 
 
