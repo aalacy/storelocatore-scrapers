@@ -106,8 +106,11 @@ def fetch_locations(lat, lng):
                     hours = hours + day + " " + loc[day] + " "
             except:
                 hours = "<MISSING>"
-        phone = phone.replace("t. ", "").replace("?", "").strip()
-        if len(phone) < 3:
+        try:
+            if len(phone) < 3:
+                phone = "<MISSING>"
+            phone = phone.replace("t. ", "").replace("?", "").strip()
+        except:
             phone = "<MISSING>"
         locations.append(
             SgRecord(

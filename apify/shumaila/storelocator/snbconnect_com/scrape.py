@@ -22,6 +22,7 @@ def fetch_data():
     statelist = soup.find("table", {"class": "Table-Staff-3Column"}).findAll("td")
     for state in statelist:
         link = state.find("a", {"class": "Button2"})["href"]
+
         state = state.find("h2").text
         r = session.get(link, headers=headers)
 
@@ -139,25 +140,30 @@ def fetch_data():
                     hours_of_operation=hours,
                 )
         if len(loclist) == 0:
-            loclist = soup.text.split("Location and Hours", 1)[1]
-            loc = (
-                re.sub(pattern, "\n", loclist)
-                .strip()
-                .split("24 HOUR ATM", 1)[0]
-                .splitlines()
-            )
 
-            m = 0
             title = "SECURITY NATIONAL BANK OF TEXAS"
             try:
-                phone = loc[m].split(" at ", 1)[1]
+                phone = (
+                    soup.text.split("Phone: ", 1)[1]
+                    .split("|", 1)[0]
+                    .strip()
+                    .replace("\n", "")
+                )
             except:
-                m = m + 1
-                phone = loc[m].split(" at ", 1)[1]
-            m = m + 1
-            hours = loc[1]
-            m = m + 1
-            address = loc[m].split(", ")
+                phone = "<MISSING>"
+            try:
+                hours = (
+                    soup.text.split("Hours: ", 1)[1]
+                    .split("In", 1)[0]
+                    .strip()
+                    .replace("\n", "")
+                )
+            except:
+                hours = "<MISSING>"
+            address = soup.text.split("LOCATED AT THE UNION:", 1)[1].split(
+                "Security", 1
+            )[0]
+            address = address.split(", ")
 
             state = address[-1]
             city = address[-2]
