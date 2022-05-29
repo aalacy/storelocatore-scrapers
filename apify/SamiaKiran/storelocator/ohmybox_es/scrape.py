@@ -1,4 +1,3 @@
-import json
 import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
