@@ -62,13 +62,13 @@ def format_store_locator_url():
 
 
 def get_response_store(url):
-    with SgRequests() as http:
+    with SgRequests(proxy_country="us") as http:
         r = http.get(url, headers=headers)
         return r
 
 
 def get_response_store_locator(url):
-    with SgRequests() as http:
+    with SgRequests(proxy_country="us") as http:
         r = http.get(url, headers=headers)
         return r
 
