@@ -1,4 +1,3 @@
-import tenacity
 from typing import Iterable, Tuple, Callable
 
 from sglogging import sglog
@@ -9,17 +8,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from tenacity import retry, stop_after_attempt
 
+import random
+import time
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
-def get_response(api_url):
-    with SgRequests() as http:
-        response = http.get(api_url, headers=headers)
-        logger.info(f"HTTP STATUS Return: {response.status_code}")
-        if response.status_code == 200:
-            return response
-        raise Exception(f"HTTP Error Code: {response.status_code}")
+session = SgRequests()
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -33,10 +26,13 @@ class ExampleSearchIteration(SearchIteration):
     ) -> Iterable[SgRecord]:
 
         lat, lng = coord
-        api = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
-        r = get_response(api)
+        api_url = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
+        r = session.get(api_url, headers=headers)
+        time.sleep(random.randint(1, 3))
         js = r.json()
-        logger.info(f"From {lat, lng} stores = {len(js)}")
+        logger.info(
+            f"From {current_country}:: {lat, lng} stores = {len(js)}, Response: {r.status_code}"
+        )
         if js:
             for j in js:
                 location_name = j.get("name")
@@ -47,10 +43,10 @@ class ExampleSearchIteration(SearchIteration):
                 if "-" in postal:
                     postal = SgRecord.MISSING
                 country = j.get("country_code")
-                logger.info(f"Country code: {country}")
                 phone = j.get("telephone")
                 latitude = j.get("lat")
                 longitude = j.get("lng")
+                found_location_at(latitude, longitude)
 
                 _tmp = []
                 hours = j.get("opening_hours") or []
@@ -120,9 +116,6 @@ if __name__ == "__main__":
                 "NL",
                 "NZ",
                 "PL",
-                "RU",
-                "SA",
-                "TR",
                 "ZA",
             ],
         )

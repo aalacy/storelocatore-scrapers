@@ -20,37 +20,58 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@data-gt-action="view-dealer"]/@href')
-    for url in all_locations:
+    all_locations = dom.xpath('//div[@class="dealer-details"]')
+    for poi_html in all_locations:
+        url = poi_html.xpath(".//a[@data-gt-dealername]/@href")[-1]
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
         data = loc_dom.xpath('//script[contains(text(), "address")]/text()')
-        if not data:
-            continue
-        poi = json.loads(data[0])
-        hoo = loc_dom.xpath(
-            '//h3[label[contains(text(), "Showroom")]]/following-sibling::ul[1]//text()'
-        )
-        hoo = [e.replace("&nbsp", "").strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo).split("   Åpningstider")[0].replace("I dag: ", "").strip()
-        if hoo == "Åpningstider Mandag  Tirsdag  Onsdag  Torsdag  Fredag  lørdag":
-            hoo = ""
+        hoo = ""
+        if data:
+            poi = json.loads(data[0])
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            phone = poi["telephone"]
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+            hoo = loc_dom.xpath(
+                '//h3[label[contains(text(), "Showroom")]]/following-sibling::ul[1]//text()'
+            )
+            hoo = [e.replace("&nbsp", "").strip() for e in hoo if e.strip()]
+            hoo = (
+                " ".join(hoo).split("   Åpningstider")[0].replace("I dag: ", "").strip()
+            )
+            if hoo == "Åpningstider Mandag  Tirsdag  Onsdag  Torsdag  Fredag  lørdag":
+                hoo = ""
+        else:
+            location_name = poi_html.xpath(".//h2/text()")[0]
+            raw_address = poi_html.xpath('.//li[@class="address"]/text()')[0].strip()
+            street_address = raw_address.split("-")[0]
+            city = raw_address.split("-")[1]
+            zip_code = ""
+            phone = ""
+            location_type = ""
+            latitude = ""
+            longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
             state="",
-            zip_postal=poi["address"]["postalCode"],
+            zip_postal=zip_code,
             country_code="NO",
             store_number="",
-            phone=poi["telephone"],
-            location_type=poi["@type"],
-            latitude=poi["geo"]["latitude"],
-            longitude=poi["geo"]["longitude"],
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 
