@@ -61,7 +61,11 @@ def fetch_data(sgw: SgWriter):
                 continue
             city = csz.split(",")[0].strip()
             csz = csz.split(",")[1].strip()
-            state, postal = csz.split()
+            try:
+                state, postal = csz.split()
+            except:
+                state = csz
+                postal = SgRecord.MISSING
             phone = "".join(
                 d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")
             ).strip()
