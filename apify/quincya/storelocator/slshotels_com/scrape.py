@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
 
     items = base.find_all(class_="card__link btn btn--primary")
-    locator_domain = "sbe.com"
+    locator_domain = "https://slshotels.com/"
 
     for item in items:
         link = "https://www.sbe.com" + item["href"]
@@ -36,12 +36,22 @@ def fetch_data(sgw: SgWriter):
         if "coming soon" in location_name.lower():
             continue
         country_code = store["address"]["addressCountry"]
-        if country_code not in ["US", "CA"]:
-            continue
-        street_address = store["address"]["streetAddress"]
-        city = store["address"]["addressLocality"]
+        street_address = (
+            store["address"]["streetAddress"].replace("“", "").replace("”", "")
+        )
+        try:
+            city = store["address"]["addressLocality"]
+        except:
+            city = ""
         state = store["address"]["addressRegion"]
-        zip_code = store["address"]["postalCode"]
+        try:
+            zip_code = store["address"]["postalCode"]
+        except:
+            zip_code = ""
+
+        if "Dubai" in location_name:
+            city = "Dubai"
+            state = ""
 
         store_number = "<MISSING>"
         location_type = "<MISSING>"
@@ -62,6 +72,9 @@ def fetch_data(sgw: SgWriter):
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
+        if len(latitude) > 50:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
         sgw.write_row(
             SgRecord(
