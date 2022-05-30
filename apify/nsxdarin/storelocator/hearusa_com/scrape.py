@@ -84,16 +84,14 @@ def fetch_data():
                     .replace("STE", "Suite")
                     .replace("Ste", "Suite")
                     .replace("Sumner Plaza", "")
+                    .replace("313 #313", "313")
+                    .replace("B2 Unit B-2", "B2")
                     .strip()
                 )
-                if add.count("Suite") > 1:
-                    add = add[: add.rfind("Suite")].strip()
-                if add.count("Building") > 1:
-                    add = add[: add.rfind("Building")].strip()
-                if add.count("Unit") > 1:
-                    add = add[: add.rfind("Unit")].strip()
-                if add.count("# ") > 1:
-                    add = add[: add.rfind("# ")].strip()
+                words = ["Suite", "Building", "#", "Unit", "C-", "B-"]
+                for word in words:
+                    if add.count(word) > 1:
+                        add = add[: add.rfind(word)].strip()
             if "Customers:" in line2:
                 if "New Customers:" in line2:
                     phone = line2.split("New Customers:")[1].split("<")[0].strip()
