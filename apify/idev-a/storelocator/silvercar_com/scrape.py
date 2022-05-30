@@ -26,31 +26,27 @@ def fetch_data():
             page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = [
-                aa.text.strip()
-                for aa in sp1.find(
-                    "h6", string=re.compile(r"^Address$")
-                ).find_next_siblings()
-            ]
-            _p = sp1.find("h6", string=re.compile(r"^Phone$"))
+            addr = link.select_one("span.address").text.strip().split(",")
+            _p = sp1.find("h3", string=re.compile(r"^Phone$"))
             phone = ""
             if _p and _p.find_next_sibling():
                 phone = _p.find_next_sibling().text.strip()
             hours = []
-            _hr = sp1.find("h6", string=re.compile(r"^Hours$"))
+            _hr = sp1.find("h3", string=re.compile(r"^Hours$"))
             if _hr:
                 hours = list(_hr.find_next_sibling().stripped_strings)
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.select_one("span.name").text.strip(),
                 street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split()[0].strip(),
-                zip_postal=addr[1].split(",")[1].strip().split()[-1].strip(),
+                city=addr[1].strip(),
+                state=addr[1].strip().split()[0].strip(),
+                zip_postal=addr[1].strip().split()[-1].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=", ".join(addr),
             )
 
 

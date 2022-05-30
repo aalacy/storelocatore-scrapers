@@ -1,10 +1,10 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -17,7 +17,9 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="span4 ba-grid-column-wrapper"]')
+    div = tree.xpath(
+        '//div[@class="span4 ba-grid-column-wrapper ba-tb-la-4 ba-sm-pt-12"]'
+    )
     for d in div:
 
         page_url = "https://www.tacobellbrasil.com.br/lojas"
