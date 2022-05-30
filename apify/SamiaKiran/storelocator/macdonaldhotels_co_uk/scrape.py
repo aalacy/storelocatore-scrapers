@@ -48,7 +48,10 @@ def fetch_data():
                     .replace("|", " ")
                 )
             except:
-                location_name = soup.find("h1").text
+                try:
+                    location_name = soup.find("h1").text
+                except:
+                    location_name = loc.find("h4").text
             raw_address = (
                 soup.find("div", {"class": "infoPanel__address"})
                 .find("p")
