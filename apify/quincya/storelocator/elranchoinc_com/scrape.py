@@ -1,50 +1,23 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://elranchoinc.com/wp-admin/admin-ajax.php"
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    data = []
     payload = {
         "lat": "31.9685988",
         "lng": "-99.9018131",
@@ -91,6 +64,14 @@ def fetch_data():
             zip_code = city_line[1].split()[1].strip()
         except:
             zip_code = "<MISSING>"
+        if not city:
+            city = street_address.split()[-1]
+            if "Worth" in city or "Prairie" in city or "Branch" in city:
+                city = " ".join(street_address.split()[-2:])
+            if "Houston" in street_address:
+                city = "Houston"
+            street_address = street_address[: street_address.rfind(city)].strip()
+
         country_code = "US"
         store_number = item["id"]
         location_type = "<MISSING>"
@@ -98,36 +79,30 @@ def fetch_data():
             phone = item.find(class_="wpsl-phone").text.strip()
         except:
             phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = "<INACCESSIBLE>"
         latitude = store["lat"]
         longitude = store["lng"]
         link = "https://elranchoinc.com/stores-2/"
 
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

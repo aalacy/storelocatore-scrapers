@@ -18,9 +18,7 @@ def fetch_data():
     states = []
     locs = []
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if (
             '<option value="' in line
             and '<option value=""' not in line
@@ -29,20 +27,20 @@ def fetch_data():
             states.append(line.split('<option value="')[1].split('"')[0])
     for state in states:
         logger.info(("Pulling Province %s..." % state))
-        findurl = (
-            "https://www.journeys.ca/stores?StateOrProvince="
-            + state
-            + "&PostalCode=&MileRadius=&Latitude=&Longitude=&Mode=search"
-        )
-        r2 = session.get(findurl, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        findurl = "https://www.journeys.ca/stores"
+        payload = {
+            "StateOrProvince": state,
+            "PostalCode": "",
+            "MileRadius": 5,
+            "Latitude": "",
+            "Longitude": "",
+            "Mode": "search",
+        }
+        r2 = session.post(findurl, headers=headers, data=payload)
+        for line2 in r2.iter_lines():
             if 'class="store-name">' in line2:
                 sname = line2.split('">')[1].split("#")[0].strip()
-                surl = (
-                    "https://www.journeys.ca" + line2.split('href="')[1].split('"')[0]
-                )
+                surl = line2.split('href="')[1].split('"')[0]
                 if surl not in locs:
                     locs.append(surl + "|" + sname)
     for loc in locs:
@@ -51,10 +49,8 @@ def fetch_data():
         name = loc.split("|")[1]
         purl = loc.split("|")[0]
         typ = loc.split("|")[1]
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
         AFound = False
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         website = "journeys.ca"
         add = ""
         hours = ""
@@ -88,6 +84,7 @@ def fetch_data():
                 lat = "<MISSING>"
                 lng = "<MISSING>"
         add = add.strip()
+        name = "JOURNEYS #" + store
         yield SgRecord(
             locator_domain=website,
             page_url=purl,

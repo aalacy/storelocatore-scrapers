@@ -18,8 +18,14 @@ Please crawl arco.co.uk. We only want their own stores, not stores that carry th
 
 - extra data field is "Arco Store"
 
-## RND
+## RND 
 
 - found 47 stores here as of 7th July 2021 
 - did not find state names, all data are present there except in 1 store: https://www.arco.co.uk/branchloc/branch/3
 - added extra field "Arco Store" (I think the name is mis-spelled in `Description`) where "Acro Store" in location_name
+
+## Updated: 
+- Website updated so it needed rewrite 
+- Found 44 stores as of 4th Nov 2021
+- API endpoint https://www.arco.co.uk/store-finder?q=&page=0&productCode=&show=All&fetchAll=true 
+- Not applicable `"Acro Store" with values "Yes" or "No";` and extra data field 

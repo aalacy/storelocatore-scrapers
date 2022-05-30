@@ -1,3 +1,4 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -32,32 +33,81 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.findAll("div", {"class": "et_pb_blurb_container"})
-            hours_of_operation = (
-                temp[0]
-                .find("table")
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
+            try:
+                hours_of_operation = (
+                    temp[0]
+                    .find("table")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            except:
+                hours_of_operation = (
+                    soup.find(
+                        "div",
+                        {
+                            "class": "et_pb_with_border et_pb_module dipl_business_hours dipl_business_hours_0"
+                        },
+                    )
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            try:
+                phone = temp[1].findAll("tr")[1].findAll("td")[1].text
+            except:
+                phone = (
+                    soup.findAll("div", {"class": "et_pb_text_inner"})[-2]
+                    .find("p")
+                    .get_text(separator="|", strip=True)
+                    .split("|")[0]
+                )
             phone = (
-                temp[1]
-                .findAll("tr")[1]
-                .findAll("td")[1]
-                .text.replace("(Press1)", "")
+                phone.replace("(Press1)", "")
                 .replace("(CAFE)", "")
+                .replace("Grocery:", "")
+                .replace("(SEED)", "")
             )
-            address = (
-                temp[2]
-                .find("div")
-                .find("h3")
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
-            street_address = address[0]
-            address = address[1].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
+            try:
+                address = (
+                    temp[2]
+                    .find("div")
+                    .find("h3")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            except:
+                address = (
+                    soup.findAll("div", {"class": "et_pb_text_inner"})[1]
+                    .find("p")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            address = address.replace("Cafe is on the second floor", "")
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

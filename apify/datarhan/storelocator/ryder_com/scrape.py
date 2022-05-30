@@ -8,9 +8,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
     domain = "ryder.com"
     start_urls = [
         "https://ryder.com/locations/USA",
@@ -36,6 +34,9 @@ def fetch_data():
                 locations_html = city_dom.xpath('//div[@class="location__item"]')
                 for l_html in locations_html:
                     store_url = "https://ryder.com" + l_html.xpath(".//a/@href")[0]
+                    loc_response = session.get(store_url)
+                    loc_dom = etree.HTML(loc_response.text)
+
                     location_name = l_html.xpath(
                         './/span[@itemprop="addressName"]/text()'
                     )
@@ -68,7 +69,9 @@ def fetch_data():
                     phone = l_html.xpath('.//span[@itemprop="telephone"]/text()')
                     phone = phone[0].strip() if phone else ""
                     phone = phone if phone else "<MISSING>"
-                    location_type = "<MISSING>"
+                    location_type = ", ".join(
+                        loc_dom.xpath('//ul[@class="location__services"]/li/text()')
+                    )
                     latitude = l_html.xpath(".//a/@data-lat")
                     latitude = latitude[0] if latitude else "<MISSING>"
                     longitude = l_html.xpath(".//a/@data-lng")

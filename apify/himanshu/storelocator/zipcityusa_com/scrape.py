@@ -1,63 +1,69 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-session = SgRequests()
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    locator_domain = "https://zipcityusa.com"
+    api_url = "https://zipcityusa.com/contact/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//a[text()="VIEW LOCATION"]')
+    for d in div:
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+        page_url = "".join(d.xpath(".//@href"))
+        location_name = "".join(d.xpath(".//preceding::h3[1]/text()"))
 
-def fetch_data():
-    base_url = "https://zipcityusa.com"
-    return_main_object=[]
-    r = session.get(base_url)
-    soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find('section',{"id":"presscore-custom-menu-one-2"}).find_all('a')
-    for atag in main:
-        r1 = session.get(atag['href'])
-        soup1=BeautifulSoup(r1.text,'lxml')
-        madd=list(soup1.find('p',{'id':'fa-address'}).stripped_strings)
-        address=madd[0].strip()
-        phone=soup1.find('p',{'id':'fa-phone'}).find('a').text.strip()
-        ct=madd[1].split(',')
-        city=ct[0].strip()
-        state=ct[1].strip().split(' ')[0].strip()
-        zip=ct[1].strip().split(' ')[1].strip()
-        name=''
-        lat=''
-        lng=''
-        country="US"
-        storeno=''
-        hour=''
-        store=[]
-        store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("zipcity")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour else "<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        street_address = (
+            "".join(tree.xpath('//p[@id="fa-address"]/text()[1]'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//p[@id="fa-address"]/text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
+        phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
 
-scrape()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {ad}",
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

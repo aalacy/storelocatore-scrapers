@@ -1,62 +1,27 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    s = set()
-    locator_domain = "https://www.jetlocal.co.uk/"
+def fetch_data(sgw: SgWriter):
     api_url = "https://api.storerocket.io/api/user/2BkJ1wEpqR/locations?filters=37343"
-
-    session = SgRequests()
     r = session.get(api_url)
     js = r.json()["results"]["locations"]
 
     for j in js:
-        street_address = (
-            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".strip()
-            or "<MISSING>"
+        street_address = " ".join(
+            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".split()
         )
-        city = j.get("state") or "<MISSING>"
-        state = "<MISSING>"
-        postal = j.get("postcode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = "<MISSING>"
+        city = j.get("state")
+        postal = j.get("postcode")
+        country_code = j.get("country")
         page_url = j.get("url") or "https://www.jetlocal.co.uk/drivers/locator"
-        location_name = j.get("name")
-        phone = "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        location_name = j.get("name") or ""
+        location_name = " ".join(location_name.split())
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
         _tmp = []
         hours = j.get("hours")
@@ -65,39 +30,32 @@ def fetch_data():
                 continue
             _tmp.append(f"{k.capitalize()}: {v}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        check = tuple(row[2:6])
-        if check in s:
-            continue
-
-        s.add(check)
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.jetlocal.co.uk/"
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

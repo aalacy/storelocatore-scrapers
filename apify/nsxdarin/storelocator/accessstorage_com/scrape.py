@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("accessstorage_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -50,7 +26,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info("Pulling Stores")
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if 'store-link" href="https://' in line:
                 locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
@@ -68,20 +43,23 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]
+            if '"name":"' in line2:
+                name = line2.split('"name":"')[1].split('"')[0]
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
+            if '"telephone":"' in line2:
+                phone = line2.split('"telephone":"')[1].split('"')[0]
             if '"postalCode": "' in line2:
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '"postalCode":"' in line2:
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
             if 'times__label">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 day = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
             if 'store-opening-times__hours">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 hrs = (
                     day
                     + ": "
@@ -95,7 +73,6 @@ def fetch_data():
                 add = line2.split('"store-map__info-address">')[1].split("<")[0]
             if 'banner__info-address">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 state = "<MISSING>"
                 if g.count(",") == 2:
                     city = g.split(",")[1].strip()
@@ -109,27 +86,29 @@ def fetch_data():
         if "/access-self-storage-guildford" in loc:
             add = "19 Moorfield Road, Slyfield Industrial Estate"
         hours = hours.replace("Monday - Friday: ;", "Monday - Friday: 08.00 - 18.00")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
