@@ -44,10 +44,9 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.findAll("div", {"class": "salons-two-column"})
             address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
-            address = address.split("Telefon:")
-            phone = address[-1]
+            phone = MISSING
             raw_address = (
-                strip_accents(address[0]).replace("COSMO", "").replace("Shop", "")
+                strip_accents(address).replace("COSMO", "").replace("Shop", "")
             )
             pa = parse_address_intl(raw_address)
 
