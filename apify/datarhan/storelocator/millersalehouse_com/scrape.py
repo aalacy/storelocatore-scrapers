@@ -1,6 +1,8 @@
 import re
 import demjson
 from lxml import etree
+from time import sleep
+from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -31,14 +33,34 @@ def fetch_data():
             continue
         poi_html = etree.HTML(poi["content"])
         raw_address = poi_html.xpath('//span[@class="address"]/text()')
+        sleep(uniform(3, 10))
+
+        hdr = {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        }
+        loc_response = session.get(poi["url"], headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath(
+            '//span[contains(text(), "Hours")]/following-sibling::fieldset//text()'
+        )
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("*")[0]
+            .split("We are open!")[0]
+            .strip()
+        )
+        location_name = (
+            poi["name"].replace("&#8217", "'").replace("&#8211; Now Open!", "")
+        )
+        street_address = (
+            poi["street"].replace("<br>", " ").replace(" Crossings Plaza", "")
+        )
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["olo"],
-            location_name=poi["name"]
-            .replace("&#8217", "'")
-            .replace("&#8211; Now Open!", ""),
-            street_address=poi["street"].replace("<br>", " "),
+            page_url=poi["url"],
+            location_name=location_name,
+            street_address=street_address,
             city=raw_address[-1].split(", ")[0],
             state=raw_address[-1].split(", ")[-1].split()[0],
             zip_postal=poi["zip"],
@@ -48,7 +70,7 @@ def fetch_data():
             location_type="",
             latitude=poi["coords"].split(",")[0],
             longitude=poi["coords"].split(",")[-1],
-            hours_of_operation="",
+            hours_of_operation=hoo,
         )
 
         yield item

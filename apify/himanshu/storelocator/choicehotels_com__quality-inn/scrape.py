@@ -46,7 +46,7 @@ def fetch_data():
     addresses = []
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
+        max_search_distance_miles=100,
         max_search_results=None,
     )
     for lat, lng in search:
@@ -136,7 +136,7 @@ def fetch_data():
             pass
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=100,
+        max_search_distance_miles=100,
         max_search_results=None,
     )
     for lat, lng in search:

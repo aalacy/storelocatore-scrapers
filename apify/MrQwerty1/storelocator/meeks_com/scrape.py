@@ -1,202 +1,123 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_coords(url):
+    coords = dict()
+    api = f"{url}wp-json/facetwp/v1/refresh"
+    json_data = {
+        "action": "facetwp_refresh",
+        "data": {
+            "facets": {
+                "locations_map": [],
+                "locations_auto": "",
+                "location_dropdown": [],
+                "location_type": [],
+                "location_state": [],
+            },
+            "frozen_facets": {
+                "locations_map": "hard",
+            },
+            "template": "locations",
+            "soft_refresh": 0,
+            "is_bfcache": 1,
+            "first_load": 0,
+            "paged": 1,
+        },
+    }
+    r = session.post(api, json=json_data, headers=headers)
+    js = r.json()["settings"]["map"]["locations"]
+    for j in js:
+        _id = j["post_id"]
+        lat = j["position"]["lat"]
+        lng = j["position"]["lng"]
+        coords[_id] = (lat, lng)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    urls = []
-    session = SgRequests()
-
-    start_urls = [
-        "https://meeks.com/midwest/locations/",
-        "https://meeks.com/western/store-locations/",
-    ]
-    for u in start_urls:
-        r = session.get(u)
-        tree = html.fromstring(r.text)
-        urls += tree.xpath("//div[@class='right' or @id='primary-content']//a/@href")
-
-    return urls
+    return coords
 
 
-def parse_western(tree, page_url):
-    locator_domain = "https://meeks.com/"
+def fetch_data(sgw: SgWriter):
+    apis = ["https://meekswest.com/", "https://meeksmidwest.com/"]
+    for url in apis:
+        page_url = f"{url}company/locations/"
+        coords = get_coords(url)
 
-    location_name = "MEEKS"
-    line = tree.xpath("//address/text()")
-    line = list(filter(None, [l.strip() for l in line]))
+        for store_number, ll in coords.items():
+            data = {
+                "action": "facetwp_map_marker_content",
+                "facet_name": "locations_map",
+                "post_id": store_number,
+            }
+            r = session.post(
+                f"{url}wp-admin/admin-ajax.php", data=data, headers=headers
+            )
+            tree = html.fromstring(r.text)
 
-    try:
-        street_address = ", ".join(line[:-2])
-        postal = line[-1]
-        line = line[-2]
-        city = line.split(",")[0].strip()
-        state = line.split(",")[-1].strip()
-    except IndexError:
-        street_address = "<MISSING>"
-        city = line[0].split(",")[0].strip()
-        state = line[0].split(",")[-1].strip()
-        postal = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//p[contains(text(), 'Phone:')]/text()"))
-        .replace("Phone:", "")
-        .strip()
-        or "<MISSING>"
-    )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        " ".join(
-            ";".join(
-                tree.xpath("//div[@class='hours']/p[contains(text(), ':')]/text()")
-            ).split()
-        ).strip()
-        or "<MISSING>"
-    )
+            location_name = "".join(tree.xpath(".//h3//text()")).strip()
+            line = tree.xpath(
+                "//i[@class='fas fa-map-marker-alt']/following-sibling::text()"
+            )
+            line = list(filter(None, [l.strip() for l in line]))
+            csz = line.pop()
+            city = csz.split(",")[0].strip()
+            csz = csz.split(",")[1].strip()
+            state, postal = csz.split()
+            street_address = ", ".join(line)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def parse_midwest(tree, page_url):
-    locator_domain = "https://meeks.com/"
-
-    location_name = "MEEKS"
-    line = tree.xpath("//div[@class='address']/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = ", ".join(line[:-2])
-    postal = line[-1]
-    line = line[-2]
-    city = line.split(",")[0].strip()
-    state = line.split(",")[-1].strip()
-    country_code = "US"
-    store_number = "<MISSING>"
-    try:
-        phone = tree.xpath("//div[@class='phone']//dd/text()")[0] or "<MISSING>"
-    except IndexError:
-        phone = "<MISSING>"
-
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'var longitude')]/text()")
-    ).strip()
-    latitude = text.split("latitude  = ")[1].split(",")[0].replace("'", "").strip()
-    longitude = text.split("longitude = ")[1].split(",")[0].replace("'", "").strip()
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        " ".join(
-            ";".join(
+            phone = "".join(
                 tree.xpath(
-                    "//div[@class='hours-of-operation']/p[contains(text(), ':')]/text()"
+                    "//strong[contains(text(), 'Phone')]/following-sibling::text()[1]"
                 )
-            ).split()
-        ).strip()
-        or "<MISSING>"
-    )
+            ).strip()
+            latitude, longitude = ll
+            hours = tree.xpath(
+                "//strong[contains(text(), 'Hours')]/following-sibling::text()"
+            )
+            hours = list(filter(None, [h.strip() for h in hours]))
+            hours_of_operation = ";".join(hours)
+            if not phone and "NOTE" in hours_of_operation:
+                hours_of_operation = SgRecord.MISSING
+                phone = "(" + hours[1].split("(")[1]
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return row
-
-
-def get_data(url):
-    page_url = f"https://meeks.com{url}"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    if page_url.find("/western") != -1:
-        row = parse_western(tree, page_url)
-    else:
-        row = parse_midwest(tree, page_url)
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://meeks.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

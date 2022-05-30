@@ -1,115 +1,140 @@
+# -*- coding: utf-8 -*-
 import re
-import csv
-import demjson
+import yaml
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
-
+    session = SgRequests()
     start_url = "https://www.barbour.com/storelocator"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "barbour.com"
 
     response = session.get(start_url)
-    data = re.findall(r"amLocator\((.+?)\);", response.text.replace("\n", ""))[0]
-    data = demjson.decode(data)
+    data = re.findall(r"amLocator\((.+)\);", response.text.replace("\n", ""))[0]
+    data = yaml.load(data.split(");    });</script>")[0], Loader=yaml.FullLoader)
 
     for poi in data["jsonLocations"]["items"]:
-        store_url = start_url
         location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
-        street_address = street_address.strip() if street_address else "<MISSING>"
+        street_address = (
+            street_address.replace("?", "").strip() if street_address else ""
+        )
         if street_address == "-":
-            street_address = "<MISSING>"
+            street_address = ""
+        if street_address:
+            street_address = " ".join(street_address.replace("\r\n", " ").split())
+        if street_address and street_address.startswith(","):
+            street_address = street_address[1:].strip()
         city = poi["city"]
-        city = city if city else "<MISSING>"
+        if city:
+            city = city.replace("?", "")
         state = poi["state"]
-        state = state if state else "<MISSING>"
-        if state.isdigit():
-            state = "<MISSING>"
+        if state and state.isdigit():
+            state = ""
         zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["CA", "GB", "US"]:
-            continue
         store_number = poi["id"]
         phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        if phone == "-":
+            phone = ""
+        location_type = ""
         if poi["attributes"].get("stockist_type", {}).get("option_title"):
-            location_type = poi["attributes"]["stockist_type"]["option_title"][0]
+            location_type = ", ".join(
+                poi["attributes"]["stockist_type"]["option_title"]
+            )
         latitude = poi["lat"]
         if latitude == "0.00000000":
-            latitude = "<MISSING>"
+            latitude = ""
         longitude = poi["lng"]
         if longitude == "0.00000000":
-            longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+            longitude = ""
+        raw_address = f'{street_address}, {poi["city"]}, {poi["state"]}, {poi["zip"]}, {poi["country"]}'.strip()
+        addr = parse_address_intl(raw_address)
+        if not zip_code:
+            zip_code = addr.postcode
+        if not city:
+            city = addr.city
+        if not state:
+            state = addr.state
+        street_address = street_address.replace(location_name, "")
+        if phone and phone == zip_code:
+            phone = ""
+        if phone and phone == city:
+            phone = ""
+        if zip_code and "@" in zip_code:
+            zip_code = ""
+        if zip_code and zip_code == ".":
+            zip_code = ""
+        if phone and phone.startswith("-"):
+            phone = phone[1:]
+        if phone:
+            phone = (
+                phone.split("..")[0]
+                .replace("Voss", "")
+                .split("(P")[0]
+                .split("J")[0]
+                .split("Butik:")[-1]
+                .split("Inköp:")[0]
+                .replace("Butik", "")
+                .replace("Tel:", "")
+                .split("(butik")[0]
+                .split("/ 8 (800")[0]
+                .split("（バ")[0]
+                .replace("03-3567-2224", "")
+                .replace("https://www.proidee.de/", "")
+                .strip()
+            )
+            if phone.endswith("."):
+                phone = phone[:-1]
+        if city and city == "None":
+            city = ""
+        if zip_code and state:
+            zip_code = zip_code.replace(state, "").strip()
+        if street_address and city:
+            if city in street_address:
+                street_address = street_address.split(city)[0].strip()
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
+        if city and city == ", , None, .,":
+            city = ""
+        if street_address and street_address.strip().startswith(","):
+            street_address = street_address[1:]
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation="",
+            raw_address=raw_address,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.COUNTRY_CODE})
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

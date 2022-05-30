@@ -30,7 +30,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    max_search_distance_miles=None,
     max_search_results=None,
     granularity=Grain_4(),
 )

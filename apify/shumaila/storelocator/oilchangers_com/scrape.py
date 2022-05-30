@@ -1,14 +1,20 @@
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from bs4 import BeautifulSoup
 
 session = SgRequests()
+website = "oilchangers_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://oilchangers.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -19,16 +25,23 @@ def fetch_data():
     ).json()
     for loc in loclist:
         loc = loclist[loc]
+        location_type = MISSING
         store = loc["ID"]
         title = loc["na"]
         link = loc["gu"]
+        if "coming-soon" in link:
+            location_type = "Coming Soon"
+        log.info(link)
         lat = loc["lat"]
         longt = loc["lng"]
         street = loc["st"]
         city = str(loc["ct"])
         state = loc["rg"]
         pcode = loc["zp"]
-        phone = loc["te"]
+        try:
+            phone = loc["te"]
+        except:
+            phone = MISSING
         if len(city) < 3 and "5710 " in street:
             city = "El Paso"
         r = session.get(link, headers=headers)
@@ -38,7 +51,6 @@ def fetch_data():
             .text.replace("Opening Hours", "")
             .strip()
         )
-
         hours = hours.encode("ascii", "ignore").decode("ascii")
         phone = phone.encode("ascii", "ignore").decode("ascii")
         street = street.encode("ascii", "ignore").decode("ascii")
@@ -48,7 +60,7 @@ def fetch_data():
         title = title.encode("ascii", "ignore").decode("ascii")
 
         yield SgRecord(
-            locator_domain="https://oilchangers.com",
+            locator_domain=DOMAIN,
             page_url=link,
             location_name=title,
             street_address=street.strip(),
@@ -58,7 +70,7 @@ def fetch_data():
             country_code="US",
             store_number=str(store),
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours.replace("\n", " ").strip(),
