@@ -40,7 +40,7 @@ def fetch_data():
             if street_address:
                 street_address = street_address.split(", C.P")[0]
             zip_code = poi["location"]["zipcode"]
-            if zip_code:
+            if zip_code and street_address:
                 street_address = street_address.split(zip_code)[0]
 
             item = SgRecord(
