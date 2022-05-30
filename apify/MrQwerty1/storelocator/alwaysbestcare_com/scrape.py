@@ -12,7 +12,7 @@ from sglogging import sglog
 def get_params():
     params = set()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=6
     )
 
     for _zip in search:
