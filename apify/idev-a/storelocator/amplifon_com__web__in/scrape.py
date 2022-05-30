@@ -38,12 +38,18 @@ def fetch_others():
             )
             for _ in locations:
                 urls["in"].append(_["href"])
-        urls["hu"] = [loc.text for loc in bs(session.get(hu_url, headers=_headers).text, "lxml").select(
-            "loc"
-        )]
-        urls["pl"] = [loc.text for loc in bs(session.get(pl_url, headers=_headers).text, "lxml").select(
-            "loc"
-        )]
+        urls["hu"] = [
+            loc.text
+            for loc in bs(session.get(hu_url, headers=_headers).text, "lxml").select(
+                "loc"
+            )
+        ]
+        urls["pl"] = [
+            loc.text
+            for loc in bs(session.get(pl_url, headers=_headers).text, "lxml").select(
+                "loc"
+            )
+        ]
         for country, url1 in urls.items():
             for page_url in url1:
                 if (
