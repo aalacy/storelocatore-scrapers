@@ -24,7 +24,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests(verify_ssl=False)
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def getAddress(raw_address):
@@ -71,7 +71,10 @@ def fetch_data():
     )
     for key, value in data.items():
         if key.startswith("RestaurantLocation:"):
-            if "Coming Soon!" in value["customLocationContent"]:
+            if (
+                "COMING SOON" in value["name"]
+                or "Coming Soon!" in value["customLocationContent"]
+            ):
                 continue
             if "Acworth" in value["name"]:
                 page_url = BASE_URL + value["slug"]

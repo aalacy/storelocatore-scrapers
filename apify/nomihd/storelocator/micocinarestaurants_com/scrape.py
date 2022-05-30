@@ -29,12 +29,12 @@ def fetch_data():
 
     stores_req = session.post(search_url, data=data, headers=headers)
     stores = json.loads(stores_req.text)
-
     for key in stores.keys():
         latitude = stores[key]["lat"]
         longitude = stores[key]["lng"]
         page_url = stores[key]["we"]
-
+        if "/west-village" in page_url:
+            page_url = "https://www.micocina.com/locations/in/tx/dallas/uptown/"
         locator_domain = website
         location_name = stores[key]["na"]
         street_address = stores[key]["st"]
@@ -45,7 +45,7 @@ def fetch_data():
         store_number = stores[key]["ID"]
         location_type = "<MISSING>"
 
-        phone = stores[key]["te"]
+        phone = stores[key].get("te", "<MISSING>")
 
         hours_of_operation = "<MISSING>"
         if page_url and len(page_url) > 0:

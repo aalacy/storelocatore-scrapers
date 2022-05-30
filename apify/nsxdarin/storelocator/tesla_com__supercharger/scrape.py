@@ -29,47 +29,71 @@ def fetch_data():
         if "supercharger" in str(ltype):
             ids.append(lid)
     for lid in ids:
-        logger.info(lid)
-        lurl = "https://www.tesla.com/cua-api/tesla-location?translate=en_US&id=" + lid
-        r2 = session.get(lurl, headers=headers)
-        for line in r2.iter_lines():
-            add = (
-                line.split('"address_line_1":"')[1].split('"')[0]
-                + " "
-                + line.split('"address_line_2":"')[1].split('"')[0]
+        try:
+            logger.info(lid)
+            lurl = (
+                "https://www.tesla.com/cua-api/tesla-location?translate=en_US&id=" + lid
             )
-            add = add.strip()
-            name = line.split('"title":"')[1].split('"')[0]
-            city = line.split('"city":"')[1].split('"')[0]
-            state = line.split('"province_state":')[1].split(',"')[0].replace('"', "")
-            zc = line.split('"postal_code":"')[1].split('"')[0]
-            country = line.split('"country":"')[1].split('"')[0]
-            lat = line.split('"latitude":"')[1].split('"')[0]
-            lng = line.split('"longitude":"')[1].split('"')[0]
-            store = lid
-            typ = "Supercharger"
-            hours = line.split('"hours":"')[1].split('"')[0]
-            if hours == "":
-                hours = "<MISSING>"
-            if state == "" or state == "null":
-                state = "<MISSING>"
-            phone = line.split('"number":"')[1].split('"')[0].strip()
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+            r2 = session.get(lurl, headers=headers)
+            for line in r2.iter_lines():
+                add = (
+                    line.split('"address_line_1":"')[1].split('"')[0]
+                    + " "
+                    + line.split('"address_line_2":"')[1].split('"')[0]
+                )
+                add = add.strip()
+                name = line.split('"title":"')[1].split('"')[0]
+                try:
+                    city = line.split('"city":"')[1].split('"')[0]
+                except:
+                    city = "<MISSING>"
+                try:
+                    state = (
+                        line.split('"province_state":')[1]
+                        .split(',"')[0]
+                        .replace('"', "")
+                    )
+                except:
+                    state = "<MISSING>"
+                try:
+                    zc = line.split('"postal_code":"')[1].split('"')[0]
+                except:
+                    zc = "<MISSING>"
+                country = line.split('"country":"')[1].split('"')[0]
+                lat = line.split('"latitude":"')[1].split('"')[0]
+                lng = line.split('"longitude":"')[1].split('"')[0]
+                store = lid
+                typ = "Supercharger"
+                try:
+                    hours = line.split('"hours":"')[1].split('"')[0]
+                except:
+                    hours = "<MISSING>"
+                if hours == "":
+                    hours = "<MISSING>"
+                if state == "" or state == "null":
+                    state = "<MISSING>"
+                try:
+                    phone = line.split('"number":"')[1].split('"')[0].strip()
+                except:
+                    phone = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        except:
+            pass
 
 
 def scrape():

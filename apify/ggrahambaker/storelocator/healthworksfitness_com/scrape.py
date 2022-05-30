@@ -78,7 +78,7 @@ def fetch_data():
         content = pull_content(page_url)
         if "healthworksfitness" not in page_url:
             info = row.text.replace("\n", ",").split("–")
-            location_name = info[0].strip()
+            location_name = info[0].split("–")[0].strip()
             raw_address = info[1].strip()
             if "gymit" in page_url:
                 location_type = "gymit"
@@ -98,7 +98,14 @@ def fetch_data():
                 latitude = coord["data-lat"]
                 longitude = coord["data-lng"]
                 phone = coord["data-mapinfo"].split("-")[1].strip()
-                hours_of_operation = MISSING
+                page_url = "https://republicbos.com/location/"
+                content = pull_content(page_url)
+                hours_of_operation = (
+                    content.find("span", text="Club Hours")
+                    .find_next(class_="wpb_wrapper")
+                    .get_text(" ")
+                    .strip()
+                )
             else:
                 phone = content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
                 location_type = "healthworksfitness"
@@ -126,7 +133,10 @@ def fetch_data():
                 info.get_text(strip=True, separator="@"),
             ).split("@Club Hours@")
             raw_address = info[0]
-            hours_of_operation = info[1].replace("@", ",")
+            try:
+                hours_of_operation = info[1].replace("@", ",")
+            except:
+                hours_of_operation = ""
             phone = content.find(
                 "strong", text=re.compile(r"Telephone:.*")
             ).next_sibling
@@ -134,8 +144,20 @@ def fetch_data():
             coord = content.find("div", {"class": "map-marker"})
             latitude = coord["data-lat"]
             longitude = coord["data-lng"]
+
+        if not hours_of_operation:
+            hours_of_operation = (
+                (
+                    content.find("strong", text="CLUB HOURS")
+                    .find_previous("p")
+                    .get_text(strip=True, separator=",")
+                )
+                .replace("CLUB HOURS,", "")
+                .strip()
+            )
+
         street_address, city, state, zip_postal = getAddress(raw_address)
-        country_code = "us"
+        country_code = "US"
         store_number = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
