@@ -325,7 +325,6 @@ def fetch_brand(brand, domain):
 
 
 def initial(url, state):
-    reqs = None
     brands = new_brands()
     brands = brands.items()
     for brand in brands:
