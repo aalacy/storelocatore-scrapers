@@ -3,3 +3,4 @@ sgscrape==0.2.6
 sglogging==0.0.4
 webdriver_manager==3.4.2
 sgselenium==0.1.4
+sgpostal==0.1.0
