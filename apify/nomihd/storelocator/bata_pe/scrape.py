@@ -7,7 +7,6 @@ import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
-import lxml.html
 
 website = "bata.pe"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
