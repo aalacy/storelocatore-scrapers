@@ -10,16 +10,11 @@ def fetch_data():
 
     start_urls = [
         "https://www.toyota.com.cy/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
-        "https://www.toyota.cz/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
-        "https://www.toyota.hu/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ie/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.it/api/dealer/drive/9.182142/45.49352?count=500&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.lv/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.lt/api/dealer/drive/25.274958/54.694969?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.pl/api/dealer/drive/19.95/50.06667?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.pt/api/dealer/drive/-8.6108/41.1495?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ru/api/dealer/drive/37.4121287410622/55.9698601178023?count=2000&extraCountries=by&isCurrentLocation=false",
-        "https://www.toyota.com.tr/api/dealer/drive/30.68333/36.9?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ru/api/dealer/drive/37.61778/55.75583?count=2000&extraCountries=by&isCurrentLocation=false",
     ]
     domain = "toyota.co.uk"
