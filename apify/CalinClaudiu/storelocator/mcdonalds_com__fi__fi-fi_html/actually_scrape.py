@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
-from sgzip.dynamic import DynamicGeoSearch, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, Grain_1_KM
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -249,7 +249,7 @@ def pull_from_map(session, country):
     try:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountry],
-            granularity=Grain_4(),
+            granularity=Grain_1_KM(),
         )
     except Exception as e:
         logzilla.warning(
