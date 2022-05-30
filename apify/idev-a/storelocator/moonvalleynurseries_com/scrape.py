@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -18,8 +18,9 @@ base_url = "https://www.moonvalleynurseries.com/locations"
 
 
 def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    with SgChrome() as driver:
+        driver.get(base_url)
+        soup = bs(driver.page_source, "lxml")
         locations = soup.select("div#maintabContent div.subcontent-bg")
         for _ in locations:
             location_name = _.h6.text.strip()
