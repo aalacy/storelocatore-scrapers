@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_urls():
-    r = session.get("https://www.foxspizza.com/store-sitemap.xml")
+    r = session.get("https://www.foxspizza.com/store-sitemap.xml", headers=headers)
     tree = html.fromstring(r.content)
     return tree.xpath("//loc/text()")
 
@@ -48,13 +48,13 @@ def get_address(line):
         street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
         if street_address == "None":
             street_address = SgRecord.MISSING
-        city = a.get("city")
+        city = a.get("city") or ""
         state = a.get("state")
         postal = a.get("postal")
     except usaddress.RepeatedLabelError:
         adr = line.split(",")
         street_address = adr.pop(0).strip()
-        city = adr.pop(0).strip()
+        city = adr.pop(0).strip() or ""
         ad = adr.pop(0).strip()
         state, postal = ad.split()
 
@@ -65,15 +65,32 @@ def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     for page_url in urls:
+        if "%" in page_url:
+            continue
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         location_name = "".join(tree.xpath("//h5[@class='blog_title']//text()")).strip()
-        line = "".join(tree.xpath("//h6[@class='loc_address']/text()")).strip()
-        if not line:
+        raw_address = "".join(tree.xpath("//h6[@class='loc_address']/text()")).strip()
+        if not raw_address:
             continue
 
-        street_address, city, state, postal = get_address(line)
+        street_address, city, state, postal = get_address(raw_address)
+        if "," in city:
+            city = city.split(",")[0].strip()
+            street_address = raw_address.split(city)[0].strip()
+        if not city:
+            city = location_name.split(",")[0].strip()
         phone = "".join(tree.xpath("//span[@class='phone_no']/a/text()")).strip()
+        text = "".join(
+            tree.xpath("//script[contains(text(), 'var locations =')]/text()")
+        )
+        try:
+            text = text.split("var locations = [")[1].split("];")[0].strip()[:-1]
+            geo = eval(text)
+            latitude = geo[-3]
+            longitude = geo[-2]
+        except:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         hours_of_operation = ";".join(tree.xpath("//span[@class='ad1']/text()"))
 
         row = SgRecord(
@@ -84,12 +101,11 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="US",
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             locator_domain=locator_domain,
+            raw_address=raw_address,
             hours_of_operation=hours_of_operation,
         )
 

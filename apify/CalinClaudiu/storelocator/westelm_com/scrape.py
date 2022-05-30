@@ -35,7 +35,7 @@ def fix_record2(rec):
     try:
         k["address"] = rec["address"]["addrLine1"]
         try:
-            k["address"] = k["address"] + rec["address"]["addrLine2"]
+            k["address"] = k["address"] + ", " + rec["address"]["addrLine2"]
         except Exception:
             pass
     except Exception:
@@ -85,7 +85,7 @@ def fix_record(rec, host):
     try:
         k["address"] = rec["address"]["addrLine1"]
         try:
-            k["address"] = k["address"] + rec["address"]["addrLine2"]
+            k["address"] = k["address"] + ", " + rec["address"]["addrLine2"]
         except Exception:
             pass
     except Exception:
@@ -100,6 +100,10 @@ def fix_record(rec, host):
         k["zip"] = rec["address"]["postalCode"]
     except Exception:
         k["zip"] = "<MISSING>"
+    try:
+        k["zip"] = rec["address"]["fullPostalCode"]
+    except Exception:
+        pass
 
     try:
         k["city"] = rec["address"]["city"]
@@ -144,6 +148,14 @@ def fix_record(rec, host):
         k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
     except Exception:
         k["type"] = "<MISSING>"
+
+    try:
+        k["phone"] = rec["phone"]
+    except Exception:
+        try:
+            k["phone"] = rec["address"]["unFormattedDayPhone"]
+        except Exception:
+            k["phone"] = "<MISSING>"
     return k
 
 
@@ -237,7 +249,7 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["country"], is_required=False, part_of_record_identity=True
         ),
-        phone=sp.MissingField(),
+        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
         store_number=sp.MappingField(
             mapping=["id"],
             is_required=False,

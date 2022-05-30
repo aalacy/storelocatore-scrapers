@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -21,38 +22,34 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
         page_url = f"https://www.superhealthpharmacy.com{slug}"
         location_name = "".join(d.xpath(".//text()"))
-        if "Coming" in location_name:
+        if "COMING" in location_name:
             continue
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        street_address = (
-            "".join(
+
+        ad = (
+            " ".join(
                 tree.xpath(
-                    '//h2[contains(text(), "Our")]/following-sibling::div/ul/li[1]//text()'
+                    '//h2[contains(text(), "Our")]/following-sibling::div/ul/li//text()'
                 )
             )
-            .replace(",", "")
             .replace("\n", "")
             .strip()
         )
         ad = (
-            "".join(
-                tree.xpath(
-                    '//h2[contains(text(), "Our")]/following-sibling::div/ul/li[2]//text()'
-                )
-            )
-            + " "
-            + "".join(
-                tree.xpath(
-                    '//h2[contains(text(), "Our")]/following-sibling::div/ul/li[3]//text()'
-                )
-            )
+            " ".join(ad.split())
+            .replace("Croton-On-Hudson", "Croton-On-Hudson,")
+            .strip()
         )
-        ad = ad.replace("Croton-On-Hudson", "Croton-On-Hudson,").strip()
-        state = " ".join(ad.split(",")[1].split()[:-1])
-        postal = ad.split(",")[1].split()[-1].strip()
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        city = ad.split(",")[0].strip()
+        city = a.city or "<MISSING>"
         map_link = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
@@ -78,6 +75,8 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if location_name.find("Coming Soon") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -94,7 +93,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address} {city},{state} {postal}",
+            raw_address=ad,
         )
 
         sgw.write_row(row)

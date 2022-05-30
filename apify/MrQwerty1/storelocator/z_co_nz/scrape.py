@@ -28,10 +28,15 @@ def fetch_data(sgw: SgWriter):
         country_code = "NZ"
         store_number = j.get("id")
         location_name = j.get("name")
-        slug = j.get("link")
-        page_url = f"https://z.co.nz{slug}"
+        slug = j.get("urlSegment")
+        page_url = f"https://www.z.co.nz/find-a-station/{slug}/"
         location_type = j.get("type")
-        phone = j.get("phone")
+        phone = j.get("phone") or ""
+        if phone:
+            if "Ph" in phone:
+                phone = phone.split("Ph")[-1].replace(":", "").strip()
+            if phone[0].isalpha() and phone[-1].isalpha():
+                phone = SgRecord.MISSING
         latitude = j.get("lat")
         longitude = j.get("lng")
 

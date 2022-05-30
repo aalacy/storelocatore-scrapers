@@ -4,12 +4,17 @@ from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import stop_after_attempt, retry
 import time
-import dirtyjson as json
 from sglogging import SgLogSetup
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -25,14 +30,6 @@ br_base_url = "https://www.carrefour.com.br/localizador-de-lojas"
 br_json_url = r"https://www.carrefour.com.br/_v/public/graphql/v1\?workspace=master\&maxAge=short\&appsEtag=remove\&domain=store"
 
 days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-
-
-def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-        is_headless=True,
-    ).driver()
 
 
 @retry(stop=stop_after_attempt(2))
@@ -153,51 +150,61 @@ def fetch_data():
             )
 
 
+def get_url(url):
+    with SgRequests() as session:
+        session.get(url, headers=headers)
+
+
 def fetch_br():
-    driver = get_driver()
-    driver.get(br_base_url)
-    checks = []
-    checks.append(driver.find_element_by_css_selector("input#simple-check2"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check3"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check4"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check5"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check6"))
-    for check in checks:
-        del driver.requests
-        driver.execute_script("arguments[0].click();", check)
-        time.sleep(10)
-        driver.wait_for_request(br_json_url)
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
+        is_headless=True,
+    ) as driver:
+        driver.get(br_base_url)
+        checks = []
+        checks.append(driver.find_element_by_css_selector("input#simple-check2"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check3"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check4"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check5"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check6"))
+        for check in checks:
+            driver.execute_script("arguments[0].click();", check)
+            time.sleep(10)
+            driver.wait_for_request(br_json_url)
 
-    x = 0
-    while True:
-        rr = driver.wait_for_request(br_json_url)
-        locations = json.loads(rr.response.body)["data"]["documents"]
-        logger.info(f"page {x}, {len(locations)}")
-        for loc in locations:
-            yield _d(loc)
-
-        button = driver.find_elements_by_css_selector(
-            "div.carrefourbr-carrefour-components-0-x-showMoreButton button"
-        )
-        if button:
-            del driver.requests
-            x += 1
+        x = 0
+        while True:
             try:
-                banner = driver.find_element_by_css_selector(
-                    "button.onetrust-close-btn-handler.banner-close-button"
+                rr = driver.wait_for_request(br_json_url)
+                locations = get_url(rr.url).json()["data"]["documents"]
+                logger.info(f"page {x}, {len(locations)}")
+                for loc in locations:
+                    yield _d(loc)
+
+                del driver.requests
+
+                button = driver.find_elements_by_css_selector(
+                    "div.carrefourbr-carrefour-components-0-x-showMoreButton button"
                 )
-                if banner:
-                    banner.click()
-                    time.sleep(1)
+                if button:
+                    del driver.requests
+                    x += 1
+                    try:
+                        banner = driver.find_element_by_css_selector(
+                            "button.onetrust-close-btn-handler.banner-close-button"
+                        )
+                        if banner:
+                            banner.click()
+                            time.sleep(1)
+                    except:
+                        pass
+                    button[0].click()
+                    time.sleep(5)
+                else:
+                    break
             except:
                 pass
-            button[0].click()
-            time.sleep(5)
-        else:
-            break
-
-    if driver:
-        driver.close()
 
 
 if __name__ == "__main__":

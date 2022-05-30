@@ -59,7 +59,7 @@ def get_data(page_url, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(
-        tree.xpath("//div[@class='address-block text-white']/h3/text()")
+        tree.xpath("//div[contains(@class, 'address-block text-white')]/h3/text()")
     ).strip()
     raw_address = " ".join(
         "".join(tree.xpath("//p[@class='mb-0 address-block-text']/text()")).split()

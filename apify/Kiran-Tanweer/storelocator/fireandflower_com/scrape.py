@@ -28,6 +28,7 @@ def fetch_data():
         for loc in loc_block:
             link = loc.find("a")["href"]
             link = "https://fireandflower.com/" + link
+            log.info(link)
             store = session.get(link, headers=headers)
             bs = BeautifulSoup(store.text, "html.parser")
             title = bs.find("h1", {"class": "m-0"}).text
@@ -48,7 +49,6 @@ def fetch_data():
             street = address[0]
             city, state = address[1].split(",")
             pcode = address[2]
-
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=link,
@@ -71,9 +71,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

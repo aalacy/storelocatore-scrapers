@@ -103,8 +103,8 @@ def fetch_data(sgw: SgWriter):
                 continue
             store_number = j.get("fid") or MISSING
             phone = j.get("local_phone") or MISSING
-            latitude = js_markers[idx].get("lat") or MISSING
-            longitude = js_markers[idx].get("lng") or MISSING
+            latitude = js_markers[idx1].get("lat") or MISSING
+            longitude = js_markers[idx1].get("lng") or MISSING
             location_type = j.get("location_type") or MISSING
             hoo = get_hours(j)
             row = SgRecord(
