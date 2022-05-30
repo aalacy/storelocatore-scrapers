@@ -33,7 +33,7 @@ def fetch_data():
                 x.get_text(separator="|", strip=True).replace("|", " ")
                 for x in location_name
             )
-            location_name= location_name.replace("(Shake Shop Location)", "")
+            location_name = location_name.replace("(Shake Shop Location)", "")
             if not location_name:
                 continue
             log.info(location_name)
@@ -56,7 +56,9 @@ def fetch_data():
                 phone = temp[-1].text
                 hours_of_operation = MISSING
                 phone = phone.replace("Delivery through DoorDash", "")
-                raw_address = address.replace(",", " ").replace("99Fillmore", "99 Fillmore")
+                raw_address = address.replace(",", " ").replace(
+                    "99Fillmore", "99 Fillmore"
+                )
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -86,7 +88,7 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address
+                raw_address=raw_address,
             )
 
 
