@@ -40,16 +40,15 @@ def fetch_data():
                 street_address = loc["street"] + " " + loc["street2"]
             except:
                 street_address = loc["street"]
-            street_address = strip_accents(street_address)
+            street_address = html.unescape(strip_accents(street_address))
             log.info(location_name)
             city = strip_accents(loc["city"])
             state = strip_accents(loc["state"])
             zip_postal = loc["zip"]
-            country_code = "US"
+            country_code = "DE"
             latitude = loc["lat"]
             longitude = loc["lng"]
             hours_of_operation = html.unescape(loc["hours"])
-
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url="https://www.supercut.de/salonfinder/",
