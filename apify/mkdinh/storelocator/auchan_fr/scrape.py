@@ -41,35 +41,35 @@ def fetch_location(item, location_type, session):
         city = store_info.find("meta", itemprop="addressLocality").attrs["content"]
         postal = store_info.find("meta", itemprop="postalCode").attrs["content"]
 
-        schedule = store_info.find('ul', class_='store-weekSchedule')
+        schedule = store_info.find("ul", class_="store-weekSchedule")
         hours_of_operation = []
-        for dayhour in schedule.find_all('li'):
-            day = dayhour.find('span', class_='store-weekSchedule__days').text
-            hour = dayhour.find('span', class_='store-weekSchedule__hours').text
-            
-            hours_of_operation.append(f'{day}: {hour}')
+        for dayhour in schedule.find_all("li"):
+            day = dayhour.find("span", class_="store-weekSchedule__days").text
+            hour = dayhour.find("span", class_="store-weekSchedule__hours").text
+
+            hours_of_operation.append(f"{day}: {hour}")
 
         if not len(hours_of_operation):
             hours_of_operation = [
-                    "Lundi: Fermé",
-                    "Mardi: Fermé",
-                    "Mercredi: Fermé",
-                    "Jeudi: Fermé",
-                    "Vendredi: Fermé",
-                    "Samedi: Fermé",
-                    "Dimanche: Fermé",
-                ]
-        hours_of_operation = ','.join(hours_of_operation)
+                "Lundi: Fermé",
+                "Mardi: Fermé",
+                "Mercredi: Fermé",
+                "Jeudi: Fermé",
+                "Vendredi: Fermé",
+                "Samedi: Fermé",
+                "Dimanche: Fermé",
+            ]
+        hours_of_operation = ",".join(hours_of_operation)
     else:
-        address = item.find("div", class_="place-pos__address").find_all('span')
+        address = item.find("div", class_="place-pos__address").find_all("span")
         texts = [item.text.strip() for item in address if item.text]
         if len(texts) == 1:
             street_address = None
-            postalcity, = texts
+            (postalcity,) = texts
         else:
             street_address, postalcity = texts
 
-        postal, city = postalcity.split(' ', 1)
+        postal, city = postalcity.split(" ", 1)
         hours_of_operation = None
 
     phone_info = soup.find("meta", itemprop="telephone")
