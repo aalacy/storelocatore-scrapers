@@ -1,42 +1,16 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://gbk.co.uk/find-your-gbk"
 
@@ -48,22 +22,24 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     locator_domain = "https://gbk.co.uk"
 
     js = (
         str(base)
         .replace("&quot;", '"')
         .split('restaurants="')[1]
-        .split('"></find-page')[0]
+        .split('" recaptcha')[0]
     )
     stores = json.loads(js)
 
     for store_data in stores:
         link = store_data["permalink"]
         location_name = store_data["title"]
-        street_address = store_data["address_lines"][0]["address_line"]
+        location_type = "Booking, Delvery"
+        try:
+            street_address = store_data["address_lines"][0]["address_line"]
+        except:
+            street_address = ""
         city = store_data["city"]
         if city in street_address.strip()[-len(city) :]:
             street_address = " ".join(street_address.split(",")[:-1])
@@ -72,7 +48,6 @@ def fetch_data():
             state = "<MISSING>"
         zip_code = store_data["zip_postal_code"]
         country_code = "GB"
-        location_type = "<MISSING>"
         store_number = store_data["restaurant_id"]
         if not store_number:
             store_number = "<MISSING>"
@@ -97,31 +72,28 @@ def fetch_data():
                 hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
+        if not street_address:
+            location_type = "Delivery"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

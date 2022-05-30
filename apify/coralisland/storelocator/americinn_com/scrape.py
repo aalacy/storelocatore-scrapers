@@ -1,9 +1,12 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
-
 from lxml import etree
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
@@ -41,33 +44,6 @@ def eliminate_space(items):
     return rets
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def parse_address(address):
     address = usaddress.parse(address)
     street = ""
@@ -96,14 +72,13 @@ def parse_address(address):
     }
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    output_list = []
     url = "https://www.wyndhamhotels.com/americinn/locations"
     request = session.get(url, headers=headers)
     response = etree.HTML(request.text)
@@ -135,7 +110,8 @@ def fetch_data():
         other_detail = BeautifulSoup(detail_request.text, "lxml")
         script = (
             other_detail.find("script", attrs={"type": "application/ld+json"})
-            .text.replace("\n", "")
+            .contents[0]
+            .replace("\t", "")
             .strip()
         )
         detail = json.loads(script)
@@ -143,29 +119,26 @@ def fetch_data():
         latitude = detail["geo"]["latitude"]
         longitude = detail["geo"]["longitude"]
         hours = "24 hours open"
-        output = []
-        output.append(base_url)  # locator_domain
-        output.append(link)  # page_url
-        output.append(title)  # location name
-        output.append(address["street"])  # address
-        output.append(address["city"])  # city
-        output.append(address["state"])  # state
-        output.append(address["zipcode"])  # zipcode
-        output.append("US")  # country code
-        output.append(store_id)  # store_number
-        output.append(phone)  # phone
-        output.append("<MISSING>")  # location type
-        output.append(latitude)  # latitude
-        output.append(longitude)  # longitude
-        output.append(hours)  # opening hours
-        output_list.append(output)
 
-    return output_list
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url=link,
+                location_name=title,
+                street_address=address["street"],
+                city=address["city"],
+                state=address["state"],
+                zip_postal=address["zipcode"],
+                country_code="US",
+                store_number=store_id,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours,
+            )
+        )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

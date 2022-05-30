@@ -1,47 +1,16 @@
-import csv
 import json
 from w3lib.url import add_or_replace_parameter
+
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "medexpress.com"
+    domain = "medexpress.com"
     start_url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=14fecb38353352245a3e1b13ed8948c0&jsLibVersion=v1.5.6&sessionTrackingEnabled=true&input=Centers%20near%20me&experienceKey=medexpressanswerstemplate&version=PRODUCTION&filters=%7B%7D&facetFilters=%7B%22c_servicesOfferedFilter%22%3A%5B%5D%7D&verticalKey=Facilities&limit=20&offset=0&queryId=78ed8f11-90a7-47ac-a88b-c7381e0c8374&retrieveFacets=true&locale=en&referrerPageUrl=https%3A%2F%2Fwww.medexpress.com%2F"
 
     all_poi = []
@@ -85,6 +54,8 @@ def fetch_data():
         for day, hours in poi["data"]["hours"].items():
             if day == "holidayHours":
                 continue
+            if type(hours) == str:
+                continue
             if hours.get("openIntervals"):
                 opens = hours["openIntervals"][0]["start"]
                 closes = hours["openIntervals"][0]["end"]
@@ -95,33 +66,36 @@ def fetch_data():
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

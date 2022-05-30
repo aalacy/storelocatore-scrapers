@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    page_url = "https://tadsrestaurants.com/visit-tremont"
+    page_url = "https://tadsrestaurants.com/visit"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -44,12 +44,18 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             "".join(
                 d.xpath(
-                    './/following::p[contains(text(), "Katy, Tomball, and College Station:")]/text()'
+                    './/following::p[contains(text(), "Katy and College Station")]/text()'
                 )
             )
-            .replace("Katy, Tomball, and College Station:", "")
+            .replace("Katy and College Station:", "")
             .strip()
         )
+        if location_name.find("Tomball") != -1:
+            hours_of_operation = (
+                "".join(d.xpath('.//following::p[contains(text(), "Tomball:")]/text()'))
+                .replace("Tomball:", "")
+                .strip()
+            )
         if location_name.find("Lake Charles") != -1:
             hours_of_operation = (
                 "".join(

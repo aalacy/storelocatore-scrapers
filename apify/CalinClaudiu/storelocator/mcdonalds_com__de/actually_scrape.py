@@ -104,6 +104,8 @@ def getAPIKey(session, country, url):
 
 
 def getLocsPage(session, country):
+    if "kraine" in country["text"]:
+        return "/ua/uk-ua/finn-oss.html"
     headers = {}
     headers[
         "user-agent"
@@ -212,6 +214,9 @@ def strip_locale(country):
 
 def pull_map_poi(coord, url, session, locale, lang, country):
     lat, lng = coord
+
+    if lang == "en-nb-no":
+        lang = "en-no"
     headers = {}
     headers[
         "user-agent"
@@ -233,8 +238,8 @@ def pull_from_map(session, country):
     try:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountry],
-            expected_search_radius_miles=None,
-            max_search_results=None,
+            expected_search_radius_miles=8,
+            max_search_results=25,
             granularity=Grain_8(),
         )
     except Exception as e:
@@ -243,23 +248,31 @@ def pull_from_map(session, country):
         )
     lang2 = lang.split("-")[1]
     lang2 = "en-" + lang
+
     if search:
-        for coord in search:
-            try:
-                for rec in pull_map_poi(coord, url, session, locale, lang, country):
-                    search.found_location_at(rec["latitude"], rec["longitude"])
-                    yield rec
-            except Exception:
-                pass
-            try:
-                for rec in pull_map_poi(coord, url, session, locale, lang2, country):
-                    search.found_location_at(rec["latitude"], rec["longitude"])
-                    yield rec
-            except Exception:
-                pass
+        with SgRequests(proxy_country=locale) as session2:
+            for coord in search:
+                try:
+                    for rec in pull_map_poi(
+                        coord, url, session2, locale, lang, country
+                    ):
+                        search.found_location_at(rec["latitude"], rec["longitude"])
+                        yield rec
+                except Exception:
+                    pass
+                try:
+                    for rec in pull_map_poi(
+                        coord, url, session2, locale, lang2, country
+                    ):
+                        search.found_location_at(rec["latitude"], rec["longitude"])
+                        yield rec
+                except Exception:
+                    pass
 
 
 def test_for_map(locationsPage, country, session, domain):
+    if "kraine" in country["text"]:
+        return True
     headers = {}
     headers[
         "user-agent"
