@@ -9,23 +9,15 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from sgscrape.pause_resume import CrawlStateSingleton
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
-DOMAIN = "winerack.com"
 website = "https://www.winerack.com"
 MISSING = SgRecord.MISSING
 
@@ -33,7 +25,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def driver_sleep(driver, time=2):
@@ -121,7 +113,7 @@ def fetch_store(http, apiKey, store_number):
     longitude = get_JSON_object_variable(store, "geometry.location.lng")
 
     return SgRecord(
-        locator_domain=DOMAIN,
+        locator_domain=website,
         store_number=store_number,
         page_url=page_url,
         location_name=location_name,
@@ -139,12 +131,12 @@ def fetch_store(http, apiKey, store_number):
     )
 
 
-def fetch_data(driver, http, search):
+def fetch_data(driver, http, zip_codes):
     driver.get(f"{website}/stores")
     random_sleep(driver, 10)
     try:
-        driver.find_element_by_xpath(
-            "//button[@id='onetrust-accept-btn-handler']"
+        driver.find_element(
+            by=By.XPATH, value="//button[@id='onetrust-accept-btn-handler']"
         ).click()
     except Exception as e:
         log.info(f"Driver failed to find element: {e}")
@@ -154,9 +146,11 @@ def fetch_data(driver, http, search):
     driver.find_element(By.CSS_SELECTOR, ".jsRadius:nth-child(3) > span").click()
 
     random_sleep(driver, 5)
-    inputZip = driver.find_element_by_xpath("//input[contains(@id, 'storesearch')]")
-    inputButton = driver.find_element_by_xpath(
-        "//button[contains(@class, 'stores__search')]"
+    inputZip = driver.find_element(
+        by=By.XPATH, value="//input[contains(@id, 'storesearch')]"
+    )
+    inputButton = driver.find_element(
+        by=By.XPATH, value="//button[contains(@class, 'stores__search')]"
     )
     log.debug("Completed initial driver work")
 
@@ -166,20 +160,25 @@ def fetch_data(driver, http, search):
 
     count = 0
     storeCount = 0
-    for zipCode in search:
+    for zipCode in zip_codes:
         count = count + 1
         inputZip.clear()
         driver_sleep(2)
         inputZip.send_keys(zipCode)
         driver_sleep(2)
-        log.debug(f"Current input value {inputZip.get_attribute('value')}")
         inputButton.click()
         random_sleep(driver, 5)
 
         body = html.fromstring(driver.page_source, "lxml")
         storeIds = body.xpath('//div[contains(@class, "stores__item")]/@id')
-
-        log.debug(f"{count}. searching in zip = {zipCode} and stores = {len(storeIds)}")
+        if len(storeIds) > 0:
+            log.info(
+                f"{count}. input= {inputZip.get_attribute('value')}; zip= {zipCode}; stores= {len(storeIds)}"
+            )
+        else:
+            log.debug(
+                f"{count}. input= {inputZip.get_attribute('value')}; zip= {zipCode}; stores= {len(storeIds)}"
+            )
         for storeId in storeIds:
             storeCount = storeCount + 1
             store = fetch_store(http, apiKey, storeId)
@@ -192,11 +191,19 @@ def fetch_data(driver, http, search):
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    search = DynamicZipSearch(country_codes=[SearchableCountries.CANADA])
+    CrawlStateSingleton.get_instance().save(override=True)
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_search_results=20,
+        max_search_distance_miles=31.0686,
+    )
 
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
+    zip_codes = []
+    for zipCode in search:
+        zip_codes.append(zipCode)
+    log.info(f"Total zip to crawl = {len(zip_codes)}")
+
+    with SgChrome() as driver:
         with SgWriter(
             SgRecordDeduper(
                 SgRecordID(
@@ -214,7 +221,7 @@ def scrape():
             )
         ) as writer:
             with SgRequests() as http:
-                for rec in fetch_data(driver, http, search):
+                for rec in fetch_data(driver, http, zip_codes):
                     writer.write_row(rec)
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
