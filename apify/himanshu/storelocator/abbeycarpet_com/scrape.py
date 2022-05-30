@@ -1,4 +1,4 @@
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
 from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -80,8 +80,9 @@ def get_data(zipps, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_search_distance_miles=250,
-        expected_search_radius_miles=50,
+        max_search_distance_miles=10,
+        expected_search_radius_miles=10,
+        granularity=Grain_1_KM(),
         max_search_results=5,
     )
 
