@@ -83,6 +83,8 @@ def fetch_data():
                         else:
                             times = _.get(f"{day}_open") + " - " + _.get(f"{day}_close")
                         hours.append(f"{day}: {times}")
+
+                state = _["state"] if _.get("state") else _.get("province")
                 yield SgRecord(
                     page_url=base_url,
                     store_number=_["id"],
@@ -90,7 +92,7 @@ def fetch_data():
                     locator_domain=locator_domain,
                     street_address=street_address,
                     city=_["city"].split(",")[0].strip() if _["city"] else "",
-                    state=_["state"] if _.get("state") else _.get("province"),
+                    state=state.replace(",", " ").strip(),
                     zip_postal=_.get("postalcode"),
                     country_code=_["country"],
                     phone=_.get("phone").split("X")[0] if _.get("phone") else "",
