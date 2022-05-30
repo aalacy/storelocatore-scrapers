@@ -1,42 +1,16 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.sonushearing.com/california-counties"
 
@@ -47,7 +21,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     loc_links = [
         "https://www.sonushearing.com/arlington",
         "https://www.sonushearing.com/fremont-michigan",
@@ -67,7 +40,9 @@ def fetch_data():
 
     locator_domain = "sonushearing.com"
     items = base.find_all(class_="font_8")
-    drop_items = base.find(id="DrpDwnMn14").find_all("a")
+    drop_items = base.find(id="DrpDwnMn14").find_all("a") + base.find(
+        id="DrpDwnMn15"
+    ).find_all("a")
 
     for item in items:
         if item.a:
@@ -96,6 +71,13 @@ def fetch_data():
         if "We are now seeing" in location_name:
             continue
 
+        if len(location_name) > 60 or "888" in location_name:
+            location_name = (
+                base.find("meta", attrs={"name": "description"})["content"]
+                .split("offers")[0]
+                .strip()
+            )
+
         rows = base.find_all("div", attrs={"data-testid": "richTextElement"})
 
         for row in rows:
@@ -107,7 +89,7 @@ def fetch_data():
         if "phone:" not in row.text.lower():
             raw_address = list(base.find(class_="font_8").stripped_strings)
 
-        street_address = " ".join(raw_address[:-1]).strip()
+        street_address = " ".join(raw_address[:-1]).replace("\xa0", "").strip()
         city_line = raw_address[-1].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
@@ -123,8 +105,8 @@ def fetch_data():
         try:
             phone = (
                 re.findall(
-                    r"Phone:.+[\d]{3}-[\d]{4}",
-                    str(base),
+                    r"Phone:.+[\d]{3}.+[\d]{4}",
+                    str(base.text),
                 )[0]
                 .replace("Phone:", "")
                 .strip()
@@ -144,16 +126,7 @@ def fetch_data():
                             break
                 except:
                     phone = "<MISSING>"
-        phone = phone.replace("&#160;", " ").strip()
-
-        if ">" in phone:
-            phone = phone.split(">")[1].strip()
-
-        if "-" not in phone:
-            if "850-8800" in str(base):
-                phone = "(616) 850-8800"
-            else:
-                phone = "<MISSING>"
+        phone = phone.replace("&#160;", " ").split("Directions")[0].strip()
 
         hours_of_operation = ""
         if "hours of operation" in str(rows).lower():
@@ -174,6 +147,11 @@ def fetch_data():
                     break
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
+        if "all for" in hours_of_operation:
+            hours_of_operation = ""
+        hours_of_operation = (
+            hours_of_operation.replace("Hours:", "").split("Week")[0].strip()
+        )
 
         try:
             geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_link)[
@@ -196,31 +174,25 @@ def fetch_data():
             latitude = "34.2016729"
             longitude = "-118.6311208"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -1,75 +1,69 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
+import datetime
 import json
-import ast
-import unicodedata
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-session = SgRequests()
+def fetch_data(sgw: SgWriter):
+    session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    return_main_object = []
-    addresses = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    locator_domain = "https://www.superlofoods.com"
+    api_url = "https://api.freshop.com/1/stores?app_key=superlo&has_address=true&is_selectable=true&limit=100&token={}"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "superlo",
+        "referrer": "https://www.superlofoods.com/",
+        "utc": str(unixtime).split(".")[0],
     }
+    r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    token = r["token"]
 
-    base_url = "http://superlofoods.com"
-    r = session.get("https://api.freshop.com/1/stores?app_key=superlo", headers=headers)
-    data = r.json()['items']
+    r = session.get(api_url.format(token))
+    js = json.loads(r.text)
 
-    for store_data in data:
-        store = []
-        location_name = store_data['name']
-        if('address_1'in store_data):
-            street_address = store_data['address_1']
-            city = store_data['city']
-            state = store_data['state']
-            zipp = store_data['postal_code']
-            phone = store_data['phone_md'].split("\nFax")[0]
-            latitude = store_data['latitude']
-            longitude = store_data['longitude']
-            hour = store_data['hours_md']
-            store_id = store_data['id']
-            if location_name in addresses:
-                continue
-            addresses.append(location_name)
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append(store_id)
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hour)
-            store.append(store_data["url"])
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.strip() if type(x) == str else x for x in store]
-            yield store
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    for j in js["items"]:
+        page_url = j.get("url")
+        location_name = j.get("name")
+        street_address = j.get("address_1")
+        phone = "".join(j.get("phone"))
+        if phone.find("Fax") != -1:
+            phone = phone.split("Fax")[0].strip()
+        state = j.get("state")
+        postal = j.get("postal_code")
+        country_code = "US"
+        city = j.get("city")
+        store_number = j.get("store_number")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        hours_of_operation = "".join(j.get("hours_md")).replace("\n", " ").strip()
 
-scrape()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.thelooprestaurant.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

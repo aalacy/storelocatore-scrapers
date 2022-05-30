@@ -1,5 +1,3 @@
-import json
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -9,51 +7,79 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.kfc.rs"
-    api_url = "https://www.kfc.rs/restorani/"
+    locator_domain = "https://kfc.rs/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "sr",
+        "Referer": "https://kfc.rs/",
+        "Content-Type": "application/json; charset=UTF-8",
+        "Brand": "KFC",
+        "Origin": "https://kfc.rs",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
+        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2ODAwODAyOTI5OTcsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.s5chlX6KtiH4dU0n9Mzd_bDQDX6TiSeemL-67W9lzqMyPS7kf6kvGsRAJa2YoDxFrmfRprdKz1nbItnAmFejhQ",
+        "Connection": "keep-alive",
     }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "places")]/text()'))
-        .split('"places":')[1]
-        .split(',"styles":"')[0]
-        .strip()
+
+    r = session.get(
+        "https://api.amrest.eu/amdv/ordering-api/KFC_RS/rest/v2/restaurants/",
+        headers=headers,
     )
-    js = json.loads(jsblock)
+    js = r.json()["restaurants"]
     for j in js:
-        b = j.get("location")
-        info = "".join(j.get("content"))
-        a = html.fromstring(info)
-        page_url = "https://www.kfc.rs/restorani/"
-        location_name = j.get("title")
-        street_address = "".join(a.xpath("//strong[2]//text()")).split(",")[0].strip()
-        state = b.get("state") or "<MISSING>"
-        postal = b.get("postal_code") or "<MISSING>"
-        country_code = b.get("country")
-        city = b.get("city")
-        store_number = j.get("id")
-        latitude = b.get("lat")
-        longitude = b.get("lng")
-        phone = "".join(a.xpath("//strong[3]//text()"))
-        hours_of_operation = (
-            " ".join(a.xpath("//*//text()"))
-            .replace("\r\n", "")
-            .split("Radno vreme")[1]
-            .strip()
+
+        page_url = "https://kfc.rs/main/home/restaurants"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = (
+            f"{j.get('addressStreet')} {j.get('addressStreetNo')}".replace(
+                "None", ""
+            ).strip()
+            or "<MISSING>"
         )
-        if hours_of_operation.find("Preuzimanje") != -1:
-            hours_of_operation = hours_of_operation.split("Preuzimanje")[0].strip()
-        if hours_of_operation.find("Dostava") != -1:
-            hours_of_operation = hours_of_operation.split("Dostava")[0].strip()
-        if hours_of_operation.find("Drive") != -1:
-            hours_of_operation = hours_of_operation.split("Drive")[0].strip()
-        hours_of_operation = (
-            hours_of_operation.replace(": ", "").replace("restorana", "").strip()
+        postal = j.get("addressPostalCode") or "<MISSING>"
+        country_code = "RS"
+        city = j.get("addressCity") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("geoLat") or "<MISSING>"
+        longitude = j.get("geoLng") or "<MISSING>"
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "sr",
+            "Referer": "https://kfc.rs/",
+            "Source": "WEB",
+            "Content-Type": "application/json; charset=UTF-8",
+            "Brand": "KFC",
+            "Origin": "https://kfc.rs",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+            "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2ODAwODAyOTI5OTcsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.s5chlX6KtiH4dU0n9Mzd_bDQDX6TiSeemL-67W9lzqMyPS7kf6kvGsRAJa2YoDxFrmfRprdKz1nbItnAmFejhQ",
+            "Connection": "keep-alive",
+        }
+
+        r = session.get(
+            f"https://api.amrest.eu/amdv/ordering-api/KFC_RS/rest/v2/restaurants/details/{store_number}",
+            headers=headers,
         )
+        js = r.json()["details"]
+        phone = js.get("phoneNo") or "<MISSING>"
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        hours = js.get("facilityOpenHours")
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if hours:
+            for d in days:
+                day = d
+                opens = hours.get(f"openHours{d}")[0].get("openFrom")
+                closes = hours.get(f"openHours{d}")[0].get("openTo")
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -61,7 +87,7 @@ def fetch_data(sgw: SgWriter):
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
+            state=SgRecord.MISSING,
             zip_postal=postal,
             country_code=country_code,
             store_number=store_number,

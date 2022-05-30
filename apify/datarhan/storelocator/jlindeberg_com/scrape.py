@@ -1,53 +1,23 @@
-import csv
 import json
+from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "jlindeberg.com"
-
+    session = SgRequests()
+    domain = "jlindeberg.com"
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
     }
-    countries = ["US", "CA", "GB"]
+    response = session.get("https://www.jlindeberg.com/es/es/stores")
+    dom = etree.HTML(response.text)
+    countries = dom.xpath('//select[@name="country"]/option/@value')
     for country_code in countries:
         url = "https://www.jlindeberg.com/on/demandware.store/Sites-BSE-South-Site/en_GB/Stores-GetCities?countryCode={}&brandCode=jl".format(
             country_code
@@ -59,53 +29,54 @@ def fetch_data():
             final_url = final_url.format(country_code, city)
             city_response = session.get(final_url, headers=headers)
             locations = json.loads(city_response.text)
-
+            if not locations.get("locations"):
+                continue
             for poi in locations["locations"]:
                 store_url = "https://www.jlindeberg.com/gb/en/stores"
                 location_name = poi["storeName"]
                 street_address = poi["address1"]
-                street_address = street_address if street_address else "<MISSING>"
                 state = poi.get("state")
-                state = state if state else "<MISSING>"
                 zip_code = poi["postalCode"]
-                zip_code = zip_code if zip_code else "<MISSING>"
                 store_number = poi["storeID"]
                 phone = poi["phone"]
-                phone = phone if phone else "<MISSING>"
-                location_type = "<MISSING>"
                 latitude = poi["latitude"]
-                latitude = latitude if latitude else "<MISSING>"
                 longitude = poi["longitude"]
-                longitude = longitude if longitude else "<MISSING>"
-                hours_of_operation = "<MISSING>"
+                if city == "Abbotsford" and not zip_code:
+                    continue
 
-                item = [
-                    DOMAIN,
-                    store_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=store_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type="",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation="",
+                )
 
-                if store_number not in scraped_items:
-                    scraped_items.append(store_number)
-                    items.append(item)
-
-    return items
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

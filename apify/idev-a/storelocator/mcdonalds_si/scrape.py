@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import dirtyjson as json
+import re
 
 logger = SgLogSetup().get_logger("mcdonalds")
 
@@ -14,39 +16,66 @@ _headers = {
 
 locator_domain = "https://www.mcdonalds.si"
 base_url = "https://www.mcdonalds.si/restavracije/"
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("ul.l-restaurants-list h2 a")
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("const docs =")[1]
+            .split(".map")[0]
+            .strip()
+        )
         for _ in locations:
-            page_url = locator_domain + _["href"]
+            page_url = _["slugs"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            block = (
-                sp1.select_one("div.l-header-restaurant strong").text.strip().split(",")
-            )
-            hours = [
-                ": ".join(hh.stripped_strings)
-                for hh in sp1.select("div.l-restaurant-info table tr")
-            ]
-            if hours:
-                hours = hours[-7:]
-            map_data = sp1.select_one("div#map")
+            phone = ""
+            if sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
+            raw_address = _["address"]
+            addr = raw_address.split(",")
+            if "Slovenia" in addr[-1]:
+                del addr[-1]
+
+            hours = []
+            for hh in _["hours_shop"]:
+                hours.append(
+                    f"{hr_obj[str(hh['day'])]}: {hh['time_from']} - {hh['time_to']}"
+                )
+
+            if hours and "Sunday" not in " ".join(hours):
+                hours.append("Sunday: Closed")
+
+            city = _["city"]
+            if not city:
+                city = " ".join(addr[-1].strip().split()[1:])
+            street_address = _["street"]
+            if not street_address:
+                street_address = ", ".join(addr[:-1])
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp1.select_one("div.l-header-restaurant h1").text.strip(),
-                street_address=map_data["data-address"],
-                city=block[1].strip().split(" ")[-1],
-                zip_postal=block[1].strip().split(" ")[0],
+                store_number=_["id"],
+                location_name=_["title"],
+                street_address=street_address,
+                city=city,
+                zip_postal=addr[-1].strip().split()[0],
+                latitude=_["marker"]["position"]["lat"],
+                longitude=_["marker"]["position"]["lng"],
                 country_code="Slovenia",
-                phone=map_data["data-tel"],
-                latitude=map_data["data-map-x"],
-                longitude=map_data["data-map-y"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=", ".join(block[:2]),
+                raw_address=raw_address,
             )
 
 

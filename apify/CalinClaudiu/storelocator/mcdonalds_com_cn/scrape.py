@@ -136,7 +136,7 @@ class CleanRecord:
     def China(badRecord, config):
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
-        cleanRecord["page_url"] = ""
+        cleanRecord["page_url"] = "https://www.mcdonalds.com.cn/top/map"
         cleanRecord["location_name"] = badRecord["title"]
         cleanRecord["latitude"] = badRecord["location"]["lat"]
         cleanRecord["longitude"] = badRecord["location"]["lng"]
@@ -146,9 +146,17 @@ class CleanRecord:
         cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["city"]
         cleanRecord["state"] = badRecord["province"]
-        cleanRecord["zipcode"] = badRecord["district"]
+        cleanRecord["zipcode"] = "<MISSING>"
         cleanRecord["country_code"] = "China"
         cleanRecord["phone"] = badRecord["tel"]
+        try:
+            cleanRecord["phone"] = cleanRecord["phone"].split(";", 1)[0]
+        except Exception:
+            pass
+        try:
+            cleanRecord["phone"] = cleanRecord["phone"].split(":", 1)[0]
+        except Exception:
+            pass
         cleanRecord["store_number"] = badRecord["id"]
         cleanRecord["hours_of_operation"] = ""
         cleanRecord["location_type"] = ""
@@ -736,7 +744,7 @@ def checkFail(countries, fromConfig):
                     Country["text"], Country["text"], Country["page"]
                 )
             )
-            raise Exception
+            pass
 
 
 def fix_proxy(StripProxyCountry):
@@ -810,6 +818,13 @@ def fix_comma(x):
         return x.replace("  ", " ")
 
 
+def fix_ph(x):
+    try:
+        return x.split(":")[0]
+    except Exception:
+        return x
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -846,8 +861,7 @@ def scrape():
         zipcode=sp.MappingField(mapping=["zipcode"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"], is_required=False),
         phone=sp.MappingField(
-            mapping=["phone"],
-            is_required=False,
+            mapping=["phone"], is_required=False, value_transform=fix_ph
         ),
         store_number=sp.MappingField(
             mapping=["store_number"],

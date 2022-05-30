@@ -25,21 +25,15 @@ def fetch_data():
     for poi in data["pharmacies"]:
         store_url = urljoin(start_url, poi["detailUrl"])
         location_name = poi["title"]
-        location_name = location_name if location_name else "<MISSING>"
         addr = parse_address_intl(poi["address"])
         street_address = poi["address"].split(",")[0]
         city = addr.city
-        city = city if city else "<MISSING>"
         state = addr.state
-        state = state if state else "<MISSING>"
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
         store_number = poi["storeCode"]
         phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        location_type = poi["flyerUrl"].split("=")[-1]
         latitude = poi["location"]["latitude"]
         latitude = latitude if latitude and len(str(latitude)) > 2 else "<MISSING>"
         longitude = poi["location"]["longitude"]

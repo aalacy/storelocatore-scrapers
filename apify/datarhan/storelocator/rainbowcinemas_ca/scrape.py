@@ -1,48 +1,17 @@
 import re
-import csv
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
+    session = SgRequests()
     start_url = "https://www.rainbowcinemas.ca/A/contact.php?t=Aurora"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
@@ -54,7 +23,9 @@ def fetch_data():
     all_locations = dom.xpath('//a[b[@style="font-size:13px"]]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath("//div[address]/h3//text()")
@@ -67,43 +38,42 @@ def fetch_data():
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
         phone = (
             loc_dom.xpath('//span[contains(text(), "Movie Info: ")]/text()')[0]
             .split(":")[-1]
             .strip()
         )
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

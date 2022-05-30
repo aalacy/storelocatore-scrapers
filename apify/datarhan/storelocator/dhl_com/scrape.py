@@ -1,10 +1,6 @@
-import demjson
-
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 from tenacity import retry, stop_after_attempt
-
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -13,11 +9,11 @@ from sgscrape.pause_resume import CrawlStateSingleton
 
 
 @retry(stop=stop_after_attempt(3))
-def fetch_latlng(lat, lng, country, session, tracker):
+def fetch_latlng(lat, lng, session, search):
     url = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints"
     params = {
         "servicePointResults": 50,
-        "countryCode": country,
+        "countryCode": "",
         "latitude": lat,
         "longitude": lng,
         "language": "eng",
@@ -27,18 +23,18 @@ def fetch_latlng(lat, lng, country, session, tracker):
     if response.status_code != 200:
         return []
     try:
-        data = demjson.decode(response.text)
+        data = response.json()
     except Exception:
         return []
     if not data.get("servicePoints"):
         return []
 
     for location in data.get("servicePoints"):
-        poi = extract(location)
+        poi = extract(location, search)
         yield poi
 
 
-def extract(poi):
+def extract(poi, search):
     domain = "dhl.com"
     location_name = poi["servicePointName"]
     location_name = location_name if location_name else "<MISSING>"
@@ -66,6 +62,7 @@ def extract(poi):
     longitude = poi["geoLocation"]["longitude"]
     latitude = latitude if latitude else "<MISSING>"
     longitude = longitude if longitude else "<MISSING>"
+    search.found_location_at(latitude, longitude)
     hours_of_operation = []
     for elem in poi["openingHours"]["openingHours"]:
         day = elem["dayOfWeek"]
@@ -99,26 +96,19 @@ def extract(poi):
 
 
 def fetch_data():
-    tracker = []
 
     session = SgRequests()
     session.get("https://locator.dhl.com/ServicePointLocator/restV3/appConfig")
 
-    with ThreadPoolExecutor() as executor:
-        futures = []
-        futures.extend(
-            executor.submit(fetch_latlng, lat, lng, "US", session, tracker)
-            for lat, lng in static_coordinate_list(5, SearchableCountries.USA)
-        )
-        futures.extend(
-            executor.submit(fetch_latlng, lat, lng, "CA", session, tracker)
-            for lat, lng in static_coordinate_list(10, SearchableCountries.CANADA)
-        )
-
-        for future in as_completed(futures):
-            locations = future.result()
-            for loc in locations:
-                yield loc
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        granularity=Grain_2(),
+    )
+    session = SgRequests()
+    for lat, lon in search:
+        locations = fetch_latlng(lat, lon, session, search)
+        for loc in locations:
+            yield loc
 
 
 def scrape():
@@ -127,7 +117,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

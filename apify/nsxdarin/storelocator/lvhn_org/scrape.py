@@ -17,12 +17,9 @@ def fetch_data():
     locs = []
     cats = []
     alllocs = []
-    donelocs = []
     url = "https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if '<select data-drupal-selector="edit-location-types"' in line:
             items = line.split('</option><option value="')
             for item in items:
@@ -45,9 +42,7 @@ def fetch_data():
             logger.info(("Pulling Category %s, %s..." % (catname, str(pagenum))))
             Found = False
             r2 = session.get(urlloc, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
+            for line2 in r2.iter_lines():
                 if "NEXT</span>" in line2:
                     Found = True
                 if (
@@ -64,16 +59,14 @@ def fetch_data():
     PFound = True
     while PFound:
         urlnew = (
-            "https://www.lvhn.org/locations?radius=20037.5&zip=10002&sort_by=search_api_relevance&sort_order=DESC&region=All&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=10002&keys=&location_types=All&physician_practice=All&services=All&page="
+            "https://www.lvhn.org/locations?keys=&location%5Bdistance%5D%5Bfrom%5D=20037.5&location%5Bvalue%5D=&location_types=All&physician_practice=All&region=All&services=All&sort_by=lvpg_tier&sort_order=ASC&page="
             + str(pagenum)
         )
         pagenum = pagenum + 1
         PFound = False
         logger.info(("Pulling Full List Page %s..." % str(pagenum)))
         r2 = session.get(urlnew, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if "NEXT</span>" in line2:
                 PFound = True
             if (
@@ -107,10 +100,11 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
+        CS = False
         r2 = session.get(lurl, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
+            if "Coming Soon</div>" in line2:
+                CS = True
             if name == "" and "<title>" in line2:
                 name = line2.split("<title>")[1].split(" |")[0]
             if '"address-line1">' in line2:
@@ -151,8 +145,12 @@ def fetch_data():
             add = add.split(" Suite")[0]
         if " #" in add:
             add = add.split(" #")[0]
-        if lurl not in donelocs and city != "":
-            donelocs.append(lurl)
+        if "LVHN" in phone and "888" in phone:
+            phone = "888-402-5846"
+        if CS:
+            name = name + " - Coming Soon"
+        phone = phone.replace("%28", "(").replace("%29", ")")
+        if city != "":
             yield SgRecord(
                 locator_domain=website,
                 page_url=lurl,

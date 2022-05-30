@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
-import csv
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,55 +11,43 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    p = 0
-    ccode = "US"
-    urlist = ["https://stores.sunglasshut.com/us", "https://stores.sunglasshut.com/ca"]
-    for url in urlist:
-        if "/ca" in url:
-            ccode = "CA"
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        statelist = soup.find("section", {"class": "StateList"}).findAll(
-            "a", {"class": "Directory-listLink"}
-        )
 
+    url = "https://stores.sunglasshut.com/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    clist = soup.find("ul", {"class": "Directory-listLinks"}).findAll(
+        "a", {"class": "Directory-listLink"}
+    )
+
+    for country in clist:
+        clink = country["href"]
+        try:
+            ccode = clink.split("/", 1)[0].upper()
+        except:
+            ccode = clink
+        clink = "https://stores.sunglasshut.com/" + clink
+
+        r = session.get(clink, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        check3 = 0
+        try:
+            statelist = soup.find("section", {"class": "StateList"}).findAll(
+                "a", {"class": "Directory-listLink"}
+            )
+        except:
+            statelist = []
+            statelist.append(clink)
+            check3 = 1
         for stnow in statelist:
             check1 = 0
-            stlink = "https://stores.sunglasshut.com/" + stnow["href"]
-            r = session.get(stlink, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
+            if check3 == 0:
+                stlink = "https://stores.sunglasshut.com/" + stnow["href"]
+
+                r = session.get(stlink, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+            else:
+                stlink = stnow
             try:
                 citylist = soup.find("section", {"class": "CityList"}).findAll(
                     "a", {"class": "Directory-listLink"}
@@ -72,7 +62,7 @@ def fetch_data():
                     citylink = "https://stores.sunglasshut.com/" + citynow["href"]
                     citylink = citylink.replace("../", "")
 
-                    r = session.get(citylink, headers=headers, verify=False)
+                    r = session.get(citylink, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                 else:
                     branchlist = []
@@ -87,21 +77,16 @@ def fetch_data():
                 except:
 
                     branchlist = []
-                    branchlist.append(citylink)
+                    branchlist.append(r.url)
                     check2 = 1
                 for branch in branchlist:
                     if check2 == 0:
                         branch = "https://stores.sunglasshut.com/" + branch["href"]
                         branch = branch.replace("../", "")
 
-                        r = session.get(branch, headers=headers, verify=False)
+                        r = session.get(branch, headers=headers)
                         soup = BeautifulSoup(r.text, "html.parser")
                         branch = r.url
-                    store = (
-                        soup.select_one("a[href*=storeId]")["href"]
-                        .split("storeId=", 1)[1]
-                        .split("&", 1)[0]
-                    )
                     lat = soup.find("meta", {"itemprop": "latitude"})["content"]
                     longt = soup.find("meta", {"itemprop": "longitude"})["content"]
                     title = (
@@ -122,7 +107,7 @@ def fetch_data():
                     try:
                         state = soup.find("abbr", {"class": "c-address-state"}).text
                     except:
-                        continue
+                        state = "<MISSING>"
                     pcode = soup.find("span", {"class": "c-address-postal-code"}).text
                     phone = soup.find("div", {"id": "phone-main"}).text
                     try:
@@ -142,33 +127,33 @@ def fetch_data():
                     except:
                         hours = "Temporarily Closed"
                     branch = r.url
-                    data.append(
-                        [
-                            "https://sunglasshut.com/",
-                            branch,
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            ccode,
-                            store,
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            hours,
-                        ]
+                    yield SgRecord(
+                        locator_domain="https://www.sunglasshut.com",
+                        page_url=branch,
+                        location_name=title,
+                        street_address=street.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=pcode.strip(),
+                        country_code=ccode,
+                        store_number=SgRecord.MISSING,
+                        phone=phone.strip(),
+                        location_type=SgRecord.MISSING,
+                        latitude=str(lat),
+                        longitude=str(longt),
+                        hours_of_operation=hours,
                     )
-
-                    p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

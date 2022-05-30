@@ -39,7 +39,7 @@ def fetch_data(sgw: SgWriter):
         raw_data = item["Html"].split(",,")
         location_name = raw_data[0].strip()
 
-        location_type = (
+        raw_type = (
             raw_data[-3]
             .replace("DDDt", "ht")
             .replace("DDD", "")
@@ -47,6 +47,11 @@ def fetch_data(sgw: SgWriter):
             .split("---")[0]
             .split(".png")[0]
         )
+
+        if "Select-Physical-Therapy" not in raw_type:
+            continue
+
+        location_type = raw_data[-1].strip()
 
         if len(raw_data) == 7:
             street_address = raw_data[1].strip() + " " + raw_data[2].strip()
@@ -61,7 +66,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
 
         store_number = "<MISSING>"
-        phone = city_line[city_line.find("(") : city_line.find("\r")].strip()
+        phone = city_line.split("\r")[1].strip()
         if phone == "(817) 333-018":
             phone = "(817) 333-0181"
         hours = (

@@ -1,144 +1,96 @@
-import csv
-import usaddress
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("ginoseast_com")
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "ginoseast_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.ginoseast.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
-    }
-    r = session.get("https://www.ginoseast.com/locations", headers=headers)
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-    soup = BeautifulSoup(r.text, "html.parser")
-    for data in soup.find("div", {"id": "page-5db3337c9f175d60ba85158a"}).find_all(
-        "h3"
-    ):
-        for link in data.find_all("a"):
-            page_url = "https://www.ginoseast.com" + link["href"]
-            r1 = session.get(page_url, headers=headers)
-            soup1 = BeautifulSoup(r1.text, "html.parser")
-            name = soup1.h1.text.strip()
-            full = list(
-                soup1.find_all("div", {"class": "col sqs-col-6 span-6"})[1]
-                .find("div", {"class": "row sqs-row"})
-                .stripped_strings
-            )
-
-            phone = "".join(full).split("Phone")[1].strip()
-            if phone.find("Address") != -1:
-                phone = phone.split("Address")[0].strip()
-
-            if "coming soon" in phone.lower():
-                continue
-
-            adr = " ".join(full).split("Address")[1].strip()
-            if adr.find("Phone") != -1:
-                adr = adr.split("Phone")[0].strip()
-            a = usaddress.tag(adr, tag_mapping=tag)[0]
-            city = a.get("city") or "<MISSING>"
-            state = a.get("state") or "<MISSING>"
-            zipcode = a.get("postal") or "<MISSING>"
-
-            if zipcode == "60665":
-                zipcode = "60605"
-            street = f"{a.get('address1')} {a.get('address2')}".replace(
-                "None", ""
-            ).strip()
-            hours = (
-                " ".join(full[1:-5])
+    if True:
+        url = "https://www.ginoseast.com/locations"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("h3")
+        for loc in loclist:
+            page_url = DOMAIN + loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text
+            hours_of_operation = r.text.split(">Hours")[1].split("</div>")[0]
+            hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
+            hours_of_operation = (
+                hours_of_operation.get_text(separator="|", strip=True)
+                .replace("|", " ")
                 .replace("Now Open For Safe Indoor Dining Service", "")
-                .strip()
+                .replace("NOW OPEN FOR DINE IN!", "")
+                .replace("Delivery available after 5pm", "")
             )
-            if not hours:
-                hours = "<MISSING>"
-            store = []
-            store.append("https://www.ginoseast.com")
-            store.append(name)
-            store.append(street)
-            store.append(city)
-            store.append(state)
-            store.append(zipcode.replace("CA", "<MISSING>"))
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(
-                hours.replace("Delivery & Curbside Pick-Up available ", "").replace(
-                    " Delivery available after 5pm", ""
-                )
+            if "Reserve" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Reserve")[0]
+            phone = r.text.split('">Phone')[1].split("</p>")[0]
+            phone = BeautifulSoup(phone, "html.parser").text
+            address = r.text.split("Address")[1].split("</p>")[0]
+            address = (
+                BeautifulSoup(address, "html.parser")
+                .get_text(separator="|", strip=True)
+                .split("|")
             )
-            store.append(page_url)
-
-            yield store
+            street_address = address[0]
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            try:
+                zip_postal = address[1]
+            except:
+                zip_postal = MISSING
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,154 +1,97 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def generate_links():
-    session = SgRequests()
-    r = session.get("https://locations.iberiabank.com/index.json")
-    js = r.json()["directoryHierarchy"]
-
-    urls = list(get_urls(js))
-
-    return urls
-
-
-def get_urls(states):
-    for state in states.values():
-        children = state["children"]
-        if children is None:
-            yield f"https://locations.iberiabank.com/{state['url']}.json"
-        else:
-            yield from get_urls(children)
-
-
-def get_data(url):
-    session = SgRequests()
-    r = session.get(url)
-    j = r.json()["profile"]
-
-    locator_domain = "https://locations.iberiabank.com/"
-    page_url = url.replace(".json", "")
-    location_name = (
-        f"{j.get('name')} {j.get('geomodifier') or ''}".strip() or "<MISSING>"
-    )
-
-    a = j.get("address", {}) or {}
-    street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("region") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("countryCode") or "<MISSING>"
-    store_number = "<MISSING>"
-    phone = j.get("mainPhone").get("display") if j.get("mainPhone") else "<MISSING>"
-    loc = j.get("yextDisplayCoordinate", {}) or {}
-    latitude = loc.get("lat") or "<MISSING>"
-    longitude = loc.get("long") or "<MISSING>"
-    location_type = "<MISSING>"
-    days = j.get("hours", {}).get("normalHours") or []
-
-    _tmp = []
-    for d in days:
-        day = d.get("day")[:3].capitalize()
-        try:
-            interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            if start == "0":
-                _tmp.append("24 hours")
-                break
-            end = str(interval.get("end"))
-
-            # normalize 9:30 -> 09:30
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
-            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-        except IndexError:
-            line = f"{day}  Closed"
-
-        _tmp.append(line)
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if (
-        hours_of_operation.count("Closed") == 7
-        or location_name.lower().find("closed") != -1
-    ):
-        hours_of_operation = "Closed"
-
-    if location_name.lower().find(":") != -1:
-        location_name = location_name.split(":")[0].strip()
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
+def fetch_data(sgw: SgWriter):
+    apis = [
+        "https://www.firsthorizon.com/api/locations/branches",
+        "https://www.firsthorizon.com/api/locations/atms",
     ]
+    data = {
+        "Latitude": "33.5178769",
+        "Longitude": "-86.8094808",
+        "SearchRadiusInMiles": "5000",
+    }
 
-    return row
+    for api in apis:
+        r = session.post(api, headers=headers, data=data)
+        if "branch" in api:
+            location_type = "Branch"
+            js = r.json()["Branches"]
+        else:
+            location_type = "ATM"
+            js = r.json()["ATMs"]
 
+        for j in js:
+            street_address = j.get("Street")
+            city = j.get("City")
+            state = j.get("State")
+            postal = j.get("Zip")
+            raw_address = f"{street_address}, {city}, {state} {postal}"
+            country_code = "US"
+            store_number = j.get("id")
+            location_name = j.get("Name")
+            phone = j.get("Phone")
+            latitude = j.get("Lat")
+            longitude = j.get("Lng")
 
-def fetch_data():
-    out = []
-    ids = generate_links()
+            _tmp = []
+            hours = j.get("Hours") or []
+            for h in hours:
+                day = h.get("Day")
+                inter = h.get("Time")
+                _tmp.append(f"{day}: {inter}")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+            hours_of_operation = ";".join(_tmp)
 
-    return out
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.firsthorizon.com/"
+    page_url = "https://www.firsthorizon.com/Support/Contact-Us/Location-Listing"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://www.firsthorizon.com/Support/Contact-Us?lf-location=35203&lf-location-type=branch",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.firsthorizon.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_TYPE})
+        )
+    ) as writer:
+        fetch_data(writer)

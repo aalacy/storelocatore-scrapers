@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("intercontinental_com")
 
@@ -10,49 +13,13 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    url = "https://www.ihg.com/bin/sitemapindex.xml"
+    url = "https://www.ihg.com/intercontinental/content/us/en/hotel-directory."
     r = session.get(url, headers=headers)
-    brand = "intercontinental"
-    brand_string = brand + ".en.hoteldetail.xml"
-    smurl = ""
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if brand_string in line:
-            smurl = line.split("<loc>")[1].split("<")[0]
-    r = session.get(smurl, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'hreflang="en" rel="alternate">' in line:
-            lurl = line.split('href="')[1].split('"')[0]
+        if '<a href="//www.ihg.com/intercontinental/hotels/us/en/' in line:
+            lurl = "https:" + line.split('href="')[1].split('"')[0]
             if lurl not in locs:
                 locs.append(lurl)
     for loc in locs:
@@ -80,7 +47,8 @@ def fetch_data():
         lng2 = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
             if 'property="og:title" content="' in line2 and name == "":
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
             if '"name" : "' in line2 and name == "":
@@ -209,28 +177,32 @@ def fetch_data():
             and "7" not in phone
         ):
             phone = "<MISSING>"
+        city = city.replace("&#39;", "'")
+        add = add.replace("&#39;", "'").replace("&amp;", "&").replace("amp;", "&")
         if " Hotels" not in name and name != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

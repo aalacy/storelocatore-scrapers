@@ -4,7 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("cleanslatecenters")
 
@@ -34,39 +36,37 @@ def fetch_data():
     base_url = "https://www.cleanslatecenters.com/our-location"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.hs_cos_wrapper_type_custom_widget")
+        links = soup.select("h4.et_pb_module_header a")
         logger.info(f"{len(links)} found")
         for link in links:
-            page_url = link.a["href"]
+            page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = list(link.select_one("div.address-div").stripped_strings)[:-1]
-            _addr = []
-            for aa in addr:
-                if "phone" in aa.lower():
-                    break
-                _addr.append(aa)
-            addr = parse_address_intl(" ".join(_addr))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            _hr = sp1.find("strong", string=re.compile(r"HOURS OF OPERATION"))
+            raw_address = list(
+                sp1.find("h4", string=re.compile(r"^ADDRESS$"))
+                .find_next_sibling("p")
+                .stripped_strings
+            )
+            addr = parse_address_intl(" ".join(raw_address))
+            state = addr.state
+            if not state:
+                state = link.text.split(",")[-1]
+            _hr = sp1.find("h4", string=re.compile(r"HOURS OF OPERATION"))
             hours = []
             if _hr:
-                hours = [
-                    "; ".join(hh.stripped_strings)
-                    for hh in _hr.find_parent().find_next_siblings("p")
-                ]
+                if _hr.find_next_sibling("p"):
+                    hours = list(_hr.find_next_sibling("p").stripped_strings)
+                elif _hr.find_next_sibling("div") and _hr.find_next_sibling("div").p:
+                    hours = list(_hr.find_next_sibling("div").p.stripped_strings)
+
             else:
-                _hr = sp1.find_all("strong", string=re.compile(r"ADDRESS"))
-                if len(_hr) > 1:
-                    hours = [
-                        "; ".join(hh.stripped_strings)
-                        for hh in _hr[1].find_parent().find_next_siblings("p")
-                    ]
+                _hr = sp1.find("strong", string=re.compile(r"HOURS OF OPERATION"))
+                if _hr:
+                    hours = list(_hr.find_parent().find_next_sibling().stripped_strings)
+
             try:
                 coord = (
-                    sp1.select_one("div.locations-map-responsive iframe")["src"]
+                    sp1.iframe["data-src"]
                     .split("!2d")[1]
                     .split("!3m")[0]
                     .split("!2m")[0]
@@ -76,22 +76,23 @@ def fetch_data():
                 coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=link.select_one(".map-name-sec").text.strip(),
-                street_address=street_address,
+                location_name=link.text.strip(),
+                street_address=" ".join(raw_address[:-1]),
                 city=addr.city,
-                state=addr.state,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="US",
-                phone=link.select_one(".telephone-link").text.strip(),
+                phone=sp1.find("a", href=re.compile(r"tel:")).text.strip(),
                 locator_domain=locator_domain,
                 latitude=coord[1],
                 longitude=coord[0],
-                hours_of_operation="; ".join(_h(hours)),
+                hours_of_operation="; ".join(_h(hours)).replace("\xa0", ""),
+                raw_address=" ".join(raw_address),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

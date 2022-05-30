@@ -1,0 +1,38 @@
+--ignore CountryCodeFillRateChecker (INTERNATIONAL)
+
+
+--ignore CentroidValidator (Confirmed on website)
+Found 4 concerning rows. Examples:
+     latitude longitude                       REASON  rowNumber
+59    43.8705     125.3  EITHER_LAT_OR_LNG_IMPRECISE         59
+203      47.8   13.0449  EITHER_LAT_OR_LNG_IMPRECISE        203
+770   24.8138    -107.4  EITHER_LAT_OR_LNG_IMPRECISE        770
+1004     43.5  -96.7496  EITHER_LAT_OR_LNG_IMPRECISE       1004
+
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+Found 6 concerning rows. Examples:
+                             street_address              REASON  rowNumber
+110  Dfs Galleria Bali Jl Bypass Ngurah Rai  ADDR_HAS_NO_NUMBER        110
+111             #Ug-053 Jalan Embong Malang  ADDR_HAS_NO_NUMBER        111
+124                         Taj Mall Abdoun  ADDR_HAS_NO_NUMBER        124
+603                  Swiss Gallery Karradah  ADDR_HAS_NO_NUMBER        603
+619                9 Via Giuseppe Garibaldi  ADDR_HAS_NO_NUMBER        619
+
+
+
+--ignore CountryValidator (Confirmed on website)
+Found 105 concerning rows. Examples:
+             state      phone        zip            REASON  rowNumber
+39        Honolulu  <MISSING>  <MISSING>  INVALID_US_STATE         39
+40   San Francisco  <MISSING>  <MISSING>  INVALID_US_STATE         40
+179       Honolulu  <MISSING>  <MISSING>  INVALID_US_STATE        179
+180    Los Angeles  <MISSING>  <MISSING>  INVALID_US_STATE        180
+181  San Francisco  <MISSING>  <MISSING>  INVALID_US_STATE        181
+
+
+--ignore LatLngDuplicationValidator
+Found 2 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude  longitude                                     street_address  num_addrs
+214  29.07917  119.64742  {No.19 Jiefang Road Zhongshan Dist. Dalian, No...          2
+486   39.9593    116.298  {East Part No.1 Yuanda Road.Haidian District B...          2

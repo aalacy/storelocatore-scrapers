@@ -27,19 +27,21 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             street_address = _["street_address"]
-            if _["street_address2"]:
-                street_address += " " + _["street_address2"]
             _city = _["city"].replace(" ", "-").lower()
             page_url = f"https://bitstop.co/{_state(_['state']).replace(' ','-')}/{_city}/{_['slug']}-{_city}-bitcoin-atm"
             country_code = _["country"]
             if country_code == "TX":
                 country_code = "US"
+            state = _["state"]
+            if state == "PR":
+                country_code = "PR"
+                state = ""
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
                 street_address=street_address,
                 city=_["city"],
-                state=_["state"],
+                state=state,
                 zip_postal=_["zipcode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
