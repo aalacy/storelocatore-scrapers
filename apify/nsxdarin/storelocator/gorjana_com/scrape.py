@@ -58,7 +58,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = "<MISSING>"
         tmp = []
         for i in info:
-            if "PM" in i or "Mon-" in i:
+            if "PM" in i or "Mon-" in i or "Sun" in i:
                 tmp.append(i)
             hours_of_operation = (
                 "; ".join(tmp).replace(":;", ":").strip() or "<MISSING>"
