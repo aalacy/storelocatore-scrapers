@@ -58,9 +58,27 @@ def get_data(url, sgw: SgWriter):
     latitude = js[0].get("lat") or "<MISSING>"
     longitude = js[0].get("lng") or "<MISSING>"
     hours_of_operation = (
-        " ".join(tree.xpath("//table//tr/td/text()")).replace("\n", "").strip()
+        " ".join(
+            tree.xpath(
+                "//table//tr/td/text() | //h2[contains(text(), 'Öppettider')]/following::div[./p][1]//p//text()"
+            )
+        )
+        .replace("\n", "")
+        .strip()
         or "<MISSING>"
     )
+    if page_url == "https://www.curves.eu/ch/curves/curves-genevelesacacias/":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Heures ")]/following::table[1]//tr//td//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+    if hours_of_operation.find("Curves") != -1:
+        hours_of_operation = hours_of_operation.split("Curves")[0].strip()
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -85,7 +103,7 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
