@@ -29,20 +29,18 @@ def fetch_data(sgw: SgWriter):
         with SgFirefox() as driver:
 
             driver.get(page_url)
-            iframe = driver.find_element_by_xpath(
-                '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
+            driver.implicitly_wait(10)
+            xpath_iframe = '//iframe[contains(@src, "maps")]'
+            WebDriverWait(driver, 50).until(
+                EC.presence_of_element_located((By.XPATH, xpath_iframe))
             )
-            driver.switch_to.frame(iframe)
-            try:
-                WebDriverWait(driver, 200).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, '//div[@class="address"]')
-                    )
-                )
-            except:
-                driver.switch_to.default_content()
+            element_iframe = driver.find_element(By.XPATH, xpath_iframe)
+            driver.switch_to.frame(element_iframe)
             try:
                 ad = driver.find_element_by_xpath('//div[@class="address"]').text
+            except:
+                ad = "<MISSING>"
+            try:
                 ll = driver.find_element_by_xpath(
                     '//div[@class="google-maps-link"]/a'
                 ).get_attribute("href")
@@ -50,6 +48,7 @@ def fetch_data(sgw: SgWriter):
                 ad = "<MISSING>"
                 ll = "<MISSING>"
             ll = "".join(ll)
+
             ad = (
                 "".join(ad)
                 .replace(", N.L.", "")
