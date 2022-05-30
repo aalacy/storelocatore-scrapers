@@ -32,6 +32,9 @@ def fetch_data(sgw: SgWriter):
 
     for store in stores:
         link = store["link"]
+
+        if "/test/" in link:
+            continue
         logger.info(link)
 
         location_name = store["post_title"]

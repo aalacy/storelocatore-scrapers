@@ -36,7 +36,11 @@ def fetch_data(sgw: SgWriter):
                 country_code = "US"
             city = j.get("city") or "<MISSING>"
             if str(city).find(",") != -1:
-                city = str(city).split(",")[0].strip()
+                city = str(city).split(",")[1].strip()
+            if city == "<MISSING>":
+                city = a.city or "<MISSING>"
+            if ad.find("South Wharf") != -1:
+                city = "South Wharf"
             store_number = j.get("stockist_id") or "<MISSING>"
             page_url = (
                 f"https://www.brasnthings.com/stores/store/index/id/{store_number}"
@@ -53,9 +57,7 @@ def fetch_data(sgw: SgWriter):
             if latitude == longitude:
                 latitude, longitude = "<MISSING>", "<MISSING>"
             phone = j.get("phone") or "<MISSING>"
-            r = http.get(url=page_url, headers=headers)
-            assert isinstance(r, httpx.Response)
-            assert 200 == r.status_code
+            r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             curr_date = date.today()
             next_date = curr_date + timedelta(days=1)
@@ -102,9 +104,6 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=f"{ad} {city}, {state} {postal}".replace(
-                    "<MISSING>", ""
-                ).strip(),
             )
 
             sgw.write_row(row)

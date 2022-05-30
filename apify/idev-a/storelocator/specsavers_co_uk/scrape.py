@@ -9,6 +9,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sglogging import SgLogSetup
 import ssl
+from webdriver_manager.chrome import ChromeDriverManager
+from tenacity import retry, stop_after_attempt, wait_fixed
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -34,7 +41,32 @@ def request_with_retries(url):
         return session.get(url, headers=_headers)
 
 
-def _d(driver, page_url, res, soup, location_type):
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    )
+
+
+@retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
+def get_url(url=None):
+    soup = None
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ) as driver:
+        try:
+            driver.get(url)
+            soup = bs(driver.page_source, "lxml")
+        except:
+            raise Exception
+
+    return soup
+
+
+def _d(page_url, res, soup, location_type):
     with SgRequests(proxy_country="us") as http:
         dr = soup.find("script", src=re.compile(r"https://knowledgetags.yextpages.net"))
         try:
@@ -49,10 +81,13 @@ def _d(driver, page_url, res, soup, location_type):
             else:
                 latitude = _["displayLat"]
                 longitude = _["displayLng"]
+            street_address = _["address"]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             return SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["city"],
                 state=_.get("state"),
                 zip_postal=_["zip"],
@@ -69,11 +104,12 @@ def _d(driver, page_url, res, soup, location_type):
                 if soup.select_one("div.store p"):
                     addr = list(soup.select_one("div.store p").stripped_strings)
                 else:
-                    driver.get(page_url)
-                    soup = bs(driver.page_source, "lxml")
+                    soup = get_url(page_url)
                     addr = list(soup.select_one("div.store p").stripped_strings)
 
-                street_address = " ".join(addr[:-3])
+                raw_address = " ".join(addr).replace("\n", "").replace("\r", "")
+                addr = raw_address.split(",")
+                street_address = " ".join(addr[:-3]).strip()
                 if street_address.endswith(","):
                     street_address = street_address[:-1]
                 try:
@@ -110,32 +146,32 @@ def _d(driver, page_url, res, soup, location_type):
                     hours_of_operation="; ".join(hours),
                     location_type=location_type,
                     country_code="UK",
-                    raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
+                    raw_address=raw_address,
                 )
             except Exception as e:
-                logger.info("failed ", page_url)
+                logger.info(f"failed {page_url} {str(e)}")
                 open("w", "a+").write(page_url + ": " + str(e) + "\n")
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        with SgRequests(proxy_country="us") as session:
-            soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-            store_links = soup.select("div.item-list ul li a")
-            for link in store_links:
-                page_url = "https://www.specsavers.co.uk/stores/" + link["href"]
-                logger.info(page_url)
-                res = request_with_retries(page_url)
-                if res.status_code == 200:
-                    soup = bs(res.text, "lxml")
-                    location_type = (
-                        "Hearing Centre" if "hearing" in page_url else "Optician"
-                    )
-                    yield _d(driver, page_url, res, soup, location_type)
+    with SgRequests(proxy_country="us") as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        store_links = soup.select("div.item-list ul li a")
+        for link in store_links:
+            page_url = "https://www.specsavers.co.uk/stores/" + link["href"]
+            logger.info(page_url)
+            res = request_with_retries(page_url)
+            if res.status_code == 200:
+                soup = bs(res.text, "lxml")
+                location_type = (
+                    "Hearing Centre" if "hearing" in page_url else "Optician"
+                )
+                yield _d(page_url, res, soup, location_type)
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

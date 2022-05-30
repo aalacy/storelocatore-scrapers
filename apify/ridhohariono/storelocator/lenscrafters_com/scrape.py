@@ -39,6 +39,9 @@ def fetch_data():
             if count != 5:
                 continue
             store = pull_content(page_url)
+            title = store.find("title").text.strip()
+            if "Coming Soon" in title:
+                continue
             try:
                 hours_today = store.find(
                     "div", {"class": "Hero-hoursToday"}

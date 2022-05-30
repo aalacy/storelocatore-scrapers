@@ -84,8 +84,12 @@ def fetch_data():
             for loc in loclist:
                 if "NEW LOCATION!" in loc.text:
                     continue
+                try:
+                    page_url = loc.findAll("a")[2]["href"]
+                except:
+                    page_url = state_url
                 location_name = loc.find("h3", {"itemprop": "name"}).text
-                log.info(location_name)
+                log.info(page_url)
                 phone = loc.find("p", {"class": "phone"}).text
                 street_address = loc.find("span", {"itemprop": "streetAddress"}).text
                 city = loc.find("span", {"itemprop": "addressLocality"}).text
@@ -101,7 +105,7 @@ def fetch_data():
                 )
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=state_url,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address.strip(),
                     city=city.strip(),

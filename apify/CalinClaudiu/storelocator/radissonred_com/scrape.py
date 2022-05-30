@@ -10,6 +10,7 @@ import time
 import ssl
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 import json
+import seleniumwire as selw  # noqa
 
 try:
     _create_unverified_https_context = (
@@ -245,7 +246,6 @@ def get_subpage(session, url):
         try:
             response = SgRequests.raise_on_err(session.get(url, headers=headers))
             soup = b4(response.text, "lxml")
-            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
         except Exception as e:
@@ -263,8 +263,8 @@ def get_subpage(session, url):
                         logzilla.info(f"Content\n{response.text}\n\n")
                     soup = b4(response.text, "lxml")
                 except Exception as e:
-                    logzilla.error(f"{str(e)}")
-                    raise
+                    logzilla.error(f" for url: {str(url)}\n{str(e)}")
+                    pass
 
         try:
             data = json.loads(
@@ -293,11 +293,13 @@ def get_subpage(session, url):
     return data
 
 
-def initial(driver, url, state):
+def initial(url, state):
+    reqs = None
     with SgChrome() as driver:
         driver.get(url)
+        time.sleep(10)
         try:
-            locator = WebDriverWait(driver, 10).until(  # noqa
+            locator = WebDriverWait(driver, 30).until(  # noqa
                 EC.visibility_of_element_located(
                     (
                         By.XPATH,
@@ -306,27 +308,36 @@ def initial(driver, url, state):
                 )
             )  # noqa
         except Exception:
-            locator2 = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/main/div[3]/div/div/div/div/span",
+            try:
+                locator2 = WebDriverWait(driver, 30).until(  # noqa
+                    EC.visibility_of_element_located(
+                        (
+                            By.XPATH,
+                            "/html/body/main/div[3]/div/div/div/div/span",
+                        )
                     )
-                )
-            )  # noqa
+                )  # noqa
+            except Exception:
+                logzilla.error(f"{driver.page_source}")
 
-        time.sleep(15)
-        time.sleep(5)
+        time.sleep(10)
         reqs = list(driver.requests)
-        logzilla.info(f"Length of driver.requests: {len(reqs)}")
-        for r in reqs:
-            x = r.url
-            if "zimba" in x and "hotels?" in x:
-                son = json.loads(r.response.body)
+    for r in reqs:
+        x = r.url
+        if "hotels?" in x:
+            body = selw.utils.decode(
+                r.response.body,
+                r.response.headers.get("Content-Encoding", "identity"),
+            )
+            if body:
+                son = json.loads(body)
                 for item in son["hotels"]:
                     state.push_request(
                         SerializableRequest(url=item["overviewPath"], context=item)
                     )
+    logzilla.info(f"{reqs}")
+    for i in reqs:
+        logzilla.info(f"{i.url}")
 
 
 def record_initial_requests(state):
@@ -334,8 +345,8 @@ def record_initial_requests(state):
         "https://www.radissonhotels.com/en-us/destination",
         "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        with SgChrome() as driver:
-            initial(driver, url, state)
+        initial(url, state)
+    return True
 
 
 def data_fetcher(session, state):

@@ -111,7 +111,7 @@ class ExampleSearchIteration(SearchIteration):
                     continue
 
                 state = _["state"] if _["country"] == "US" else _["province"]
-                location_type = "the north face"
+                location_type = ""
                 north_store = _.get("northface")
                 if north_store == "1":
                     location_type = "the north face store"
@@ -207,7 +207,7 @@ def fetch_records():
                         zip_postal=addr["postalCode"],
                         country_code="US",
                         phone=_["telephone"],
-                        location_type=_["@type"],
+                        location_type="the north face",
                         latitude=_["geo"]["latitude"],
                         longitude=_["geo"]["longitude"],
                         locator_domain=locator_domain,
@@ -227,7 +227,11 @@ if __name__ == "__main__":
                 app_key = (
                     script.text.split("appkey: ")[1].split(",")[0].replace("'", "")
                 )
-        with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        with SgWriter(
+            SgRecordDeduper(
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+            )
+        ) as writer:
             search_maker = DynamicSearchMaker(
                 search_type="DynamicZipSearch", expected_search_radius_miles=500
             )

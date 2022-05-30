@@ -1,86 +1,73 @@
 import json
-import re
+import ssl
 
 from bs4 import BeautifulSoup
-
-from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.urthcaffe.com/"
 
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-        "upgrade-insecure-requests": "1",
-    }
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    driver = SgChrome(user_agent=user_agent).driver()
 
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    driver.get(base_link)
 
-    items = []
+    base = BeautifulSoup(driver.page_source, "lxml")
 
-    # Using phones to match lat/lng
-    geos = re.findall(r'[0-9]{2}\.[0-9]+,"lng":-[0-9]{2,3}\.[0-9]+', str(base))
-    phones = re.findall(r'"phone":"[0-9]+', str(base))
-    names = re.findall(r'"name":"[a-z A-Z]+","openTableId', str(base))
-    if len(geos) - len(names) == 1:
-        geos.pop(0)
-        phones.pop(0)
+    raw_data = base.find(id="popmenu-apollo-state").contents[0]
+    js = raw_data.split("STATE =")[1].strip()[:-1]
+    store_data = json.loads(js)
 
-    all_scripts = base.find_all("script")
-    for script in all_scripts:
-        if "addressLocality" in str(script):
-            items.append(script.contents[0])
+    for loc in store_data:
+        if "RestaurantLocation:" in loc:
+            store = store_data[loc]
 
-    for item in items:
-        store = json.loads(item)
+            location_name = store["name"]
+            street_address = store["streetAddress"].replace("\n", " ")
+            city = store["city"]
+            state = store["state"]
+            zip_code = store["postalCode"]
+            country_code = "US"
+            location_type = "<MISSING>"
+            phone = store["displayPhone"]
+            hours_of_operation = " ".join(store["schemaHours"])
+            link = base_link + store["slug"]
+            store_number = store["id"]
+            latitude = store["lat"]
+            longitude = store["lng"]
 
-        locator_domain = "urthcaffe.com"
-        street_address = store["address"]["streetAddress"].replace("\n", " ")
-        city = store["address"]["addressLocality"]
-        state = store["address"]["addressRegion"]
-        zip_code = store["address"]["postalCode"]
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
-        phone = store["telephone"]
-        for i, tel in enumerate(phones):
-            if phone == tel.split('"')[-1]:
-                geo = geos[i]
-                latitude = geo.split(",")[0]
-                longitude = geo.split(":")[-1]
-                location_name = names[i].split(':"')[1].split('",')[0]
-
-        hours_of_operation = " ".join(store["openingHours"])
-        link = store["url"]
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=link,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=base_link,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
-        )
+
+    driver.close()
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
