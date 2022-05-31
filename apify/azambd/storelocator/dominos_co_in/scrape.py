@@ -112,7 +112,7 @@ def fetch_stores():
                 log.info(f"Error Fetching Store: {e}")
                 pass
             if count % 50 == 0:
-                log.info(f"{count} page_urls {len(page_urls)}")
+                log.debug(f"{count} page_urls {len(page_urls)}")
 
     log.info(f"Total page_urls {len(page_urls)}")
     return page_urls
