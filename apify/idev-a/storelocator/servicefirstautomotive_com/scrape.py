@@ -52,9 +52,12 @@ def fetch_records(search):
                 maxZ = search.items_remaining()
             logger.info(("Pulling Geo Code %s..." % lat, lng))
 
-            locations = session.post(
-                base_url, headers=_headers, json=data(lat, lng)
-            ).json()["contentlets"]
+            try:
+                locations = session.post(
+                    base_url, headers=_headers, json=data(lat, lng)
+                ).json()["contentlets"]
+            except:
+                continue
             total += len(locations)
             for store in locations:
                 search.found_location_at(store["latitude"], store["longitude"])
@@ -100,7 +103,6 @@ def fetch_records(search):
                 yield SgRecord(
                     page_url=page_url,
                     location_name=store["title"],
-                    store_number=store["centerId"],
                     street_address=street_address,
                     city=store["city"],
                     state=store["state"],
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     search = DynamicGeoSearch(country_codes=["us"], expected_search_radius_miles=500)
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=10
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
         )
     ) as writer:
         for rec in fetch_records(search):
