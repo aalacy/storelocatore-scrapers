@@ -59,8 +59,8 @@ def fetch_data():
                 store_number=poi["poicode"],
                 phone=poi.get("contactData", {}).get("phoneNumber"),
                 location_type="",
-                latitude=poi["location"]["coordinates"][0],
-                longitude=poi["location"]["coordinates"][1],
+                latitude=poi["location"]["coordinates"][1],
+                longitude=poi["location"]["coordinates"][0],
                 hours_of_operation=hoo,
             )
 
