@@ -45,11 +45,16 @@ def fetch_data():
             city = poi["address"]["city"].strip()
             if street_address.lower().endswith(city.lower()):
                 street_address = street_address[: -len(city)].replace("/", "").strip()
+            if street_address.strip().endswith(","):
+                street_address = street_address.strip()[:-1]
             zip_code = poi["address"]["zip"]
             if zip_code and "," in zip_code:
                 zip_code = ""
             if zip_code and poi["country"] == "ie":
                 zip_code = ""
+            phone = poi["phone"]
+            if phone:
+                phone = phone.split(";")[0]
 
             item = SgRecord(
                 locator_domain=domain,
@@ -61,7 +66,7 @@ def fetch_data():
                 zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number=poi.get("localDealerID"),
-                phone=poi["phone"],
+                phone=phone,
                 location_type="",
                 latitude=poi["address"]["geo"]["lat"],
                 longitude=poi["address"]["geo"]["lon"],
