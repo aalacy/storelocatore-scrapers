@@ -24,6 +24,10 @@ def fetch_data():
             street_address = addr["street1"]
             if addr["street2"]:
                 street_address += " " + addr["street2"]
+
+            phone = ""
+            if _.get("phones"):
+                phone = _["phones"][0].get("phone")
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -35,7 +39,7 @@ def fetch_data():
                 longitude=_["longitude"],
                 zip_postal=addr["postal"],
                 country_code=addr["country"],
-                phone=_["phones"]["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
             )
 
