@@ -8,8 +8,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-from webdriver_manager.chrome import ChromeDriverManager  # noqa
-from sgselenium import SgChrome  # noqa
+from sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -20,10 +21,6 @@ MISSING = SgRecord.MISSING
 
 api_json = "https://www.fullers.co.uk/ajax/directory/pubs/allpubs"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
 
 
 def get_var_name(value):
@@ -73,13 +70,9 @@ def get_address(raw_address):
 
 
 def fetch_data():
-    with SgChrome(
-        is_headless=True,
-        user_agent=user_agent,
-        executable_path=ChromeDriverManager().install(),
-    ) as driver:
+    with SgFirefox() as driver:
         driver.get(api_json)
-        source = driver.find_element_by_xpath(".//pre").text
+        source = driver.find_element(by=By.XPATH, value=".//pre").text
         stores = json.loads(source)["Data"]
         log.info(f"Total stores = {len(stores)}")
         for store in stores:
