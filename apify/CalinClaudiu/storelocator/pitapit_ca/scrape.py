@@ -77,7 +77,7 @@ def parse_soup(soup, url):
         street_address = (
             parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         )
-        street_address(
+        street_address = (
             (street_address + ", " + parsed.street_address_2)
             if parsed.street_address_2
             else street_address
@@ -86,7 +86,8 @@ def parse_soup(soup, url):
         state = parsed.state if parsed.state else SgRecord.MISSING
         zip_postal = parsed.postcode if parsed.postcode else SgRecord.MISSING
         country_code = parsed.country if parsed.country else SgRecord.MISSING
-    except Exception:
+    except Exception as e:
+        logzilla.error("", exc_info=e)
         pass
 
     try:
@@ -159,14 +160,15 @@ def parse_soup(soup, url):
         hours_of_operation = hours_of_operation.find_all("p")
         temphr = []
         for i in hours_of_operation:
-            block = ""
             if "day" in i.text:
+                block = ""
                 block = i.text.strip()
                 block = block + " "
-            if any(z.isdigit() for z in i.text):
+            if any(z.isdigit() for z in i.text) or "osed" in i.text:
                 block = block + "- "
                 block = block + i.text.strip()
-            temphr.append(block)
+                temphr.append(block)
+                block = ""
         hours_of_operation = ", ".join(temphr)
 
     except Exception:
