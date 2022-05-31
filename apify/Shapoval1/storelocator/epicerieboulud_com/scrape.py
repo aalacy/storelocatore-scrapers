@@ -15,7 +15,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[contains(@class, "Header-nav-folder-item")][position()>1]')
+    div = tree.xpath('//a[text()="All Locations"]/following-sibling::a[text()]')
     for d in div:
         slug = "".join(d.xpath(".//@href"))
 

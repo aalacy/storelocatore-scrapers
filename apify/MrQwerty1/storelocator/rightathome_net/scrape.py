@@ -60,8 +60,13 @@ def fetch_data(sgw: SgWriter):
                 logger.info(f"something went wrong: {page_url}")
                 continue
             city = csz.split(",")[0].strip()
-            csz = csz.split(",")[1].strip()
-            state, postal = csz.split()
+            try:
+                csz = csz.split(",")[1].strip()
+                state, postal = csz.split()
+            except:
+                logger.info(f"{page_url}: {lines}")
+                state = csz
+                postal = SgRecord.MISSING
             phone = "".join(
                 d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")
             ).strip()
