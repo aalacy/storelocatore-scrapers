@@ -12,7 +12,7 @@ from sglogging import sglog
 def get_params():
     params = set()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=6
     )
 
     for _zip in search:
@@ -49,9 +49,9 @@ def get_data(param, sgw: SgWriter):
         )
     except IndexError:
         location_name = SgRecord.MISSING
-    street_address = "".join(
-        tree.xpath("//span[@itemprop='streetAddress']/text()")
-    ).strip()
+    street_address = " ".join(
+        "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).split()
+    )
     city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
     state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
     postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
@@ -62,6 +62,9 @@ def get_data(param, sgw: SgWriter):
         text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
         if "/@" in text:
             latitude, longitude = text.split("/@")[1].split(",")[:2]
+
+    if latitude == SgRecord.MISSING or str(latitude) == "0":
+        latitude, longitude = SgRecord.MISSING
 
     row = SgRecord(
         page_url=page_url,

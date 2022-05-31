@@ -29,7 +29,7 @@ def get_data():
 
         for location in response:
             locator_domain = "key.com"
-            page_url = url
+            page_url = "https://www.key.com/locations/search"
 
             location_properties = location["properties"]
             location_name = location_properties["LocationName"]
