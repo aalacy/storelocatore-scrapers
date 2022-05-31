@@ -1,4 +1,3 @@
-import json
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -17,12 +16,10 @@ def fetch_data():
     )
 
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
     )
     for lat, lng in all_coords:
-        response = session.get(start_url.format(lat, lng))
-        all_locations = json.loads(response.text)
-
+        all_locations = session.get(start_url.format(lat, lng)).json()
         for poi in all_locations:
             page_url = urljoin("https://www.cashstore.com", poi["url"])
             location_name = "Cash Store"

@@ -49,6 +49,7 @@ def get_data(coords, sgw: SgWriter):
         latitude = j["latitude"]
         longitude = j["longitude"]
         street_address = j["addressLine"]["0"] + " " + j["addressLine"]["1"]
+        street_address = str(street_address).replace(" NA", "").strip()
         city = j["city"].strip()
         state = j["stateOrProvinceName"].strip()
         postal = j["postalCode"].strip()

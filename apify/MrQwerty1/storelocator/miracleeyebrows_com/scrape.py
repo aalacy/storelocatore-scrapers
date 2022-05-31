@@ -80,7 +80,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     locator_domain = "https://www.miracleeyebrows.com/"
     page_url = "https://www.miracleeyebrows.com/locations/"
 

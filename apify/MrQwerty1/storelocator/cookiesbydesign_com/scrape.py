@@ -26,11 +26,12 @@ def get_data(slug, sgw: SgWriter):
     text = "".join(tree.xpath("//script[contains(text(), 'Bakery')]/text()")).strip()
     if not text:
         return
-    j = json.loads(text)
+    j = json.loads(text, strict=False)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     a = j.get("address")
-    street_address = a.get("streetAddress")
+    street_address = a.get("streetAddress") or ""
+    street_address = " ".join(street_address.split())
     city = str(a.get("addressLocality")).split(",")[0].strip()
     state = a.get("addressRegion")
     postal = a.get("postalCode")

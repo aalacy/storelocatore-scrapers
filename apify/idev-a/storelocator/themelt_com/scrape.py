@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
@@ -34,7 +34,7 @@ def _p(val):
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(base_url)
         rr = driver.wait_for_request(json_url, 30)
         locations = json.loads(rr.response.body)
@@ -104,7 +104,7 @@ def fetch_data():
             temp = [
                 hh.text.strip()
                 for hh in _hr.find_parent("div").find_next_siblings("div")
-                if hh.text.strip()
+                if hh.text.strip() and hh.text.strip() != "\u200b"
             ]
             hours = []
             ii = int(len(temp) / 2)

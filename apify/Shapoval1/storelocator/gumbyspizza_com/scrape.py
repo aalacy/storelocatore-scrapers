@@ -23,7 +23,7 @@ def fetch_data(sgw: SgWriter):
         page_url = f"http://gumbyspizza.com{''.join(d.xpath('.//@href'))}"
         if page_url == "http://gumbyspizza.com/college-station":
             page_url = "https://www.gumbyspizzaaggieland.com/store-info/"
-        session = SgRequests()
+
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -58,6 +58,7 @@ def fetch_data(sgw: SgWriter):
             state = location_name.split(",")[-1].strip()
         if location_name.find("Madison") != -1:
             city = "Madison"
+
         map_link = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
@@ -81,12 +82,10 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split())
         if page_url == "https://www.gumbyspizzaaggieland.com/store-info/":
             ad = (
-                "".join(
-                    tree.xpath('//div[./h1[text()="Info"]]/following-sibling::text()')
-                )
+                "".join(tree.xpath('//p[./a[contains(@href, "tel")]]/text()[last()]'))
                 .replace("\n", "")
                 .replace("\r", "")
-                .split("Address:")[1]
+                .replace("Address:", "")
                 .strip()
             )
             street_address = " ".join(ad.split(",")[0].split()[:-2]).strip()
@@ -95,7 +94,7 @@ def fetch_data(sgw: SgWriter):
             postal = ad.split(",")[1].split()[1].strip()
             phone = "".join(
                 tree.xpath(
-                    '//div[@class="fusion-title title"]/following-sibling::a[contains(@href, "tel")]/text()'
+                    '//p[./a[contains(@href, "tel")]]//a[contains(@href, "tel")]/text()'
                 )
             )
             location_name = f"Gumby's Pizza {city}, {state}"
@@ -111,6 +110,30 @@ def fetch_data(sgw: SgWriter):
             map_link = "".join(tree.xpath("//iframe/@src"))
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+
+        if street_address == "<MISSING>":
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//span[text()="at"]/following-sibling::span//text() | //h1/following-sibling::text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            ad = " ".join(ad.split())
+            if ad.find("| Wings,") != -1:
+                ad = ad.split("| Wings,")[1].strip()
+            street_address = ad.split(",")[0].strip()
+            city = ad.split(",")[1].strip()
+            state = ad.split(",")[2].split()[0].strip()
+            postal = ad.split(",")[2].split()[1].strip()
+            phone = (
+                " ".join(tree.xpath("//h1/following-sibling::text()[2]"))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -135,6 +158,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

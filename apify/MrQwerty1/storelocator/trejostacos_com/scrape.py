@@ -1,4 +1,3 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -23,9 +22,6 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    j = json.loads(tree.xpath("//div[@data-block-json]/@data-block-json")[0])[
-        "location"
-    ]
     location_name = tree.xpath("//title/text()")[0].strip()
     line = tree.xpath("//h2/a[not(contains(@href, 'tel'))]/text()")
     line = list(filter(None, [l.strip() for l in line]))
@@ -55,8 +51,11 @@ def get_data(page_url, sgw: SgWriter):
             )
     except IndexError:
         phone = SgRecord.MISSING
-    latitude = j.get("markerLat")
-    longitude = j.get("markerLng")
+
+    text = "".join(tree.xpath("//a[contains(@href, 'map')]/@href"))
+    latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+    if "/@" in text:
+        latitude, longitude = text.split("/@")[1].split(",")[:2]
 
     _tmp = []
     lines = tree.xpath("//h2/text()")
@@ -88,7 +87,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

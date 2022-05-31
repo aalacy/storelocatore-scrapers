@@ -67,9 +67,10 @@ def fetch_data():
             location_name = strip_accents(loc["fantasyName"])
             store_number = MISSING
             phone = loc["telephone"]
-            if "/" in phone:
-                phone = phone.split("/")[0]
-            phone = "(11) " + phone
+            if phone:
+                if "/" in phone:
+                    phone = phone.split("/")[0]
+                phone = "(11) " + phone
             address = loc["address"]
             street_address = strip_accents(
                 address["street"] + " " + address["number"].replace(",", ".")
