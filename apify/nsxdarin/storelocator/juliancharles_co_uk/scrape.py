@@ -68,6 +68,10 @@ def fetch_data():
                 hours = hours.split(";facilities")
             if "; facilities" in hours:
                 hours = hours.split("; facilities")
+            hours = str(hours)
+            if "', ':" in hours:
+                hours = hours.split("', ':")[0].strip()
+            hours = hours.replace("['", "")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
