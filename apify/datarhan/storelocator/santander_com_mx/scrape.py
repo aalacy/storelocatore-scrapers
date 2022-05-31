@@ -25,7 +25,7 @@ def fetch_data():
             SearchableCountries.BRAZIL,
             SearchableCountries.CHILE,
             SearchableCountries.USA,
-            SearchableCountries.PUERTO_RICO
+            SearchableCountries.PUERTO_RICO,
         ],
         expected_search_radius_miles=100,
     )
