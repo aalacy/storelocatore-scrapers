@@ -26,9 +26,7 @@ def fetch_data(sgw: SgWriter):
 
     found = []
 
-    sections = base.find(class_="elementor-section-wrap").find_all(
-        "section", recursive=False
-    )[1:]
+    sections = base.article.div.find_all("section")[1:]
 
     for section in sections:
         items = section.find(
@@ -41,7 +39,10 @@ def fetch_data(sgw: SgWriter):
                 location_name = item.h3.text.replace("CREEKCOL", "CREEK COL").strip()
             except:
                 continue
-            raw_address = list(item.h5.stripped_strings)
+            try:
+                raw_address = list(item.h5.stripped_strings)
+            except:
+                continue
             if "188," in raw_address[0]:
                 raw_address = raw_address[0].replace("188,", "188RR").split("RR")
             if "land Dr," in raw_address[0]:

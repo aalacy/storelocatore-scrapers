@@ -14,7 +14,7 @@ logger = SgLogSetup().get_logger("badaxethrowing_com")
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://badaxethrowing.com/locations/axe-throwing-san-francisco/|US"]
     url = "https://badaxethrowing.com/locations/"
     r = session.get(url, headers=headers)
     website = "badaxethrowing.com"
@@ -151,22 +151,23 @@ def fetch_data():
                     zc = "N2J 3H8"
                 if "/axe-throwing-winnipeg" in loc:
                     zc = "R3H 0N1"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=lurl,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                if "location" in lurl:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=lurl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():

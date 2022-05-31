@@ -21,7 +21,7 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    url = "https://maps.hallmark.com/api/getAsyncLocations?template=search&level=search&radius=100000&search=10010&limit=5000"
+    url = "https://maps.hallmark.com/api/getAsyncLocations?template=search&level=search&radius=100000000&search=USA&limit=5000"
     r = session.get(url, headers=headers).json()
     log.info("Getting " + str(len(r["markers"])) + " links..(Approx. 1hr..)")
     for x in r["markers"]:

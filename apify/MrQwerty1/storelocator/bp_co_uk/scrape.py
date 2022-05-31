@@ -1,4 +1,3 @@
-import tenacity
 from typing import Iterable, Tuple, Callable
 
 from sglogging import sglog
@@ -9,17 +8,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from tenacity import retry, stop_after_attempt
 
+import random
+import time
 
-@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
-def get_response(api_url):
-    with SgRequests() as http:
-        response = http.get(api_url, headers=headers)
-        logger.info(f"HTTP STATUS Return: {response.status_code}")
-        if response.status_code == 200:
-            return response
-        raise Exception(f"HTTP Error Code: {response.status_code}")
+session = SgRequests()
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -33,10 +26,13 @@ class ExampleSearchIteration(SearchIteration):
     ) -> Iterable[SgRecord]:
 
         lat, lng = coord
-        api = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
-        r = get_response(api)
+        api_url = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
+        r = session.get(api_url, headers=headers)
+        time.sleep(random.randint(1, 3))
         js = r.json()
-        logger.info(f"From {lat, lng} stores = {len(js)}")
+        logger.info(
+            f"From {current_country}:: {lat, lng} stores = {len(js)}, Response: {r.status_code}"
+        )
         if js:
             for j in js:
                 location_name = j.get("name")
@@ -47,10 +43,10 @@ class ExampleSearchIteration(SearchIteration):
                 if "-" in postal:
                     postal = SgRecord.MISSING
                 country = j.get("country_code")
-                logger.info(f"Country code: {country}")
                 phone = j.get("telephone")
                 latitude = j.get("lat")
                 longitude = j.get("lng")
+                found_location_at(latitude, longitude)
 
                 _tmp = []
                 hours = j.get("opening_hours") or []
@@ -83,15 +79,16 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     logger = sglog.SgLogSetup().get_logger(logger_name="bp.co.uk")
     CrawlStateSingleton.get_instance().save(override=True)
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     }
     locator_domain = "https://www.bp.co.uk/"
     page_url = "https://www.bp.com/en_gb/united-kingdom/home/products-and-services/our-sites/find-your-nearest-bp.html"
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=15,
     )
 
     with SgWriter(
@@ -117,10 +114,8 @@ if __name__ == "__main__":
                 "GR",
                 "LU",
                 "NL",
+                "NZ",
                 "PL",
-                "RU",
-                "SA",
-                "TR",
                 "ZA",
             ],
         )

@@ -1,6 +1,6 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 import os
 from sglogging import sglog
 
@@ -10,7 +10,7 @@ def get_data():
     proxy_url = os.getenv("PROXY_URL")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_4(),
+        granularity=Grain_2(),
     )
 
     session = SgRequests()
@@ -27,7 +27,7 @@ def get_data():
             + str(search_lat)
             + "%2C"
             + str(search_lon)
-            + "&staffed=on&fdxType=5644121&fdxType=5644112&fdxType=5644117&fdxType=5644122&fdxType=5644123&fdxType=5644127&l=en"
+            + "&r=50&per=50&staffed=on&fdxType=5644121&fdxType=5644112&fdxType=5644117&fdxType=5644122&fdxType=5644123&fdxType=5644127&l=en"
         )
 
         x = 0

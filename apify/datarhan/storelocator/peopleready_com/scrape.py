@@ -41,7 +41,7 @@ def fetch_data():
             state = poi["state"]
             zip_code = poi["zip"]
             country_code = poi["country"]
-            store_number = poi["branch_number"]
+            store_number = poi["branch_number"].split("-")[0].split("&")[0]
             phone = poi["phone"]
             latitude = poi["lat"]
             longitude = poi["lng"]

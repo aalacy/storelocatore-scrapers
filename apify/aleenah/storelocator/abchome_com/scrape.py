@@ -1,77 +1,70 @@
-from sglogging import sglog
 from bs4 import BeautifulSoup
+import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "abchome_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-DOMAIN = "https://abchome.com/"
-MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    res = session.get(DOMAIN)
-    soup = BeautifulSoup(res.text, "html.parser")
-    loclist = soup.find_all("div", {"class": "container-2 w-container"})[:-1]
-    for loc in loclist:
-        location_name = loc.find("h2").text
-        log.info(location_name)
-        phone = loc.select_one("a[href*=tel]").text
-        temp = loc.findAll("p", {"class": "hero-subheading"})
-        address = temp[0].get_text(separator="|", strip=True).split("|")
-        street_address = address[0]
-        address = address[1].split(",")
-        city = address[0]
-        address = address[1].split()
-        state = address[0]
-        zip_postal = address[1]
-        hours_of_operation = (
-            temp[1]
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
+
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://abchome.com/pages/contact"
+    r = session.get(url, headers=headers)
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "location__intro"})
+    for div in divlist:
+        title = div.find("h2").text.strip()
+        address = str(div.find("div", {"class": "location__store-address"}))
+        address = re.sub(cleanr, "\n", address)
+        address = re.sub(pattern, "\n", address).strip().splitlines()
+        street = address[1]
+        city, state = address[2].split(", ", 1)
+        state, pcode = state.split(" ", 1)
+        state = state.replace(",", "").strip()
+        hours = (
+            div.find("div", {"class": "location__store-hours"})
+            .text.strip()
             .replace("Hours", "")
+            .replace("\n", " ")
+            .replace("pm", "pm ")
+            .strip()
         )
-        country_code = "US"
+
         yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=DOMAIN,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=MISSING,
-            phone=phone,
-            location_type=MISSING,
-            latitude=MISSING,
-            longitude=MISSING,
-            hours_of_operation=hours_of_operation,
+            locator_domain="https://abchome.com/",
+            page_url=url,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=SgRecord.MISSING,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude="<MISSING>",
+            hours_of_operation=hours,
         )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
+
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

@@ -31,6 +31,13 @@ base_url = "https://carlsjr.cl/locales/?jsf=jet-engine&pagenum={}"
 map_url = "https://www.google.com/maps/search/"
 
 
+def get_driver():
+    return SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    )
+
+
 class url_has_at(object):
     """An expectation for checking that an element has a particular css class.
 
@@ -49,7 +56,10 @@ class url_has_at(object):
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ) as driver:
         with SgRequests() as session:
             page = 1
             while True:

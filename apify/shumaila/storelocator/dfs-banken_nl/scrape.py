@@ -29,25 +29,34 @@ def fetch_data():
         link = "https://www.dfs-banken.nl/store-directory/" + loc["seoToken"]
         title = loc["storeName"]
         hourslist = loc["hours"]
+
         hours = ""
         for day in daylist:
             day = day + "day"
             hr = hourslist[day]
-            openstr = hr["openIntervals"][0]["start"] + " AM - "
-            closestr = hr["openIntervals"][0]["end"]
-            close = int(closestr.split(":", 1)[0])
-            if close > 12:
-                close = close - 12
-            hours = (
-                hours
-                + day
-                + " "
-                + openstr
-                + str(close)
-                + ":"
-                + closestr.split(":", 1)[1]
-                + " PM "
-            )
+            try:
+                openstr = hr["openIntervals"][0]["start"] + " AM - "
+                closestr = hr["openIntervals"][0]["end"]
+                close = int(closestr.split(":", 1)[0])
+                if close > 12:
+                    close = close - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + openstr
+                    + str(close)
+                    + ":"
+                    + closestr.split(":", 1)[1]
+                    + " PM "
+                )
+            except:
+                hours = hours + day + " Closed "
+        if (
+            "monday Closed tuesday Closed wednesday Closed thursday Closed friday Closed saturday Closed sunday Closed"
+            in hours
+        ):
+            hours = "monday - sunday : CLOSED "
         yield SgRecord(
             locator_domain="https://www.dfs-banken.nl/",
             page_url=link,

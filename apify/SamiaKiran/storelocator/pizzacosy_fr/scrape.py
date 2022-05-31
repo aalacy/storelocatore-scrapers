@@ -53,8 +53,6 @@ def fetch_data():
                 .split("T.")
             )
             raw_address = strip_accents(address[0])
-            phone = address[1]
-
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -68,6 +66,14 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            temp_zip = raw_address.split()
+            if zip_postal == MISSING:
+                zip_postal = temp_zip[-3] + " " + temp_zip[-2]
+            elif len(zip_postal) < 5:
+                zip_postal = temp_zip[-3] + " " + temp_zip[-2]
+            if "Le" in zip_postal:
+                zip_postal = temp_zip[-4] + " " + temp_zip[-3]
 
             hours_of_operation = (
                 temp[1]
