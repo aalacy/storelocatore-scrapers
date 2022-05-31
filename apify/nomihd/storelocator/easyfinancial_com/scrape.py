@@ -12,16 +12,17 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "authority": "be.easyfinancial.com",
     "accept": "*/*",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
     "origin": "https://www.easyfinancial.com",
     "referer": "https://www.easyfinancial.com/",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"',
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-site",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
 }
 
 json_data = {
@@ -29,7 +30,7 @@ json_data = {
     "variables": {
         "lat": 43.65413,
         "lng": -79.39242,
-        "radius": 5000,
+        "radius": 50,
     },
     "query": "query getAllBranches($lat: Float, $lng: Float, $radius: Float) {\n  getAllBranches(lat: $lat, lng: $lng, radius: $radius)\n}\n",
 }
@@ -37,7 +38,7 @@ json_data = {
 
 def fetch_data():
     # Your scraper here
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="ca") as session:
         stores_req = session.post(
             "https://be.easyfinancial.com/api/src?code=WLcdq2dRebMBytNYRbk7l/FOdQ8zAMXsKacLZV3vSqOJzknemwL9PQ==",
             headers=headers,
