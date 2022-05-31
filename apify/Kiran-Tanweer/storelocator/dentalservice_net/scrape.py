@@ -117,23 +117,23 @@ def fetch_data():
                     hoo = hoo + ", " + hrs
             hoo = hoo.lstrip(",")
             hoo = hoo.strip()
-
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=loc,
-                location_name=title.strip(),
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
-                country_code="US",
-                store_number=SgRecord.MISSING,
-                phone=phone.strip(),
-                location_type=SgRecord.MISSING,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hoo.strip(),
-            )
+            if title.find("Affordable") == -1:
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=loc,
+                    location_name=title.strip(),
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=SgRecord.MISSING,
+                    phone=phone.strip(),
+                    location_type=SgRecord.MISSING,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hoo.strip(),
+                )
 
 
 def scrape():
@@ -153,6 +153,7 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

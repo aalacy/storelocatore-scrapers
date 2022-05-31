@@ -1,0 +1,27 @@
+--ignore CountryCodeFillRateChecker (International)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 6 concerning rows. Examples:
+                           street_address              REASON  rowNumber
+12        1 Garden State Plaza Space 1043  ADDR_HAS_NO_NUMBER         12
+33   132 Avenida Enrique Díaz De León Sur  ADDR_HAS_NO_NUMBER         33
+51                       # 35-40 Calle 8A  ADDR_HAS_NO_NUMBER         51
+122            10 Rue Du Président Carnot  ADDR_HAS_NO_NUMBER        122
+260                  No. 3 Jalan Pjs11/15  ADDR_HAS_NO_NUMBER        260
+
+
+--ignore StreetAddressHasStateName  (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+                            street_address                    REASON  rowNumber
+162  19A Olympic Street Sukhbaatar Level 3  ADDR_CONTAINS_STATE_NAME        162
+
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 6 concerning rows. Examples:
+         state            phone      zip                  REASON  rowNumber
+21          QC     514-985-2727  H3G-1R1  INVALID_CA_POSTAL_CODE         21
+33   <MISSING>   5233 3825 7393    44160        INVALID_US_PHONE         33
+123  <MISSING>   069 949 428 60    60311        INVALID_US_PHONE        123
+215  <MISSING>  886-2-2751-6711    10694        INVALID_US_PHONE        215
+260  <MISSING>     603-74965880    46150        INVALID_US_PHONE        260
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)

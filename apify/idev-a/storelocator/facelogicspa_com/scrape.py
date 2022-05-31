@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -35,9 +35,11 @@ def fetch_data():
                 res = session.get(page_url, headers=_headers)
             except:
                 continue
-            if res.status_code != 200 or res.url.endswith("facelogiccle.com"):
+            if res.status_code != 200:
                 continue
             sp1 = bs(res.text, "lxml")
+            if not sp1.title:
+                continue
             location_name = (
                 sp1.title.text.split("-")[-1]
                 .split("|")[-1]
@@ -114,9 +116,11 @@ def fetch_data():
                                 "div#footer-widget-wrap div#text-3 p"
                             ).stripped_strings
                         )[1:]
-                        phone = sp1.select("div#footer-widget-wrap div#text-3 p")[
-                            1
-                        ].strong.text.strip()
+                        phone = list(
+                            sp1.select("div#footer-widget-wrap div#text-3 p")[
+                                1
+                            ].strong.stripped_strings
+                        )[0].split(":")[-1]
                     elif sp1.select_one("div.mt20.mb20 p"):
                         _addr = list(sp1.select_one("div.mt20.mb20 p").stripped_strings)
                         phone = sp1.select("div.fr")[1].text.strip()
@@ -135,15 +139,15 @@ def fetch_data():
                             sp1.select("div.footer-widgets-1 section#text-26 p")[
                                 1
                             ].stripped_strings
-                        )[1:]
-                        if "Tel" in _addr[-1]:
-                            phone = _addr[-1].split(":")[-1].replace("Tel", "")
-                            del _addr[-1]
+                        )
                         if "Terms of" in _addr[-1]:
                             del _addr[-1]
                         if "|" in _addr[-1]:
                             del _addr[-1]
                         if "Privacy Policy" in _addr[-1]:
+                            del _addr[-1]
+                        if "Tel" in _addr[-1]:
+                            phone = _addr[-1].split(":")[-1].replace("Tel", "").strip()
                             del _addr[-1]
                         hours = list(
                             sp1.find("h3", string=re.compile(r"^Our Hours"))
@@ -162,6 +166,8 @@ def fetch_data():
                         _addr = sp1.select_one("div#footerinfo p").text.split("|")
                         phone = _addr[-1]
                         del _addr[-1]
+                    if not _addr:
+                        continue
                     addr = parse_address_intl(" ".join(_addr))
                     street_address = addr.street_address_1
                     if addr.street_address_2:

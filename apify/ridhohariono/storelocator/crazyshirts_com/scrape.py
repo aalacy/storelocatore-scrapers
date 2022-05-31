@@ -88,6 +88,10 @@ def fetch_data():
             street_address += ", " + info["address"]["street2"]
         if info["address"]["street3"]:
             street_address += ", " + info["address"]["street3"]
+        if "Planet Hollywood Resort & Casino, " in street_address:
+            street_address = street_address.replace(
+                "Planet Hollywood Resort & Casino, ", ""
+            )
         city = info["address"]["city"]
         state = info["address"]["stateCode"]
         zip_postal = info["address"]["postalCode"]
