@@ -183,21 +183,8 @@ class ExampleSearchIteration(SearchIteration):
         :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
         :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
         """
-        chrome_optionz = Options()
-        dir_path = os.getcwd()  # noqa
-        # chrome_optionz.add_argument(f'--user-data-dir={dir_path}/selenium') # noqa
-        # chrome_optionz.add_argument("--profile-directory=Default") # noqa
-        # chrome_optionz.add_argument("--disable-extensions") # noqa
-        # options.add_argument("--headless") # noqa
-        chrome_optionz.add_argument("--no-sandbox")
-        chrome_optionz.add_argument("--headless")
-        chrome_optionz.add_argument("--disable-gpu")
-        chrome_optionz.add_argument("--disable-dev-shm-usage")
-        chrome_optionz.add_argument("--start-maximized")
-        chrome_optionz.add_argument(
-            "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-        )
-        with SgChrome(chrome_options=chrome_optionz) as driver:
+        chrome_optionz = ["ignore-certificate-errors"]
+        with SgChrome(extra_option_args=chrome_optionz) as driver:
             lat, lng = coord
             url = "https://toniandguy.com/salon-finder"
             driver.get(url)
@@ -207,12 +194,13 @@ class ExampleSearchIteration(SearchIteration):
             )
             inputel.send_keys(f"{lat}, {lng}")
             inputel.send_keys(Keys.ENTER)
-            time.sleep(30)
+            time.sleep(20)
             soup = b4(driver.page_source, "lxml")
             locs = soup.find_all("div", {"data-map-marker": True})
             time.sleep(5)
             if not locs:
-                time.sleep(300)
+                time.sleep(150)
+            locs = soup.find_all("div", {"data-map-marker": True})
             for loc in locs:
                 data = loc["data-map-marker"].split(",")
                 try:
