@@ -54,7 +54,7 @@ def request_with_retries(url, retry=1):
             return request_with_retries(url, retry + 1)
         return response.text, url
     except Exception as e:
-        log.info(f"Failed {url}: {response.status_code} err: {e}")
+        log.info(f"Failed {url}: err: {e}")
         pass
     if retry > 4:
         return None, url
@@ -75,7 +75,7 @@ def request_with_retries_stores(url, retry=1):
 
     except Exception as e:
         if retry > 4:
-            log.info(f"Failed {url}: {response.status_code}: Retried: {retry} err: {e}")
+            log.info(f"Failed {url}:: Retried: {retry} err: {e}")
             return None, url
         return request_with_retries_stores(url, retry + 1)
 
@@ -300,7 +300,7 @@ def fetch_data():
                     raw_address=raw_address,
                 )
             except Exception as e:
-                log.info(f"Failed Adding Data {page_url}, Err: {e}")
+                log.info(f"Failed Adding Data, Err: {e}")
                 pass
     return []
 
