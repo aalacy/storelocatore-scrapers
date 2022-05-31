@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -37,6 +36,7 @@ def fetch_data():
             .split(":")[-1]
             .split("/")[0]
             .split("-")[0]
+            .replace("PBX", "")
         )
         geo = poi_html.xpath(".//a/@href")[0].split("/@")[-1].split(",")[:2]
         latitude = ""
