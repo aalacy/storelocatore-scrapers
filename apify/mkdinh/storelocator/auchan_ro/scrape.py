@@ -19,63 +19,66 @@ def get_csrf_token():
     return soup.find("input", {"name": "CSRFToken"}).attrs["value"]
 
 
-def fetch_locations(token, query=""):
-    data = {"locationQuery": re.sub(r"\(.*\)", "", query), "CSRFToken": token}
-    html = session.post(
-        "https://www.auchan.ro/store/store-pickup/pointOfServices", data=data
+def fetch_locations(pageNum=0, locations=None):
+    if not locations:
+        locations = []
+
+    page = session.get(
+        f"https://www.auchan.ro/store/store-finder?page={pageNum}&view=&pageSize=7"
     ).text
-    soup = BeautifulSoup(html, "html.parser")
-
-    cities = [
-        item.text.strip()
-        for item in soup.find("div", id="pos-list-localities").find_all(
-            "div", id="pos-list"
-        )
+    soup = BeautifulSoup(page, "html.parser")
+    items = [
+        f'https://www.auchan.ro{item.find("form")["action"]}'
+        for item in soup.find_all("div", class_="storeItem")
     ]
-    locations = soup.find_all("li", class_="searchPOSResult")
+    locations.extend(items)
 
-    return locations, cities
+    if len(items):
+        fetch_locations(pageNum + 1, locations)
+
+    return locations
 
 
 def fetch_data():
-    token = get_csrf_token()
-    locations, cities = fetch_locations(token)
 
-    locator_domain = "auchan.ro"
-    page_url = "https://www.auchan.ro/store/home"
-    for city in cities:
-        locations, _ = fetch_locations(token, city)
+    for page_url in fetch_locations():
+        page = session.get(page_url).text
+        soup = BeautifulSoup(page, "html.parser")
 
-        for location in locations:
-            store_number = location.find("button", id="changePickupStoreButton").attrs[
-                "data-store"
-            ]
-            latitude = location.attrs["data-latitude"]
-            longitude = location.attrs["data-longitude"]
+        locator_domain = "auchan.ro"
+        location_name = soup.find("div", class_="store-name").getText(strip=True)
+        store_number = re.split("/", page_url)[-1]
+        hours, address, phone, *other = soup.find_all("div", class_="detailSection")
+        hours_of_operation = re.sub(r"\s\s+", "", re.sub(r"\n", "", hours.text.strip()))
 
-            location_name = location.find("span", class_="resultName").text.strip()
-            address = location.find("div", class_="resultLine1").text
-            parsed = parse_address(International_Parser(), address)
+        parsed = parse_address(International_Parser(), address.getText())
+        street_address = parsed.street_address_1
+        city = parsed.city
+        state = parsed.state
+        postcode = parsed.postcode
+        country = parsed.country
 
-            street_address = parsed.street_address_1
-            city = parsed.city
-            postal = parsed.postcode
-            state = parsed.state
-            country_code = parsed.country
+        canvas = soup.find("div", id="map_canvas")
+        latitude = canvas["data-latitude"]
+        longitude = canvas["data-longitude"]
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                store_number=store_number,
-                location_name=location_name,
-                latitude=latitude,
-                longitude=longitude,
-                street_address=street_address,
-                city=city,
-                zip_postal=postal,
-                state=state,
-                country_code=country_code,
-            )
+        phone = re.sub(r"Telefon:", "", phone.getText(strip=True))
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            store_number=store_number,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postcode,
+            country_code=country,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 if __name__ == "__main__":

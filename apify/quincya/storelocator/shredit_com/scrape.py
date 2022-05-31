@@ -42,16 +42,24 @@ def fetch_data(sgw: SgWriter):
         if latitude == "0.0":
             latitude = ""
             longitude = ""
-        hours_of_operation = (
-            store["openingHours"]
-            .replace("\n", " ")
-            .replace("<br>", "")
-            .split("Witness")[0]
-            .split("Haunted")[0]
-            .strip()
-        )
-        if "per additional bag" in hours_of_operation:
+
+        try:
+            hours_of_operation = (
+                store["openingHours"]
+                .replace("\n", " ")
+                .replace("<br>", "")
+                .split("Witness")[0]
+                .split("Haunted")[0]
+                .strip()
+            )
+            if "per additional bag" in hours_of_operation:
+                hours_of_operation = ""
+        except:
             hours_of_operation = ""
+
+        if "Schedule" in hours_of_operation:
+            hours_of_operation = ""
+
         location_type = ""
 
         link = locator_domain + store["url"]

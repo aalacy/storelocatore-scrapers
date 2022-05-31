@@ -4,6 +4,7 @@ from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -44,7 +45,22 @@ def fetch_data():
             city = strip_accents(loc["city"])
             state = strip_accents(loc["state"])
             zip_postal = loc["zip"]
-            country_code = "FR"
+            raw_address = street_address + " " + city + " " + state + zip_postal
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            country_code = loc["country"]
             latitude = loc["lat"]
             longitude = loc["lng"]
             if "False" in location_name:
@@ -85,6 +101,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

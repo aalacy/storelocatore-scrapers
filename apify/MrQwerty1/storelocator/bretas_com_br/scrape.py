@@ -67,7 +67,7 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
-    session = SgRequests()
+    session = SgRequests(proxy_country="br")
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:

@@ -24,7 +24,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api, headers=headers)
     js = r.json()["documents"]
 
-    s = js[0].get("LocationDetailPageLink")
+    s = js[1].get("LocationDetailPageLink")
     url = f"https://www.lincare.com{s}"
     hours_of_operation = get_hours(url)
 

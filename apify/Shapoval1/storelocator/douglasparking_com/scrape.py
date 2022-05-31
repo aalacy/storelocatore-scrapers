@@ -1,18 +1,17 @@
 import json
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://www.douglasparking.com"
-    api_url = "http://www.douglasparking.com/locations-2/"
-    session = SgRequests()
+    api_url = "https://www.douglasparking.com/locations/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -27,7 +26,7 @@ def fetch_data(sgw: SgWriter):
     js = json.loads(jsblock)
     for j in js:
 
-        page_url = "http://www.douglasparking.com/locations-2/"
+        page_url = "https://www.douglasparking.com/locations/"
         location_name = (
             "".join(j.get("title")).replace("&#038;", "&").replace("&#8211;", "–")
             or "<MISSING>"
@@ -39,9 +38,11 @@ def fetch_data(sgw: SgWriter):
         ad = " ".join(a.xpath("//*//text()")).replace("\r\n", "").strip()
 
         a = parse_address(USA_Best_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "")
+            .replace("Entrance On Eddy No Motorcycles", "")
+            .strip()
+        )
         state = a.state or "<MISSING>"
         if state == "On Jefferson":
             state = "<MISSING>"
