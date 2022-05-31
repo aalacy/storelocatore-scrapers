@@ -6,13 +6,10 @@ from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from lxml import html
-import json
 import ssl
 import tenacity
 from tenacity import retry, stop_after_attempt
 from bs4 import BeautifulSoup as bs
-import re
 
 
 try:
