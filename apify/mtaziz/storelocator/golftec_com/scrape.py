@@ -1,167 +1,137 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import ssl
+import tenacity
+from tenacity import retry, stop_after_attempt
 from bs4 import BeautifulSoup as bs
-import dirtyjson as json
-import re
-from lxml import html
 
-logger = SgLogSetup().get_logger("golftec_com")
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+MAX_WORKERS = 5
+logger = SgLogSetup().get_logger("golftec")
 headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36"
 }
 
-locator_domain = "golftec.com"
-china_url = "https://www.golftec.cn/golf-lessons/nanshan"
-jp_url = "https://golftec.golfdigest.co.jp/"
-MAX_WORKERS = 1
+locator_domain = "https://www.golftec.com"
 
 
-def fetch_cn(url, http, sgw: SgWriter):
-    logger.info(url)
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_locs(url, http):
     res = http.get(url, headers=headers)
-    sp1 = bs(res.text, "lxml")
-    ss = json.loads(sp1.find("script", type="application/ld+json").string)
-    raw_address = (
-        sp1.find("p", string=re.compile(r"地址")).text.replace("地址", "").replace("：", "")
-    )
-    city = "市" + raw_address.split("市")[0]
-    street_address = raw_address.split("市")[-1]
-    hours = [
-        ": ".join(hh.stripped_strings)
-        for hh in sp1.select("div.center-details__hours ul li")
-    ]
-    item = SgRecord(
-        page_url=url,
-        location_name=ss["name"],
-        street_address=street_address,
-        city=city,
-        country_code="China",
-        latitude=ss["geo"]["latitude"],
-        longitude=ss["geo"]["longitude"],
-        phone=ss["contactPoint"]["telephone"],
-        hours_of_operation="; ".join(hours),
-        locator_domain="https://www.golftec.cn",
-        raw_address=raw_address,
-    )
-    logger.info(f"Item: {item}")
-    sgw.write_row(item)
+    return res.json()
 
 
-def fetch_jp(idx, page_url, http, sgw: SgWriter):
-    logger.info(f"[{idx}] PullingContentFrom: {page_url}")
-    sp2 = bs(http.get(page_url, headers=headers).text, "lxml")
-    s_data = json.loads(sp2.find("script", type="application/ld+json").string)
-    raw_address = (
-        " ".join(sp2.select_one("p.studioAccess__detail__adress").stripped_strings)
-        .replace("〒", "")
-        .strip()
-    )
-    zip_postal = raw_address.split()[0]
-    s_c = " ".join(raw_address.split()[1:])
-    ss = state = city = street_address = ""
-    if "都" in s_c:
-        ss = s_c.split("都")[-1]
-        state = s_c.split("都")[0] + "都"
-    elif "県" in s_c:
-        ss = s_c.split("県")[-1]
-        state = s_c.split("県")[0] + "県"
-    elif "府" in s_c:
-        ss = s_c.split("府")[-1]
-        state = s_c.split("府")[0] + "府"
+def fetch_records(coord, search_us, sgw: SgWriter):
+    lat = coord[0]
+    lng = coord[1]
 
-    if "市" in ss:
-        city = ss.split("市")[0] + "市"
-        street_address = ss.split("市")[-1]
-    else:
-        street_address = ss
+    with SgRequests(proxy_country="us") as http:
+        url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
+        logger.info(f"PullingContentFrom: {url} | ( {lat}, {lng})")
+        try:
+            locations = get_locs(url, http)
+        except:
+            logger.info(f"[{lat}, {lng}] failed")
+            locations = {}
 
-    hours = sp2.select_one(
-        "dl.p-studioInfo__desc.-businessHours dd.p-studioInfo__desc__content"
-    ).text.strip()
-    coord = (
-        sp2.select_one("p.studioAccess__detail__map")
-        .iframe["src"]
-        .split("!1d")[1]
-        .split("!2m")[0]
-        .split("!3m")[0]
-        .split("!3d")
-    )
-    lng = coord[0].split("!2d")[-1]
-    item = SgRecord(
-        page_url=page_url,
-        location_name=s_data["name"],
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code="JP",
-        latitude=coord[1],
-        longitude=lng,
-        phone=s_data["telephone"],
-        hours_of_operation=hours,
-        locator_domain="https://golftec.golfdigest.co.jp",
-        raw_address=raw_address,
-    )
-    logger.info(f"ITEM: {item.as_dict()}")
-    sgw.write_row(item)
-
-
-def get_store_urls():
-    s = SgRequests(proxy_country="us")
-    r = s.get("https://golftec.golfdigest.co.jp/studio/", headers=headers)
-    sel = html.fromstring(r.text)
-    store_urls = [
-        "https://golftec.golfdigest.co.jp" + i
-        for i in sel.xpath('//li[contains(@class, "p-studio__store-list")]/a/@href')
-    ]
-    return store_urls
+        if "centers" in locations:
+            for _ in locations["centers"]:
+                page_url = f"{locator_domain}{_['link']}"
+                res = http.get(page_url, headers=headers)
+                if res.status_code != 200:
+                    return
+                soup = bs(res.text, "lxml")
+                street_address = _["street1"]
+                if _["street2"]:
+                    street_address += " " + _["street2"]
+                if street_address and "coming soon" in street_address.lower():
+                    continue
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in soup.select(
+                        "div.center-details__hours div.seg-center-hours ul li"
+                    )
+                ]
+                if not hours:
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in soup.select("div.center-details__hours ul li")
+                    ]
+                lat_found = _["position"]["thelat"]
+                lng_found = _["position"]["thelong"]
+                search_us.found_location_at(lat_found, lng_found)
+                item = SgRecord(
+                    page_url=page_url,
+                    store_number=_["cid"],
+                    location_name=_["name"],
+                    street_address=street_address.replace(
+                        "Inside Golf Town", ""
+                    ).strip(),
+                    city=_["city"],
+                    state=_["state"],
+                    zip_postal=_["zip"],
+                    latitude=lat_found,
+                    longitude=lng_found,
+                    country_code=_["country"],
+                    phone=_["phone"],
+                    hours_of_operation="; ".join(hours),
+                    locator_domain="golftec.com",
+                )
+                sgw.write_row(item)
 
 
 def fetch_data(sgw: SgWriter):
-    store_urls_jp = get_store_urls()
-    logger.info(f"StoreCountInJapan: {len(store_urls_jp)}")
-    with SgRequests(proxy_country="us") as http:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks = []
-            task_cn = [executor.submit(fetch_cn, china_url, http, sgw)]
-            tasks.extend(task_cn)
-            task_jp = [
-                executor.submit(fetch_jp, idx, store_url, http, sgw)
-                for idx, store_url in enumerate(store_urls_jp[0:])
-            ]
-            tasks.extend(task_jp)
-            for future in as_completed(tasks):
-                if future.result() is not None:
-                    future.result()
-                else:
-                    continue
+    logger.info("Started")
+
+    search_us = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=300,
+        granularity=Grain_8(),
+        use_state=False,
+    )
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task_us = [
+            executor.submit(fetch_records, latlng, search_us, sgw)
+            for latlng in search_us
+        ]
+        tasks.extend(task_us)
+        for future in as_completed(tasks):
+            if future.result() is not None:
+                future.result()
 
 
 def scrape():
-    logger.info("Started")  # noqa
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
                 {
                     SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STORE_NUMBER,
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
                 }
             ),
             duplicate_streak_failure_factor=1500,
         )
     ) as writer:
         fetch_data(writer)
-    logger.info("Finished")  # noqa
+    logger.info("Finished")
 
 
 if __name__ == "__main__":

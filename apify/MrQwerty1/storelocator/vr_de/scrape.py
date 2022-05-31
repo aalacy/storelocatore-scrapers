@@ -25,7 +25,8 @@ def fetch_data(sgw: SgWriter):
             try:
                 page_url = j["links"]["detail_page_url"]
             except KeyError:
-                page_url = SgRecord.MISSING
+                page_url = j["links"]["url"]
+
             phone = j["contact"]["i18n_phone_number"]
             latitude = a.get("latitude")
             longitude = a.get("longitude")
