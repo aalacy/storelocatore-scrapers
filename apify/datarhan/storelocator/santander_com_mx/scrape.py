@@ -15,17 +15,17 @@ def fetch_data():
     }
     all_coords = DynamicGeoSearch(
         country_codes=[
-            # SearchableCountries.URUGUAY,
-            # SearchableCountries.MEXICO,
+            SearchableCountries.URUGUAY,
+            SearchableCountries.MEXICO,
             SearchableCountries.SPAIN,
-            # SearchableCountries.ARGENTINA,
-            # SearchableCountries.PORTUGAL,
-            # SearchableCountries.GERMANY,
-            # SearchableCountries.POLAND,
-            # SearchableCountries.BRAZIL,
-            # SearchableCountries.CHILE,
-            # SearchableCountries.USA,
-            # SearchableCountries.PUERTO_RICO
+            SearchableCountries.ARGENTINA,
+            SearchableCountries.PORTUGAL,
+            SearchableCountries.GERMANY,
+            SearchableCountries.POLAND,
+            SearchableCountries.BRAZIL,
+            SearchableCountries.CHILE,
+            SearchableCountries.USA,
+            SearchableCountries.PUERTO_RICO
         ],
         expected_search_radius_miles=100,
     )
