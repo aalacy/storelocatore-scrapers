@@ -1,4 +1,6 @@
 import json
+import re
+import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -7,6 +9,52 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sglogging import sglog
+
+
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+
+    try:
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        adr1 = a.get("address1") or ""
+        adr2 = a.get("address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("postal")
+    except usaddress.RepeatedLabelError:
+        adr = line.split(",")
+        state, postal = adr.pop().strip().split()
+        city = adr.pop().strip()
+        street_address = ",".join(line)
+
+    return street_address, city, state, postal
 
 
 def fetch_data(sgw: SgWriter):
@@ -53,19 +101,14 @@ def fetch_data(sgw: SgWriter):
                     continue
                 _tmp.append(line.replace("\xa0", " ").strip().replace("\n", " "))
 
-            street_address = ", ".join(_tmp[:-1])
-            try:
-                csz = _tmp.pop()
-            except:
-                logger.info(f"something went wrong: {page_url}")
-                continue
-            city = csz.split(",")[0].strip()
-            csz = csz.split(",")[1].strip()
-            try:
-                state, postal = csz.split()
-            except:
-                state = csz
-                postal = SgRecord.MISSING
+            raw_address = ", ".join(_tmp).replace(",,", ",")
+            incorrect = "".join(re.findall(regex, raw_address))
+            if incorrect:
+                correct = incorrect[:2] + " " + incorrect[2:]
+                raw_address = re.sub(regex, correct, raw_address)
+
+            street_address, city, state, postal = get_address(raw_address)
+
             phone = "".join(
                 d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")
             ).strip()
@@ -90,6 +133,7 @@ def fetch_data(sgw: SgWriter):
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
+                raw_address=raw_address,
                 locator_domain=locator_domain,
             )
 
@@ -97,6 +141,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    regex = r"([A-Z]{2}\d{5})"
     locator_domain = "https://www.rightathome.net/"
     logger = sglog.SgLogSetup().get_logger(logger_name="rightathome.net")
     session = SgRequests()
