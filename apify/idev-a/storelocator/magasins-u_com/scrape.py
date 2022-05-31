@@ -18,7 +18,7 @@ locator_domain = "https://www.magasins-u.com"
 base_url = "https://www.magasins-u.com/csd/Satellite?childpagename=portailu%2FUtilities%2FMagasin%2FGetMagasinsAvecFiltres&pagename=portailu%2FWrapper%2FAuthentication"
 
 
-max_workers = 4
+max_workers = 1
 
 
 def fetchConcurrentSingle(_):

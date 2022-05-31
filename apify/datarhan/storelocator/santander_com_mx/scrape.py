@@ -15,13 +15,17 @@ def fetch_data():
     }
     all_coords = DynamicGeoSearch(
         country_codes=[
-            SearchableCountries.URUGUAY,
-            SearchableCountries.MEXICO,
+            # SearchableCountries.URUGUAY,
+            # SearchableCountries.MEXICO,
             SearchableCountries.SPAIN,
-            SearchableCountries.ARGENTINA,
-            SearchableCountries.PORTUGAL,
-            SearchableCountries.GERMANY,
-            SearchableCountries.POLAND,
+            # SearchableCountries.ARGENTINA,
+            # SearchableCountries.PORTUGAL,
+            # SearchableCountries.GERMANY,
+            # SearchableCountries.POLAND,
+            # SearchableCountries.BRAZIL,
+            # SearchableCountries.CHILE,
+            # SearchableCountries.USA,
+            # SearchableCountries.PUERTO_RICO
         ],
         expected_search_radius_miles=100,
     )
@@ -53,10 +57,10 @@ def fetch_data():
                 zip_postal=zip_code,
                 country_code=poi["location"]["country"],
                 store_number=poi["poicode"],
-                phone="",
+                phone=poi.get("contactData", {}).get("phoneNumber"),
                 location_type="",
-                latitude=poi["location"]["coordinates"][0],
-                longitude=poi["location"]["coordinates"][1],
+                latitude=poi["location"]["coordinates"][1],
+                longitude=poi["location"]["coordinates"][0],
                 hours_of_operation=hoo,
             )
 
