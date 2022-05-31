@@ -21,6 +21,8 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "".join(d.xpath('.//following::a[@class="more-link"][1]/@href'))
         location_name = "".join(d.xpath(".//text()"))
+        if "coming soon" in location_name.lower():
+            continue
         street_address = "".join(d.xpath(".//following-sibling::p[1]/text()[1]"))
         ad = (
             "".join(d.xpath(".//following-sibling::p[1]/text()[2]"))

@@ -1,10 +1,4 @@
-import os
-
-os.environ.pop("PROXY_PASSWORD", None)
-os.environ.pop("PROXY_URL", None)
-
 from lxml import html
-from time import sleep
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -13,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
@@ -32,24 +26,21 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if page_url.find("Corporativo") != -1:
             continue
-        with SgChrome(is_headless=True) as driver:
+        with SgFirefox() as driver:
 
             driver.get(page_url)
-            sleep(10)
-            iframe = driver.find_element_by_xpath(
-                '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
+            driver.implicitly_wait(10)
+            xpath_iframe = '//iframe[contains(@src, "maps")]'
+            WebDriverWait(driver, 50).until(
+                EC.presence_of_element_located((By.XPATH, xpath_iframe))
             )
-            driver.switch_to.frame(iframe)
-            try:
-                WebDriverWait(driver, 200).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, '//div[@class="address"]')
-                    )
-                )
-            except:
-                driver.switch_to.default_content()
+            element_iframe = driver.find_element(By.XPATH, xpath_iframe)
+            driver.switch_to.frame(element_iframe)
             try:
                 ad = driver.find_element_by_xpath('//div[@class="address"]').text
+            except:
+                ad = "<MISSING>"
+            try:
                 ll = driver.find_element_by_xpath(
                     '//div[@class="google-maps-link"]/a'
                 ).get_attribute("href")
@@ -57,6 +48,7 @@ def fetch_data(sgw: SgWriter):
                 ad = "<MISSING>"
                 ll = "<MISSING>"
             ll = "".join(ll)
+
             ad = (
                 "".join(ad)
                 .replace(", N.L.", "")

@@ -52,12 +52,12 @@ def fetch_data():
             zip = store_json["address"]["post_code"]
             country_code = store_json["address"]["country_short"]
 
-            phone = store.get("phone_number", "<MISSING>")
+            phone = store_json.get("phone_number", "<MISSING>")
             location_type = "<MISSING>"
 
             hour_list = []
 
-            hours = store["hours"]["days"]
+            hours = store_json["hours"]["days"]
             for day, hour in hours.items():
                 hour_list.append(f'{day}: {hours[day]["open"]} - {hours[day]["close"]}')
 
