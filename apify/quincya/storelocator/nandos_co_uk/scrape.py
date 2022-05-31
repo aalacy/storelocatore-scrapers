@@ -46,8 +46,6 @@ def fetch_data(sgw: SgWriter):
 
         if "Dublin" in state or state == "County Kildare" or state == "Cork":
             continue
-        if not state:
-            state = "<MISSING>"
         zip_code = store["address"]["postalCode"]
         if not zip_code:
             zip_code = "<MISSING>"
@@ -57,6 +55,14 @@ def fetch_data(sgw: SgWriter):
             street_address = street_address.replace(", " + zip_code, "")
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
+
+        if not city:
+            city = street_address.split(",")[-1].strip()
+            street_address = street_address[: street_address.rfind(",")]
+
+        if not state:
+            if city in ["London", "Merseyside"]:
+                state = city
 
         store_number = "<MISSING>"
         location_type = "<MISSING>"

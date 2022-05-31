@@ -77,7 +77,7 @@ def parse_soup(soup, url):
         street_address = (
             parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         )
-        street_address(
+        street_address = (
             (street_address + ", " + parsed.street_address_2)
             if parsed.street_address_2
             else street_address
@@ -86,7 +86,8 @@ def parse_soup(soup, url):
         state = parsed.state if parsed.state else SgRecord.MISSING
         zip_postal = parsed.postcode if parsed.postcode else SgRecord.MISSING
         country_code = parsed.country if parsed.country else SgRecord.MISSING
-    except Exception:
+    except Exception as e:
+        logzilla.error("", exc_info=e)
         pass
 
     try:
@@ -137,7 +138,7 @@ def parse_soup(soup, url):
     except Exception:
         pass
 
-    try:
+    def hoursB(soup, column):
         hours_of_operation = soup.find(
             "div",
             {
@@ -147,7 +148,7 @@ def parse_soup(soup, url):
                     for i in [
                         "fusion-layout-column",
                         "fusion_builder_column",
-                        "fusion-builder-column-16",
+                        f"fusion-builder-column-{str(column)}",
                         "fusion_builder_column_1_2",
                         "1_2",
                         "fusion-flex-column",
@@ -159,19 +160,100 @@ def parse_soup(soup, url):
         hours_of_operation = hours_of_operation.find_all("p")
         temphr = []
         for i in hours_of_operation:
-            block = ""
             if "day" in i.text:
+                block = ""
                 block = i.text.strip()
                 block = block + " "
-            if any(z.isdigit() for z in i.text):
+            if any(z.isdigit() for z in i.text) or "osed" in i.text:
                 block = block + "- "
                 block = block + i.text.strip()
-            temphr.append(block)
-        hours_of_operation = ", ".join(temphr)
+                temphr.append(block)
+                block = ""
+        return ", ".join(temphr)
 
+    try:
+        hours_of_operation = hoursB(soup, 16)
     except Exception:
-        pass
+        try:
+            hours_of_operation = hoursB(soup, 15)
+        except Exception as e:
+            logzilla.error("", exc_info=e)
 
+    try:
+
+        def parse_coords(gMapUrl):
+            gMapUrl = list(gMapUrl)
+            try:
+                gMapUrl = gMapUrl[57:]
+            except Exception:
+                try:
+                    gMapUrl = gMapUrl[38:]
+                except Exception:
+                    pass
+            longitude = []
+            latDone = False
+            lngDone = False
+            latitude = []
+            while gMapUrl:
+                i = gMapUrl.pop(-1)
+                if not latDone:
+                    if i.isdigit():
+                        latitude.insert(0, i)
+                        continue
+                    if i == ".":
+                        latitude.insert(0, i)
+                        latDone = "close"
+                        continue
+                if latDone == "close":
+                    if i.isdigit() or i == "-":
+                        latitude.insert(0, i)
+                        continue
+                    else:
+                        latDone = True
+                if not lngDone:
+                    if i.isdigit():
+                        longitude.insert(0, i)
+                        continue
+                    if i == ".":
+                        longitude.insert(0, i)
+                        lngDone = "close"
+                        continue
+                if lngDone == "close":
+                    if i.isdigit() or i == "-":
+                        longitude.insert(0, i)
+                        continue
+                    else:
+                        lngDone = True
+                        continue
+            if all([latDone, lngDone]):
+                if longitude[0] == "-":
+                    return ("".join(latitude), "".join(longitude))
+                return ("".join(longitude), "".join(latitude))
+            return (SgRecord.MISSING, SgRecord.MISSING)
+
+        links = soup.find_all(
+            "a",
+            {
+                "class": lambda x: x
+                and all(
+                    i in x
+                    for i in [
+                        "fusion-button",
+                        "button-flat",
+                        "fusion-button-default-size",
+                        "button-custom button-6",
+                        "button-6",
+                        "fusion-button-span-no",
+                    ]
+                )
+            },
+        )
+        for link in links:
+            if "irection" in link.find("span").text.strip():
+                latitude, longitude = parse_coords(link["href"])
+    except Exception as e:
+        logzilla.error("", exc_info=e)
+        raise
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
