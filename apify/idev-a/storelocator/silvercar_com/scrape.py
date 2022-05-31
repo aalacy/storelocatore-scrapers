@@ -1,11 +1,14 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import re
 from sglogging import SgLogSetup
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("silvercar")
 
@@ -18,14 +21,16 @@ base_url = "https://www.silvercar.com/car-rentals/"
 
 
 def fetch_data():
-    with SgRequests() as session:
-        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+    with SgChrome() as driver:
+        driver.get(base_url)
+        locations = bs(driver.page_source, "lxml").select(
             "div.locations-list div.location-detail a"
         )
         for link in locations:
             page_url = link["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            driver.get(page_url)
+            sp1 = bs(driver.page_source, "lxml")
             addr = link.select_one("span.address").text.strip().split(",")
             _p = sp1.find("h3", string=re.compile(r"^Phone$"))
             phone = ""
