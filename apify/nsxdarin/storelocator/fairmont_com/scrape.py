@@ -266,12 +266,15 @@ def fetch_data():
                         else "<MISSING>"
                     )
                 if 'aria-label="Phone number"' in line2:
-                    phone = (
-                        line2.split('aria-label="Phone number"')[1]
-                        .split(">")[1]
-                        .split("<")[0]
-                        .replace("%20", " ")
-                    )
+                    try:
+                        phone = (
+                            line2.split('aria-label="Phone number"')[1]
+                            .split(">")[1]
+                            .split("<")[0]
+                            .replace("%20", " ")
+                        )
+                    except:
+                        phone = "<MISSING>"
                 if 'Latitude" value="' in line2:
                     lat = line2.split('Latitude" value="')[1].split('"')[0]
                 if 'Longitude" value="' in line2:
