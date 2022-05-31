@@ -16,7 +16,6 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa
 from selenium.webdriver.common.keys import Keys  # noqa
 from selenium.webdriver.chrome.options import Options  # noqa
 from bs4 import BeautifulSoup as b4
-import os
 import time
 import ssl
 
@@ -246,13 +245,6 @@ def testfetch(
         locs = soup.find_all("div", {"data-map-marker": True})
         for loc in locs:
             data = loc["data-map-marker"].split(",")
-            try:
-                found_location_at(
-                    data[0],
-                    data[1],
-                )
-            except Exception:
-                pass
             yield {"lat": data[0], "lng": data[1], "link": data[-1]}
 
 
