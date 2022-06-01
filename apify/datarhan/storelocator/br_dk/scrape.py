@@ -28,7 +28,7 @@ def fetch_data():
     home_url = "https://www.br.dk/kundeservice/find-din-br/"
     with SgFirefox() as driver:
         driver.get(home_url)
-        sleep(10)
+        sleep(20)
         dom = etree.HTML(driver.page_source)
         log.info("")
         log.info("")
