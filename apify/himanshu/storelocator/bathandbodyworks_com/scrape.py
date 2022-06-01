@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -45,6 +46,38 @@ def fetch_data():
             latitude=poi["latitude"],
             longitude=poi["longitude"],
             hours_of_operation=hoo,
+        )
+
+        yield item
+
+    start_url = (
+        "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
+    )
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+
+    all_locations = dom.xpath('//div[@class="store-location"]')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath('.//p[@class="store-name"]/text()')[0]
+        raw_address = poi_html.xpath('.//p[@class="location"]/text()')[0].split(", ")
+        phone = poi_html.xpath("./p[4]/text()")[0]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address="",
+            city=raw_address[0],
+            state=raw_address[1],
+            zip_postal="",
+            country_code="CA",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
         )
 
         yield item
