@@ -136,10 +136,6 @@ def fetch_data():
 
         street_address = street_address.replace(f",{zip_postal}", "").replace(",", ", ")
         street_address = " ".join(street_address.split())
-        if state == MISSING:
-            raw_address = f"{street_address}, {city} {zip_postal}"
-        else:
-            raw_address = f"{street_address}, {city}, {state} {zip_postal}"
 
         hours_of_operation = get_JSON_object_variable(store, "hoo")
 
@@ -157,7 +153,7 @@ def fetch_data():
                         try:
                             dataJSON = json.loads(data)
                         except Exception as e:
-                            log.error("Failed to load json openingHours")
+                            log.error(f"Failed to load json openingHours: {e}")
                             dataJSON = []
                         location_name = dataJSON["name"]
                         hours_of_operation = (
