@@ -1,169 +1,185 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-import time
 from datetime import datetime
-import phonenumbers
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
-logger = SgLogSetup().get_logger('biggby_com')
 session = SgRequests()
+website = "biggby_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.biggby.com/"
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    base_url = "https://www.biggby.com/"
-    addresess = []
-
-    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-    'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-    }
-
-    r = session.get("https://www.biggby.com/locations/", headers=headers)
+    url = "https://www.biggby.com/locations/"
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    key = str(soup).split('"bgcSecurity":"')[1].split('","ajax":')[0]
     data = soup.find_all("marker")
     for i in data:
-        if i['coming-soon'] == "yes" :
+        if i["coming-soon"] == "yes":
             continue
-        location_name = i['name']
-        street_address = i['address-one'] +" "+ i['address-two']
-        city = i['city']
-        state = i['state']
-        zipp = i['zip']
-        store_number = i['id']
+        location_name = i["name"]
+        log.info(location_name)
+        street_address = i["address-one"] + " " + i["address-two"]
+        city = i["city"]
+        state = i["state"]
+        zip_postal = i["zip"]
+        store_number = i["id"]
         try:
-            latitude = i['lat']
-            longitude = i['lng']
+            latitude = i["lat"]
+            longitude = i["lng"]
         except KeyError:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        country_code = i['country']
-        hours = ''
-        if i['mon-thurs-open-hour']:
+            latitude = MISSING
+            longitude = MISSING
+        country_code = i["country"]
+        hours = ""
+        if i["mon-thurs-open-hour"]:
             try:
-                mon_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
-                mon_open=mon_o.strftime("%I:%M %p")       
+                mon_o = datetime.strptime(str(i["mon-thurs-open-hour"]), "%H:%M")
+                mon_open = mon_o.strftime("%I:%M %p")
             except:
-                mon_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
-                mon_open=mon_o.strftime("%I:%M %p")   
+                mon_o = datetime.strptime(str(i["mon-thurs-open-hour"]), "%H")
+                mon_open = mon_o.strftime("%I:%M %p")
         else:
             mon_open = "close"
 
-        if i['mon-thurs-close-hour']:
+        if i["mon-thurs-close-hour"]:
             try:
-                mon_c = datetime.strptime(str(i['mon-thurs-close-hour']), "%H:%M")
-                mon_close=mon_c.strftime("%I:%M %p")       
+                mon_c = datetime.strptime(str(i["mon-thurs-close-hour"]), "%H:%M")
+                mon_close = mon_c.strftime("%I:%M %p")
             except:
-                mon_c = datetime.strptime(str(i['mon-thurs-close-hour']), "%H")
-                mon_close=mon_c.strftime("%I:%M %p")
+                mon_c = datetime.strptime(str(i["mon-thurs-close-hour"]), "%H")
+                mon_close = mon_c.strftime("%I:%M %p")
         else:
             mon_close = "close"
 
-        if i['fri-open-hour']:
+        if i["fri-open-hour"]:
             try:
-                fir_o = datetime.strptime(str(i['fri-open-hour']), "%H:%M")
-                fri_open=fir_o.strftime("%I:%M %p")       
+                fir_o = datetime.strptime(str(i["fri-open-hour"]), "%H:%M")
+                fri_open = fir_o.strftime("%I:%M %p")
             except:
-                fir_o = datetime.strptime(str(i['fri-open-hour']), "%H")
-                fri_open=fir_o.strftime("%I:%M %p")
+                fir_o = datetime.strptime(str(i["fri-open-hour"]), "%H")
+                fri_open = fir_o.strftime("%I:%M %p")
         else:
             fri_open = "close"
 
-        if i['fri-close-hour']:
+        if i["fri-close-hour"]:
             try:
-                fri_c = datetime.strptime(str(i['fri-close-hour']), "%H:%M")
-                fri_close=fri_c.strftime("%I:%M %p")       
+                fri_c = datetime.strptime(str(i["fri-close-hour"]), "%H:%M")
+                fri_close = fri_c.strftime("%I:%M %p")
             except:
-                mon_c = datetime.strptime(str(i['fri-close-hour']), "%H")
-                fri_close=fri_c.strftime("%I:%M %p")
+                mon_c = datetime.strptime(str(i["fri-close-hour"]), "%H")
+                fri_close = fri_c.strftime("%I:%M %p")
         else:
             fri_close = "close"
 
-        if i['sat-open-hour']:
+        if i["sat-open-hour"]:
             try:
-                sat_o = datetime.strptime(str(i['sat-open-hour']), "%H:%M")
-                sat_open=sat_o.strftime("%I:%M %p")       
+                sat_o = datetime.strptime(str(i["sat-open-hour"]), "%H:%M")
+                sat_open = sat_o.strftime("%I:%M %p")
             except:
-                sat_o = datetime.strptime(str(i['sat-open-hour']), "%H")
-                sat_open=sat_o.strftime("%I:%M %p")
+                sat_o = datetime.strptime(str(i["sat-open-hour"]), "%H")
+                sat_open = sat_o.strftime("%I:%M %p")
         else:
             sat_open = "close"
 
-        if i['sat-close-hour']:
+        if i["sat-close-hour"]:
             try:
-                sat_c = datetime.strptime(str(i['sat-close-hour']), "%H:%M")
-                sat_close=sat_c.strftime("%I:%M %p")       
+                sat_c = datetime.strptime(str(i["sat-close-hour"]), "%H:%M")
+                sat_close = sat_c.strftime("%I:%M %p")
             except:
-                sat_c = datetime.strptime(str(i['sat-close-hour']), "%H")
-                sat_close=sat_c.strftime("%I:%M %p")
+                sat_c = datetime.strptime(str(i["sat-close-hour"]), "%H")
+                sat_close = sat_c.strftime("%I:%M %p")
         else:
             sat_close = "close"
 
-        if i['sun-open-hour']:
+        if i["sun-open-hour"]:
             try:
-                sun_o = datetime.strptime(str(i['sun-open-hour']), "%H:%M")
-                sun_open=sun_o.strftime("%I:%M %p")       
+                sun_o = datetime.strptime(str(i["sun-open-hour"]), "%H:%M")
+                sun_open = sun_o.strftime("%I:%M %p")
             except:
-                sun_o = datetime.strptime(str(i['sun-open-hour']), "%H")
-                sun_open=sun_o.strftime("%I:%M %p")
+                sun_o = datetime.strptime(str(i["sun-open-hour"]), "%H")
+                sun_open = sun_o.strftime("%I:%M %p")
         else:
             sun_open = "close"
 
-        if i['sun-close-hour']:
+        if i["sun-close-hour"]:
             try:
-                sun_c = datetime.strptime(str(i['sun-close-hour']), "%H:%M")
-                sun_close=sun_c.strftime("%I:%M %p")       
+                sun_c = datetime.strptime(str(i["sun-close-hour"]), "%H:%M")
+                sun_close = sun_c.strftime("%I:%M %p")
             except:
-                sun_c = datetime.strptime(str(i['sun-close-hour']), "%H")
-                sun_close=sun_c.strftime("%I:%M %p")
+                sun_c = datetime.strptime(str(i["sun-close-hour"]), "%H")
+                sun_close = sun_c.strftime("%I:%M %p")
         else:
             sun_close = "close"
-        hours = "mon to thurs"+" "+str(mon_open)+"-"+str(mon_close)+","+"fri"+" "+str(fri_open)+"-"+str(fri_close)+","+"sat"+" "+str(sat_open)+"-"+str(sat_close)+","+"sun"+" "+str(sun_open)+"-"+str(sun_close)
-        hours = hours.replace("close-close","close")
-
-        r1 = session.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security="+key+"&post_id="+str(i['pid'])).json()
-        number = r1['phone-number'].replace("not available",'').replace("unavailable",'').replace("TBD","")
-        if number:
-            phone = phonenumbers.format_number(phonenumbers.parse(str(number), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-        else:
-            phone = "<MISSING>"
-        store = []
-        store.append(base_url)
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zipp if zipp else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone)
-        store.append('<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append(hours if hours else '<MISSING>')
-        store.append('<MISSING>')
-        if store[2] in addresess:
-            continue
-        addresess.append(store[2])
-        #logger.info("===", str(store))
-        yield  store
+        hours = (
+            "mon to thurs"
+            + " "
+            + str(mon_open)
+            + "-"
+            + str(mon_close)
+            + ","
+            + "fri"
+            + " "
+            + str(fri_open)
+            + "-"
+            + str(fri_close)
+            + ","
+            + "sat"
+            + " "
+            + str(sat_open)
+            + "-"
+            + str(sat_close)
+            + ","
+            + "sun"
+            + " "
+            + str(sun_open)
+            + "-"
+            + str(sun_close)
+        )
+        hours_of_operation = hours.replace("close-close", "close").replace(",", ", ")
+        phone = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()    
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

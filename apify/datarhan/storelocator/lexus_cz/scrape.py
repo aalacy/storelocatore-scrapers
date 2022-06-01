@@ -7,13 +7,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.lexus.cz/retailers/"
+    start_url = "https://www.lexus.cz/contact/retailers"
     domain = "lexus.cz"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -21,44 +20,64 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//a[@class="ui-button ui-button--primary ui-button--anim-stretch-right "]/@href'
-    )
+    all_locations = dom.xpath('//a[contains(@href, "contact/retailers/")]/@href')
     for url in all_locations:
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
-        poi = json.loads(data)
-        raw_address = poi["address"]
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += ", " + addr.street_address_2
-        geo = loc_dom.xpath("//@data-pos")[0].split(",")
+        if "lexus-pruhonice" not in page_url:
+            data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
+            poi = json.loads(data)
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            phone = poi["telephone"]
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+        else:
+            location_name = loc_dom.xpath('//div[@class="dealer-heading"]/div/text()')[
+                0
+            ]
+            raw_address = loc_dom.xpath(
+                '//div[@class="bottom-contact-item col-lg-8"]/div/text()'
+            )
+            raw_address = [e.strip() for e in raw_address if e.strip()]
+            street_address = raw_address[0]
+            city = " ".join(raw_address[1].split()[2:])
+            zip_code = " ".join(raw_address[1].split()[:2])
+            phone = (
+                loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+                .split(":")[-1]
+                .strip()
+            )
+            location_type = "AutomotiveBusiness"
+            geo = loc_dom.xpath("//@data-location")[0].split(",")
+            latitude = geo[1]
+            longitude = geo[0]
+
         hoo = loc_dom.xpath(
-            '//div[@class="c-dealer-contact-card__opening-times"]//text()'
+            '//div[contains(text(), "ShowRoom")]/following-sibling::ul//text()'
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo).split("o Otevírací doba")[0] + "o"
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
+            location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
-            zip_postal=raw_address.split(",")[-1].strip(),
+            zip_postal=zip_code,
             country_code="CZ",
             store_number="",
-            phone=poi["contactPoint"]["telephone"],
-            location_type=poi["@type"],
-            latitude=geo[0],
-            longitude=geo[1],
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
-            raw_address=raw_address,
         )
 
         yield item
@@ -67,9 +86,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.PAGE_URL})
         )
     ) as writer:
         for item in fetch_data():
