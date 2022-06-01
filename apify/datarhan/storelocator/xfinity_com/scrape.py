@@ -50,6 +50,8 @@ def fetch_data():
 
     for loc_url in list(set(all_locations)):
         store_url = "https://www.xfinity.com/local/" + loc_url.replace("../", "")
+        if store_url == "https://www.xfinity.com/local/":
+            continue
         log.info(f"Scraping : {store_url}")
         store_response = session.get(store_url)
         store_dom = etree.HTML(store_response.text)

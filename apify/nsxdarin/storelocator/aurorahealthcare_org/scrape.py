@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 session = SgRequests()
 headers = {
@@ -27,7 +28,6 @@ def fetch_data():
         )
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '"PinType":["' in line:
                 items = line.split('"PinType":["')
                 for item in items:
@@ -39,6 +39,7 @@ def fetch_data():
                         )
         for loc in locs:
             try:
+                time.sleep(1)
                 lurl = loc.split("|")[0]
                 typ = loc.split("|")[1]
                 logger.info(lurl)
@@ -54,7 +55,6 @@ def fetch_data():
                 hours = ""
                 r2 = session.get(lurl, headers=headers)
                 for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
                     if '"openingHours":["' in line2:
                         hours = (
                             line2.split('"openingHours":["')[1]
@@ -81,6 +81,8 @@ def fetch_data():
                         lng = line2.split('longitude="')[1].split('"')[0]
                 if hours == "":
                     hours = "<MISSING>"
+                if " - " in name:
+                    name = name.split(" - ")[0]
                 if add != "":
                     yield SgRecord(
                         locator_domain=website,

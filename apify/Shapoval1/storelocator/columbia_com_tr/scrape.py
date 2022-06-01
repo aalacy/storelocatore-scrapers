@@ -35,31 +35,40 @@ def fetch_data(sgw: SgWriter):
                 if postal == "227.KM":
                     postal = "<MISSING>"
                 country_code = "TR"
-                city = a.city or "<MISSING>"
+                city_id = j.get("cityId")
                 latitude = j.get("latitude") or "<MISSING>"
                 longitude = j.get("longtitude") or "<MISSING>"
                 phone = j.get("phone") or "<MISSING>"
                 hours_of_operation = j.get("workingHours") or "<MISSING>"
+                api_url_1 = "https://www.columbia.com.tr/api/inventory/store/cities-all-filter?countryId=1&storeType=10&storeIsActive=true"
+                r_1 = SgRequests.raise_on_err(http.get(url=api_url_1))
+                assert isinstance(r_1, httpx.Response)
+                assert 200 == r_1.status_code
+                js_1 = r_1.json()
+                for j_1 in js_1:
+                    city_slg = j_1.get("id")
+                    if city_slg == city_id:
+                        city = j_1.get("name")
 
-                row = SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=postal,
-                    country_code=country_code,
-                    store_number=SgRecord.MISSING,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=ad,
-                )
+                        row = SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=postal,
+                            country_code=country_code,
+                            store_number=SgRecord.MISSING,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                            raw_address=ad,
+                        )
 
-                sgw.write_row(row)
+                        sgw.write_row(row)
 
         except Exception as e:
             log.info(f"Err at #L100: {e}")

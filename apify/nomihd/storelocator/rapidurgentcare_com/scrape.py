@@ -6,7 +6,12 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgselenium import SgChrome
 import time
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "rapidurgentcare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -22,7 +27,6 @@ def fetch_data():
         driver.get(search_url)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight-100);")
         time.sleep(120)
-
         search_sel = lxml.html.fromstring(driver.page_source)
 
         raw_text = list(
@@ -56,7 +60,7 @@ def fetch_data():
             filter(
                 str,
                 search_sel.xpath(
-                    '//div[contains(@data-mesh-id,"FOOTER")]//span[@style="font-style:italic"]//text()'
+                    '//div[contains(@data-mesh-id,"SITE_FOOTER")]//span[@style="font-style:italic;"]//text()'
                 ),
             )
         )
@@ -65,7 +69,7 @@ def fetch_data():
             filter(
                 str,
                 search_sel.xpath(
-                    '//div[contains(@data-mesh-id,"FOOTER")]//iframe/@src'
+                    '//div[contains(@data-mesh-id,"SITE_FOOTER")]//iframe/@src'
                 ),
             )
         )
@@ -85,6 +89,9 @@ def fetch_data():
         stores_list = iframe_sel.xpath('//ul[contains(@id,"locations")]/li')
 
         for store in stores_list:
+            phone = ""
+            page_url = ""
+            hours_of_operation = ""
             store_name = "".join(store.xpath(".//a//text()")).strip()
             # check if it maps to store_phones_dict.
             for name in store_phones_dict.keys():
@@ -94,7 +101,12 @@ def fetch_data():
 
                     for key in store_hours_dict.keys():
                         if name in key:
-                            hours_of_operation = " ".join(store_hours_dict[key]).strip()
+                            hours_of_operation = (
+                                " ".join(store_hours_dict[key])
+                                .strip()
+                                .replace("Open ", "")
+                                .strip()
+                            )
                             break
                     break
 
@@ -141,7 +153,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

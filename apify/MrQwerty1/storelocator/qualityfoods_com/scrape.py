@@ -1,134 +1,91 @@
-import csv
 import re
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
+    city = adr.city or SgRecord.MISSING
+    state = adr.state or SgRecord.MISSING
+    postal = adr.postcode or SgRecord.MISSING
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street, city, state, postal
 
 
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+def get_coords(text):
+    if "/@" in text:
+        latitude, longitude = text.split("/@")[1].split(",")[:2]
+    elif "&ll=" in text:
+        latitude, longitude = text.split("&ll=")[1].split("&")[0].split(",")
+    else:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.qualityfoods.com/"
-    page_url = "https://www.qualityfoods.com/about-qf/location-hours"
-
-    session = SgRequests()
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='sfContentBlock' and .//*[text()='Map']]")
+    divs = tree.xpath(
+        "//div[contains(@class, 'sfContentBlock') and .//*[text()='Map']]"
+    )
 
     for d in divs:
-        location_name = " ".join("".join(d.xpath("./h1//text()|./h2//text()")).split())
-        line = d.xpath("./div/span/text()")
-        line = list(
-            filter(None, [l.replace("/", "").replace("\xa0", "").strip() for l in line])
-        )[0]
-        if " - " in line:
-            line = line.split(" - ")[-1]
-
-        adr = parse_address(International_Parser(), line)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
+        lines = d.xpath(".//text()")
+        lines = list(
+            filter(
+                None,
+                [line.replace("\xa0", " ").replace("/", "").strip() for line in lines],
+            )
         )
 
-        city = adr.city or "<MISSING>"
-        state = adr.state or "<MISSING>"
-        postal = "<MISSING>"
-        country_code = "CA"
-        store_number = "<MISSING>"
-        phone_text = "".join(d.xpath(".//strong//text()"))
+        location_name = lines.pop(0)
+        raw_address = lines.pop(0)
+        street_address, city, state, postal = get_international(raw_address)
+
         try:
+            phone_text = "".join(d.xpath(".//text()"))
             phone = re.findall(r"\d{3}-\d{3}-\d{4}", phone_text)[0]
         except IndexError:
-            phone = "<MISSING>"
+            phone = SgRecord.MISSING
 
         text = "".join(d.xpath(".//a/@href"))
-        if text:
-            latitude, longitude = get_coords_from_google_url(text)
-        else:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = get_coords(text)
 
-        location_type = "<MISSING>"
-        hours_of_operation = d.xpath(
-            ".//div[./strong/span[contains(text(), 'Store Hours')]]/span//text()|.//strong[contains(text(), 'Store Hours')]/following-sibling::span//text()|.//strong[contains(text(), 'Store Hours')]/following-sibling::text()"
+        hours_of_operation = SgRecord.MISSING
+        if "Store Hours:" in lines:
+            hours_of_operation = lines[lines.index("Store Hours:") + 1]
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="CA",
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
-        hours_of_operation = list(filter(None, [h.strip() for h in hours_of_operation]))
-        hours_of_operation = "".join(hours_of_operation) or "<MISSING>"
-        if "A Step" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("A Step")[0].strip()
-        if hours_of_operation.endswith("8"):
-            hours_of_operation = hours_of_operation[:-1]
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.qualityfoods.com/"
+    page_url = "https://www.qualityfoods.com/about-qf/location-hours"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)
