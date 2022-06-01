@@ -75,6 +75,26 @@ def fetch_data():
             if "', ':" in hours:
                 hours = hours.split("', ':")[0].strip()
             hours = hours.replace("['", "")
+            if "Unit 45 White Rose Way" in city:
+                add = city
+                city = "Doncaster"
+            if "Unit 29 Maritime Way" in city:
+                add = city
+                city = "Chatham"
+            if "Quayside" in city:
+                city = "Quayside"
+            if "Yate Shopping Centre" in city:
+                add = city
+                city = "Yate"
+            if "KW15 1HP" in city:
+                zc = city
+                city = "Orkney"
+            if "165-171 High Street" in city:
+                add = city
+                city = "Kircaldy"
+            if "Vivary Way" in city:
+                city = "Colne"
+                add = "Vivary Way"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
