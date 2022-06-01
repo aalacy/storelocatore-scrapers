@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+import lxml.html
 
 website = "batakenya.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -29,12 +30,27 @@ def fetch_data():
 
             store_number = store["id"]
             page_url = "https://batakenya.com/shops/" + store["slug"]
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            if not isinstance(store_req, SgRequestError):
+
+                store_sel = lxml.html.fromstring(store_req.text)
+                street_address = "".join(
+                    store_sel.xpath(
+                        '//p[@class="text-sm sm:text-base text-copy-primary"]/text()'
+                    )
+                ).strip()
+                if (
+                    "You can still shop safely" in street_address
+                    or "Our " in street_address
+                    or "Located" in street_address
+                ):
+                    street_address = "<MISSING>"
+            else:
+                street_address = "<MISSING>"
+
             locator_domain = website
-
             location_name = store["name"]
-
-            street_address = "<MISSING>"
-
             city = "<MISSING>"
             state = "<MISSING>"
             zip = "<MISSING>"
