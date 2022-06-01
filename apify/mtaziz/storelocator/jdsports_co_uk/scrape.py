@@ -66,7 +66,7 @@ def format_store_locator_url():
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response_store(url):
-    with SgRequests() as http:
+    with SgRequests(proxy_country="gb") as http:
         response = http.get(url, headers=headers)
         logger.info(f"HTTPStatusCode: {response.status_code} | {url}")
         if response.status_code == 200:
@@ -77,7 +77,7 @@ def get_response_store(url):
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response_store_locator(url):
-    with SgRequests() as http:
+    with SgRequests(proxy_country="gb") as http:
         response = http.get(url, headers=headers)
         logger.info(f"HTTPStatusCode: {response.status_code} | {url}")
         if response.status_code == 200:
