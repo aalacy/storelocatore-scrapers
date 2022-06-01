@@ -21,7 +21,7 @@ def get_countries():
 
 def fetch_data(sgw: SgWriter):
     search = DynamicGeoSearch(
-        country_codes=get_countries(), expected_search_radius_miles=100
+        country_codes=get_countries(), expected_search_radius_miles=50
     )
     for lat, lng in search:
         country = search.current_country().upper()

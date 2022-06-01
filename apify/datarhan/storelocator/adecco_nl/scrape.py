@@ -54,7 +54,7 @@ def fetch_data():
                 zip_postal=poi["ZipCode"],
                 country_code=poi["CountryCode"],
                 store_number=poi["BranchCode"],
-                phone=poi["PhoneNumber"],
+                phone=poi["PhoneNumber"].split("/")[0],
                 location_type="",
                 latitude=poi["Latitude"],
                 longitude=poi["Longitude"],
