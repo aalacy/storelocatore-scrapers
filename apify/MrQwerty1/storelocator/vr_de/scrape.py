@@ -1,4 +1,4 @@
-import slugify
+import slugify  # noqa
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
