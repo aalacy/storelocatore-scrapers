@@ -50,7 +50,7 @@ def get_data(param, sgw: SgWriter):
     except IndexError:
         location_name = SgRecord.MISSING
     street_address = " ".join(
-        "".join(tree.xpath("//span[@itemprop='streetAddress']/text()").split())
+        "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).split()
     )
     city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
     state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
