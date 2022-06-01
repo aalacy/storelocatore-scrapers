@@ -1,103 +1,85 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "rooflinesupply_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://rooflinesupply.com/"
+MISSING = SgRecord.MISSING
 
-# helper for getting address
-def addy_extractor(src):
-    arr = src.split(',')
-    city = arr[0]
-    prov_zip = arr[1].split(' ')
-    if len(prov_zip) == 3:
-        state = prov_zip[1]
-        zip_code = prov_zip[2]
-
-    return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'http://rooflinesupply.com/'
-    to_scrape = locator_domain
-    page = session.get(to_scrape)
-    assert page.status_code == 200
+    if True:
+        r = session.get(DOMAIN, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "locations"})
+        for loc in loclist:
+            page_url = DOMAIN + loc.find("a")["href"]
+            store_number = page_url.split("BranchId=")[1].split("&")[0]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find(
+                "span", {"id": "ContentPlaceHolder1_BranchName"}
+            ).text
+            street_address = soup.find(
+                "span", {"id": "ContentPlaceHolder1_StreetAddr"}
+            ).text
+            city = soup.find("span", {"id": "ContentPlaceHolder1_City"}).text
+            state = soup.find("span", {"id": "ContentPlaceHolder1_StateCd"}).text
+            zip_postal = soup.find("span", {"id": "ContentPlaceHolder1_ZipCd"}).text
+            phone = soup.find("span", {"id": "ContentPlaceHolder1_Phone2"}).text
+            hours_of_operation = soup.find(
+                "span", {"id": "ContentPlaceHolder1_BusinessHours"}
+            ).text
+            latitude, longitude = (
+                soup.find("a", {"id": "ContentPlaceHolder1_hlMap"})["href"]
+                .split("q=")[1]
+                .split(",")
+            )
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    soup = BeautifulSoup(page.content, 'html.parser')
-    pattern = re.compile('(([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)\,\s+([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+))')
-    pair_pattern = re.compile('((\w+)=\"([^\"]+)\")')
-
-    script = soup.find('script', text=pattern)
-
-    results_locs = re.findall(pair_pattern, script.text)
-    loc_arr = []
-    for i, res in enumerate(results_locs):
-        if 'title' in res:
-            res = str(res)
-            idx = [i.start() for i in re.finditer('"', res)]
-            loc_arr.append([res[idx[0] + 1:idx[1]]])
-
-    results = re.findall(pattern, script.text)
-    for i, loc in enumerate(loc_arr):
-        loc.append(results[i][0])
-
-    stores = soup.find_all('div', {'class': 'locations'})
-    all_store_data = []
-
-    for store in stores:
-        location_name = store.find('a').text
-        phone_number = store.find_all('a', {'title': 'Phone'})[0].text
-
-        brs = store.find_all('br')
-        street_address = brs[0].nextSibling.strip()
-        city, state, zip_code = addy_extractor(brs[1].nextSibling.strip())
-
-        hr_brs = brs[1:]
-        hours = hr_brs[4].previousSibling.strip()
-        if hours == '':
-            hours = '<MISSING>'
-        else:
-            if hr_brs[5].previousSibling.strip() == 'CLOSED':
-                hours += ' CLOSED WEEKENDS'
-            else:
-                hours += ' ' + hr_brs[5].previousSibling.strip()
-
-        for loc in loc_arr:
-            if city in loc[0]:
-                coords = loc[1].split(',')
-                lat = coords[0]
-                longit = coords[1]
-
-        if '4350 Pell Drive, Ste 100' in street_address:
-            lat = '38.647544'
-            longit = '-121.469982'
-
-        if '5870 88th Street' in street_address:
-            lat = '38.520273'
-            longit = '-121.376846'
-
-        country_code = 'US'
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
