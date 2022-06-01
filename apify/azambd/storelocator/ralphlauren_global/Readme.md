@@ -8,3 +8,19 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+
+## Info: 
+
+### By analysis in SLC-26025, this includes the following: 
+- Azerbaijan [AZ]
+- Bahrain [BH]
+- Brazil [BR]
+- Hungary [HU]
+- Israel [IL]
+- Morocco [MA]
+- Qatar [QA]
+- Saudi Arabia [SA]
+- UAE [AE]
+
+> Direct link to comment: https://safegraph-crawl.atlassian.net/browse/SLC-26025?focusedCommentId=122354
