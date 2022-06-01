@@ -57,8 +57,7 @@ def fetch_records(search):
                 res = session.post(base_url, headers=_headers, json=data(lat, lng)).text
                 locations = json.loads(res)["contentlets"]
             except Exception as err:
-                open("w", "a").write(res)
-                logger.warning(res)
+                logger.warning(str(err))
                 continue
             total += len(locations)
             for store in locations:
