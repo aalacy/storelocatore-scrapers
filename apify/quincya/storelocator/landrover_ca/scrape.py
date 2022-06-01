@@ -1,4 +1,3 @@
-from proxyfier import ProxyProviders
 from lxml import html
 
 from bs4 import BeautifulSoup
