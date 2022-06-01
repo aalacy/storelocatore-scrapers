@@ -45,7 +45,9 @@ def fetch_data(sgw: SgWriter):
         store_number = store["ID"]
         country_code = "US"
         location_type = "<MISSING>"
-        link = "https://www.discounttirecenters.com/stores/view/" + store["CustomField7"]
+        link = (
+            "https://www.discounttirecenters.com/stores/view/" + store["CustomField7"]
+        )
 
         hours_of_operation = (
             "Monday "
