@@ -22,8 +22,12 @@ def fetch_data():
             SearchableCountries.PORTUGAL,
             SearchableCountries.GERMANY,
             SearchableCountries.POLAND,
+            SearchableCountries.BRAZIL,
+            SearchableCountries.CHILE,
+            SearchableCountries.USA,
+            SearchableCountries.PUERTO_RICO,
         ],
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=10,
     )
     for lat, lng in all_coords:
         start_url = f"https://back-scus.azurewebsites.net/branch-locator/find/defaultView?config=%7B%22coords%22%3A%5B{lat}%2C{lng}%5D%7D&globalSearch=true"
@@ -53,10 +57,10 @@ def fetch_data():
                 zip_postal=zip_code,
                 country_code=poi["location"]["country"],
                 store_number=poi["poicode"],
-                phone="",
+                phone=poi.get("contactData", {}).get("phoneNumber"),
                 location_type="",
-                latitude=poi["location"]["coordinates"][0],
-                longitude=poi["location"]["coordinates"][1],
+                latitude=poi["location"]["coordinates"][1],
+                longitude=poi["location"]["coordinates"][0],
                 hours_of_operation=hoo,
             )
 
