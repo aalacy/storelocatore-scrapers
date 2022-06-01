@@ -21,7 +21,7 @@ def fetch_data():
     url = "https://andpizza.com/wp-content/themes/andpizza/assets/js/scripts.js?ver=06072021"
     log.info("Fetching the Bearer Token...")
     r = session.get(url, headers=headers)
-    Bearer = r.text.split("'Authorization','")[1].split("');},")[0]
+    Bearer = 'Bearer'+r.text.split("Bearer")[1].split("')")[0]
     api_url = "https://api.andpizza.com/webapi/v100/partners/shops"
     headers_2 = {
         "authority": "api.andpizza.com",
