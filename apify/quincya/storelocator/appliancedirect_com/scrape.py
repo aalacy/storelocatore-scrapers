@@ -26,8 +26,6 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
 
-        raw_data = item.text.split("\n")
-
         location_name = item.h4.text.strip()
 
         raw_address = (
