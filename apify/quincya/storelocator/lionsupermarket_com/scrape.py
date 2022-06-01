@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.lionsupermarket.com"
 
-    items = base.find_all(class_="_1Q9if")
+    items = base.find_all(class_="_2Hij5")
 
     for item in items:
         try:

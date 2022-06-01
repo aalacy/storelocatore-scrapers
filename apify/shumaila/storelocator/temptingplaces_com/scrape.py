@@ -6,13 +6,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
 def fetch_data():
+    session = SgRequests()
 
     url = "https://www.temptingplaces.com/fr/page/decouvrez-notre-collection-unique-de-boutique-hotels-temptingplaces.2708.html"
     r = session.get(url, headers=headers)
@@ -36,12 +37,19 @@ def fetch_data():
     linklist = soup.findAll("h3", {"class": "item-suptitle"})
     for link in linklist:
         link = link.find("a")["href"]
+        try:
+            link = link.split("#backlink", 1)[0]
+        except:
+            pass
+        session = SgRequests()
         r = session.get(link, headers=headers)
         r.encoding = "utf-8-sig"
         content = r.text.split('<script type="application/ld+json">', 1)[1].split(
             "</script>", 1
         )[0]
+
         content = json.loads(content)
+
         try:
             phone = content["telephone"][0]
         except:
@@ -64,7 +72,6 @@ def fetch_data():
                 "à",
             )
         )
-
         yield SgRecord(
             locator_domain="https://www.temptingplaces.com/",
             page_url=link,

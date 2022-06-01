@@ -3,13 +3,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
 import ast
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
-search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
 
 hours_key_list = [
     ["MonOpen", "MonClose"],
@@ -51,11 +50,12 @@ def get_driver(url, class_name, driver=None):
                     "Make sure this ran with a Proxy, will fail without one"
                 )
             continue
+    driver.set_script_timeout(60)
     return driver
 
 
 def get_data():
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
+    search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
 
     hours_key_list = [
         ["MonOpen", "MonClose"],
@@ -66,44 +66,40 @@ def get_data():
         ["SatOpen", "SatClose"],
         ["SunOpen", "SunClose"],
     ]
-    driver = get_driver("https://www.schuh.co.uk/stores/", "secondLine")
+    driver = get_driver("https://www.schuh.co.uk/stores/", "headerStore")
 
-    for search_lat, search_lon in search:
+    for search_code in search:
         while True:
             try:
                 data = driver.execute_async_script(
-                    r"""
+                    """
+                    console.log("maybe")
                     var done = arguments[0]
-                    fetch('https://schuhservice.schuh.co.uk/StoreFinderService/GetNearbyBranchesByLocation', {
-                "headers": {
-                    "accept": "application/json, text/javascript, */*; q=0.01",
-                    "accept-language": "en-US,en;q=0.9",
-                    "cache-control": "no-cache",
-                    "content-type": "application/json;charset=UTF-8;",
-                    "sec-ch-ua-mobile": "?0",
-                    "sec-fetch-dest": "empty",
-                    "sec-fetch-mode": "cors",
-                    "sec-fetch-site": "same-site"
-                },
-                "referrer": "https://www.schuh.co.uk/",
-                "referrerPolicy": "strict-origin-when-cross-origin",
-                "body": '{"lat":"""
-                    + str(search_lat)
-                    + r""","lon":"""
-                    + str(search_lon)
-                    + r""","culture":"en-gb"}',
-                "method": "POST",
-                "mode": "cors",
-                "credentials": "include"
+                    console.log("here")
+                    fetch("https://schuhservice.schuh.co.uk/StoreFinderService/GetNearByBranchesBySearch", {
+                        "headers": {
+                            "content-type": "application/json;charset=UTF-8;",
+                        },
+                        "referrer": "https://www.schuh.co.uk/",
+                        "referrerPolicy": "strict-origin-when-cross-origin",
+                        "body": '{"searchString":"""
+                    + '"'
+                    + search_code
+                    + '"'
+                    + ""","culture":"en-gb"}',
+                        "method": "POST",
+                        "mode": "cors",
+                        "credentials": "include"
                     })
                     .then(res => res.json())
                     .then(data => done(data))
                     """
                 )
                 break
+
             except Exception:
                 driver = get_driver(
-                    "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
+                    "https://www.schuh.co.uk/stores/", "headerStore", driver=driver
                 )
                 continue
 
@@ -166,7 +162,7 @@ def get_data():
                     break
                 except Exception:
                     driver = get_driver(
-                        "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
+                        "https://www.schuh.co.uk/stores/", "headerStore", driver=driver
                     )
                     continue
 

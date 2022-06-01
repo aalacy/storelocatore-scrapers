@@ -1,118 +1,107 @@
-import csv
 import json
-
+from sglogging import sglog
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "stayaka_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.stayaka.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    session = SgRequests()
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-
-    locator_domain = "https://www.stayaka.com/"
-    ext = "locations"
-
-    response = session.get(locator_domain + ext, headers=headers)
-
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    link_list = []
-    main = soup.find(class_="submenu level-2 destinations")
-    links = main.find_all("a")
-    for link in links:
-        if "aka" not in link["href"]:
-            continue
-        if "http" not in link["href"]:
-            l = locator_domain + link["href"][1:]
-        else:
-            l = link["href"]
-        link_list.append(l)
-
-    all_store_data = []
-    for link in link_list:
-        response = session.get(link, headers=headers)
-
+    if True:
+        url = "https://www.stayaka.com/locations"
+        response = session.get(url, headers=headers)
         soup = BeautifulSoup(response.content, "html.parser")
-        cont = json.loads(soup.find("script", {"type": "application/ld+json"}).text)
-        location_name = cont["name"]
-        page_url = cont["url"]
-
-        phone_number = cont["telephone"]
-        addy = cont["address"]
-        street_address = addy["streetAddress"].replace("Cira Centre South,", "").strip()
-
-        city = addy["addressLocality"]
-        state = addy["addressRegion"]
-        zip_code = addy["postalCode"]
-        country_code = addy["addressCountry"]
-
-        if state == "London":
-            country_code = "GB"
-
-        lat = cont["geo"]["latitude"]
-        longit = cont["geo"]["longitude"]
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        hours = "<MISSING>"
-
-        store_data = [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone_number,
-            location_type,
-            lat,
-            longit,
-            hours,
-            page_url,
-        ]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
+        state_list = soup.findAll("ul", {"class": "submenu level-3"})
+        for state_url in state_list:
+            loclist = state_url.findAll("a")
+            for loc in loclist:
+                page_url = DOMAIN + loc["href"]
+                log.info(page_url)
+                response = session.get(page_url, headers=headers)
+                if (
+                    "We look forward to welcoming guests in late Summer, 2022"
+                    in response.text
+                ):
+                    continue
+                elif "welcoming you in September, 2022" in response.text:
+                    continue
+                soup = BeautifulSoup(response.content, "html.parser")
+                cont = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).text
+                )
+                location_name = cont["name"]
+                page_url = cont["url"]
+                try:
+                    phone = cont["telephone"]
+                except:
+                    phone = MISSING
+                addy = cont["address"]
+                try:
+                    street_address = (
+                        addy["streetAddress"].replace("Cira Centre South,", "").strip()
+                    )
+                except:
+                    street_address = (
+                        soup.find("div", {"class": "property-address"})
+                        .get_text(separator="|", strip=True)
+                        .split("|")[1]
+                    )
+                city = addy["addressLocality"]
+                state = addy["addressRegion"]
+                zip_postal = addy["postalCode"]
+                country_code = addy["addressCountry"]
+                if state == "London":
+                    country_code = "GB"
+                latitude = cont["geo"]["latitude"]
+                longitude = cont["geo"]["longitude"]
+                if len(str(latitude)) < 2:
+                    latitude = MISSING
+                    longitude = MISSING
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=MISSING,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -42,7 +42,7 @@ def _d(store_number):
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(10):
+        for a in range(20):
             for b in range(50):
                 for c in range(100):
                     logger.info(f"{a, b, c}")
@@ -97,8 +97,8 @@ def fetch_data():
                             zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
-                            latitude=loc["geometry"]["coordinates"][0],
-                            longitude=loc["geometry"]["coordinates"][1],
+                            latitude=loc["geometry"]["coordinates"][1],
+                            longitude=loc["geometry"]["coordinates"][0],
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
@@ -24,7 +25,8 @@ def fetch_data():
     }
 
     all_coords = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, expected_search_radius_miles=200
+        country_codes=SearchableCountries.ALL,
+        expected_search_radius_miles=200,
     )
     for lat, lng in all_coords:
         response = session.post(start_url, data=body % (lat, lng), headers=headers)
@@ -33,30 +35,63 @@ def fetch_data():
             continue
 
         for poi in data["response"]["collection"]:
-            location_name = poi["name"]
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["address1"]
-            street_address = street_address if street_address else "<MISSING>"
+            location_name = (
+                poi["name"]
+                .replace("&#xe9;", "é")
+                .replace("&#xe8;", "è")
+                .replace("&#xe1;", "á")
+                .replace("&#xdf;", "ß")
+                .replace("&#xdc;", "Ü")
+                .replace("&#xfc;", "ü")
+                .replace("&#xd6;", "Ö")
+                .replace("&#xf6;", "ö")
+                .replace("&#xe4;", "ä")
+                .replace("&#x96;", "-")
+                .replace("&#xc4;", "Ä")
+            )
+            street_address = (
+                poi["address1"]
+                .replace("&#xe9;", "é")
+                .replace("&#xe8;", "è")
+                .replace("&#xe1;", "á")
+                .replace("&#xdf;", "ß")
+                .replace("&#xdc;", "Ü")
+                .replace("&#xfc;", "ü")
+                .replace("&#xd6;", "Ö")
+                .replace("&#xf6;", "ö")
+                .replace("&#xe4;", "ä")
+                .replace("&#x96;", "-")
+                .replace("&#xc4;", "Ä")
+            )
             city = poi["city"]
-            city = city if city else "<MISSING>"
+            if city:
+                city = (
+                    city.replace("&#xe9;", "é")
+                    .replace("&#xe8;", "è")
+                    .replace("&#xe1;", "á")
+                    .replace("&#xdf;", "ß")
+                    .replace("&#xdc;", "Ü")
+                    .replace("&#xfc;", "ü")
+                    .replace("&#xd6;", "Ö")
+                    .replace("&#xf6;", "ö")
+                    .replace("&#xe4;", "ä")
+                    .replace("&#x96;", "-")
+                    .replace("&#xc4;", "Ä")
+                )
             state = poi["state"]
             if not state:
                 state = poi["province"]
-            state = state if state else "<MISSING>"
             zip_code = poi["postalcode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["country"]
-            country_code = country_code if country_code else "<MISSING>"
             store_number = poi["clientkey"]
-            store_number = store_number if store_number else "<MISSING>"
             phone = poi["phone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["dealertype"]
-            location_type = location_type if location_type else "<MISSING>"
+            if phone:
+                phone = phone.replace("...", "").strip()
+                if country_code == "TH":
+                    phone = phone.split("/")[0]
+            location_type = poi["icon"]
             latitude = poi["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
             longitude = poi["longitude"]
-            longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
             hours_dict = {}
             for key, value in poi.items():
@@ -79,7 +114,7 @@ def fetch_data():
                         hours_dict[day] = {}
                         hours_dict[day]["closes"] = value
             hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                ", ".join(hours_of_operation) if hours_of_operation else ""
             )
 
             store_url = "https://www.underarmour.com/en-us/store-locator"

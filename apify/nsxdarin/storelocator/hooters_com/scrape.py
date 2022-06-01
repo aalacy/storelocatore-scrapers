@@ -117,51 +117,51 @@ def fetch_data():
         try:
             hours = (
                 "Mon: "
-                + item["hours"]["mon"]["open"]
+                + item["hours"]["mon"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["mon"]["close"]
+                + item["hours"]["mon"]["close"].rsplit(":", 1)[0]
             )
             hours = (
                 hours
                 + "; Tue: "
-                + item["hours"]["tue"]["open"]
+                + item["hours"]["tue"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["tue"]["close"]
+                + item["hours"]["tue"]["close"].rsplit(":", 1)[0]
             )
             hours = (
                 hours
                 + "; Wed: "
-                + item["hours"]["wed"]["open"]
+                + item["hours"]["wed"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["wed"]["close"]
+                + item["hours"]["wed"]["close"].rsplit(":", 1)[0]
             )
             hours = (
                 hours
                 + "; Thu: "
-                + item["hours"]["thu"]["open"]
+                + item["hours"]["thu"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["thu"]["close"]
+                + item["hours"]["thu"]["close"].rsplit(":", 1)[0]
             )
             hours = (
                 hours
                 + "; Fri: "
-                + item["hours"]["fri"]["open"]
+                + item["hours"]["fri"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["fri"]["close"]
+                + item["hours"]["fri"]["close"].rsplit(":", 1)[0]
             )
             hours = (
                 hours
                 + "; Sat: "
-                + item["hours"]["sat"]["open"]
+                + item["hours"]["sat"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["sat"]["close"]
+                + item["hours"]["sat"]["close"].rsplit(":", 1)[0]
             )
             hours = (
                 hours
                 + "; Sun: "
-                + item["hours"]["sun"]["open"]
+                + item["hours"]["sun"]["open"].rsplit(":", 1)[0]
                 + "-"
-                + item["hours"]["sun"]["close"]
+                + item["hours"]["sun"]["close"].rsplit(":", 1)[0]
             )
         except:
             hours = "<MISSING>"

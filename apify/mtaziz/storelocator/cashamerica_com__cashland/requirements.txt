@@ -2,5 +2,4 @@
 sgrequests==0.2.9
 tenacity==7.0.0
 sglogging==0.0.4
-pgeocode==0.3.0
 sgscrape==0.2.2

@@ -6,11 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
-import os
-
-
-os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
-os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 
 session = SgRequests()
@@ -37,34 +32,45 @@ def fetch_data():
                 title = location.find("h3").text
                 address = location.find("p").text
                 address = address.split("\n")
-                address = address[0] + " " + address[1]
-                ptags = location.findAll("p")
-                hours = ptags[-1].text
-                hours = hours.replace("\n", " ")
-                hours = hours.replace("7 days a week", "Mon-Sun")
-                hours = hours.replace(
-                    "Open every home game at Sun Devil Stadium!", "<MISSING>"
-                )
-                phone = ptags[0].text
-                phone = phone.split("\n")[-1]
-                if phone.find("-") == -1:
-                    phone = "<MISSING>"
+                try:
+                    address = address[0] + " " + address[1]
+                    ptags = location.findAll("p")
+                    hours = ptags[-1].text
+                    hours = hours.replace("\n", " ")
+                    hours = hours.replace("7 days a week", "Mon-Sun")
+                    hours = hours.replace(
+                        "Open every home game at Sun Devil Stadium!", "<MISSING>"
+                    )
+                    phone = ptags[0].text
+                    phone = phone.split("\n")[-1]
+                    if phone.find("-") == -1:
+                        phone = "<MISSING>"
+                    parsed = parser.parse_address_usa(address)
+                    street1 = (
+                        parsed.street_address_1
+                        if parsed.street_address_1
+                        else "<MISSING>"
+                    )
+                    street = (
+                        (street1 + ", " + parsed.street_address_2)
+                        if parsed.street_address_2
+                        else street1
+                    )
+                    city = parsed.city if parsed.city else "<MISSING>"
+                    state = parsed.state if parsed.state else "<MISSING>"
+                    pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+                    hours = hours.replace("â€“", "-").strip()
+                    title = title.replace("â€“", "-").strip()
+                    phone = phone.split("â€¬")[0]
 
-                parsed = parser.parse_address_usa(address)
-                street1 = (
-                    parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-                )
-                street = (
-                    (street1 + ", " + parsed.street_address_2)
-                    if parsed.street_address_2
-                    else street1
-                )
-                city = parsed.city if parsed.city else "<MISSING>"
-                state = parsed.state if parsed.state else "<MISSING>"
-                pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-                hours = hours.replace("â€“", "-").strip()
-                title = title.replace("â€“", "-").strip()
-                phone = phone.split("â€¬")[0]
+                except IndexError:
+                    title = title + " " + "Coming Soon"
+                    hours = MISSING
+                    street = MISSING
+                    city = MISSING
+                    state = MISSING
+                    pcode = MISSING
+                    phone = MISSING
 
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -88,9 +94,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
