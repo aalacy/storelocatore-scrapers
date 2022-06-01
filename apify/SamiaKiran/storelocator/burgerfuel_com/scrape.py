@@ -8,7 +8,7 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 website = "burgerfuel_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 

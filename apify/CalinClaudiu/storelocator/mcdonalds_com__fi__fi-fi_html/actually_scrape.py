@@ -191,31 +191,43 @@ def transform_item_map(raw, country):
     try:
         good["state"] = raw["properties"]["subDivision"]
     except Exception:
-        good["state"] = ""
-    good["zipcode"] = raw["properties"]["postcode"]
-    good["country_code"] = raw["properties"]["addressLine4"]
+        pass
+    try:
+        good["zipcode"] = raw["properties"]["postcode"]
+    except Exception:
+        pass
+    try:
+        good["country_code"] = raw["properties"]["addressLine4"]
+    except Exception:
+        pass
     try:
         raw["properties"]["telephone"] = raw["properties"]["telephone"]
         good["phone"] = raw["properties"]["telephone"]
     except Exception:
         pass
     good["store_number"] = raw["properties"]["id"]
-    good["hours_of_operation"] = str(raw["properties"]["restauranthours"]).replace(
-        '"', " "
-    )
-    good["hours_of_operation"] = (
-        good["hours_of_operation"]
-        .replace("{", "")
-        .replace("}", "")
-        .replace("hours", "")
-        .replace("'", "")
-    )
-    good["location_type"] = (
-        str(raw["properties"]["filterType"])
-        .replace("'", "")
-        .replace("[", "")
-        .replace("]", "")
-    )
+    try:
+        good["hours_of_operation"] = str(raw["properties"]["restauranthours"]).replace(
+            '"', " "
+        )
+        good["hours_of_operation"] = (
+            good["hours_of_operation"]
+            .replace("{", "")
+            .replace("}", "")
+            .replace("hours", "")
+            .replace("'", "")
+        )
+    except Exception:
+        pass
+    try:
+        good["location_type"] = (
+            str(raw["properties"]["filterType"])
+            .replace("'", "")
+            .replace("[", "")
+            .replace("]", "")
+        )
+    except Exception:
+        pass
     good["raw_address"] = ""
     return good
 

@@ -45,6 +45,8 @@ def fetch_data():
     for country in countries:
         country_code = country.text
         log.info(f"Fetching locations from {country_code}")
+        if "Please Select" in country_code:
+            continue
         response = session.get(start_url)
         dom = etree.HTML(response.text)
         post_url = dom.xpath('//form[@id="dwfrm_storelocator"]/@action')[0]
