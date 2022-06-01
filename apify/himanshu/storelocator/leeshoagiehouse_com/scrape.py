@@ -21,7 +21,6 @@ def fetch_data():
 
     all_locations = dom.xpath('//a[@target="_blank"]/@href')[:-1]
     for page_url in all_locations:
-        print(page_url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
