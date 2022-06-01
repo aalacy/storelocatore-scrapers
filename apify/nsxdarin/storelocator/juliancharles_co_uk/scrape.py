@@ -55,8 +55,11 @@ def fetch_data():
                 city = addinfo.split(",")[3].strip()
                 zc = addinfo.split(",")[4].strip()
             elif addinfo.count(",") == 3:
-                add = addinfo.split(",")[1].strip()
-                city = addinfo.split(",")[2].strip()
+                add = addinfo.split(",")[0].strip()
+                city = addinfo.split(",")[1].strip()
+                if "Julian Charles c" in add:
+                    add = addinfo.split(",")[1].strip()
+                    city = addinfo.split(",")[2].strip()
                 zc = addinfo.split(",")[3].strip()
             else:
                 add = addinfo.split(",")[0].strip()
