@@ -63,17 +63,21 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     data = json.loads(
-        soup.find("script", id="popmenu-apollo-state")
-        .string.replace("window.POPMENU_APOLLO_STATE = ", "")
-        .replace("};", "}")
-        .replace('" + "', "")
-        .strip()
+        re.sub(
+            r"window\.POPMENU_SERVER_SIDE_MEMO.*",
+            "",
+            soup.find("script", id="popmenu-apollo-state")
+            .string.replace("window.POPMENU_APOLLO_STATE = ", "")
+            .replace("};", "}")
+            .replace('" + "', ""),
+        ).strip()
     )
     for key, value in data.items():
         if key.startswith("RestaurantLocation:"):
             if (
                 "COMING SOON" in value["name"]
                 or "Coming Soon!" in value["customLocationContent"]
+                or value["isLocationClosed"]
             ):
                 continue
             if "Acworth" in value["name"]:
