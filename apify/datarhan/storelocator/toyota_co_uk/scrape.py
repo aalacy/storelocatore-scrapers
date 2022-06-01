@@ -10,7 +10,7 @@ def fetch_data():
 
     start_urls = [
         "https://www.toyota.ie/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.it/api/dealer/drive/9.182142/45.49352?count=500&extraCountries=&isCurrentLocation=false",
+        "https://www.toyota.it/api/dealer/drive/9.182142/45.49352?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.lv/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ru/api/dealer/drive/37.4121287410622/55.9698601178023?count=2000&extraCountries=by&isCurrentLocation=false",
         "https://www.toyota.ru/api/dealer/drive/37.61778/55.75583?count=2000&extraCountries=by&isCurrentLocation=false",
@@ -49,6 +49,8 @@ def fetch_data():
             if zip_code and "," in zip_code:
                 zip_code = ""
             if zip_code and poi["country"] == "ie":
+                zip_code = ""
+            if zip_code and len(zip_code.strip()) < 2:
                 zip_code = ""
             phone = poi["phone"]
             if phone:
