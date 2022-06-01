@@ -23,7 +23,6 @@ def fetch_data(sgw: SgWriter):
         url = "https://inventory.landrover.ca/contact/?postcode=M4C+1A1&postcode-area=CA&distance=20000"
         with SgRequests(
             proxy_country="ca",
-            proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
         ) as http:
             r = http.get(url, headers=headers_landrover_ca)
             pgtext = r.text
