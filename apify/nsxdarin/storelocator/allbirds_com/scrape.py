@@ -14,7 +14,10 @@ headers = {
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://stores.allbirds.com/location/paris-le-bon-marche",
+        "https://stores.allbirds.com/location/paris-galeries-lafayette-haussmann",
+    ]
     url = "https://stores.allbirds.com/"
     r = session.get(url, headers=headers)
     website = "allbirds.com"
