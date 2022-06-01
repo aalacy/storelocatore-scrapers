@@ -30,19 +30,16 @@ def get_data(url, sgw: SgWriter):
     j = r.json()
 
     page_url = url.replace(".json", ".html")
-    location_name = j.get("name") or SgRecord.MISSING
-
-    street_address = (
-        f"{j.get('address1')} {j.get('address2') or ''}".strip() or SgRecord.MISSING
-    )
-    city = j.get("city") or SgRecord.MISSING
-    state = j.get("state") or SgRecord.MISSING
-    postal = j.get("postalCode") or SgRecord.MISSING
-    country_code = j.get("country") or SgRecord.MISSING
-    store_number = j.get("corporateCode") or SgRecord.MISSING
-    phone = j.get("phone") or SgRecord.MISSING
-    latitude = j.get("latitude") or SgRecord.MISSING
-    longitude = j.get("longitude") or SgRecord.MISSING
+    location_name = j.get("name")
+    street_address = " ".join(f"{j.get('address1')} {j.get('address2') or ''}".split())
+    city = j.get("city")
+    state = j.get("state")
+    postal = j.get("postalCode")
+    country_code = j.get("country")
+    store_number = j.get("corporateCode")
+    phone = j.get("phone")
+    latitude = j.get("latitude")
+    longitude = j.get("longitude")
     days = j.get("hours", {}).get("days") or []
 
     _tmp = []
@@ -50,15 +47,8 @@ def get_data(url, sgw: SgWriter):
         day = d.get("day")[:3].capitalize()
         try:
             interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            end = str(interval.get("end"))
-
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
+            start = str(interval.get("start")).zfill(4)
+            end = str(interval.get("end")).zfill(4)
             line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
         except IndexError:
             line = f"{day}  Closed"
@@ -82,7 +72,6 @@ def get_data(url, sgw: SgWriter):
         country_code=country_code,
         store_number=store_number,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,

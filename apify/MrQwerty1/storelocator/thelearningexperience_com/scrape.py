@@ -48,15 +48,25 @@ def get_address(line):
 
 
 def get_urls():
+    urls = []
     r = session.get("https://thelearningexperience.com/search-centers/?per_page=350")
     tree = html.fromstring(r.text)
+    divs = tree.xpath("//div[@class='col-24 col-lg-20 wrapper']")
+    for d in divs:
+        text = "".join(d.xpath(".//p[@class='badge-yellow']/text()"))
+        if "Opening Soon" in text:
+            continue
+        urls.append("".join(d.xpath(".//h2/a/@href")))
 
-    return tree.xpath("//div[@class='col-24 col-lg-20 wrapper']//h2/a/@href")
+    return urls
 
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
+
+    if tree.xpath("//p[contains(text(), 'Coming soon!')]"):
+        return
 
     location_name = "".join(
         tree.xpath("//div[@id='center-details-left']/h2/text()")
@@ -83,6 +93,8 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(h.strip())
 
     hours_of_operation = " ".join(_tmp)
+    if "We " in hours_of_operation:
+        hours_of_operation = hours_of_operation.split("We ")[0].strip()
 
     row = SgRecord(
         page_url=page_url,

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -66,7 +66,7 @@ def fetch_data():
 
                         log.info(page_url)
                         store_req = session.get(page_url)
-                        if len(store_req.text) > 0:
+                        if not isinstance(store_req, SgRequestError) > 0:
                             store_sel = lxml.html.fromstring(store_req.text)
 
                             location_name = title

@@ -28,14 +28,18 @@ def fetch_data(sgw: SgWriter):
         if "OPENING" in item.text.upper():
             continue
         location_name = item.b.text.strip()
-        street_address = item.a.text.split(",")[1].strip()[2:]
+        street_address = item.a.text.split(",")[1].strip()[2:].replace("Canada", "")
         city = item.b.text.split(",")[0].strip().split("-")[0]
-        state = item.b.text.split(",")[1].strip()
+        state = item.b.text.split(",")[1].replace("Canada", "").strip()
         zip_code = item.a.text.split(",")[-2].split()[-1]
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = item.a.text.split(",")[-1]
+
+        if zip_code == "6B6":
+            zip_code = "R3T 6B6"
+            country_code = "CA"
 
         link = item.a["href"]
         req = session.get(link, headers=headers)
@@ -59,6 +63,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation.encode("ascii", "replace").decode().replace("?", "-")
         )
         hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+
+        if "COMING" in hours_of_operation.upper():
+            continue
 
         all_scripts = base.find_all("script")
         for script in all_scripts:

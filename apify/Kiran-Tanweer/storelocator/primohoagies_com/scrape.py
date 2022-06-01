@@ -1,96 +1,83 @@
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from bs4 import BeautifulSoup
-import os
 
-os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
-os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 session = SgRequests()
 website = "primohoagies_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-
-DOMAIN = "https://www.primohoagies.com/"
+DOMAIN = "https://primohoagies.com"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        search_url = "https://www.primohoagies.com/json/locations.json"
-        stores_req = session.get(search_url, headers=headers).json()
-        for store in stores_req:
-            storeid = store["ID"]
-            lat = store["lat"]
-            lng = store["lng"]
-            address = store["address"]
-            address2 = store["address2"]
-            street = address + " " + address2
-            street = street.strip()
-            city = store["city"]
-            state = store["state"]
-            pcode = store["postal"]
-            phone = store["phone"]
-            title = store["name"]
-            hours = store["hours"]
-            city2 = city
-            if city2.strip().find(" ") != -1:
-                city2 = city2.replace(" ", "-")
-            link = "https://www.primohoagies.com/" + city2 + "-" + state
-            hours = hours.replace("\n", " ")
-            if hours.strip() == "":
-                req = session.get(link, headers=headers)
-                if req.status_code == 200:
-                    soup = BeautifulSoup(req.text, "html.parser")
-                    hours = soup.find("div", {"class": "hours"})
-                    if hours is None:
-                        hours = "Coming Soon"
-                    else:
-                        hours = hours.text
-                        hours = hours.replace("day", "day ")
-                        hours = hours.replace("pm", "pm ")
-                        hours = hours.strip()
-                else:
-                    hours = "<MISSING>"
-
+        url = "https://primohoagies.com/wp-admin/admin-ajax.php?action=asl_load_stores&load_all=1&layout=1"
+        loclist = session.get(url, headers=headers).json()
+        for loc in loclist:
+            page_url = loc["website"]
+            log.info(page_url)
+            location_name = loc["title"]
+            store_number = loc["id"]
+            phone = loc["phone"]
+            street_address = loc["street"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["postal_code"]
+            country_code = "US"
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            hours_of_operation = loc["open_hours"]
+            r = session.get(page_url, headers=headers)
+            if r.status_code != 200:
+                hours_of_operation = MISSING
+            else:
+                if "This Store is currently inactive" in r.text:
+                    continue
+                soup = BeautifulSoup(r.text, "html.parser")
+                hours_of_operation = (
+                    soup.find("div", {"class": "hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("(Memorial Day) Holiday Hours", "")
+                )
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=link,
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode,
-                country_code="US",
-                store_number=storeid.strip(),
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
                 phone=phone,
                 location_type=MISSING,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours.strip(),
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
-    )
-    with SgWriter(deduper) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

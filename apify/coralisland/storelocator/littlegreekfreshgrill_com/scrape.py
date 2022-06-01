@@ -1,100 +1,83 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
 import json
-import usaddress
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-base_url = 'https://littlegreekfreshgrill.com'
+def fetch_data(sgw: SgWriter):
 
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.replace('\u2013', '-').strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '') + ' '
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
+    locator_domain = "https://littlegreekfreshgrill.com/"
+    api_url = "https://littlegreekfreshgrill.com/locations/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//h3[@class="menu-item-title"]')
+    for d in div:
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+        page_url = "".join(d.xpath(".//a/@href"))
+        street_address = (
+            "".join(d.xpath(".//following-sibling::div[1]//text()")) or "<MISSING>"
+        )
+        ad = (
+            "".join(d.xpath(".//following-sibling::div[2]//text()"))
+            .replace("FL, FL", "FL")
+            .strip()
+            or "<MISSING>"
+        )
+        if ad == ",":
+            ad = "<MISSING>"
+        state = "<MISSING>"
+        postal = "<MISSING>"
+        country_code = "US"
+        city = "<MISSING>"
+        if ad != "<MISSING>":
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
 
-def fetch_data():
-    output_list = []
-    url = "https://littlegreekfreshgrill.com/locations/"
-    session = requests.Session()
-    source = session.get(url).text    
-    response = etree.HTML(source)
-    store_list = response.xpath('//h3[@class="menu-item-title"]//a/@href')
-    for store_link in store_list:
-        store = etree.HTML(session.get(store_link).text)
-        output = []
-        output.append(base_url) # url
-        address = eliminate_space(store.xpath('.//div[@id="store_address_info"]//text()'))
-        output.append(address[0]) #location name
-        address = parse_address(', '.join(address[1:]))
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode  
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        phone = eliminate_space(store.xpath('.//div[@id="store_contact_info"]//a/text()'))[0]
-        output.append(get_value(phone)) #phone
-        output.append("Little Greek Fresh Grill") #location type
-        output.append("<INACCESSIBLE>") #latitude
-        output.append("<INACCESSIBLE>") #longitude
-        store_hours = eliminate_space(store.xpath('.//div[@id="store_hours_of_operation"]//text()'))
-        output.append(get_value(store_hours)) #opening hours
-        output_list.append(output)
-    return output_list
+        phone = "".join(d.xpath(".//following-sibling::div[3]//text()")) or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        js_block = "".join(tree.xpath('//script[contains(text(), "address")]/text()'))
+        js = json.loads(js_block)
+        a = js.get("address")
+        if state == "<MISSING>":
+            state = a.get("addressRegion")
+        location_name = "".join(tree.xpath("//title//text()")) or "<MISSING>"
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@id="store_hours_of_operation"]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
 
-scrape()
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

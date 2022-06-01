@@ -36,19 +36,25 @@ def fetch_data():
         if not loc_type:
             continue
         url = loc.xpath(".//a/@href")[0]
-        if "concessionari-suzuk" in url:
+        if "concessionari-suzuk" in url and "sedi" not in url:
+            url = url.replace("http:", "https:")
+            if "https://" not in url:
+                url = "https://" + url
             response = session.get(url + "/sedi/")
             dom = etree.HTML(response.text)
             all_poi = dom.xpath('//a[@class="card-dealership__link"]/@href')
             for page_url in all_poi:
-                loc_response = session.get(page_url)
+                loc_response = session.get(page_url, headers=hdr)
+                if loc_response.status_code != 200:
+                    continue
                 loc_dom = etree.HTML(loc_response.text)
 
                 location_name = loc_dom.xpath("//h1/text()")[0].strip()
                 street_address = loc_dom.xpath(
                     '//span[@itemprop="streetAddress"]/text()'
                 )[0]
-                city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
+                city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
+                city = city[0] if city else ""
                 zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
                 zip_code = zip_code[0].strip() if zip_code else ""
                 phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
@@ -67,7 +73,18 @@ def fetch_data():
                     .split("Chiusura")[0]
                     .strip()
                 )
-                hoo = " ".join(hoo.split())
+                hoo = (
+                    " ".join(hoo.split())
+                    .split(", Chiuso:")[0]
+                    .split("Chiusura:")[0]
+                    .split(", Chiuso per")[0]
+                    .split(", CHIUSURA")[0]
+                    .split(", Festività")[0]
+                    .split("Assistenza")[0]
+                    .split("Chiuso:")[0]
+                    .split("Domenica: Chiuso")[0]
+                    + " Domenica: Chiuso"
+                )
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -123,6 +140,19 @@ def fetch_data():
                 )
             else:
                 hoo = ""
+            if hoo:
+                hoo = hoo = (
+                    " ".join(hoo.split())
+                    .split(", Chiuso:")[0]
+                    .split("Chiusura:")[0]
+                    .split(", Chiuso per")[0]
+                    .split(", CHIUSURA")[0]
+                    .split(", Festività")[0]
+                    .split("Assistenza")[0]
+                    .split("Chiuso:")[0]
+                    .split("Domenica: Chiuso")[0]
+                    + " Domenica: Chiuso"
+                )
 
             latitude = re.findall(r'lat":(.+?),', loc_response.text)[0]
             longitude = re.findall(r'lng":(.+?)\}', loc_response.text)[0]

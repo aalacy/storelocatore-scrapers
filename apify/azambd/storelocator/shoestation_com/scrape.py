@@ -3,8 +3,10 @@ import ssl
 import time
 import json
 
-from sgselenium.sgselenium import SgChrome
-from sgrequests import SgRequests
+from webdriver_manager.chrome import ChromeDriverManager  # noqa
+from selenium import webdriver  # noqa
+import undetected_chromedriver as uc  # noqa
+
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -18,16 +20,21 @@ website = "https://www.shoestation.com"
 page_url = f"{website}/storelocator/"
 MISSING = SgRecord.MISSING
 
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
+
+def get_driver(url, driver=None):
+    log.info("Driver Initiation")
+    options = webdriver.ChromeOptions()
+    options.add_argument("start-maximized")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
+
+    driver.get(url)
+
+    return driver
 
 
 def jsonjson(response):
@@ -46,9 +53,7 @@ def stringify_children(nodes):
 
 
 def fetch_stores():
-    with SgChrome(user_agent=user_agent) as driver:
-        driver.get(page_url)
-
+    with get_driver(page_url) as driver:
         time.sleep(30)
         body = html.fromstring(driver.page_source, "lxml")
         locations = jsonjson(driver.page_source)
@@ -88,8 +93,13 @@ def fetch_data():
         state = store[0].strip()
         store = store[1].split("Distance:")
         street_address = store[0].strip()
-        store = store[1].split("Monday")
-        hours_of_operation = ("Monday" + store[1]).strip()
+        try:
+            store = store[1].split("Monday")
+            hours_of_operation = ("Monday" + store[1]).strip()
+        except Exception as e:
+            hours_of_operation = MISSING
+            log.info(f"HOO MISSING: {e}")
+
         raw_address = f"{street_address} {city}, {state} {zip_postal}"
 
         yield SgRecord(

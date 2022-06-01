@@ -36,6 +36,7 @@ def _d(sp1, page_url):
         hours.append(f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}")
     if sp1.select_one("span.Phone-display"):
         phone = sp1.select_one("span.Phone-display").text.strip()
+
     return SgRecord(
         page_url=page_url,
         location_name=sp1.h1.text.strip(),
@@ -85,7 +86,20 @@ def fetch_data():
                     else:
                         yield _d(sp1, page_url)
             else:
-                yield _d(sp0, state_url)
+                teasers = sp0.select(
+                    "div.Main-content div.DirectoryPage div.Teaser-card"
+                )
+                logger.info(f"[{state['href']}] {len(teasers)} teasers")
+                if teasers:
+                    for teaser in teasers:
+                        url1 = urljoin(
+                            state_url, teaser.select_one("a.Teaser-cta")["href"]
+                        )
+                        logger.info(url1)
+                        sp3 = bs(session.get(url, headers=_headers).text, "lxml")
+                        yield _d(sp3, url)
+                else:
+                    yield _d(sp0, state_url)
 
 
 if __name__ == "__main__":

@@ -60,12 +60,6 @@ def fetch_data(sgw: SgWriter):
         if "Soon" in location_name:
             continue
 
-        page_url = "".join(d.xpath(".//a[contains(text(), 'Information')]/@href"))
-        if page_url:
-            store_number = get_id(page_url)
-        else:
-            store_number = SgRecord.MISSING
-
         line = d.xpath(".//a/h4/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = ", ".join(line[:-1])
@@ -75,6 +69,14 @@ def fetch_data(sgw: SgWriter):
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
+
+        page_url = "".join(d.xpath(".//a[contains(text(), 'Information')]/@href"))
+        if not page_url:
+            page_url = f"https://hotheadburritos.com/{city}-{state}".replace(
+                " ", "-"
+            ).lower()
+
+        store_number = get_id(page_url)
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
         try:
             latitude = geo[store_number]["lat"]

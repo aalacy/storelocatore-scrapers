@@ -16,11 +16,14 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    if r.url == "https://www.pollyspies.com/locations/":
+        return
 
+    tree = html.fromstring(r.text)
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = tree.xpath("//h2[text()='Address']/following-sibling::a/text()")
     line = list(filter(None, [l.strip() for l in line]))
+
     street_address = ", ".join(line[:-1])
     line = line[-1]
     city = line.split(",")[0].strip()

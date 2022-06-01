@@ -35,12 +35,11 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath("//div[@data-pub-id and ./h2]")
+    store_list = search_sel.xpath("//div[@data-pub-id and ./h2]")[1:]
 
     for store in store_list:
 
         page_url = "".join(store.xpath("p/a/@href")).strip()
-
         locator_domain = website
 
         location_name = "".join(store.xpath("./h2/text()")).strip()
@@ -58,6 +57,24 @@ def fetch_data():
         phone = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+
+        if "ikea.com" not in page_url:
+            log.info(page_url)
+            store_req = session.get(page_url)
+            try:
+                latitude = (
+                    str(store_req.url).split("=ll.")[1].strip().split("%2C")[0].strip()
+                )
+            except:
+                pass
+
+            try:
+                longitude = (
+                    str(store_req.url).split("=ll.")[1].strip().split("%2C")[1].strip()
+                )
+            except:
+                pass
+
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"

@@ -10,55 +10,34 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    session = SgRequests()
-
-    base_link = "https://www.superthrifty.com/locations/"
+    base_link = "https://www.superthrifty.com/wp-admin/admin-ajax.php?action=store_search&lat=49.3530784&lng=-97.3899384&max_results=50&search_radius=2000"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    session = SgRequests(verify_ssl=False)
+    stores = session.get(base_link, headers=headers).json()
+
     locator_domain = "https://www.superthrifty.com"
 
-    response = session.get(base_link, headers=headers)
-    base = BeautifulSoup(response.text, "lxml")
-
-    items = base.find(string="Locations").find_next("ul").find_all("li")
-    for i in items:
-        link = i.a["href"]
-        response = session.get(link, headers=headers)
-        item = BeautifulSoup(response.text, "lxml")
-
-        location_name = item.h1.text.strip()
-        raw_address = list(
-            item.find(string="Address").find_previous("div").stripped_strings
-        )[1:]
-        street_address = raw_address[0]
-        city = raw_address[1].split(",")[0]
-        state = raw_address[1].split(",")[1].strip()
-        zip_code = raw_address[2]
-        country_code = "CA"
+    for store in stores:
+        location_name = store["store"].replace("&#8217;", "'")
+        street_address = (store["address"] + " " + store["address2"]).strip()
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["zip"]
+        if "Otineka" in street_address:
+            zip_code = "R9A 1P8"
+        country_code = store["country"]
+        store_number = store["id"]
+        phone = store["phone"]
         location_type = ""
-        phone = item.find(string="Phone:").find_next().text.strip()
-
-        try:
-            hours_of_operation = (
-                " ".join(
-                    list(
-                        item.find(string="Store Hours:")
-                        .find_next("table")
-                        .stripped_strings
-                    )
-                )
-                .split("Holidays")[0]
-                .strip()
-            )
-        except:
-            hours_of_operation = ""
-        store_number = (
-            item.find(class_="content").find(class_="container").div["id"].split("-")[1]
-        )
-        latitude = item.find(id="gmap-1")["data-x"]
-        longitude = item.find(id="gmap-1")["data-y"]
+        latitude = store["lat"]
+        longitude = store["lng"]
+        hours_of_operation = BeautifulSoup(store["hours"], "lxml").get_text(" ")
+        link = locator_domain + store["url"]
+        if not store["url"]:
+            link = "https://www.superthrifty.com/locations/"
 
         sgw.write_row(
             SgRecord(
@@ -80,5 +59,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)
