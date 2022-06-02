@@ -1,3 +1,4 @@
+import re
 import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -53,8 +54,9 @@ def fetch_data(sgw: SgWriter):
             "".join(tree.xpath('//a[contains(@href, "tel")]/text()')).strip()
             or "<MISSING>"
         )
-        if phone.find(">") != -1:
-            phone = phone.split(">")[1].split("<")[0].strip()
+
+        phone = re.search(r"(\d{3}-\d{3}-\d{4})", phone).group(1)
+
         hours_of_operation = (
             " ".join(
                 tree.xpath(
