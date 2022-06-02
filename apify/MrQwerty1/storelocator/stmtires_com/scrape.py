@@ -8,10 +8,10 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 def fetch_data(sgw: SgWriter):
     api = "https://locations.stmtires.com/search"
 
-    for i in range(0, 5000, 10):
+    for cnt in range(0, 5000, 10):
         params = {
             "l": "en",
-            "offset": str(i),
+            "offset": str(cnt),
         }
         r = session.get(api, headers=headers, params=params)
         js = r.json()["response"]["entities"]
