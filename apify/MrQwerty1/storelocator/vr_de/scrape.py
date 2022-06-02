@@ -1,3 +1,4 @@
+import slugify
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -19,13 +20,12 @@ def fetch_data(sgw: SgWriter):
             city = a.get("city")
             postal = a.get("zip_code")
             country_code = "DE"
-            store_number = j.get("id")
-            location_name = j.get("name")
+            store_number = j.get("id") or ""
+            location_name = j.get("name") or ""
             location_type = j["institute"]["bank_type"]
-            try:
-                page_url = j["links"]["detail_page_url"]
-            except KeyError:
-                page_url = SgRecord.MISSING
+            slug = slugify.slugify(location_name)
+            _id = store_number.replace("bank-", "").strip()
+            page_url = f"https://www.vr.de/standorte/B/Ba-Bm/{slug}-{_id}.html"
             phone = j["contact"]["i18n_phone_number"]
             latitude = a.get("latitude")
             longitude = a.get("longitude")

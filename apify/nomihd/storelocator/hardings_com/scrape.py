@@ -75,6 +75,10 @@ def fetch_data():
                 .strip()
                 .split("Pharmacy")[0]
                 .strip()
+                .split("Pizza")[0]
+                .strip()
+                .replace("\n", ";")
+                .strip()
             )
 
             yield SgRecord(
