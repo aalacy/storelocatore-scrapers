@@ -55,7 +55,9 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
 
-        phone = re.search(r"(\d{3}-\d{3}-\d{4})", phone).group(1)
+        search = re.search(r"(\d{3}-\d{3}-\d{4})", phone)
+        if search:
+            phone = search.group(1)
 
         hours_of_operation = (
             " ".join(
