@@ -8,7 +8,7 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 website = "burgerfuel_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
@@ -42,7 +42,7 @@ def fetch_data():
             coords = temp["coordinates"].replace("\xa0", "").split(",")
             longitude = coords[1]
             latitude = coords[0]
-            phone = temp["phone"].split("-")[0]
+            phone = temp["phone"].split("-")[0].split("\n")[0]
             hours_of_operation = loc.split("['openingHours'] = '")[1].split("';")[0]
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
