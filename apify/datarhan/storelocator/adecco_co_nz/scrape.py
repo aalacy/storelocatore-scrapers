@@ -44,8 +44,8 @@ def fetch_data():
         geo = loc_dom.xpath('//iframe[contains(@src, "maps")]/@src')
         if geo:
             geo = geo[0].split("!2d")[-1].split("!2m")[0].split("!3d")
-            latitude = geo[1]
-            longitude = geo[0]
+            latitude = geo[1].split("!")[0]
+            longitude = geo[0].split("!")[0]
         hoo = loc_dom.xpath('//div[@class="branch-locator__opening"]//li/text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 

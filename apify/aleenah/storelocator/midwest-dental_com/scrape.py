@@ -41,7 +41,10 @@ def fetch_data():
         if "permanently closed" in r.text:
             continue
         soup = BeautifulSoup(r.text, "html.parser")
-        phone = soup.select_one("a[href*=tel]").text
+        try:
+            phone = soup.select_one("a[href*=tel]").text
+        except:
+            phone = loc["phone"]
         try:
             hours_of_operation = soup.find("div", {"id": "hours"}).findAll("div")[2:]
             hours_of_operation = " ".join(
