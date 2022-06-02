@@ -31,7 +31,6 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
 
-        _tmp = []
         source = j.get("operatingHours") or ""
         if "Monday" not in source:
             source = j.get("description") or "<html>"
