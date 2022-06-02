@@ -1,65 +1,39 @@
-import csv
 import json
+from sglogging import sglog
 from bs4 import BeautifulSoup
-from tenacity import retry, stop_after_attempt
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("hollisterco_com")
+session = SgRequests()
+website = "hollisterco_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.hollisterco.com"
+MISSING = SgRecord.MISSING
 
 
-@retry(stop=stop_after_attempt(3))
 def fetch_locations(base_url, session):
     location_url = f"{base_url}/shop/ViewAllStoresDisplayView?storeId=11205&catalogId=10201&langId=-1"
 
-    session.get(base_url, headers=headers, timeout=20)
+    session.get(base_url, headers=headers)
     res = session.get(location_url, headers=headers)
     res.raise_for_status()
 
     soup = BeautifulSoup(res.text, "lxml")
-    links = soup.find_all("li", {"class": "view-all-stores__store"})
-
+    links = soup.find("main", {"class": "all-stores"}).findAll("li")
     return [link.a["href"] for link in links]
 
 
-@retry(stop=stop_after_attempt(3))
 def fetch_location(url, session):
 
-    res = session.get(url, headers=headers, timeout=20)
+    res = session.get(url, headers=headers)
     if res.status_code == 404:
         return None
 
@@ -83,52 +57,59 @@ def extract_data(soup):
 
 
 def fetch_data():
-
-    base_url = "https://www.hollisterco.com"
     requests = SgRequests()
-    links = fetch_locations(base_url, requests)
-
+    links = fetch_locations(DOMAIN, requests)
     for link in links:
-        page_url = f"{base_url}{link}"
-        logger.info(page_url)
+        page_url = f"{DOMAIN}{link}"
+        log.info(page_url)
         data = fetch_location(page_url, requests)
         if not data:
             continue
-
         location_name = data["name"]
         street_address = data["addressLine"][0]
         city = data["city"]
         state = data["stateOrProvinceName"]
-        zipp = data["postalCode"]
+        zip_postal = data["postalCode"]
+        if zip_postal == "-":
+            zip_postal = MISSING
         country_code = data["country"]
         store_number = data["storeNumber"]
         phone = data["telephone"]
-        location_type = "<MISSING>"
         latitude = data["latitude"]
         longitude = data["longitude"]
         hours_of_operation = "<INACCESSIBLE>"
-
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone)
-        store.append(location_type)
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(page_url)
-        yield store
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

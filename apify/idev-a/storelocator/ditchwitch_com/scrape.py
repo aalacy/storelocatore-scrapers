@@ -1,7 +1,8 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("ditchwitch")
@@ -10,96 +11,104 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-locator_domain = "https://www.ditchwitch.com"
+locator_domain = "http://ditchwitch.com/"
 base_url = "https://www.ditchwitch.com/find-a-dealer"
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-search = static_zipcode_list(
-    country_code=SearchableCountries.USA,
-    radius=3,
-)
+json_url = "https://hosted.where2getit.com/ditchwitch/rest/locatorsearch?like=0.22822414982857775&lang=en_US"
+
+coords = [
+    (40.75368539999999, -73.9991637),
+    (3.216264063853835, 23.092478837961707),
+    (8.873924062928575, -67.8303725109154),
+    (-25.180938219545883, -62.55693492432918),
+    (26.57294931161124, 5.997752650887076),
+    (58.8956478624396, 47.8336901788746),
+    (62.827134824567196, 116.03681483952685),
+    (31.488776327650406, 104.43525246284652),
+    (-19.161622877728977, 129.57197119797826),
+]
+
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    total = 0
-    for zip in search:
-        logger.info(("Pulling zip Code %s..." % zip))
-        url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zip}"
-        res = session.get(url, headers=headers, timeout=15)
-        if res.status_code != 200:
-            continue
-        locations = res.json()
-        if "dealers" in locations:
-            total += len(locations["dealers"])
-            for loc in locations["dealers"]:
-                try:
-                    mon = "Mon " + loc["mon_open"] + "-" + loc["mon_close"]
-                    tue = "; Tue " + loc["tue_open"] + "-" + loc["tue_close"]
-                    wed = "; Wed " + loc["wed_open"] + "-" + loc["wed_close"]
-                    thu = "; Thu " + loc["thur_open"] + "-" + loc["thur_close"]
-                    fri = "; Fri " + loc["fri_open"] + "-" + loc["fri_close"]
-                    sat = "; Sat " + loc["sat_open"] + "-" + loc["sat_close"]
-                    sun = "; Sun " + loc["sun_open"] + "-" + loc["sun_close"]
-                    hours_of_operation = mon + tue + wed + thu + fri + sat + sun
-                except:
-                    hours_of_operation = "<MISSING>"
+    with SgRequests() as session:
+        for coord in coords:
+            logger.info(coord)
+            payload = {
+                "request": {
+                    "appkey": "FA8D823E-C7EC-11EC-973C-ED5D58203F82",
+                    "formdata": {
+                        "geoip": "false",
+                        "dataview": "store_default",
+                        "limit": 10000,
+                        "atleast": 1,
+                        "geolocs": {
+                            "geoloc": [
+                                {
+                                    "addressline": "",
+                                    "country": "",
+                                    "latitude": coord[0],
+                                    "longitude": coord[1],
+                                    "state": "",
+                                    "province": "",
+                                    "city": "",
+                                    "address1": "",
+                                    "postalcode": "",
+                                }
+                            ]
+                        },
+                        "searchradius": "5000",
+                        "radiusuom": "",
+                        "where": {},
+                        "false": "0",
+                    },
+                }
+            }
+            locations = session.post(json_url, headers=headers, json=payload).json()[
+                "response"
+            ]["collection"]
+            for _ in locations:
+                street_address = _["address1"]
+                if _.get("address2"):
+                    street_address += " " + _["address2"]
 
-                loc["hours_of_operation"] = hours_of_operation
-                loc["state"] = loc["state"] or "<MISSING>"
-                loc["street_address"] = loc["address1"] + " " + loc.get("address2", "")
-                yield loc
+                hours = []
+                for day in days:
+                    day = day.lower()
+                    if _.get(f"{day}_open") and _.get(f"{day}_open") != "On Call":
+                        if _.get(f"{day}_open") == "Closed":
+                            times = "closed"
+                        else:
+                            times = _.get(f"{day}_open") + " - " + _.get(f"{day}_close")
+                        hours.append(f"{day}: {times}")
 
-            logger.info(f"found: {len(locations['dealers'])} | total: {total}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.ConstantField(base_url),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        store_number=sp.MappingField(
-            mapping=["clientkey"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street_address"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["postalcode"],
-        ),
-        country_code=sp.ConstantField("US"),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+                state = _["state"] if _.get("state") else _.get("province")
+                if state:
+                    state = state.replace(",", " ").strip()
+                yield SgRecord(
+                    page_url=base_url,
+                    store_number=_["id"],
+                    location_name=_["name"],
+                    locator_domain=locator_domain,
+                    street_address=street_address,
+                    city=_["city"].split(",")[0].strip() if _["city"] else "",
+                    state=state,
+                    zip_postal=_.get("postalcode"),
+                    country_code=_["country"],
+                    phone=_.get("phone").split("X")[0] if _.get("phone") else "",
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+        )
+    ) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)

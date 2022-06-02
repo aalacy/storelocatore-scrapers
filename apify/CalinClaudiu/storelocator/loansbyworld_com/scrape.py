@@ -1,99 +1,120 @@
 from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
+from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from bs4 import BeautifulSoup as b4
 from sglogging import sglog
-from sgzip import DynamicGeoSearch, SearchableCountries
-import json
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+
+
+def parse_hrs(soup):
+    soup = b4(soup, "lxml")
+    days = soup.find_all("span", {"class": "day"})
+    hors = soup.find_all("span", {"class": "hours"})
+    hours = ", ".join(
+        [
+            str(days[i].text.strip() + ": " + hors[i].text.strip())
+            for i in range(len(days))
+        ]
+    )
+    if "unday" not in hours.lower():
+        spans = soup.find_all("span")
+        for i in range(len(spans)):
+            if "unday" in spans[i].text.lower():
+                try:
+                    hours = (
+                        hours
+                        + ", "
+                        + spans[i].text.strip()
+                        + ": "
+                        + spans[i + 1].text.strip()
+                    )
+                except Exception as eh:
+                    logzilla.error("eh", exc_info=eh)
+
+    return hours
 
 
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = (
-        "https://www.loansbyworld.com/wp-admin/admin-ajax.php?action=store_search&lat="
-    )
-    url2 = "&max_results=100&search_radius=100"
-    # 33.5114334&lng=-112.0685027
-    headers = {
-        "Host": "www.loansbyworld.com",
-        "Connection": "keep-alive",
-        "Accept": "*/*",
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Dest": "empty",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9,ro;q=0.8",
-    }
-    session = SgRequests()
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
-        max_search_results=100,
-    )
+    def search_api(session, long):
+        def actual_req(session, long):
+            url = "https://www.loansbyworld.com/api/yext/geosearch"
+            headers = {}
 
-    search.initialize()
+            headers["Content-Type"] = "application/json"
+            data = str('{"location":"' + f"{long}" + '","radius":1000}')
 
-    coord = search.next()
-    identities = set()
-    while coord:
-        lat, long = coord  # extract lat/long from the coord tuple
-        son = session.get(
-            url + str(lat) + "&lng=" + str(long) + url2, headers=headers
-        ).text
-        ter = 0
-        while "403 Forbidden" in son:
-            ter += 1
-            if ter > 500:
-                raise Exception(
-                    'Tried to grab this 500 times:\n\n{url+str(lat)+"&lng="+str(long)+url2}\n\nReason: 403 Forbidden\n\n No longer retrying :('
-                )
-                # it usually works after about 30 tries..
-            logzilla.info(
-                f'Can not grab following link:\n\n{url+str(lat)+"&lng="+str(long)+url2}\n\nReason: 403 Forbidden\n\nRetrying...'
+            resp = session.post(url, headers=headers, data=data)
+            try:
+                resp = resp.json()
+            except Exception as e:
+                logzilla.error(f"{str(url)} \n {str(e)}", exc_info=e)
+                return []
+            return resp
+
+        try:
+            return actual_req(session, long)["data"]
+        except Exception as smh:
+            logzilla.error("smh", exc_info=smh)
+            logzilla.error(f"smhlong {str(long)}")
+            long = "0" + str(long)
+            try:
+                return actual_req(session, long)["data"]
+            except Exception as ff:
+                logzilla.error("FF", exc_info=ff)
+                return []
+
+    def fetch_sub(session, k):
+        headers = {}
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+
+        #%5Bstate%5D/%5Bcity%5D/%5BpostalCode%5D/%5BstoreId% # noqa
+        # https://www.loansbyworld.com/locations/alabama/alabaster/35007/1521 # noqa
+        url = (
+            str(
+                f"https://www.loansbyworld.com/locations/{k['state']['id']}/{k['address']['city']}/{k['address']['postalCode']}/{k['id']}"
             )
-            son = session.get(
-                url + str(lat) + "&lng=" + str(long) + url2, headers=headers
-            ).text
-        if len(son) > 5:
-            try:
-                son = son.replace("\n", "")
-                son = "[" + son.split("[", 1)[1]
-            except:
-                raise Exception(
-                    'Failed getting this:\n\n{url+str(lat)+"&lng="+str(long)+url2}\n\nReason: odd json format\n\n '
-                )
-            try:
-                son = json.loads(son)
-            except:
-                raise Exception(
-                    'Failed getting this:\n\n{url+str(lat)+"&lng="+str(long)+url2}\n\nReason: odd json format\n\n '
-                )
-        else:
-            son = ""
-        result_lats = []
-        result_longs = []
-        result_coords = []
-        topop = 0
-        if len(son) != 0:
-            for k in son:
-                result_lats.append(k["lat"])
-                result_longs.append(k["lng"])
-                if str(str(k["lat"]) + str(k["lng"])) not in identities:
-                    identities.add(str(str(k["lat"]) + str(k["lng"])))
-                    yield k
-                else:
-                    topop += 1
-        result_coords = list(zip(result_lats, result_longs))
-        logzilla.info(
-            f"Coords remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-topop} stores."
+            .lower()
+            .replace(" ", "-")
         )
-        search.update_with(result_coords)
-        coord = search.next()
-    coord = "Finished grabbing data!!"
-    logzilla.info(f"{coord}")
+        logzilla.info(url)
+        resp = session.get(url, headers=headers)
+        k["page_url"] = url
+        k["hours"] = parse_hrs(resp.text)
+
+        return k
+
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=40,
+        max_search_results=None,
+    )
+
+    with SgRequests() as session:
+        for long in search:
+            for result in search_api(session, long):
+                try:
+                    k = fetch_sub(session, result)
+                    try:
+                        k["address"]["line2"] = k["address"]["line2"]
+                    except Exception:
+                        k["address"]["line2"] = ""
+                    yield k
+                except Exception as e:
+                    logzilla.error("", exc_info=e)
+                    k = result
+                    try:
+                        k["address"]["line2"] = k["address"]["line2"]
+                    except Exception:
+                        k["address"]["line2"] = ""
+                    k["hours"] = ""
+                    yield k
 
 
 def fix_comma(x):
@@ -115,59 +136,64 @@ def fix_comma(x):
     return h
 
 
-def good_hours(k):
-    h = []
-    for i in list(k):
-        h.append(str(i) + ": " + str(k[i]["open"]) + "-" + str(k[i]["close"]))
-    return "; ".join(h).replace("false-false", "closed")
-
-
 def scrape():
     url = "https://www.loansbyworld.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["permalink"], is_required=False),
-        location_name=MappingField(
-            mapping=["store"], value_transform=lambda x: x.replace("None", "<MISSING>")
+        page_url=MappingField(
+            mapping=["page_url"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
         ),
-        latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lng"]),
+        location_name=MappingField(
+            mapping=["store"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
+        ),
+        latitude=MappingField(
+            mapping=["latitude"],
+            part_of_record_identity=True,
+        ),
+        longitude=MappingField(mapping=["longitude"]),
         street_address=MultiMappingField(
-            mapping=[["address"], ["address2"]],
+            mapping=[["address", "line1"], ["address", "line2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
+            is_required=False,
         ),
         city=MappingField(
-            mapping=["city"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["address", "city"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         state=MappingField(
-            mapping=["state"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["address", "region"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         zipcode=MappingField(
-            mapping=["zip"],
+            mapping=["address", "postalCode"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        country_code=MappingField(mapping=["country"]),
+        country_code=MappingField(mapping=["address", "countryCode"]),
         phone=MappingField(
             mapping=["phone"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        store_number=MappingField(mapping=["id"]),
-        hours_of_operation=MappingField(
-            mapping=["uhours"], raw_value_transform=good_hours, is_required=False
+        store_number=MappingField(
+            mapping=["id"],
+            part_of_record_identity=True,
         ),
-        location_type=MappingField(
-            mapping=["branch_id"], value_transform=lambda x: "BranchId: " + x
-        ),
+        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
+        location_type=MissingField(),
     )
 
     pipeline = SimpleScraperPipeline(
-        scraper_name="ajsfinefoods.com",
+        scraper_name="loansbyworld.com",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()

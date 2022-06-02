@@ -1,60 +1,51 @@
-import re
-import json
+from time import sleep
+from lxml import etree
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
     domain = "sanrio.com"
-    start_url = "https://cdn.shopify.com/s/files/1/0416/8083/0620/t/78/assets/sca.storelocator_scripttag.js?v=1612166361&shop=sanrio-na.myshopify.com"
+    start_url = "https://www.sanrio.com/pages/store-locator"
 
-    response = session.get(start_url)
-    data = re.findall("Setting=(.+);", response.text)[0]
-    data = data.split("locationsRaw:")[-1][1:].split("'},function")[0]
-    all_locations = json.loads(data)
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        sleep(10)
+        dom = etree.HTML(driver.page_source)
+    all_locations = dom.xpath('//li[@id="scasl-list-container"]')
 
-    for poi in all_locations:
-        store_url = "<MISSING>"
-        location_name = poi["name"]
-        street_address = poi["address"]
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["state"]
-        zip_code = poi["postal"]
-        country_code = "US"
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
-        hours_of_operation = poi.get("schedule")
-        hours_of_operation = (
-            " ".join(hours_of_operation.replace("<br>", "").split())
-            if hours_of_operation
-            else "<MISSING>"
-        )
+    for poi_html in all_locations:
+        location_name = poi_html.xpath('.//div[@id="scasl-title"]/text()')[0]
+        street_address = poi_html.xpath('.//div[@id="scasl-address"]/text()')[0]
+        city = poi_html.xpath('.//span[@id="scasl-city"]/text()')[0]
+        state = poi_html.xpath('.//span[@id="scasl-state"]/text()')
+        state = state[0] if state else ""
+        zip_code = poi_html.xpath('.//span[@id="scasl-zipcode"]/text()')[0]
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
+        country_code = poi_html.xpath('.//span[@id="scasl-country"]/text()')
+        country_code = country_code[0] if country_code else ""
+        hoo = poi_html.xpath('.//div[@id="scasl-schedule"]/text()')
+        hoo = " ".join(" ".join(hoo).split()) if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=start_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=store_number,
+            store_number="",
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
         )
 
         yield item

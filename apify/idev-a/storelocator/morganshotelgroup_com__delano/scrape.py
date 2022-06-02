@@ -19,7 +19,10 @@ base_url = "https://www.sbe.com/properties.json"
 
 
 def _d(page_url, session):
-    sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+    res = session.get(page_url, headers=_headers)
+    if res.status_code != 200:
+        return None
+    sp1 = bs(res.text, "lxml")
     ss = json.loads(sp1.find_all("script", type="application/ld+json")[1].string)
     coord = json.loads(
         sp1.find(
@@ -36,7 +39,7 @@ def _d(page_url, session):
         country_code=ss["address"]["addressCountry"],
         latitude=coord["lat"],
         longitude=coord["lng"],
-        phone=ss["telephone"],
+        phone=ss.get("telephone"),
         locator_domain=locator_domain,
     )
 
@@ -66,4 +69,5 @@ if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

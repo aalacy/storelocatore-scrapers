@@ -1,76 +1,76 @@
-import csv
+# -*- coding: utf-8 -*-
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-logger = SgLogSetup().get_logger('holidaytouch_com')
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    # addresses = []
-    country_code = "US"
-    headers = {
-            'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            # 'content-type':'application/x-www-form-urlencoded; charset=UTF-8',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
-        }
-    locator_domain = "https://www.holidaytouch.com/"
-    r= session.get("https://www.holidaytouch.com/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    footer = soup.find("footer",class_="footer")
-    for ul in footer.find_all("ul",class_="footer-top__list"):
-        for state_link in ul.find_all("a",class_="footer-top__link"):
-            state_link_url = state_link["href"]
-            # logger.info(state_link.text)
-            r1 = session.get("https://www.holidaytouch.com"+state_link_url,headers=headers)
-            soup1 = BeautifulSoup(r1.text,"lxml")
-            script = json.loads(soup1.find("script",text=re.compile("var communities = ")).text.split("var communities = ")[1].split("];")[0]+"]")
-            for x in script:
-                longitude = x["Longitude"]
-                latitude = x["Latitude"]
-                location_name = x["Name"].strip()
-                street_address = x["Address"]
-                city = x["City"]
-                state = x["State"]
-                zipp = x["ZipCode"]
-                phone = x["PhoneNumber"]
-                page_url = "https://www.holidaytouch.com/our-communities/"+location_name.replace(" ","-").lower().strip()
-                store_number = "<MISSING>"
-                location_type = "<MISSING>"
-                hours_of_operation = "Monday-Sunday 7:30 am - 7:30 pm"
-                
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                # if str(str(store[1])+str(store[2])) not in addresses :
-                #     addresses.append(str(store[1])+str(store[2]))
+    session = SgRequests(verify_ssl=False)
 
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
+    start_url = "https://www.holidayseniorliving.com/retirement-communities"
+    domain = ""
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+    all_states = dom.xpath(
+        '//a[@class="super-footer-li-links" and contains(@href, "senior-living-communities")]/@href'
+    )
+    for url in all_states:
+        state_url = urljoin(start_url, url)
+        response = session.get(state_url)
+        dom = etree.HTML(response.text)
+        all_locations = dom.xpath('//div[@class="communityCard__info"]/div/a/@href')
+        for url in all_locations:
+            page_url = urljoin(start_url, url)
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            raw_address = loc_dom.xpath(
+                '//p[@class="community-info__community-address"]/text()'
+            )
+            phone = loc_dom.xpath(
+                '//div[@class="community-info__phone-number-container"]/a/text()'
+            )
+            phone = phone[0] if phone else ""
 
-    
-    
-   
-   
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name="",
+                street_address=raw_address[0].replace(",", ""),
+                city=raw_address[1].split(",")[0],
+                state=" ".join(raw_address[1].split(",")[1].split()[:-1]),
+                zip_postal=raw_address[1].split(",")[1].split()[-1],
+                country_code="",
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation="",
+            )
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()
