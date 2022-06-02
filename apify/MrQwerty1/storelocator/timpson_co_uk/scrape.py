@@ -1,130 +1,86 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=200
+    )
+    for lat, lng in search:
+        api = f"https://www.timpson.co.uk/storefinder/locator/get/{lat}/{lng}/1"
+        r = session.post(api, headers=headers, data=data)
+        js = r.json()["locations"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
+        for j in js:
+            page_url = f'https://www.timpson.co.uk/stores/{j.get("url")}'
+            location_name = j.get("name")
+            street_address = j.get("street1")
+            city = j.get("city")
+            postal = j.get("zip")
+            store_number = j.get("store_no")
+            phone = j.get("phone")
+            latitude = j.get("lat")
+            longitude = j.get("lng")
+
+            _tmp = []
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
             ]
-        )
 
-        for row in data:
-            writer.writerow(row)
+            for i in range(1, 8):
+                time = j.get(f"opening_{i}")
+                day = days[i - 1]
+                _tmp.append(f"{day}: {time}")
 
+            hours_of_operation = ";".join(_tmp)
 
-def get_data(coord):
-    rows = []
-    locator_domain = "https://www.timpson.co.uk/"
-    lat, lon = coord
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code="GB",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    session = SgRequests()
-    data = {"start": "1000"}
-    r = session.post(
-        f"https://www.timpson.co.uk/storefinder/locator/get/{lat}/{lon}/", data=data
-    )
-    js = r.json()["locations"]
-
-    for j in js:
-        page_url = f'https://www.timpson.co.uk/stores/{j.get("url")}'
-        location_name = j.get("name")
-        street_address = j.get("street1") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = "GB"
-        store_number = j.get("store_no") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
-
-        for i in range(1, 8):
-            time = j.get(f"opening_{i}")
-            day = days[i - 1]
-            _tmp.append(f"{day}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
-
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(
-        radius=200, country_code=SearchableCountries.BRITAIN
-    )
-
-    with futures.ThreadPoolExecutor(max_workers=20) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.timpson.co.uk/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://www.timpson.co.uk/",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.timpson.co.uk",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
+
+    data = {"start": "1000"}
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

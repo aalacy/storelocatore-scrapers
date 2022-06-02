@@ -3,8 +3,10 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("ingrammicroservices")
 
@@ -25,7 +27,10 @@ def fetch_data():
             page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            location_name = sp1.select_one("div.banner-style1 h2").text.strip()
+            if sp1.h1:
+                location_name = sp1.h1.text.strip()
+            else:
+                location_name = sp1.select_one("div.banner-style1 h2").text.strip()
             addr = parse_address_intl(location_name)
             city = addr.city
             state = addr.state
@@ -57,7 +62,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

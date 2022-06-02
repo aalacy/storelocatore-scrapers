@@ -1,10 +1,14 @@
-import csv
 import json
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
@@ -13,37 +17,7 @@ logger = SgLogSetup().get_logger("uwmedicine_org")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     addresses = []
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
@@ -106,13 +80,14 @@ def fetch_data():
                             lambda tag: (tag.name == "script")
                             and '"address"' in str(tag)
                         ).contents[0]
-                    )["@graph"][-1]
-                    location_name = data["name"]
+                    )["@graph"][0]
+                    location_name = data["name"].replace("&#039;", "'")
                     street_address = data["address"]["streetAddress"]
 
-                    digit = re.search(r"\d", street_address).start(0)
-                    if digit != 0:
-                        street_address = street_address[digit:]
+                    if re.search(r"\d", street_address):
+                        digit = str(re.search(r"\d", street_address))
+                        start = int(digit.split("(")[1].split(",")[0])
+                        street_address = street_address[start:]
 
                     city = data["address"]["addressLocality"]
                     state = data["address"]["addressRegion"]
@@ -143,10 +118,8 @@ def fetch_data():
                             )
                         else:
                             hours = "<MISSING>"
-                    store = []
-                    store.append(base_url)
-                    store.append(location_name)
-                    store.append(
+
+                    street_address = (
                         street_address.replace("Main Hospital,", "")
                         .replace("West Clinic", "")
                         .replace("East Clinic,", "")
@@ -157,29 +130,30 @@ def fetch_data():
                         )
                         .strip()
                     )
-                    store.append(city)
-                    store.append(state)
-                    store.append(zipp)
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append(phone)
-                    store.append(location_type)
-                    store.append("<INACCESSIBLE>")
-                    store.append("<INACCESSIBLE>")
-                    store.append(hours)
-                    store.append(page_url)
-                    store = [x.strip() if type(x) == str else x for x in store]
-                    if str(store[2]) + str(store[1]) in addresses:
+
+                    if street_address + location_name in addresses:
                         continue
-                    addresses.append(str(store[2]) + str(store[1]))
-                    yield store
-            else:
-                break
+                    addresses.append(street_address + location_name)
+
+                    sgw.write_row(
+                        SgRecord(
+                            locator_domain=base_url,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zipp,
+                            country_code="US",
+                            store_number="",
+                            phone=phone,
+                            location_type=location_type,
+                            latitude="",
+                            longitude="",
+                            hours_of_operation=hours,
+                        )
+                    )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

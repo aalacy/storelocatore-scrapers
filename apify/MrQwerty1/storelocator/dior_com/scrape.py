@@ -1,179 +1,111 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_ids():
-    ids = []
-    session = SgRequests()
-    r = session.get("https://www.dior.com/store/json/posG.json")
-    js = r.json()["items"]
-    for j in js:
-        ids.append(j[0])
-
-    return ids
-
-
-def generate_urls(ids):
+def get_urls():
     urls = []
-    u = "https://tpc33of0na.execute-api.eu-west-1.amazonaws.com/prod/PointOfSale?ids="
-    _tmp = []
-    cnt = 0
-    for i in ids:
-        if cnt == 100:
-            urls.append(f'{u}{",".join(_tmp)}')
-            _tmp = []
-            cnt = 0
-        _tmp.append(i)
-        cnt += 1
+    r = session.get("https://www.dior.com/fashion/stores/en_us.json")
+    js = r.json()["directoryHierarchy"].values()
+    for j in js:
+        slugs = j["children"].keys()
+        for slug in slugs:
+            urls.append(f"https://www.dior.com/fashion/stores/{slug}.json")
 
-    urls.append(f'{u}{",".join(_tmp)}')
     return urls
 
 
-def get_data(url):
-    rows = []
-    locator_domain = "https://www.dior.com/"
+def get_data(api, sgw: SgWriter):
+    r = session.get(api)
+    jss = r.json()["keys"]
 
-    session = SgRequests()
-    r = session.get(url)
-    try:
-        js = r.json()["Items"]
-    except:
-        return []
+    for js in jss:
+        j = js["entity"]["profile"]
+        a = j.get("address") or {}
+        c = j.get("yextDisplayCoordinate") or {}
 
-    for j in js:
-        page_url = "<MISSING>"
-        location_name = j.get("defaultName").strip()
-        street_address = (
-            f"{j.get('defaultStreet1')} {j.get('defaultStreet2') or ''}".strip()
-            or "<MISSING>"
-        )
-        street_address = " ".join(street_address.split())
-        city = j.get("defaultCity") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("defaultZipCode", "").strip() or "<MISSING>"
-        country_code = j.get("countryCode") or "<MISSING>"
+        adr1 = a.get("line1") or ""
+        adr2 = a.get("line2") or ""
+        street_address = " ".join(f"{adr1} {adr2}".split())
+        city = a.get("city") or ""
+        state = a.get("region") or ""
+        postal = a.get("postalCode") or ""
+        country = a.get("countryCode")
+        raw_address = " ".join(f"{adr1} {adr2} {city} {state} {postal}".split())
+        latitude = c.get("lat")
+        longitude = c.get("long")
+        location_name = j.get("c_locationName") or j.get("name")
+        location_type = j.get("c_locationType")
+        page_url = j.get("c_pagesURL") or api.replace(".json", "")
 
-        if len(postal) > 5 and country_code == "US":
-            state = postal.split()[0]
-            postal = postal.split()[1]
-
-        if len(postal) > 7 and country_code == "CA":
-            state = postal.split()[0]
-            postal = postal.replace(state, "").strip()
-
-        store_number = "<MISSING>"
-        phone = j.get("phoneNumber") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        try:
+            phone = j["mainPhone"]["display"]
+        except KeyError:
+            phone = SgRecord.MISSING
 
         _tmp = []
-        days = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-        ]
-        hours = j.get("calculatedWeeklyOpeningHours") or []
+        try:
+            days = j["hours"]["normalHours"]
+        except KeyError:
+            days = []
 
-        for h in hours:
-            index = h.get("day")
-            day = days[int(index)]
+        for d in days:
+            day = d.get("day")
+            try:
+                interval = d.get("intervals")[0]
+                start = str(interval.get("start")).zfill(4)
+                end = str(interval.get("end")).zfill(4)
+                line = f"{day}:  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+            except IndexError:
+                line = f"{day}: Closed"
+            _tmp.append(line)
 
-            t = h.get("hours")
-            if t:
-                start = t[0].get("from")
-                close = t[0].get("to")
-            else:
-                start, close = "", ""
+        hours_of_operation = ";".join(_tmp)
 
-            if start and start != close:
-                _tmp.append(f"{day}: {start} - {close}")
-            else:
-                _tmp.append(f"{day}: Closed")
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country,
+            latitude=latitude,
+            longitude=longitude,
+            location_type=location_type,
+            phone=phone,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+            raw_address=raw_address,
+        )
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        rows.append(row)
-
-    return rows
+        sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    ids = get_ids()
-    urls = generate_urls(ids)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                if row:
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.dior.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

@@ -4,7 +4,7 @@ crawler_subdir_regex='apify(\/[^/]+){3}'
 required_python_files=('Dockerfile' 'requirements.txt' 'scrape.py')
 required_node_files=('Dockerfile' 'scrape.js' 'package.json')
 forbidden_files=('chromedriver' 'geckodriver' 'validate.py' 'data.csv' 'state.json')
-internal_libraries=('sgscrape' 'sgcrawler' 'sgrequests' 'sgselenium' 'sglogging' 'sgzip' 'sggrid')
+internal_libraries=('sgscrape' 'sgcrawler' 'sgrequests' 'sgselenium' 'sglogging' 'sgzip' 'sggrid' 'proxyfier')
 
 function exit_code_of () {
   eval "${1}" 2>1 1>/dev/null
@@ -103,9 +103,32 @@ check_forbidden_file() {
 	fi
 }
 
+# https://stackoverflow.com/a/17841619
+join_by() {
+	local d=$1
+	shift
+	local f=$1
+	shift
+	printf %s "$f" "${@/#/$d}"
+}
+
+function grep_and_get_exit_code() {
+  export where="${1}"
+  export what="${2}"
+  exit_code_of 'echo "${where}" | grep -F "${what}"'
+}
+
+function piprottest() {
+  lib=$(echo $1 | cut -d'=' -f1)
+  ver=$(echo $1 | cut -d'=' -f3)
+  latest=$(pip install --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/ ${lib}== 2>&1 | grep versions: | rev | cut -d',' -f1 | rev | sed -r 's/[ \)]//g')
+  [[ "$ver" == "$latest" ]] || echo "${lib}==${ver} is not latest (${latest})"
+}
+
 check_required_files() {
+  echo "Check required files are present..."
 	exit_status=0
-	updated_crawler="$(get_updated_crawler)"
+	updated_crawler="${1}"
 	if is_node_scraper "$updated_crawler"; then
 		for required_file in "${required_node_files[@]}"; do
 			check_required_file "${updated_crawler}" "${required_file}" || exit_status=1
@@ -119,8 +142,9 @@ check_required_files() {
 }
 
 check_forbidden_files() {
+  echo "Check forbidden files are absent..."
 	exit_status=0
-	updated_crawler="$(get_updated_crawler)"
+	updated_crawler="${1}"
 	for forbidden_file in "${forbidden_files[@]}"; do
 		check_forbidden_file "${updated_crawler}" "${forbidden_file}" || exit_status=1
 	done
@@ -128,8 +152,9 @@ check_forbidden_files() {
 }
 
 check_dependencies() {
+  echo "Check all python dependencies are pinned..."
 	exit_status=0
-	updated_crawler="$(get_updated_crawler)"
+	updated_crawler="${1}"
 	if ! is_node_scraper "$updated_crawler"; then
 		requirements_path="${updated_crawler}/requirements.txt"
 		unpinned_dependencies=$(cat "$requirements_path" | grep -v '\-\-extra-index-url' | awk NF | grep -v '==' || true)
@@ -142,41 +167,32 @@ check_dependencies() {
 	return $exit_status
 }
 
-# https://stackoverflow.com/a/17841619
-join_by() {
-	local d=$1
-	shift
-	local f=$1
-	shift
-	printf %s "$f" "${@/#/$d}"
-}
-
 check_internal_library_versions() {
+  echo "Check internal library versions are up to date..."
 	exit_status=0
-	updated_crawler="$(get_updated_crawler)"
-	if ! is_node_scraper "$updated_crawler"; then
-		requirements_path="${updated_crawler}/requirements.txt"
-		internal_library_regex="$(join_by "|" "${internal_libraries[@]}")"
-		outdated_internal_libraries=$(piprot --outdated "$requirements_path" | grep -E "$internal_library_regex" || true)
-		if [ -n "$outdated_internal_libraries" ]; then
-			formatted_outdated_internal_libraries="${outdated_internal_libraries//$'\n'/', '}"
-			echo "FAIL: found outdated SafeGraph libraries in requirements.txt: $formatted_outdated_internal_libraries"
-			exit_status=1
-		fi
-	fi
+	updated_crawler=${1}
+  requirements_path="${updated_crawler}/requirements.txt"
+  internal_library_regex="$(join_by "|" "${internal_libraries[@]}")"
+  export -f piprottest  # so we can call it in a subshell in xargs
+  internal_libs_present=$(cat "$requirements_path" | sed 's/\r//g' | grep -E "$internal_library_regex")
+  while IFS= read -r line; do
+    lib_outdated=$(echo ${line} | xargs bash -c 'piprottest $@' _ || true)
+    if [[ -n "$lib_outdated" ]]; then
+      echo "FAIL: ${lib_outdated}"
+      exit_status=1
+    fi
+  done <<< ${internal_libs_present}
+
+  if [[ ${exit_status} -eq 0 ]]; then
+    echo "All internal library versions are up to date."
+  fi
 	return $exit_status
-
-}
-
-function grep_and_get_exit_code() {
-  export what="${1}"
-  export how="${2}"
-  exit_code_of 'echo "${what}" | grep -F "${how}"'
 }
 
 check_how_records_are_written_to_file() {
+  echo "Check whether records are written to file properly..."
   exit_status=0
-  updated_crawler="$(get_updated_crawler)"
+  updated_crawler="${1}"
   if ! is_node_scraper "$updated_crawler"; then
     script_path="${updated_crawler}/scrape.py"
     script_src="$(cat "$script_path")"
@@ -204,5 +220,73 @@ check_how_records_are_written_to_file() {
       exit_status=1
     fi
   fi
+  return $exit_status
+}
+
+function check_sgrequests_uses_prod_proxies() {
+  echo "Check no test proxies are used..."
+  exit_status=0
+  updated_crawler="${1}"
+  if ! is_node_scraper "$updated_crawler"; then
+    script_path="${updated_crawler}/scrape.py"
+    script_src="$(cat "$script_path")"
+    using_test_proxies_1="$(grep_and_get_exit_code "$script_src" "TEST_PROXY_ESCALATION_ORDER")"
+
+    if [ "$using_test_proxies_1" -eq 0 ]; then
+      echo "FAIL: ProxySettings.TEST_PROXY_ESCALATION_ORDER detected; please do not set proxy_escalation_order in SgRequests"
+      exit_status=1
+    fi
+  fi
+  return $exit_status
+}
+
+function check_dockerfile_base_image_is_latest() {
+  echo "Check dockerfile base image is latest..."
+  exit_status=0
+  updated_crawler="${1}"
+  if ! is_node_scraper "$updated_crawler" ; then
+    docker_path="${updated_crawler}/Dockerfile"
+    docker_src="$(cat "$docker_path")"
+    using_latest_image="$(grep_and_get_exit_code "$docker_src" 'FROM safegraph/apify-python3:latest')"
+    if [ "$using_latest_image" -ne 0 ]; then
+      echo "FAIL: Dockerfile should use latest base image: FROM safegraph/apify-python3:latest"
+      exit_status=1
+    fi
+    return $exit_status
+  fi
+}
+
+function check_all_for_crawl_dir() {
+  crawl_dir="${1}"
+  crawl_dir="${crawl_dir:=$(get_updated_crawler)}"
+  echo "Checking crawl folder: ${crawl_dir}"
+  exit_status=0
+  local funs=( check_required_files check_dependencies check_internal_library_versions check_dockerfile_base_image_is_latest check_how_records_are_written_to_file check_sgrequests_uses_prod_proxies )
+  export -f check_required_files
+  export -f check_dependencies
+  export -f check_internal_library_versions
+  export -f check_dockerfile_base_image_is_latest
+  export -f check_how_records_are_written_to_file
+  export -f check_sgrequests_uses_prod_proxies
+
+  for func in "${funs[@]}"; do
+    echo "-----------------------"
+    ${func} "${crawl_dir}"
+    result=$?
+    if [[ "$result" -ne 0 ]]; then
+      echo "Failed."
+      exit_status=1
+    else
+      echo "Passed."
+    fi
+  done
+
+  echo "-----------------------"
+  if [[ "$result" -eq 0 ]]; then
+    echo "All checks passed."
+  else
+    echo "Some checks failed."
+  fi
+
   return $exit_status
 }

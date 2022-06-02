@@ -1,102 +1,103 @@
-import csv
-
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    try:
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+        if street_address == "None":
+            street_address = "<MISSING>"
+    except usaddress.RepeatedLabelError:
+        street_address = line.split(",")[0]
+        a = usaddress.tag(",".join(line.split(",")[1:]), tag_mapping=tag)[0]
 
-        for row in data:
-            writer.writerow(row)
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
+
+    return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    s = set()
-    locator_domain = "https://www.compass.com/"
+def fetch_data(sgw: SgWriter):
     page_url = "https://www.compass.com/about/offices/"
-
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='offices-office']")
+    divs = tree.xpath(
+        "//div[@class='offices-region' and not(./h2[contains(text(), 'Head')])]//div[@class='offices-office']"
+    )
 
     for d in divs:
         location_name = "".join(
             d.xpath("./h3[@class='offices-officeTitle']/text()")
         ).strip()
-        line = d.xpath("./p[@class='offices-officeDetail']/text()")
-        street_address = line[0]
-        if len(line) == 3:
-            phone = line[-1].replace("O:", "")
-        else:
-            phone = "<MISSING>"
-        line = line[1]
-        state = line.split()[-2]
-        postal = line.split()[-1]
-        if len(state) > 2:
+        if not location_name:
             continue
-        city = line.replace(state, "").replace(postal, "").strip()
-        country_code = "US"
 
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        line = d.xpath("./p/text()")
+        last = line[-1].replace("O:", "").strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        phone = SgRecord.MISSING
+        if last[0].isdigit():
+            phone = last
+            line.pop()
 
-        t = tuple(row[2:6])
-        if t not in s:
-            s.add(t)
-            out.append(row)
+        raw_address = " ".join(" ".join(line).split())
+        street_address, city, state, postal = get_address(raw_address)
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            locator_domain=locator_domain,
+            raw_address=raw_address,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.compass.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
