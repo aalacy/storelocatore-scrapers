@@ -170,7 +170,7 @@ def get_data():
                 "country_code": country_code,
             }
 
-        except Exception as e:
+        except Exception:
             pass
 
 
