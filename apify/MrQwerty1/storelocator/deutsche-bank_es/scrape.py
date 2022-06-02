@@ -33,7 +33,7 @@ def fetch_data(sgw: SgWriter):
         key = "".join(d.xpath("./@prov"))
         state = states.get(key)
         postal = "".join(d.xpath("./@cp"))
-        country_code = "US"
+        country_code = "ES"
         store_number = "".join(d.xpath("./@numo"))
         location_name = "".join(d.xpath("./@nomo"))
         phone = "".join(d.xpath("./@tel")).strip()
