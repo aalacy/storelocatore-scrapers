@@ -87,6 +87,11 @@ def fetch_data():
         coming_soon = store.xpath(
             'div[@class="shops-contact"]//p[contains(text(),"OPEN")]'
         )
+        if not coming_soon:
+            coming_soon = store.xpath(
+                'div[@class="shops-contact"]//p[contains(text(),"COMING SOON!")]'
+            )
+
         if coming_soon:
             continue
 
