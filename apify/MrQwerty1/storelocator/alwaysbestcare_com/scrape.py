@@ -64,7 +64,7 @@ def get_data(param, sgw: SgWriter):
             latitude, longitude = text.split("/@")[1].split(",")[:2]
 
     if latitude == SgRecord.MISSING or str(latitude) == "0":
-        latitude, longitude = SgRecord.MISSING
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     row = SgRecord(
         page_url=page_url,
