@@ -4,10 +4,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import urllib.parse
+from urllib.parse import urlencode
 import dirtyjson as json
-from sglogging import SgLogSetup
 import csv
+from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("aceparking")
 
@@ -32,10 +32,10 @@ def params(hourly, row):
 def get_city_list():
     city_list = []
     logger.info("... reading city list csv")
-    with open("./zipcode.csv") as f:
+    with open("./uscities.csv") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            val = [row["city"], row["state"]]
+            val = [row["city"], row["state_id"]]
             if val not in city_list:
                 city_list.append(val)
 
@@ -58,18 +58,22 @@ def fetch_data(city_list):
     with SgRequests() as session:
         for row in city_list:
             for hourly in range(1, 3):
-                url = base_url + urllib.parse.urlencode(params(hourly, row))
+                url = base_url + urlencode(params(hourly, row))
                 logger.info(url)
                 res = session.get(url, headers=_headers)
                 locs = res.text.split("new google.maps.Marker(")[2:]
                 soup = bs(res, "lxml")
                 if soup.select_one("div.siteResults h4.error"):
+                    logger.warning("div.siteResults h4.error")
                     continue
+
                 locations = soup.select("div.lotSection")
                 try:
                     soup.select_one("div.resultAddress").text.strip().split(",")
                 except:
+                    logger.warning("div.resultAddress")
                     continue
+
                 if hourly == 1:
                     location_type = "daily"
                 else:
@@ -89,7 +93,7 @@ def fetch_data(city_list):
                         page_url="https://space.aceparking.com/site/results",
                         store_number=_["id"].split("-")[-1],
                         location_name=location_name,
-                        street_address=" ".join(street_address),
+                        street_address=" ".join(street_address).split("Lot")[0].strip(),
                         city=row[0],
                         state=row[1],
                         country_code="US",
@@ -102,7 +106,11 @@ def fetch_data(city_list):
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         city_list = get_city_list()
         results = fetch_data(city_list)
         for rec in results:

@@ -2,115 +2,109 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
 from sgrequests import SgRequests
 import re
+from bs4 import BeautifulSoup
+
+ssl._create_default_https_context = ssl._create_unverified_context
+from sgselenium.sgselenium import SgChrome
 
 session = SgRequests()
-headers = {
-    "Host": "www.cubesmart.com",
-    "Origin": "https://www.cubesmart.com",
-    "Referer": "https://www.cubesmart.com/storage-locations",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-    "sec-ch-ua-mobile": "?0",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-origin",
+headersss = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
-    "X-Requested-With": "XMLHttpRequest",
+    "Cookie": "visid_incap_2413170=iuf6SPzhT+mKcACVBU0bd6U1WGEAAAAAQUIPAAAAAABHeU65cdCOhpFMVpgRMoo9; _gcl_au=1.1.2004528901.1633170860; FPID=FPID2.2.VpN8Vt98sjeWsxZx%2BOAy19RZrM6%2BFwEm4OjFAP7IMEA%3D.1633170861; _st_bid=0939cf00-93d6-11eb-bc89-0f12746e63bb; _fbp=fb.1.1633170870335.967157101; _pin_unauth=dWlkPVpUYzFZbVk1TmprdFlqYzBNQzAwTjJGaUxXSTNaakl0TWpRMU5EZGlORE14WkRWaQ; LPVID=IyNGU3MjQzYzdmOTA4MzYw; _lc2_fpi=7be72f5c8f1d--01fh4116p2fe871kc5t6bxpv70; _ce.s=v11.rlc~1633296622303~v~0185e13a4831b35d27bd29b7f8254eb54ea4e9cd~vpv~0~ir~1; aam_test=aam%3D3684620; aam_uuid_opt=50083103468810933921148224779681165276; nlbi_2413170=WkJ+NqVgmQpV+dKN/cPt3AAAAACBRYLETLbunYtZKsY3dsD7; incap_ses_961_2413170=oGdGVUsdlic/MVGh4ShWDaZewGEAAAAA16jIUOB5dFi/QuJJyR2/Xw==; ASP.NET_SessionId=vw33zkqju2p5r23fxef32k02; _usiTracking=8338335; at_check=true; search_term=; _gid=GA1.2.1235199019.1639997154; AMCV_FA78F19C55BA9FAA7F000101%40AdobeOrg=-1124106680%7CMCIDTS%7C18982%7CMCMID%7C50119964891794107831144045850486083987%7CMCAID%7CNONE%7CMCAAMLH-1640601954%7C3%7CMCAAMB-1640601954%7Cj8Odv6LonN4r3an7LhD3WZrU1bUpAkFkkiY1ncBR96t2PTI%7CMCOPTOUT-1640004354s%7CNONE%7CvVersion%7C5.2.0; AMCVS_FA78F19C55BA9FAA7F000101%40AdobeOrg=1; gpv_pageName=Facility; s_cc=true; FPLC=3eTjTCM9GSJrS4wOwvy4OevcZUVoLJhhVpEiiun2Dw2zOl8uX78%2Be0zOEzqLc2llMy8x2cZgIySdA2sxdK3ozk3n1iVKHVNnQpvjtMK3irL5by60V459SOXLNhH8qQ%3D%3D; _clck=1yl6h0b|1|exf|0; LPSID-22469663=WOJ4OMsxT3egkNIFFjkmig; _ga=GA1.2.1259643920.1633170861; _derived_epik=dj0yJnU9RWVBYnJ3c0NqNUNKYnliMWZ4cGJVNUV5VGNIRG5PLUImbj1DREtBeTRRM3BGZ0JDTDNWMFEyakhBJm09MSZ0PUFBQUFBR0hBWVAwJnJtPTEmcnQ9QUFBQUFHSEFZUDA; _uetsid=0242f270618211ec9db773564baeeca1; _uetvid=13679d00b01411eb8b98e188bf556b85; mbox=PC#10cd1757245248d0906f34d38600b8c2.38_0#1703242497|session#1ff3a0076d9049868e8f41eb543880b0#1639999557; _clsk=81bxa4|1639997696544|2|1|e.clarity.ms/collect; _ga_M4TC2GYJNB=GS1.1.1639997154.10.1.1639997701.0; s_plt=11.99; s_pltp=Facility; _st=0939cf00-93d6-11eb-bc89-0f12746e63bb.0296e910-6182-11ec-b945-4d8850779b1e.8555664700.(855) 566-4700.+18555664700.0.8772797585.primaryPhone.cshPhone.1639998413.1640008492.600.10800.30.1....0....1...cubesmart^com.UA-1207651-2.1259643920^1633170861.38.",
 }
 
-cookielist = [
-    "_ga=GA1.2.1605234886.1620488575; _gcl_au=1.1.918372723.1620488576; aam_uuid_opt=06256971139219621033527052771413870466; _fbp=fb.1.1620488889828.1871037673; _pin_unauth=dWlkPVpUYzFZbVk1TmprdFlqYzBNQzAwTjJGaUxXSTNaakl0TWpRMU5EZGlORE14WkRWaQ; _st_bid=0939cf00-93d6-11eb-bc89-0f12746e63bb; _usiTracking=4064102; aam_test=aam%3D3684620; LPVID=NiZDFkNDM3MWZjYTc4ZjBj; visid_incap_2413170=UYWZywgMT9G57YsgP8C2+bOwlmAAAAAAQ0IPAAAAAACAd4ucAS0rDlZpxsTZ82QF9tfjVvE9tKLY; nlbi_2413170=m8eKVSbW9gsCoFy2/cPt3AAAAADR74Bhx+Ucmfsn4xBiqBpV; incap_ses_207_2413170=Mjn2cjJ5ymVnWIFxxGnfAiUnv2AAAAAAPOBPCSYbY58u8tWM28NJhA==; at_check=true; _gid=GA1.2.1342296470.1623140139; mboxEdgeCluster=38; AMCVS_FA78F19C55BA9FAA7F000101%40AdobeOrg=1; ASP.NET_SessionId=3tdskz1mfjqka5bksiuds2rn; s_cc=true; incap_ses_530_2413170=MlUdUTdBuTBYWuzvmfBaB5Asv2AAAAAAKuu5Z49I82m1DSDsuUElxQ==; search_term=; s_plt=%5B%5BB%5D%5D; s_pltp=%5B%5BB%5D%5D; AMCV_FA78F19C55BA9FAA7F000101%40AdobeOrg=-637568504%7CMCIDTS%7C18787%7CMCMID%7C06220023048075832883530184630691412429%7CMCAAMLH-1623746763%7C7%7CMCAAMB-1623746763%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1623149163s%7CNONE%7CvVersion%7C5.1.1%7CMCAID%7CNONE; s_sq=%5B%5BB%5D%5D; LPSID-22469663=MYs3IRP-S4-VNZM7yoCaTw; _ce.s=v11.rlc~1623142541578~v11slnt~1623141535561; gpv_pageName=no%20value; mbox=PC#ecd6e123c41646ee84167cc509812e27.38_0#1686387356|session#0bd6512fa8674eeba4afa608d5a1b409#1623144394; _uetsid=b9a12b80c83111eb960a53c56458616a; _uetvid=13679d00b01411eb8b98e188bf556b85; reese84=3:60TANpQknpoKfxsUXeEJ9Q==:ri3POIlmoGHQCqlbsIVetzebWK4pA1z3HErUUWGkkmZEngLvbbMtKt4oMQImqELf879nrMjs0ik13AiTm0cDZZ4LM8kio325G45Ne8rcyKUHNq59Oh92BKxuYLJDPkUFEpECs7settbBdEosq0Q+LyxREVl1wyl3hdj8GYrlx/9UhFWg9H+O6+ajScWfieCs2xBimyEvva5SZ1c9NvkIGJdNZ7vvSZxbPs+6wrtvrDHUGXfntymrcExvEfK5T+6RBgAdzTKwTdFFYYZoTCFUdjSCCJny0343XeeyGqVU+Gbe/5IZ1GBfc6uCKsgzSWYbmw3urtE85zwKcL6T6NDtxvmig7rzrrodx2dXdz0P3JD4Jc+zg+y3ZLVGIf7XGB/6rv65TrvUroHFrvYoV3HDoFmDgyI9DZl76ETGTxVJqsc=:8hQm7GO42Lb6iJAT6zo+myojmqL4qaI7M3n2us3hmwg=; _st=0939cf00-93d6-11eb-bc89-0f12746e63bb.c1513710-c831-11eb-8a62-a95a6f722872.8555802831.(855) 580-2831.+18555802831.0..primaryPhone.cshPhone.1623143943.1623153362.600.10800.30.1....0....1...cubesmart^com.UA-1207651-2.1605234886^1620488575.35.; _gat=1; _gat_UA-1207651-2=1; nlbi_2413170_2147483646=tuwzAm4OsVTmCvov/cPt3AAAAAD7gLVlAkEK6dhuxE94Aw5F",
-    "_ga=GA1.2.1605234886.1620488575; _gcl_au=1.1.918372723.1620488576; aam_uuid_opt=06256971139219621033527052771413870466; _fbp=fb.1.1620488889828.1871037673; _pin_unauth=dWlkPVpUYzFZbVk1TmprdFlqYzBNQzAwTjJGaUxXSTNaakl0TWpRMU5EZGlORE14WkRWaQ; _st_bid=0939cf00-93d6-11eb-bc89-0f12746e63bb; aam_test=aam%3D3684620; LPVID=NiZDFkNDM3MWZjYTc4ZjBj; nlbi_2413170=m8eKVSbW9gsCoFy2/cPt3AAAAADR74Bhx+Ucmfsn4xBiqBpV; incap_ses_207_2413170=Mjn2cjJ5ymVnWIFxxGnfAiUnv2AAAAAAPOBPCSYbY58u8tWM28NJhA==; at_check=true; _gid=GA1.2.1342296470.1623140139; mboxEdgeCluster=38; AMCVS_FA78F19C55BA9FAA7F000101%40AdobeOrg=1; s_cc=true; incap_ses_530_2413170=MlUdUTdBuTBYWuzvmfBaB5Asv2AAAAAAKuu5Z49I82m1DSDsuUElxQ==; search_term=; LPSID-22469663=MYs3IRP-S4-VNZM7yoCaTw; ASP.NET_SessionId=w4wiwhjz1dxke3qqdnjjlj5o; incap_sh_2413170=ED6/YAAAAABnxbl1DAAIkPz8hQYQi/z8hQZdb3DgZ13VJJAWlav/qdkR; visid_incap_2413170=UYWZywgMT9G57YsgP8C2+bOwlmAAAAAAREIPAAAAAACAkcmcAS0rDkz5Zdu1NGb7+PGnzYXwtljz; _usiTracking=9572728; AMCV_FA78F19C55BA9FAA7F000101%40AdobeOrg=-637568504%7CMCIDTS%7C18787%7CMCMID%7C06220023048075832883530184630691412429%7CMCAAMLH-1623750820%7C7%7CMCAAMB-1623750820%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1623153220s%7CNONE%7CvVersion%7C5.1.1%7CMCAID%7CNONE; _ce.s=v11.rlc~1623144670965~v11slnt~1623146021984; _gat_UA-1207651-2=1; _gat=1; _uetsid=b9a12b80c83111eb960a53c56458616a; _uetvid=13679d00b01411eb8b98e188bf556b85; nlbi_2413170_2147483646=uUkEG8Z47C/OaSbk/cPt3AAAAAA03e+K/4Uvq++9K/xwzGOv; reese84=3:ufBtWj3432XGVNhsgtPMGA==:JQQrb+qEK0UbsX99wuWKAQFm9jdakNF780VBoCORwVZCj5ICfysNnYTlV0tHGie5a7NAiSGz5bXX/bReSp3draxgxVHb94T2D5Q7jTjuyOR6jdxofeskY99pHaVCIAbCC/r0sK2nl/zUAfs9IXfyjsvqcVx/UwFIZb7zunK326qtdxitpMvADKmoQWukkGwYmy6yr8ZKIFIlVkb5fIrmSgalEtb2VrbOtYL0faRAHDk+USN5MW3Eq1jXcO7EKpVKWZYOJtyoGUDuF5j9xMs0FrRZuGbwETYmluiao9LQ0Lv8/LZwfBtkXgQVTEEyJE8OR0lvYDOHpjZVjQcS4uWVCrmWXxsoDjepLwqhD8JGl3ytNAIbymAGf0HXqQkCfXzYPTzlK21tKehxaAwK/pHjED6pRxBYGuc1lb2MCP4//8M=:0kHWP3za6nbPLqdua/MVX4T2Khvl9jc23FpfofBGROA=; mbox=PC#ecd6e123c41646ee84167cc509812e27.38_0#1686390980|session#267176b0bc6d4216a30b036b3490979f#1623146521; gpv_pageName=facility%3A5083%3A3333%20meade%20ave%20las%20vegas%20nv%2089102; s_sq=%5B%5BB%5D%5D; s_plt=19.32; s_pltp=facility%3A5083%3A3333%20meade%20ave%20las%20vegas%20nv%2089102; _st=0939cf00-93d6-11eb-bc89-0f12746e63bb.c1513710-c831-11eb-8a62-a95a6f722872.8555802831.(855) 580-2831.+18555802831.0..primaryPhone.cshPhone.1623146802.1623150959.600.10800.30.1....0....1...cubesmart^com.UA-1207651-2.1605234886^1620488575.35.",
-    "_ga=GA1.2.1605234886.1620488575; _gcl_au=1.1.918372723.1620488576; aam_uuid_opt=06256971139219621033527052771413870466; _fbp=fb.1.1620488889828.1871037673; _pin_unauth=dWlkPVpUYzFZbVk1TmprdFlqYzBNQzAwTjJGaUxXSTNaakl0TWpRMU5EZGlORE14WkRWaQ; _st_bid=0939cf00-93d6-11eb-bc89-0f12746e63bb; _usiTracking=4064102; aam_test=aam%3D3684620; LPVID=NiZDFkNDM3MWZjYTc4ZjBj; visid_incap_2413170=UYWZywgMT9G57YsgP8C2+bOwlmAAAAAAQ0IPAAAAAACAd4ucAS0rDlZpxsTZ82QF9tfjVvE9tKLY; nlbi_2413170=m8eKVSbW9gsCoFy2/cPt3AAAAADR74Bhx+Ucmfsn4xBiqBpV; incap_ses_207_2413170=Mjn2cjJ5ymVnWIFxxGnfAiUnv2AAAAAAPOBPCSYbY58u8tWM28NJhA==; at_check=true; _gid=GA1.2.1342296470.1623140139; mboxEdgeCluster=38; AMCVS_FA78F19C55BA9FAA7F000101%40AdobeOrg=1; s_cc=true; incap_ses_530_2413170=MlUdUTdBuTBYWuzvmfBaB5Asv2AAAAAAKuu5Z49I82m1DSDsuUElxQ==; search_term=; LPSID-22469663=MYs3IRP-S4-VNZM7yoCaTw; _ce.s=v11.rlc~1623142541578~v11slnt~1623141535561; AMCV_FA78F19C55BA9FAA7F000101%40AdobeOrg=-637568504%7CMCIDTS%7C18787%7CMCMID%7C06220023048075832883530184630691412429%7CMCAAMLH-1623748468%7C7%7CMCAAMB-1623748468%7CRKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y%7CMCOPTOUT-1623150868s%7CNONE%7CvVersion%7C5.1.1%7CMCAID%7CNONE; gpv_pageName=facility%3A5904%3A312%20n%20gay%20st%20auburn%20al%2036830; s_sq=%5B%5BB%5D%5D; ASP.NET_SessionId=w4wiwhjz1dxke3qqdnjjlj5o; _uetsid=b9a12b80c83111eb960a53c56458616a; _uetvid=13679d00b01411eb8b98e188bf556b85; mbox=PC#ecd6e123c41646ee84167cc509812e27.38_0#1686388528|session#0bd6512fa8674eeba4afa608d5a1b409#1623144394; s_plt=6.51; s_pltp=facility%3A5904%3A312%20n%20gay%20st%20auburn%20al%2036830; _st=0939cf00-93d6-11eb-bc89-0f12746e63bb.c1513710-c831-11eb-8a62-a95a6f722872.8555802831.(855) 580-2831.+18555802831.0..primaryPhone.cshPhone.1623145230.1623150959.600.10800.30.1....0....1...cubesmart^com.UA-1207651-2.1605234886^1620488575.35.; nlbi_2413170_2147483646=4oVMO49GHgWpMUIP/cPt3AAAAABcv0yqfV7uwgDZ2oCyFJMP; reese84=3:ZD3LBgLWADwlUmnp2+RuvA==:OvBMjazjrG/EP76kDKdcBCjwNw80lb/Y+Pzo+GFrTkeLUnuSqJ8JtgYzZdho3CQJZ0MTovWDzcLw1J7mJgoP0aYvA7VK6Q24yHHWAeJyUw92mcNnNzdvMARgM8qGkZGEEYuiunWUF2duFQiUJ9nTCCGdEBLmDa0f5JPGBNYKFRf2tEFtVf4SqDhibSuw0Se9NspxFEOw5RVOgY3yVz5907QVJ0Wb2ugieEGR9UCZwca/AfIRD6J0hXeNDDf9+UVT1m5rKtnTB82/JdQ+Q049JN5r6LFpoaySS4F9dlMU/URXIKyAce57qlIyGtUQZ7/sNROah9FmJ1+YQCSyirHZTQDo40+1E/P9keMmuy2YpaRhoR2hKiuo36qDLp4NJbyPsUjUPV4CEK80PYtrxdZ86Cfvlx12fuq9RJblIXXYF+A=:4H+EiE9AlvMZ0yu1tDilY73b827OlqS+7wCZG4nAgV4=",
-]
-headers1 = {
-    "Host": "www.cubesmart.com",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-    "sec-ch-ua-mobile": "?0",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
-}
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
     cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.cubesmart.com/facilities/query/GetSiteGeoLocations"
+    with SgChrome(user_agent=user_agent) as driver:
+        url = "https://www.cubesmart.com/sitemap-facility.xml"
 
-    try:
-        loclist = session.post(url, headers=headers).json()
-    except:
-        headers["Cookie"] = cookielist[1]
-        loclist = session.post(url, headers=headers).json()
-    for loc in loclist:
-        store = str(loc["Id"])
-        street = loc["Address"]
-        title = "Self Storage of " + loc["City"]
-        city = loc["City"].lower().strip().replace(" ", "-")
-        state = loc["State"]
-        lat = loc["Latitude"]
-        longt = "-" + str(loc["Longitude"])
-        link = (
-            "https://www.cubesmart.com/"
-            + state
-            + "-self-storage/"
-            + city
-            + "-self-storage/"
-            + store
-            + ".html"
-        )
+        driver.get(url)
 
-        headers1["Cookie"] = cookielist[1]
-        headers1["Referer"] = (
-            "https://www.cubesmart.com/"
-            + state
-            + "-self-storage/"
-            + city
-            + "-self-storage/"
-        )
-        try:
-            r = session.get(link, headers=headers1).text
-        except:
-            continue
-        try:
-            pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
-        except:
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        loclist = soup.findAll("loc")
+        for loc in loclist:
 
-            headers1["Cookie"] = cookielist[2]
+            link = loc.text
+            flag = 0
+
+            r = session.get(link, headers=headersss)
             try:
-                r = session.get(link, headers=headers1).text
-                pcode = r.split(',"postalCode":"', 1)[1].split('"', 1)[0]
+                soup = BeautifulSoup(r.text, "html.parser")
+            except:
+                driver.get(link)
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                flag = 1
+            try:
+                title = soup.find("h1").text
             except:
                 continue
-        phone = r.split('},"telephone":"', 1)[1].split('"', 1)[0]
-        phone = phone.replace(")", ") ")
-        try:
-            hours = (
-                r.split('<p class="csHoursList">', 1)[1]
-                .split("</p>", 1)[0]
-                .replace("&ndash;", " - ")
-                .replace("<br>", " ")
-                .lstrip()
-            )
-            hours = re.sub(cleanr, " ", hours).strip()
-        except:
+            try:
+                address = (
+                    soup.find("div", {"class": "csFacilityAddress"}).find("div").text
+                )
+            except:
 
-            hours = "<MISSING>"
-        if pcode == "75072":
-            pcode = "75070"
-        if loc["OpenSoon"] is False:
+                continue
+            street, city, state, pcode = address.split(", ")
+            if flag == 0:
+                lat = r.text.split('"Latitude": ', 1)[1].split(",", 1)[0]
+                longt = r.text.split('"Longitude": ', 1)[1].split("}", 1)[0].strip()
+                phone = r.text.split('},"telephone":"', 1)[1].split('"', 1)[0]
+                try:
+                    hours = (
+                        r.text.split('<p class="csHoursList">', 1)[1]
+                        .split("</p>", 1)[0]
+                        .replace("&ndash;", " - ")
+                        .replace("<br>", " ")
+                        .lstrip()
+                    )
+                    hours = re.sub(cleanr, " ", hours).strip()
+                except:
+
+                    hours = "<MISSING>"
+            else:
+                lat = driver.page_source.split('"Latitude": ', 1)[1].split(",", 1)[0]
+                longt = (
+                    driver.page_source.split('"Longitude": ', 1)[1]
+                    .split("}", 1)[0]
+                    .strip()
+                )
+                phone = driver.page_source.split('},"telephone":"', 1)[1].split('"', 1)[
+                    0
+                ]
+                try:
+                    hours = (
+                        driver.page_source.split('<p class="csHoursList">', 1)[1]
+                        .split("</p>", 1)[0]
+                        .replace("&ndash;", " - ")
+                        .replace("<br>", " ")
+                        .lstrip()
+                    )
+                    hours = re.sub(cleanr, " ", hours).strip()
+                except:
+
+                    hours = "<MISSING>"
+            store = link.split("/")[-1].split(".", 1)[0]
+
+            phone = phone.replace(")", ") ")
 
             yield SgRecord(
                 locator_domain="https://www.cubesmart.com/",
                 page_url=link,
                 location_name=title,
                 street_address=street.strip(),
-                city=str(loc["City"]),
-                state=str(loc["State"]),
+                city=str(city),
+                state=str(state),
                 zip_postal=pcode.strip(),
                 country_code="US",
                 store_number=store,

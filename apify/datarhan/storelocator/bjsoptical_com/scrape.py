@@ -20,6 +20,11 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["Stores"]["PhysicalStore"]:
+        coming_soon = [
+            elem["value"] for elem in poi["Attribute"] if elem["name"] == "Coming Soon"
+        ][0]
+        if coming_soon == "Yes":
+            continue
         location_name = poi["Description"][0]["displayStoreName"]
         store_url = f"https://www.bjs.com/cl/{location_name.lower()}/{poi['storeName']}"
         location_name = location_name if location_name else "<MISSING>"

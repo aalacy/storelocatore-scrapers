@@ -13,10 +13,37 @@ headers = {
 def fetch_data():
     r = session.get("https://www.bubbagump.com/store-locator/", headers=headers)
     lines = r.iter_lines()
-    country = "US"
     website = "bubbagump.com"
     typ = "Restaurant"
     hours = "<MISSING>"
+    name = "London, UK"
+    purl = "https://www.bubbagump.com/international-locations/"
+    add = "Unit 75 Trocadero, 13 Coventry Street"
+    city = "London"
+    state = "<MISSING>"
+    zc = "W1D 7AB"
+    country = "GB"
+    store = "<MISSING>"
+    phone = "0203 7635 288"
+    lat = "51.5104365"
+    lng = "-0.134656"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=purl,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
+    country = "US"
     for line in lines:
         if '{"name": "' in line:
             line = line.replace('"categories": [{"name":', "")
@@ -72,9 +99,12 @@ def fetch_data():
                         hours = "Sunday - Thursday: 11:30 AM - 9:00 PM; Friday - Saturday: 11:30 AM - 10:00 PM"
                     if "Orlando" in city:
                         hours = "SUN - SAT: 11:00 AM - 11:00 PM"
-                    if "Beijing" in city:
+                    if "beijing" in purl:
                         phone = "010-13651001283"
                         hours = "<MISSING>"
+                    hours = hours.strip()
+                    if hours[-1:] == ";":
+                        hours = hours[:-1]
                     if "Coming" not in name:
                         yield SgRecord(
                             locator_domain=website,

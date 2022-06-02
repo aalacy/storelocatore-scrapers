@@ -22,70 +22,79 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        divname = []
         search_url = "https://someburros.com/locations/"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
         loc_block = soup.find("article", {"id": "post-9"}).findAll("div")
-        for d in loc_block:
-            name = d["class"]
-            if len(name) == 3:
-                divname.append(name[0] + " " + name[1] + " " + name[2])
-        for loc in divname:
-            loc_block = soup.find("article", {"id": "post-9"}).find(
-                "div", {"class": loc}
-            )
-            title = loc_block.find("h3").text
-            address = loc_block.find("p").text
-            if len(loc_block.findAll("p")) == 4:
-                hours = loc_block.findAll("p")[3].text
-            else:
-                hours = loc_block.findAll("p")[2].text
-            address = address.split("\n")
-            phone = address[-1]
-            address = address[0] + " " + address[1]
-            phone = phone.replace("TACO (", "")
-            phone = phone.replace(")", "").strip()
-            hours = hours.replace("\n", " ")
-            hours = hours.replace(" Order online", "").strip()
-            parsed = parser.parse_address_usa(address)
-            street1 = (
-                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-            )
-            street = (
-                (street1 + ", " + parsed.street_address_2)
-                if parsed.street_address_2
-                else street1
-            )
-            city = parsed.city if parsed.city else "<MISSING>"
-            state = parsed.state if parsed.state else "<MISSING>"
-            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+        for i in range(0, len(loc_block) - 5):
+            if i % 5 == 0:
+                location = loc_block[i]
+                title = location.find("h3").text
+                address = location.find("p").text
+                address = address.split("\n")
+                try:
+                    address = address[0] + " " + address[1]
+                    ptags = location.findAll("p")
+                    hours = ptags[-1].text
+                    hours = hours.replace("\n", " ")
+                    hours = hours.replace("7 days a week", "Mon-Sun")
+                    hours = hours.replace(
+                        "Open every home game at Sun Devil Stadium!", "<MISSING>"
+                    )
+                    phone = ptags[0].text
+                    phone = phone.split("\n")[-1]
+                    if phone.find("-") == -1:
+                        phone = "<MISSING>"
+                    parsed = parser.parse_address_usa(address)
+                    street1 = (
+                        parsed.street_address_1
+                        if parsed.street_address_1
+                        else "<MISSING>"
+                    )
+                    street = (
+                        (street1 + ", " + parsed.street_address_2)
+                        if parsed.street_address_2
+                        else street1
+                    )
+                    city = parsed.city if parsed.city else "<MISSING>"
+                    state = parsed.state if parsed.state else "<MISSING>"
+                    pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+                    hours = hours.replace("â€“", "-").strip()
+                    title = title.replace("â€“", "-").strip()
+                    phone = phone.split("â€¬")[0]
 
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url="https://someburros.com/locations/",
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode,
-                country_code="US",
-                store_number=MISSING,
-                phone=phone,
-                location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
-                hours_of_operation=hours.strip(),
-            )
+                except IndexError:
+                    title = title + " " + "Coming Soon"
+                    hours = MISSING
+                    street = MISSING
+                    city = MISSING
+                    state = MISSING
+                    pcode = MISSING
+                    phone = MISSING
+
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url="https://someburros.com/locations/",
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=MISSING,
+                    longitude=MISSING,
+                    hours_of_operation=hours.strip(),
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

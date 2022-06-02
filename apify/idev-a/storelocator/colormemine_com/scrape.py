@@ -1,8 +1,11 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("colormemine")
 
@@ -12,101 +15,68 @@ headers = {
 
 locator_domain = "https://www.colormemine.com/"
 
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-    maximum_search_radius=None,
-    max_search_results=None,
-)
 
-
-def fetch_data():
+def fetch_records(search):
     # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
     maxZ = search.items_remaining()
     total = 0
     for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % lat, lng))
-        url = f"https://www.colormemine.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lng}&max_results=25&search_radius=2000"
-        locations = session.get(url, headers=headers, timeout=15).json()
-        total += len(locations)
-        for loc in locations:
-            if loc["country"].lower() == "korea":
-                continue
-            search.found_location_at(
-                loc["lat"],
-                loc["lng"],
+        with SgRequests() as session:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            logger.info(("Pulling Geo Code %s..." % lat, lng))
+            url = f"https://www.colormemine.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lng}&max_results=25&search_radius=2000"
+            locations = session.get(url, headers=headers).json()
+            total += len(locations)
+            for _ in locations:
+                if _["country"].lower() == "korea":
+                    continue
+                search.found_location_at(
+                    _["lat"],
+                    _["lng"],
+                )
+                hours = []
+                if _["hours"]:
+                    for hh in bs(_["hours"], "lxml").select("tr"):
+                        hours.append(
+                            f"{hh.select('td')[0].text}: {hh.select('td')[1].text}"
+                        )
+
+                street_address = _["address"]
+                if _["address2"]:
+                    street_address += " " + _["address2"]
+                yield SgRecord(
+                    page_url=_["url"],
+                    location_name=_["store"],
+                    store_number=_["id"],
+                    street_address=street_address,
+                    city=_["city"],
+                    state=_["state"],
+                    zip_postal=_["zip"],
+                    country_code=_["country"],
+                    phone=_["phone"],
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
-            hours = []
-            if loc["hours"]:
-                for hh in bs(loc["hours"], "lxml").select("tr"):
-                    hours.append(
-                        f"{hh.select('td')[0].text}: {hh.select('td')[1].text}"
-                    )
 
-            loc["hours_of_operation"] = "; ".join(hours)
-            loc["street_address"] = loc["address"]
-            if loc["address2"]:
-                loc["street_address"] += " " + loc["address2"]
-            yield loc
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-
-        logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["store"],
-        ),
-        store_number=sp.MappingField(
-            mapping=["id"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["lng"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street_address"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+            logger.info(
+                f"found: {len(locations)} | total: {total} | progress: {progress}"
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=10
+        )
+    ) as writer:
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        )
+        for rec in fetch_records(search):
+            writer.write_row(rec)
