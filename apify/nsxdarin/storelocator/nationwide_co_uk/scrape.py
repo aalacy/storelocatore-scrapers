@@ -29,9 +29,9 @@ def fetch_data():
                 if "<!doctype html>" not in item:
                     lurl = "https://www.nationwide.co.uk/branches/" + item.split('"')[0]
                     if 'data-count="(' in item:
-                        cities.append(lurl)
+                        cities.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
                     else:
-                        locs.append(lurl)
+                        locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
     for curl in cities:
         logger.info(curl)
         r = session.get(curl, headers=headers)
@@ -44,7 +44,7 @@ def fetch_data():
                             "https://www.nationwide.co.uk/branches/"
                             + item.split('"')[0]
                         )
-                        locs.append(lurl)
+                        locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
     for loc in locs:
         logger.info(loc)
         name = ""
