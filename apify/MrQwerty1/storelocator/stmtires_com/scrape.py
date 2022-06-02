@@ -54,15 +54,16 @@ def fetch_data(sgw: SgWriter):
                     continue
 
                 try:
-                    i = h.get("intervals")[0]
+                    i = h["intervals"][0]
                 except:
                     i = dict()
 
-                start = str(i.get("start")).zfill(4)
-                end = str(i.get("end")).zfill(4)
+                start = str(i.get("start") or "").zfill(4)
+                end = str(i.get("end") or "").zfill(4)
                 start = start[:2] + ":" + start[2:]
                 end = end[:2] + ":" + end[2:]
-                _tmp.append(f"{day}: {start}-{end}")
+                if start != end:
+                    _tmp.append(f"{day}: {start}-{end}")
 
             hours_of_operation = ";".join(_tmp)
 
