@@ -55,14 +55,15 @@ def get_data(slug, sgw: SgWriter):
     longitude = geo.get("longitude")
     location_type = (data.get("@type") or [SgRecord.MISSING]).pop()
 
-    hours_of_operation = []
+    _tmp = []
     for time in data.get("openingHoursSpecification"):
         day = time["dayOfWeek"]
         opens = time.get("opens")
         closes = time.get("closes")
         if opens and closes:
-            hours_of_operation.append(f"{day}: {opens}-{closes}")
-    hours_of_operation = ",".join(hours_of_operation)
+            _tmp.append(f"{day}: {opens}-{closes}")
+
+    hours_of_operation = ",".join(_tmp)
 
     row = SgRecord(
         page_url=page_url,
