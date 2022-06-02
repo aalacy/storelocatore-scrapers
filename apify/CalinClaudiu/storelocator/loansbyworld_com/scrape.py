@@ -60,8 +60,13 @@ def fetch_data():
             return actual_req(session, long)["data"]
         except Exception as smh:
             logzilla.error("smh", exc_info=smh)
+            logzilla.error(f"smhlong {str(long)}")
             long = "0" + str(long)
-            return actual_req(session, long)["data"]
+            try:
+                return actual_req(session, long)["data"]
+            except Exception as ff:
+                logzilla.error("FF", exc_info=ff)
+                return []
 
     def fetch_sub(session, k):
         headers = {}

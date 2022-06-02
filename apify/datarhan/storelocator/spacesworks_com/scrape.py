@@ -32,9 +32,11 @@ def fetch_data():
         all_locations += data["data"]["items"]
 
     for poi in all_locations:
-        street_address = poi["addressLine1"]
+        street_address = poi.get("addressLine1")
         if poi.get("addressLine2"):
             street_address += " " + poi["addressLine2"]
+        if not street_address:
+            street_address = poi["name"]
         time = str(poi["openingDate"])
         location_type = ""
         if datetime.fromisoformat(time) > datetime.now(timezone.utc):
