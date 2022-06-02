@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from concurrent import futures
@@ -75,7 +75,7 @@ def fetch_data(sgw: SgWriter):
         coords = DynamicGeoSearch(
             country_codes=[f"{country}"],
             max_search_distance_miles=250,
-            expected_search_radius_miles=50,
+            expected_search_radius_miles=70,
             max_search_results=None,
         )
 
@@ -87,5 +87,9 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
