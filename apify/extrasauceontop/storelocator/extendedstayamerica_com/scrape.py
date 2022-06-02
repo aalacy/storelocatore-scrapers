@@ -1,10 +1,10 @@
-from sgselenium import SgSelenium
 from sgselenium import SgChrome
-from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
-from bs4 import BeautifulSoup as bs
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_json(html_string):
@@ -33,60 +33,45 @@ def extract_json(html_string):
 
 
 def get_data():
-    session = SgRequests()
-
     url = "https://www.extendedstayamerica.com/hotels/"
-    browser_headers = SgSelenium.get_default_headers_for(
-        the_driver=SgChrome().driver(), request_url=url
-    )
-    response = session.get(url, headers=browser_headers).text
-    json_objects = extract_json(response.split("window.esa.hotelsData = ")[1])
+    with SgChrome() as driver:
+        driver.get(url)
+        response = driver.page_source
+        json_objects = extract_json(response.split("window.esa.hotelsData = ")[1])
 
-    for location in json_objects:
-        locator_domain = "extendedstayamerica.com"
-        page_url = "https://www.extendedstayamerica.com" + location["urlMap"]
-        location_name = location["title"]
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        city = location["address"]["city"]
-        store_number = location["siteId"]
-        address = location["address"]["street"]
-        state = location["address"]["region"]
-        zipp = location["address"]["postalCode"]
-        location_type = "<MISSING>"
-        hours = "24/7"
-        country_code = "US"
-        try:
-            phone_response = session.get(page_url, headers=browser_headers).text
-            phone_soup = bs(phone_response, "html.parser")
+        for location in json_objects:
+            locator_domain = "extendedstayamerica.com"
+            page_url = "https://www.extendedstayamerica.com" + location["urlMap"]
+            location_name = location["title"]
+            latitude = location["latitude"]
+            longitude = location["longitude"]
+            city = location["address"]["city"]
+            store_number = location["siteId"]
+            address = location["address"]["street"]
+            state = location["address"]["region"]
+            zipp = location["address"]["postalCode"]
+            location_type = "<MISSING>"
+            hours = "24/7"
+            country_code = "US"
 
-            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+            phone = "<INACCESSIBLE>"
 
-        except Exception:
-            browser_headers = SgSelenium.get_default_headers_for(
-                the_driver=SgChrome().driver(), request_url=page_url
-            )
-            phone_response = session.get(page_url, headers=browser_headers).text
-            phone_soup = bs(phone_response, "html.parser")
-
-            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
-
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
 def scrape():

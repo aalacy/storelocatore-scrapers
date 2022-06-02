@@ -51,7 +51,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url=poi["urlDetailPage"],
+                page_url=poi.get("urlDetailPage"),
                 location_name=poi.get("name"),
                 street_address=street_address,
                 city=poi["location"]["city"],
@@ -74,7 +74,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
