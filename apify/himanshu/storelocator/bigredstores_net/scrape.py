@@ -53,8 +53,7 @@ def fetch_data(sgw: SgWriter):
                     state = content[2].split(",")[1].split()[0].strip()
                     zipp = content[2].split(",")[1].split()[-1].strip()
                     phone_list = re.findall(
-                        re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
-                        str(content[-1]),
+                        r"[\d]{3}-[\d]{3}-[\d]{4}", str(content[-1])
                     )
                     if phone_list:
                         phone = phone_list[-1]
