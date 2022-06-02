@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
 
         index = 0
         for li in line:
-            if "@" in li:
+            if "emailprotected" in li:
                 break
             index += 1
 
