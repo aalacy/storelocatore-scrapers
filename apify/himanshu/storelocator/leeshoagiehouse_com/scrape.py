@@ -1,75 +1,100 @@
-import csv
+# -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    session = SgRequests()
+
+    start_url = "https://leeshoagiehouse.com/order/"
+    domain = "leeshoagiehouse.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    base_url = "http://leeshoagiehouse.com"
-    r = session.get("http://leeshoagiehouse.com/order/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for location in soup.find_all("div",{"class":"item"}):
-        name = location.find("div",{"class":"title"}).text.strip()
-        address = location.find("p",{'class':'address-wrap'}).text.strip()
-        state_split = re.findall("([A-Z]{2})",address)
-        if state_split:
-            state = state_split[-1]
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//a[@target="_blank"]/@href')[:-1]
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath("//h2/text()")[0]
+        raw_address = " ".join(
+            loc_dom.xpath('//p[@class="address-wrap"]/text()')
+        ).replace("PA", "PA ")
+        city = location_name.split(", ")[0]
+        if "(Lehigh" not in raw_address:
+            raw_address = raw_address.split("(")[0]
+        phone = loc_dom.xpath(
+            '//div[@class="col-12 col-lg-auto  text-center"]/p[3]/text()'
+        )
+        if not phone:
+            phone = loc_dom.xpath(
+                '//div[@class="col-12 col-lg-auto  text-center"]/p[5]/text()'
+            )
+        phone = phone[0] if phone else ""
+        hoo = loc_dom.xpath(
+            '//div[@class="col-12 col-lg-auto  text-center"]/p[4]/text()'
+        )[1:]
+        if phone == "Hours:":
+            phone = loc_dom.xpath(
+                '//div[@class="col-12 col-lg-auto  text-center"]/p[2]/text()'
+            )[0]
+            hoo = loc_dom.xpath(
+                '//div[@class="col-12 col-lg-auto  text-center"]/p[3]/text()'
+            )[1:]
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//p[contains(text(), "Hours:")]/following-sibling::p/text()'
+            )
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        state = location_name.split(", ")
+        if len(state) > 1:
+            state = state[1]
         else:
-            state = "<MISSING>"
-        store_zip_split = re.findall(r"[0-9]{5}(?:-[0-9]{4})?",address)
-        if store_zip_split:
-            store_zip = store_zip_split[-1]
-        else:
-            store_zip = "<MISSING>"
-        city = name.split(",")[0]
-        street_address = address.replace(store_zip,"").replace(state,"").replace(city,"").replace("\n"," ")
-        if " ," in street_address:
-            pass
-        else:
-            city = street_address.split(",")[0].split(" ")[-1]
-            street_address = street_address.replace(city,"")
-        if location.find("p",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")):
-            phone = location.find("p",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")).text
-        else:
-            phone = "<MISSING>"
-        store_id = location["class"][1].split("-")[1]
-        hours = " ".join(list(location.find("div",{'class':'content'}).find_all("p")[-1].stripped_strings))
-        store = []
-        store.append("http://leeshoagiehouse.com")
-        store.append(name)
-        store.append(street_address.replace(", ",""))
-        store.append(city)
-        store.append(state)
-        store.append(store_zip)
-        store.append("US")
-        store.append(store_id)
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours)
-        store.append("http://leeshoagiehouse.com/order")
-        yield store
+            state = raw_address.split(",")[-1].split()[0]
+        street_address = raw_address.split(city)[0].strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=raw_address.split()[-1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+        )
+
+        yield item
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

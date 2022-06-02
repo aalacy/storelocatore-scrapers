@@ -32,19 +32,16 @@ def fetch_data():
         city = loc["city"]
         state = loc["state"]
         zip_postal = loc["zip"]
-        phone = loc["phone"]
         page_url = loc["url"]
-        try:
-            if page_url.find("https://midwest-dental.com/locations") == -1:
-                continue
-        except:
-            continue
         country_code = "US"
         log.info(page_url)
         r = session.get(page_url, headers=headers)
         if r.status_code != 200:
             continue
+        if "permanently closed" in r.text:
+            continue
         soup = BeautifulSoup(r.text, "html.parser")
+        phone = soup.select_one("a[href*=tel]").text
         try:
             hours_of_operation = soup.find("div", {"id": "hours"}).findAll("div")[2:]
             hours_of_operation = " ".join(

@@ -108,6 +108,10 @@ def fetch_data():
                 )
             except:
                 hours_of_operation = MISSING
+            if "This store is currently closed" in hours_of_operation:
+                hours_of_operation = MISSING
+                location_type = "Temporarily Closed"
+            city = city.replace("Mumbai Mumbai", "Mumbai")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
