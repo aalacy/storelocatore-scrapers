@@ -1,10 +1,6 @@
 beautifulsoup4==4.7.1
-selenium==4.1.5
 sglogging==0.0.4
-sgvalidator==0.0.71
 tenacity==7.0.0
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 sgscrape==0.2.9
-sgselenium==0.3.1
 sgrequests==0.3.7
-selenium-wire==4.6.4

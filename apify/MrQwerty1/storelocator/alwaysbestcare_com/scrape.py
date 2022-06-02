@@ -10,15 +10,16 @@ from sglogging import sglog
 
 
 def get_params():
-    params = []
+    params = set()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=6
     )
 
     for _zip in search:
         api = f"https://www.alwaysbestcare.com/wp-json/ral/v1/location/offices?q={_zip}"
         r = session.get(api, headers=headers)
         js = r.json()["features"]
+        logger.info(f"{_zip}: {len(js)} location(s) found")
 
         for j in js:
             p = j.get("properties") or {}
@@ -26,7 +27,7 @@ def get_params():
             page_url = p.get("url")
             g = j.get("geometry") or {}
             lng, lat = g.get("coordinates") or (SgRecord.MISSING, SgRecord.MISSING)
-            params.append((page_url, lat, lng, store_number))
+            params.add((page_url, lat, lng, store_number))
 
     return params
 
@@ -35,6 +36,9 @@ def get_data(param, sgw: SgWriter):
     page_url, latitude, longitude, store_number = param
     r = session.get(page_url, headers=headers)
     logger.info(f"{page_url}: {r.status_code}")
+    if r.status_code != 200:
+        logger.info(f"{page_url} skipped b/c status code is {r.status_code}")
+        return
     tree = html.fromstring(r.text)
 
     try:
@@ -45,9 +49,9 @@ def get_data(param, sgw: SgWriter):
         )
     except IndexError:
         location_name = SgRecord.MISSING
-    street_address = "".join(
-        tree.xpath("//span[@itemprop='streetAddress']/text()")
-    ).strip()
+    street_address = " ".join(
+        "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).split()
+    )
     city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
     state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
     postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
@@ -58,6 +62,9 @@ def get_data(param, sgw: SgWriter):
         text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
         if "/@" in text:
             latitude, longitude = text.split("/@")[1].split(",")[:2]
+
+    if latitude == SgRecord.MISSING or str(latitude) == "0":
+        latitude, longitude = SgRecord.MISSING
 
     row = SgRecord(
         page_url=page_url,

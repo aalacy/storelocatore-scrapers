@@ -50,7 +50,7 @@ def fetch_data():
             if "Directions" in phone:
                 phone = MISSING
             address = address_json["address"]
-            address = address.replace(",", " ").replace("USA", "")
+            address = address.replace(",", " ").replace(".", "").replace("USA", "")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -85,6 +85,9 @@ def fetch_data():
             )[1:]
             location_name = raw_data[0]
             street_address = raw_data[1]
+            street_address = (
+                str(street_address).replace(",", "").replace(".", "").strip()
+            )
             city_line = raw_data[2].strip().split(",")
             city = city_line[0].strip()
             state = city_line[-1].strip().split()[0].strip()
