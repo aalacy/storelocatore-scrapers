@@ -25,7 +25,6 @@ def fetch_data(sgw: SgWriter):
     )
     for lat, lng in search:
         country = search.current_country().upper()
-        print(country)
         api = f"https://www.lefties.com/itxrest/2/bam/store/94009000/physical-store?favouriteStores=false&lastStores=false&closerStores=false&latitude={lat}&longitude={lng}&receiveEcommerce=false&countryCode={country}&languageId=-1&appId=1"
         r = session.get(api, headers=headers)
         js = r.json()["closerStores"]
