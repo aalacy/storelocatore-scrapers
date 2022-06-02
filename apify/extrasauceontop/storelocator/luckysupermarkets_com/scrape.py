@@ -1,5 +1,4 @@
 from sgselenium import SgChrome
-from proxyfier import ProxyProviders
 from bs4 import BeautifulSoup as bs
 import ssl
 from sgscrape import simple_scraper_pipeline as sp
@@ -12,9 +11,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_data():
     url = "https://www.luckysupermarkets.com/stores/?coordinates=39.64096403685537,-112.39632159999998&zoom=5"
-    with SgChrome(
-        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER
-    ) as driver:
+    with SgChrome() as driver:
         driver.get(url)
         response = driver.page_source
 
