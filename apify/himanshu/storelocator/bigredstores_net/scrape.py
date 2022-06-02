@@ -1,10 +1,10 @@
+import re
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup
-import re
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("bigredstores_net")
@@ -36,7 +36,7 @@ def fetch_data(sgw: SgWriter):
         soup_loc = BeautifulSoup(r_loc.text, "html.parser")
         try:
             coords = soup_loc.find("div", class_="et_pb_map_pin")
-            if coords == None:
+            if coords is None:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
             else:
