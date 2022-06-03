@@ -23,7 +23,6 @@ def fetch_data():
         '//h4[contains(text(), "Select a county")]/following-sibling::ul[1]//a/@href'
     )
     for url in all_counties:
-        print("County: ", url)
         if url in scraped_urls:
             continue
         scraped_urls.append(url)
@@ -36,7 +35,6 @@ def fetch_data():
             if url in scraped_urls:
                 continue
             scraped_urls.append(url)
-            print("City: ", url)
             url = urljoin(start_url, url)
             response = session.get(url, headers=hdr)
             dom = etree.HTML(response.text)
@@ -50,7 +48,6 @@ def fetch_data():
             if total:
                 total_pages = int(round((int(total[0]) + 12) / 12, 0))
                 for i in range(0, total_pages):
-                    print("Page: ", i)
                     data = session.get(
                         f"https://www.anchor.org.uk/internals/property-finder/search?offset={str(i)}"
                     ).json()
@@ -63,7 +60,6 @@ def fetch_data():
                 if page_url in scraped_urls:
                     continue
                 scraped_urls.append(page_url)
-                print(page_url)
                 loc_response = session.get(page_url, headers=hdr)
                 if loc_response.status_code != 200:
                     continue
