@@ -42,9 +42,6 @@ user_agent = (
 )
 
 
-service = Service(executable_path=ChromeDriverManager().install())
-
-
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response(urlnum, url):
     with SgRequests() as http:
