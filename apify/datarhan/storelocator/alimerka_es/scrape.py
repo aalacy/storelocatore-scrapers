@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -19,13 +20,28 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@id="localizador"]/div')
-    url = "https://www.alimerka.es/localizador-de-supermercados/?_sft_localidad={}"
+    all_locations = dom.xpath('//div[@id="localizador"]/div')[1:]
+    url = "https://www.alimerka.es/?sfid=2205&sf_action=get_data&sf_data=results&_sft_localidad={}&sf_paged=1&lang=es"
     all_cities = dom.xpath('//select[@class="sf-input-select"]/option/@value')
     for c in all_cities:
-        response = session.get(url.format(c))
-        dom = etree.HTML(response.text)
+        c_url = url.format(c)
+        data = session.get(c_url).json()
+        dom = etree.HTML(data["results"])
+        if not dom:
+            continue
+        page = 1
         all_locations += dom.xpath('//div[@id="localizador"]/div')
+        while True:
+            c_url = add_or_replace_parameter(c_url, "sf_paged", str(page + 1))
+            data = session.get(c_url).json()
+            dom = etree.HTML(data["results"])
+            if not dom:
+                break
+            page += 1
+            more_locations = dom.xpath('//div[@id="localizador"]/div')
+            if not more_locations:
+                break
+            all_locations += more_locations
 
     for poi_html in all_locations:
         location_name = poi_html.xpath('.//div[@class="h2"]/text()')[0]
@@ -50,12 +66,13 @@ def fetch_data():
         hoo = (
             poi_html.xpath('.//div[contains(text(), " horas")]/text()')[0]
             .split("Horario:")[-1]
+            .replace(", ininterrumpidamente", "")
             .strip()
         )
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.alimerka.es/localizador-de-supermercados",
+            page_url=start_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
