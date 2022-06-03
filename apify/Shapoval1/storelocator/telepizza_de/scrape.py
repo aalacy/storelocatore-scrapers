@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//tr[contains(@class, "bestellen_store  js_store_")]')
+    div = tree.xpath("//tr[@data-id]")
     for d in div:
 
         slug = "".join(d.xpath('.//a[@class="storelink"]/@href'))
