@@ -15,8 +15,10 @@ def fetch_data():
         city = poi["city"]
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
-        page_url = f"https://uberall.com/api/storefinders/ALDINORDDE_UimhY3MWJaxhjK9QdZo3Qa4chq1MAu/locations?v=20211005&language=de&locationIds={store_number}"
-        poi_data = session.get(page_url).json()
+        page_url = f"https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html/l/{city.lower()}/{street_address.lower().replace(' ', '-')}/{store_number}"
+        poi_url = f"https://uberall.com/api/storefinders/ALDINORDDE_UimhY3MWJaxhjK9QdZo3Qa4chq1MAu/locations?v=20211005&language=de&locationIds={store_number}"
+        poi_data = session.get(poi_url).json()
+        print(poi_data)
         hoo = []
         days_dict = {
             7: "Sunday",
@@ -41,7 +43,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html",
+            page_url=page_url,
             location_name=poi["name"],
             street_address=street_address,
             city=city,
