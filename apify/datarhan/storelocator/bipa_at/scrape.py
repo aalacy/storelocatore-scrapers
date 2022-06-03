@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import random
 import json
 from lxml import etree
 from sglogging import sglog
@@ -8,13 +9,16 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgFirefox
-from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 
 logger = sglog.SgLogSetup().get_logger(logger_name="bipa.at")
 
 
-def fetch_locations(session, url, code, lat, lng, retry=0):
+def fetch_locations(session, url, latlng, retry=0):
+    lat, lng = latlng
+
     try:
+
         html = session.execute_async_script(
             f"""
             fetch("{url}", {{
@@ -31,7 +35,7 @@ def fetch_locations(session, url, code, lat, lng, retry=0):
                     "Sec-Fetch-User": "?1"
                 }},
                 "referrer": "https://www.bipa.at/filialen",
-                "body": "dwfrm_storelocator_zipcity={code}&latitude={lat}&longitude={lng}",
+                "body": "&latitude={lat}&longitude={lng}",
                 "method": "POST",
                 "mode": "cors"
             }})
@@ -43,15 +47,15 @@ def fetch_locations(session, url, code, lat, lng, retry=0):
         return html
     except:
         if retry < 3:
-            return fetch_locations(session, url, code, lat, lng, retry + 1)
+            return fetch_locations(session, url, latlng, retry + 1)
 
 
 def fetch_data():
     domain = "bipa.at"
 
-    search = DynamicZipAndGeoSearch(
-        expected_search_radius_miles=1,
+    search = DynamicGeoSearch(
         max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
         country_codes=[SearchableCountries.AUSTRIA],
     )
 
@@ -62,8 +66,8 @@ def fetch_data():
         tree = etree.HTML(session.page_source)
         url = tree.xpath('//form[@id="frmStorelocator"]/@action')[0]
 
-        for code, (lat, lng) in search:
-            html = fetch_locations(session, url, code, lat, lng)
+        for latlng in search:
+            html = fetch_locations(session, url, latlng)
 
             dom = etree.HTML(html)
 
@@ -123,7 +127,8 @@ def scrape():
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
