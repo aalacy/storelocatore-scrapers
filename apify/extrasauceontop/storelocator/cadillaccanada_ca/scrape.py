@@ -44,7 +44,7 @@ def get_data():
             address = location["streetAddress1"]
             state = location["state"]
             zipp = location["postalCode"]
-            phone = location["primaryPhone"]
+            phone = location["salesPhone"]
             location_type = "<MISSING>"
             country_code = "CA"
 
