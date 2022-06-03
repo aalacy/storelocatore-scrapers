@@ -19,7 +19,12 @@ def fetch_data(sgw: SgWriter):
 
         location_name = j.get("key") or "<MISSING>"
         slug = str(location_name).lower().replace(" ", "-").strip()
-        page_url = f"https://www.coffee-fellows.com/locations/{slug}"
+        page_url = (
+            f"https://www.coffee-fellows.com/locations/{slug}".replace("ä", "ae")
+            .replace("ß", "ss")
+            .replace("ü", "ue")
+            .replace("ö", "oe")
+        )
         street_address = j.get("street") or "<MISSING>"
         state = j.get("region") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"

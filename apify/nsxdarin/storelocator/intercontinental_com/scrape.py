@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("intercontinental_com")
 
@@ -25,10 +26,11 @@ def fetch_data():
     for loc in locs:
         Retry = True
         rc = 1
-        while Retry and rc <= 3:
+        while Retry and rc <= 8:
             rc = rc + 1
             Retry = False
             try:
+                time.sleep(5)
                 logger.info(loc)
                 r2 = session.get(loc, headers=headers)
                 website = "intercontinental.com"
