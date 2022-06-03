@@ -55,8 +55,10 @@ def fetch_data():
                 phone = temp[-1].text
                 hours_of_operation = MISSING
                 phone = phone.replace("Delivery through DoorDash", "")
-                raw_address = address.replace(",", " ").replace(
-                    "99Fillmore", "99 Fillmore"
+                raw_address = (
+                    address.replace(",", " ")
+                    .replace("Delivery through Door Dash", "")
+                    .replace("99Fillmore", "99 Fillmore")
                 )
             pa = parse_address_intl(raw_address)
 
