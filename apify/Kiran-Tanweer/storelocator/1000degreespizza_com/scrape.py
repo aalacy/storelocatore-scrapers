@@ -23,7 +23,7 @@ def fetch_data():
         try:
             link = div.findAll("a")[-1]["href"]
             if "../" in link:
-                link = link.replace("../", "https://www.1000degreespizza.com")
+                link = link.replace("../", "https://www.1000degreespizza.com/")
         except:
             continue
         if "NOW OPEN!" in div.text:
