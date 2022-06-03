@@ -9,32 +9,10 @@ from sgscrape import simple_scraper_pipeline as sp
 
 from sglogging import sglog
 import ssl
-import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 log = sglog.SgLogSetup().get_logger(logger_name="wincofoods.com")
-
-
-def get_driver(url, class_name):
-
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            with SgFirefox() as driver:
-                driver.get(url)
-                WebDriverWait(driver, 70).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, class_name))
-                )
-            break
-        except Exception:
-            if x == 5:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    return driver
 
 
 def fetch_data():
@@ -42,12 +20,12 @@ def fetch_data():
     while True:
         x = x + 1
 
-        url = "https://www.wincofoods.com/stores/"
-        with SgFirefox() as driver:
+        url = "https://www.wincofoods.com/stores/?coordinates=41.20605200836969,-110.02699584999999&zoom=6"
+
+        with SgFirefox(driver_wait_timeout=80) as driver:
 
             if x == 1:
-                driver.get(url)
-                time.sleep(60)
+                driver.get_and_wait_for_request(url)
 
             soup = bs(driver.page_source, "lxml")
             grids = soup.find("div", class_="store-list__scroll-container").find_all(
@@ -77,7 +55,7 @@ def fetch_data():
             )
 
             try:
-                driver.get(page_url)
+                driver.get_and_wait_for_request(page_url)
                 log.info("Pull content => " + page_url)
                 WebDriverWait(driver, 30).until(
                     EC.presence_of_element_located(
@@ -85,7 +63,13 @@ def fetch_data():
                     )
                 )
             except Exception:
-                driver = get_driver(page_url, "store-details-store-hours__content")
+                driver.get_and_wait_for_request(page_url)
+                log.info("Pull content => " + page_url)
+                WebDriverWait(driver, 30).until(
+                    EC.presence_of_element_located(
+                        (By.CLASS_NAME, "store-details-store-hours__content")
+                    )
+                )
 
             location_soup = bs(driver.page_source, "lxml")
 

@@ -41,6 +41,8 @@ def fetch_data(sgw: SgWriter):
         for i in info:
             if "Mo" in i or "So" in i:
                 hours_of_operation = str(i)
+        if hours_of_operation.endswith(","):
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
