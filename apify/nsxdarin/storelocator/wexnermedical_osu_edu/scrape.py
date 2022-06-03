@@ -1,5 +1,10 @@
-import csv
 from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sglogging import SgLogSetup
 
 session = SgRequests()
@@ -10,105 +15,17 @@ headers = {
 logger = SgLogSetup().get_logger("wexnermedical_osu_edu")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    locs = []
+def fetch_data(sgw: SgWriter):
     url = (
         "https://wexnermedical.osu.edu/locations/locations_filter/?name=&service=&care="
     )
-    r = session.get(url, headers=headers)
+    locs = session.get(url, headers=headers).json()
     website = "wexnermedical.osu.edu"
-    typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
     logger.info("Pulling Stores")
-    name = "Central Ohio Primary Care"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    add = "4895 Olentangy Rd. Suite 150"
-    city = "Columbus"
-    state = ("OH",)
-    zc = "43214"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    phone = "<MISSING>"
-    yield [
-        website,
-        loc,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
-    name = "Ohio State Transplant Care at the Jewish Hospital - Mercy Health"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    loc = "<MISSING>"
-    add = "4700 E. Galbraith Rd., Suite 104"
-    city = "Cincinnati"
-    state = ("OH",)
-    zc = "45236"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    phone = "<MISSING>"
-    yield [
-        website,
-        loc,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '"Url":"' in line:
-            items = line.split('"Url":"')
-            for item in items:
-                if '"ServiceName":"' in item:
-                    locs.append(item.split('"')[0])
-    for loc in locs:
+    found = []
+    for i in locs:
+        loc = i["Url"]
         logger.info(loc)
         name = ""
         add = ""
@@ -120,9 +37,10 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
+        typ = i["Entity"]
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '<meta property="og:title" content="' in line2:
                 name = line2.split('<meta property="og:title" content="')[1].split('"')[
                     0
@@ -149,44 +67,53 @@ def fetch_data():
                     .replace('"', "")
                 )
             if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
+                phone = (
+                    line2.split('"telephone": "')[1]
+                    .split('"')[0]
+                    .split("or")[0]
+                    .strip()
+                )
             if '"openingHours": "' in line2:
                 hours = line2.split('"openingHours": "')[1].split('"')[0]
             if '<span class="phoneLink">' in line2:
-                phone = line2.split('<span class="phoneLink">')[1].split("<")[0]
+                phone = (
+                    line2.split('<span class="phoneLink">')[1]
+                    .split("<")[0]
+                    .split("or")[0]
+                    .strip()
+                )
         if "Ohio" in name:
             state = "Ohio"
-        if "Mary Rutan" in add:
-            add = "Mary Rutan Hospital Orthopedics 2221 Timber Trail"
-        if phone == "":
-            phone = "<MISSING>"
-        if hours == "":
-            hours = "<MISSING>"
-        if lat == "":
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-        if add != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if len(lat) < 3:
+            lat = i["Latitude"]
+            lng = i["Longitude"]
+        if not hours:
+            hours = "Monday: Closed Tuesday: Closed Wednesday: Closed Thursday: Closed Friday: Closed Saturday: Closed Sunday: Closed"
+        if not add.strip():
+            continue
+        if name + add in found:
+            continue
+        found.append(name + add)
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
