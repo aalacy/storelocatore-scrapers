@@ -30,61 +30,66 @@ def fetch_data():
         if "supercharger" in str(ltype):
             ids.append(lid)
     for lid in ids:
-        logger.info(lid)
-        lurl = "https://www.tesla.com/cua-api/tesla-location?translate=en_US&id=" + lid
-        r2 = session.get(lurl, headers=headers)
-        js = json.loads(r2.text)
-        add = js["address_line_1"] + " " + js["address_line_2"]
-        add = add.strip()
-        name = js["title"]
-        city = js["city"]
-        state = js["province_state"]
-        zc = js["postal_code"]
-        country = js["country"]
-        lat = js["latitude"]
-        lng = js["longitude"]
-        store = lid
-        typ = "Supercharger"
-        hours = js["hours"]
-        if state == "" or state == "null":
-            state = "<MISSING>"
-        phonestr = str(js["sales_phone"])
         try:
-            phone = phonestr.split("'number': '")[1].split("'")[0].strip()
+            logger.info(lid)
+            lurl = (
+                "https://www.tesla.com/cua-api/tesla-location?translate=en_US&id=" + lid
+            )
+            r2 = session.get(lurl, headers=headers)
+            js = json.loads(r2.text)
+            add = js["address_line_1"] + " " + js["address_line_2"]
+            add = add.strip()
+            name = js["title"]
+            city = js["city"]
+            state = js["province_state"]
+            zc = js["postal_code"]
+            country = js["country"]
+            lat = js["latitude"]
+            lng = js["longitude"]
+            store = lid
+            typ = "Supercharger"
+            hours = js["hours"]
+            if state == "" or state == "null":
+                state = "<MISSING>"
+            phonestr = str(js["sales_phone"])
+            try:
+                phone = phonestr.split("'number': '")[1].split("'")[0].strip()
+            except:
+                phone = "<MISSING>"
+            clean = re.compile("<.*?>")
+            hours = (
+                re.sub(clean, "", hours)
+                .replace("\n", ";")
+                .replace("\\n", ";")
+                .replace("\\t", "")
+                .replace("\t", "")
+                .replace("\\r", ";")
+                .replace("\r", ";")
+            )
+            hours = hours.replace(";;", ";").replace(";;", ";")
+            if "Store Hours;" in hours:
+                hours = hours.split("Store Hours;")[1]
+            if ";Service" in hours:
+                hours = hours.split(";Service")[0]
+            hours = hours.replace("Supercharger Hours", "")
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
         except:
-            phone = "<MISSING>"
-        clean = re.compile("<.*?>")
-        hours = (
-            re.sub(clean, "", hours)
-            .replace("\n", ";")
-            .replace("\\n", ";")
-            .replace("\\t", "")
-            .replace("\t", "")
-            .replace("\\r", ";")
-            .replace("\r", ";")
-        )
-        hours = hours.replace(";;", ";").replace(";;", ";")
-        if "Store Hours;" in hours:
-            hours = hours.split("Store Hours;")[1]
-        if ";Service" in hours:
-            hours = hours.split(";Service")[0]
-        hours = hours.replace("Supercharger Hours", "")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+            pass
 
 
 def scrape():
