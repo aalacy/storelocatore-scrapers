@@ -23,7 +23,7 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     logger.info(f"{api_url} >> Response: {r.status_code}")
     try:
-        j = r.json()["@graph"][0]
+        j = r.json()[0]
 
         location_name = j.get("name")
         a = j.get("address")
