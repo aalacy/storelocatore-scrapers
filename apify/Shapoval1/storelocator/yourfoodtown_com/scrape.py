@@ -48,6 +48,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hooAndPhone)
         if hours_of_operation.find("Store Phone") != -1:
             hours_of_operation = hours_of_operation.split("Store Phone")[0].strip()
+        store_number = page_url.split("-")[-1].replace("/", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -58,7 +59,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
