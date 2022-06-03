@@ -82,6 +82,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
                 soup.find("div", {"class": "hours-block-oneStore"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("-", "Closed")
             )
         except:
             hours_of_operation = MISSING
