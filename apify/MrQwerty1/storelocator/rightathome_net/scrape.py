@@ -52,7 +52,7 @@ def get_address(line):
         adr = line.split(",")
         state, postal = adr.pop().strip().split()
         city = adr.pop().strip()
-        street_address = ",".join(line)
+        street_address = ",".join(adr)
 
     return street_address, city, state, postal
 

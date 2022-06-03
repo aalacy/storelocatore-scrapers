@@ -3,7 +3,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 session = SgRequests()
 headers = {
@@ -101,29 +101,71 @@ def fetch_data():
         hours = hours.replace("<br><strong>", "; ")
         if phone == "":
             phone = "<MISSING>"
-        if city != "":
-            yield SgRecord(
-                locator_domain=website,
-                page_url=lurl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        if "Eunice-Smith-Home" in lurl:
+            name = "Alton Memorial Rehabilitation & Therapy"
+            add = "1251 College Avenue"
+            city = "Alton"
+            state = "IL"
+            zc = "62002"
+            phone = "618-463-7330"
+        if "Barnes-Jewish-Extended-Care" in lurl:
+            name = "Barnes-Jewish Extended Care"
+            city = "Clayton"
+            state = "MO"
+            phone = "314-725-7447"
+            add = "401 Corporate Park Drive"
+            zc = "63105"
+        if "Christian-Extended-Care-Rehabilitation" in lurl:
+            name = "Christian Extended Care & Rehabilitation"
+            city = "St. Louis"
+            state = "MO"
+            zc = "63136"
+            phone = "314-653-4848"
+            add = "11160 Village Drive North"
+        if "Memorial-Care-Center" in lurl:
+            name = "Memorial Care Center"
+            add = "4315 Memorial Drive"
+            city = "Belleville"
+            state = "IL"
+            zc = "62226"
+            phone = "618-619-5000"
+        if "Transitional-Care-Program" in lurl:
+            name = "Transitional Care Program"
+            city = "Sullivan"
+            state = "MO"
+            zc = "63080"
+            add = "751 Sappington Bridge Road"
+            phone = "573-468-1191"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=lurl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

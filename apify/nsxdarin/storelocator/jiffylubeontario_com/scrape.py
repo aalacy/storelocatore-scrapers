@@ -235,8 +235,9 @@ def fetch_data():
                     name = line2.split("<title>")[1].split("|")[0].strip()
             if phone == "":
                 phone = "<MISSING>"
-            name = name.replace("</title>", "").strip()
+            name = name.replace("</title>", "").strip().replace("<link", "")
             name = name.replace("&#8211;", "-").strip()
+            add = add.replace("<link", "")
             if zc == "":
                 zc = "<MISSING>"
             if lat == "":
@@ -245,22 +246,24 @@ def fetch_data():
                 lng = "<MISSING>"
             if "-514-brock-st-n" in loc:
                 add = "514 Brock St N"
-            yield SgRecord(
-                locator_domain=website,
-                page_url=lurl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+            phone = phone.replace('"', "")
+            if "Page Not" not in name:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=lurl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
         except:
             pass
 

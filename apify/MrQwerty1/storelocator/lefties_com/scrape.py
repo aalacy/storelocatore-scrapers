@@ -21,7 +21,7 @@ def get_countries():
 
 def fetch_data(sgw: SgWriter):
     search = DynamicGeoSearch(
-        country_codes=get_countries(), expected_search_radius_miles=50
+        country_codes=get_countries(), expected_search_radius_miles=100
     )
     for lat, lng in search:
         country = search.current_country().upper()
@@ -36,6 +36,8 @@ def fetch_data(sgw: SgWriter):
             street_address = " ".join(lines)
             if "(" in street_address:
                 street_address = street_address.split("(")[0].strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             city = j.get("city") or ""
             postal = j.get("zipCode") or ""
             if str(postal) == "0":

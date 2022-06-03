@@ -90,6 +90,7 @@ def fetch_data():
                     hours_of_operation = (
                         hours_of_operation + " " + day + ": " + start_t + "-" + end_t
                     )
+            hours_of_operation = hours_of_operation.replace("00", ":00")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
