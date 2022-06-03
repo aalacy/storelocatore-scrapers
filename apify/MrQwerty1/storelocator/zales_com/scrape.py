@@ -5,11 +5,13 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from tenacity import stop_after_attempt, wait_fixed, retry
+from sglogging import sglog
 
 
 @retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
 def get_json(api):
     r = session.get(api, headers=headers)
+    logger.info(f"{api}: {r}")
     js = r.json()["data"]
 
     return js
@@ -17,12 +19,17 @@ def get_json(api):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for _zip in search:
         for i in range(777):
             api = f"https://www.zales.com/store-finder?q={_zip}&page={i}"
-            js = get_json(api)
+
+            try:
+                js = get_json(api)
+            except:
+                logger.info(f"{api}: ERROR!")
+                js = []
 
             for j in js:
                 _type = j.get("baseStore") or ""
@@ -78,17 +85,16 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.zales.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="zales.com")
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Requested-With": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json;q=0.9",
         "Connection": "keep-alive",
-        "Referer": "https://www.zales.com/store-finder",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "TE": "trailers",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
     }
     with SgWriter(
         SgRecordDeduper(
