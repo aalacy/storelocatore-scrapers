@@ -68,7 +68,7 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code="",
+            country_code="US",
             store_number="",
             phone=phone,
             location_type="",
