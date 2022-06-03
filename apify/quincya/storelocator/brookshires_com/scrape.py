@@ -25,6 +25,25 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(driver.page_source, "lxml")
         log.info(base)
 
+        sgw.write_row(
+            SgRecord(
+                locator_domain="",
+                page_url=base_link,
+                location_name="",
+                street_address="",
+                city="",
+                state="",
+                zip_postal="",
+                country_code="",
+                store_number="",
+                phone="",
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation="",
+            )
+        )
+
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)
