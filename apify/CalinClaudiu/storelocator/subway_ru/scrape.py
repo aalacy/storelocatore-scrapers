@@ -452,7 +452,6 @@ if __name__ == "__main__":
         "fm",
         "fo",
         "ga",
-        "gb",
         "gd",
         "gf",
         "gg",

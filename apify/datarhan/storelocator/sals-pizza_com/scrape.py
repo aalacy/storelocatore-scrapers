@@ -34,8 +34,13 @@ def fetch_data():
     for store_url in all_locations:
         if "coming-soon" in store_url:
             continue
+
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+
+        if loc_dom.xpath('//span[contains(text(), "Coming Soon")]'):
+            continue
+
         raw_address = loc_dom.xpath(
             "//div[h1]/following-sibling::div[1]/h2/span//text()"
         )
