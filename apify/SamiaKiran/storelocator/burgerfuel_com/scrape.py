@@ -30,11 +30,12 @@ def fetch_data():
         loclist = (
             soup.find("div", {"class": "content-inner"})
             .find("script")
-            .text.replace(" var stores = {};", "")
-            .split("['detailPageVisible'] = false;")
+            .text.split("var stores = {};")[1]
+            .split('{"id":')[1:]
         )
-        for loc in loclist[:-1]:
-            page_url = DOMAIN + loc.split("['orderUrl'] = '")[1].split("'")[0]
+        for loc in loclist:
+            loc = '= {"id":' + loc
+            page_url = DOMAIN + loc.split("['pageUrl'] = '")[1].split("'")[0]
             log.info(page_url)
             temp = json.loads("{" + loc.split("= {")[1].split("};")[0] + "}")
             location_name = temp["title"]
@@ -42,7 +43,7 @@ def fetch_data():
             coords = temp["coordinates"].replace("\xa0", "").split(",")
             longitude = coords[1]
             latitude = coords[0]
-            phone = temp["phone"].split("-")[0]
+            phone = temp["phone"].split("-")[0].split("\n")[0]
             hours_of_operation = loc.split("['openingHours'] = '")[1].split("';")[0]
             hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
@@ -57,6 +58,7 @@ def fetch_data():
                     .strip()
                     .split("\n")[0]
                 )
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -99,7 +101,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:

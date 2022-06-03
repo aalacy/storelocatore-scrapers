@@ -33,41 +33,41 @@ def fetch_data():
             .split("var brand_Logo")[0]
             .strip()[:-1]
         )
-        poi = json.loads(data)[0]
-        hoo = []
-        for e in poi["ScheduleList"]:
-            day = e["WeekdayId"]
-            opens = e["StartTime"].split("T")[1][:-3]
-            closes = e["EndTime"].split("T")[1][:-3]
-            hoo.append(f"{day}: {opens} - {closes}")
-        hoo = " ".join(hoo)
+        all_poi = json.loads(data)
+        for poi in all_poi:
+            page_url = urljoin(start_url, poi["SeoBranchUrl"])
+            hoo = []
+            for e in poi["ScheduleList"]:
+                day = e["WeekdayId"]
+                opens = e["StartTime"].split("T")[1][:-3]
+                closes = e["EndTime"].split("T")[1][:-3]
+                hoo.append(f"{day}: {opens} - {closes}")
+            hoo = " ".join(hoo)
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi["BranchName"],
-            street_address=poi["Address"],
-            city=poi["City"],
-            state=poi["State"],
-            zip_postal=poi["ZipCode"],
-            country_code=poi["CountryCode"],
-            store_number=poi["BranchCode"],
-            phone=poi["PhoneNumber"],
-            location_type="",
-            latitude=poi["Latitude"],
-            longitude=poi["Longitude"],
-            hours_of_operation=hoo,
-        )
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["BranchName"],
+                street_address=poi["Address"],
+                city=poi["City"],
+                state=poi["State"],
+                zip_postal=poi["ZipCode"],
+                country_code=poi["CountryCode"],
+                store_number=poi["BranchCode"],
+                phone=poi["PhoneNumber"].split("/")[0],
+                location_type="",
+                latitude=poi["Latitude"],
+                longitude=poi["Longitude"],
+                hours_of_operation=hoo,
+            )
 
-        yield item
+            yield item
 
 
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.PAGE_URL})
         )
     ) as writer:
         for item in fetch_data():
