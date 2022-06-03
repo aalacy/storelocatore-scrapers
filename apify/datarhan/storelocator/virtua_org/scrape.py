@@ -31,6 +31,7 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         if not loc_dom.xpath("//@data-map-coords"):
+            print(page_url)
             continue
 
         location_name = loc_dom.xpath('//h1[@itemprop="name"]/text()')
@@ -68,7 +69,7 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code="",
+            country_code="US",
             store_number="",
             phone=phone,
             location_type="",
