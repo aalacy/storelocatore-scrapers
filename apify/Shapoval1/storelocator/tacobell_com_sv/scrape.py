@@ -1,46 +1,45 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "http://tacobell.com.sv/"
-    api_url = "http://tacobell.com.sv/"
+    locator_domain = "https://tacobellelsalvador.com/"
+    page_url = "https://tacobellelsalvador.com/sucursales"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="icon-box-boxed top"]')
+    div = tree.xpath('//div[./*/span[contains(text(), "·")]]')
     for d in div:
 
-        page_url = "http://tacobell.com.sv/"
-        location_name = "".join(d.xpath(".//h4/a/text()"))
-        slug = "".join(d.xpath(".//h4/a/@href")).split("-")[1].strip()
-        ad = (
-            " ".join(d.xpath(".//h4/following-sibling::p[1]/text()"))
+        location_name = (
+            "".join(d.xpath(".//h2//text() | .//h1//text()")).replace("\n", "").strip()
+        )
+        ad = "".join(d.xpath(".//p/span//text()")).replace("\n", "").strip()
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        state = str(state).replace(".", "").strip()
+        postal = a.postcode or "<MISSING>"
+        country_code = "SV"
+        city = a.city or "<MISSING>"
+        city = str(city).replace(".", "").strip()
+        hours_of_operation = (
+            " ".join(d.xpath('.//p[contains(text(), "Lun")]/text()'))
             .replace("\n", "")
             .strip()
         )
-        a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
-        country_code = "El Salvador"
-        city = a.city or "<MISSING>"
-        map_link = "".join(
-            d.xpath(f'.//following::div[@data-box-id="{slug}"]//iframe/@src')
-        )
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -54,9 +53,9 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
             raw_address=ad,
         )
 
@@ -66,6 +65,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)

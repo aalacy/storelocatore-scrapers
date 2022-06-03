@@ -7,17 +7,36 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def fetch_data(sgw: SgWriter):
-    urls = [
-        "https://cdn.shopify.com/s/files/1/0066/6563/3903/t/591/assets/sca.storelocator_scripttag.js?v=1643607188&shop=decathlon-australia.myshopify.com",
-        "https://cdn.shopify.com/s/files/1/0418/6000/6041/t/2/assets/sca.storelocator_scripttag.js?v=1635403500&amp;shop=decathlon-sl.myshopify.com",
+def get_urls():
+    urls = []
+    start_urls = [
+        "https://decathlon.com.au/pages/store-locator",
+        "https://decathlon.lk/pages/store-locator",
     ]
+
+    for url in start_urls:
+        r = session.get(url, headers=headers)
+        tree = html.fromstring(r.text)
+        script = "".join(tree.xpath("//script[contains(text(), 'var urls =')]/text()"))
+        script = script.split("var urls =")[1].split("];")[0].replace("\\", "") + "]"
+        links = eval(script)
+
+        for link in links:
+            if "sca.storelocator_scripttag.js" in link:
+                urls.append(link)
+                break
+
+    return urls
+
+
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
 
     for api in urls:
         r = session.get(api, headers=headers)
         text = (
-            r.text.split("locationsRaw:'")[1]
-            .split("}]'")[0]
+            r.text.split('"locationsRaw":"')[1]
+            .split('}]"')[0]
             .replace("\\r", "")
             .replace("\\", "")
             + "}]"
@@ -27,7 +46,9 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             if "australia" in api:
                 locator_domain = "https://decathlon.com.au/"
-                page_url = j.get("web") or ""
+                page_url = (
+                    j.get("web") or "https://decathlon.com.au/pages/store-locator"
+                )
                 page_url = page_url.replace("\\", "")
             else:
                 locator_domain = "https://decathlon.lk/"
@@ -37,6 +58,8 @@ def fetch_data(sgw: SgWriter):
             street_address = street_address.replace("\\", "").replace("/", "")
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            if street_address.split(", ")[-1].count(" ") == 0:
+                street_address = street_address.split(",")[0].strip()
             city = j.get("city")
             state = j.get("state")
             postal = j.get("postal")

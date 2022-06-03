@@ -1,5 +1,6 @@
 from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
@@ -9,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.oilvinegar.ch/"
+    log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
     api_url = "https://www.oilvinegar.ch/rest/V1/storelocator/search/?searchCriteria%5Bfilter_groups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bfield%5D=country_id&searchCriteria%5Bfilter_groups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bvalue%5D=CH&searchCriteria%5Bfilter_groups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bcondition_type%5D=eq&_=1652339002942"
     session = SgRequests()
     headers = {
@@ -35,6 +37,8 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = "<MISSING>"
         if page_url != "https://www.oilvinegar.ch/dealers/":
             r = session.get(page_url, headers=headers)
+            log.info(r.status_code)
+            log.info(f"Location Name: {location_name} & {page_url}")
             tree = html.fromstring(r.text)
             phone = (
                 "".join(
@@ -56,6 +60,32 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             hours_of_operation = " ".join(hours_of_operation.split())
+            if hours_of_operation == "<MISSING>":
+                r = session.get(page_url, headers=headers)
+                log.info(r.status_code)
+                log.info(f"Location Name: {location_name} & {page_url}")
+                tree = html.fromstring(r.text)
+                phone = (
+                    "".join(
+                        tree.xpath(
+                            '//h3[contains(text(), "Telefon")]/following-sibling::div[1]//text()'
+                        )
+                    )
+                    or "<MISSING>"
+                )
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//h4[contains(text(), "Öffnungszeiten")]/following-sibling::div[1]//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .replace("\r", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                hours_of_operation = " ".join(hours_of_operation.split())
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

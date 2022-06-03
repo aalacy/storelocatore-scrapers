@@ -22,6 +22,7 @@ def fetch_data(sgw: SgWriter):
         page_url = f"https://bluewaveexpress.com{slug}"
         if page_url.find("harlingen") != -1:
             page_url = "https://bluewaveexpress.com/location/?location=harlingen"
+        title = j.get("title")
 
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -30,6 +31,8 @@ def fetch_data(sgw: SgWriter):
             "".join(tree.xpath('//div[@id="locheader"]/h2[@class="sitename"]/text()'))
             or "<MISSING>"
         )
+        if location_name == "<MISSING>":
+            location_name = title
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -39,8 +42,11 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         city = a.city or "<MISSING>"
         map_link = "".join(tree.xpath("//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
             "".join(tree.xpath('//td[contains(text(),"Phone")]/text()[2]'))
             .replace("\n", "")
@@ -54,6 +60,8 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if str(location_name).find("Coming Soon") != -1:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

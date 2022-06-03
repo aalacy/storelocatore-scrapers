@@ -1,4 +1,3 @@
-import json
 import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -56,14 +55,18 @@ def fetch_data():
             page_url = "https://www.ohmybox.es" + loc["DetailsUrl"]
             log.info(page_url)
             r = session.get(page_url)
-            address = r.text.split('"address":')[1].split("},", 1)[0] + "}"
-            address = json.loads(address)
-            street_address = strip_accents(address["streetAddress"])
-            city = strip_accents(address["addressLocality"])
-            state = MISSING
-            zip_postal = address["postalCode"]
-            country_code = "ES"
             soup = BeautifulSoup(r.text, "html.parser")
+            street_address = strip_accents(
+                soup.find("span", {"itemprop": "streetAddress"}).text
+            )
+            city = strip_accents(
+                soup.find("span", {"itemprop": "addressLocality"}).text
+            )
+            state = MISSING
+            zip_postal = strip_accents(
+                soup.find("span", {"itemprop": "postalCode"}).text
+            )
+            country_code = "ES"
             hour_list = soup.find(
                 "div", {"class": "store-info__time opening-time"}
             ).findAll("div", {"class": "grid__item grid__item_span_3"})

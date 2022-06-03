@@ -10,32 +10,36 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.der-beck.de"
     session = SgRequests()
-    cookies = {
-        "session-1": "5b13f013cf2b7164f1398504b0bc806678adbbbec11f7a46ef834bedc6ebfd8f",
-        "__csrf_token-1": "7XY8uQRV2NleK6hKmYT45abyYkZNCA",
-    }
+    session.get("https://www.der-beck.de/csrftoken")
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "multipart/form-data; boundary=---------------------------286015112433308835001571930278",
+        "Host": "www.der-beck.de",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Length": "67",
         "Origin": "https://www.der-beck.de",
+        "DNT": "1",
         "Connection": "keep-alive",
         "Referer": "https://www.der-beck.de/in-ihrer-naehe/filialfinder/",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-User": "?1",
     }
 
-    data = '-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="lat"\r\n\r\n\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="long"\r\n\r\n\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="city"\r\n\r\nErlangen\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="plz"\r\n\r\n91052\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="street"\r\n\r\n\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="umkreis"\r\n\r\n100000\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="showmap"\r\n\r\nFiliale finden\r\n-----------------------------286015112433308835001571930278\r\nContent-Disposition: form-data; name="__csrf_token"\r\n\r\n7XY8uQRV2NleK6hKmYT45abyYkZNCA\r\n-----------------------------286015112433308835001571930278--\r\n'
+    data = {
+        "umkreis": "10000",
+        "plz": "91052",
+        "__csrf_token": "6RJNBGIomk0al3e06TNRGBgY6JCpjM",
+    }
 
     r = session.post(
         "https://www.der-beck.de/in-ihrer-naehe/filialfinder/#submit",
-        headers=headers,
         data=data,
-        cookies=cookies,
+        headers=headers,
     )
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@class="findereintrag"]')
@@ -69,6 +73,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(d.xpath('.//div[./strong[text()="Öffnungszeiten"]]//text()'))
             .replace("Öffnungszeiten", "")
+            .replace("Bitte beachten Sie unsere", "")
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
