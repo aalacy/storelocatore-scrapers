@@ -22,7 +22,7 @@ def fetch_data():
 
         url = "https://www.wincofoods.com/stores/?coordinates=41.20605200836969,-110.02699584999999&zoom=6"
 
-        with SgFirefox() as driver:
+        with SgFirefox(driver_wait_timeout=80) as driver:
 
             if x == 1:
                 driver.get_and_wait_for_request(url)
