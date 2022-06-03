@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import re
-import random
 import json
 from lxml import etree
 from sglogging import sglog
