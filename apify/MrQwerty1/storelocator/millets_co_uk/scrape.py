@@ -41,8 +41,10 @@ def get_data(slug, sgw: SgWriter):
     data = fetch_page_schema(page_url)
 
     a = data.get("address")
-    street_address = a.get("streetAddress")
-    city = a.get("addressLocality")
+    street_address = a.get("streetAddress") or ""
+    city = a.get("addressLocality") or ""
+    if f", {city}" in street_address:
+        street_address = street_address.split(f", {city}")[0].strip()
     postal = a.get("postalCode")
     country_code = "GB"
 
