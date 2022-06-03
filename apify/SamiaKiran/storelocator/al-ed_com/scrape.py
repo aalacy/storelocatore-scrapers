@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -33,7 +34,6 @@ def fetch_data():
             loclist = r.text.split('jsonLocations: {"items":')[1].split("}]")[0] + "}]"
             loclist = json.loads(loclist)
             for loc in loclist:
-
                 store_number = loc["id"]
                 latitude = loc["lat"]
                 longitude = loc["lng"]
@@ -46,10 +46,22 @@ def fetch_data():
                 address = soup.find(
                     "div", {"class": "amlocator-location-info"}
                 ).findAll("div", {"class": "amlocator-block"})
-                zip_postal = address[0].findAll("span")[-1].text
-                state = address[2].findAll("span")[-1].text
-                city = address[3].findAll("span")[-1].text
-                street_address = address[4].findAll("span")[-1].text
+                raw_address = address[4].findAll("span")[-1].text
+
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
+
                 location_name = html.unescape(soup.find("h1").text)
                 phone = soup.find("div", {"class": "amlocator-block -contact"}).findAll(
                     "div", {"class": "amlocator-block"}
@@ -64,7 +76,10 @@ def fetch_data():
                     day = hour[0].text
                     time = hour[1].text
                     hours_of_operation = hours_of_operation + " " + day + " " + time
-
+                if city == MISSING:
+                    zip_postal = address[0].findAll("span")[-1].text
+                    state = address[2].findAll("span")[-1].text
+                    city = address[3].findAll("span")[-1].text
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
