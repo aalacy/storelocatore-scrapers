@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sgscrape import simple_scraper_pipeline as sp
-import json
 
 
 def get_data():
