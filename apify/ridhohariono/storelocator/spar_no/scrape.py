@@ -15,7 +15,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
 }
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
@@ -52,21 +52,24 @@ def fetch_data():
         country_code = "NO"
         phone = info["organization"]["phone"]
         store_number = info["storeId"]
-        hours_of_operation = (
-            re.sub(
-                r"(\D),",
-                r"\1:",
+        try:
+            hours_of_operation = (
                 re.sub(
-                    r"\s?\(.*\)\s?",
-                    r"",
-                    store.find(
-                        "dl", {"class": "openinghours openinghours--ordinary"}
-                    ).get_text(strip=True, separator=", "),
-                ).strip(),
+                    r"(\D),",
+                    r"\1:",
+                    re.sub(
+                        r"\s?\(.*\)\s?",
+                        r"",
+                        store.find(
+                            "dl", {"class": "openinghours openinghours--ordinary"}
+                        ).get_text(strip=True, separator=", "),
+                    ).strip(),
+                )
+                .replace("Stengt:", "Stengt,")
+                .strip()
             )
-            .replace("Stengt:", "Stengt,")
-            .strip()
-        )
+        except:
+            hours_of_operation = MISSING
         location_type = MISSING
         latitude = info["position"]["lat"]
         longitude = info["position"]["lng"]
