@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "betzone.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -51,10 +52,23 @@ def fetch_data():
             )
 
             raw_address = "".join(store.xpath("text()")).strip()
-            street_address = ", ".join(raw_address.split(",")[:-2]).strip()
-            city = raw_address.split(",")[-2]
-            state = "<MISSING>"
+
             zip = raw_address.split(",")[-1]
+            raw_address = ", ".join(raw_address.split(",")[:-1]).strip()
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
+
+            city = formatted_addr.city
+            state = formatted_addr.state
+
             country_code = "GB"
             store_number = "<MISSING>"
             phone = "<MISSING>"

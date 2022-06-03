@@ -25,47 +25,53 @@ def fetch_data():
     r = r.text.split("var locs = ")[1].split("}];")[0] + "}]"
     loclist = json.loads(r)
     for loc in loclist:
-        location_name = loc["name"]
-        latitude = loc["lat"]
-        longitude = loc["lng"]
-        street_address = loc["address"]
-        city = loc["city"]
-        state = loc["state"]
-        zip_postal = loc["zip"]
         page_url = loc["url"]
-        country_code = "US"
-        log.info(page_url)
-        r = session.get(page_url, headers=headers)
-        if r.status_code != 200:
-            continue
-        if "permanently closed" in r.text:
-            continue
-        soup = BeautifulSoup(r.text, "html.parser")
-        phone = soup.select_one("a[href*=tel]").text
-        try:
-            hours_of_operation = soup.find("div", {"id": "hours"}).findAll("div")[2:]
-            hours_of_operation = " ".join(
-                x.get_text(separator="|", strip=True).replace("|", " ")
-                for x in hours_of_operation
+        if "midwest-dental" in page_url:
+            location_name = loc["name"]
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            street_address = loc["address"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["zip"]
+            country_code = "US"
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            if r.status_code != 200:
+                continue
+            if "permanently closed" in r.text:
+                continue
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                phone = soup.select_one("a[href*=tel]").text
+            except:
+                phone = loc["phone"]
+            try:
+                hours_of_operation = soup.find("div", {"id": "hours"}).findAll("div")[
+                    2:
+                ]
+                hours_of_operation = " ".join(
+                    x.get_text(separator="|", strip=True).replace("|", " ")
+                    for x in hours_of_operation
+                )
+            except:
+                hours_of_operation = MISSING
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
             )
-        except:
-            hours_of_operation = MISSING
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
-            country_code=country_code,
-            store_number=MISSING,
-            phone=phone.strip(),
-            location_type=MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation.strip(),
-        )
 
 
 def scrape():
