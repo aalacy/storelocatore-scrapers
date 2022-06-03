@@ -56,7 +56,7 @@ def fetch_data():
 
             for store in stores:
                 locator_domain = website
-                store_number = store["storenumber"]
+                store_number = store["idstore"]
                 page_url = f"https://www.bata.ch/store-detail/{store_number}"
                 location_name = store["storename"]
 

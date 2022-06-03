@@ -77,7 +77,6 @@ def fetch_data():
             if (
                 "COMING SOON" in value["name"]
                 or "Coming Soon!" in value["customLocationContent"]
-                or value["isLocationClosed"]
             ):
                 continue
             if "Acworth" in value["name"]:
@@ -100,6 +99,8 @@ def fetch_data():
             country_code = value["country"]
             phone = value["displayPhone"]
             location_type = MISSING
+            if value["isLocationClosed"]:
+                location_type = "temporary_closed"
             store_number = MISSING
             latitude = value["lat"]
             longitude = value["lng"]

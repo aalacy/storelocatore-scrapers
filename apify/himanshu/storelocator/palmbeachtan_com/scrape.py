@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("salon_lat") or "<MISSING>"
         longitude = j.get("salon_lon") or "<MISSING>"
         phone = j.get("phone_1") or "<MISSING>"
-        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        days = ["mon", "tue", "wen", "thu", "fri", "sat", "sun"]
         tmp = []
         for d in days:
             day = str(d).capitalize()
