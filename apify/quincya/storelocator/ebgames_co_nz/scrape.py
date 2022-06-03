@@ -1,4 +1,6 @@
 import json
+import ssl
+
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -7,6 +9,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):

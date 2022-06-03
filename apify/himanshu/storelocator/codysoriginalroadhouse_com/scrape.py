@@ -45,8 +45,10 @@ def fetch_data():
             location_details = location_details.get_text(
                 separator="|", strip=True
             ).split("|")
-            address = location_details[1]
             phone = location_details[3]
+            if "Monday" in phone:
+                phone = location_details[2].split(":")[1]
+            address = location_details[1]
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -73,6 +75,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            city = city.replace("W", "")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
