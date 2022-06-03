@@ -18,8 +18,14 @@ def fetch_data(sgw: SgWriter):
 
         store_number = j.get("ID")
         street_address = (
-            f"{j.get('address1')} {j.get('address2')}".strip() or "<MISSING>"
+            f"{j.get('address1')} {j.get('address2')}".replace("Unit 4 -", "")
+            .replace("Unit L-045 -", "")
+            .replace("Unit 11/12/13", "")
+            .strip()
+            or "<MISSING>"
         )
+        if street_address.find(",") != -1:
+            street_address = " ".join(street_address.split(",")[1:]).strip()
         phone = j.get("phone") or "<MISSING>"
         city = j.get("city") or "<MISSING>"
         postal = j.get("postalCode") or "<MISSING>"
@@ -36,7 +42,11 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
             )
-            hours_of_operation = " ".join(hours_of_operation.split())
+            hours_of_operation = (
+                " ".join(hours_of_operation.split())
+                .replace("TEMPORARILY CLOSED", "")
+                .strip()
+            )
         location_type = "<MISSING>"
         if str(store_number).find("TEMPORARILY CLOSED") != -1:
             location_type = str(store_number).split("-")[1].strip()
@@ -57,6 +67,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{j.get('address1')} {j.get('address2')} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

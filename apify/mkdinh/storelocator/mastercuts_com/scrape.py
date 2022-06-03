@@ -105,7 +105,7 @@ def fetch_location(poi_html, retry=0):
         return item
     except:
         if retry < 3:
-            return fetch_location(poi_html, session, retry + 1)
+            return fetch_location(poi_html, retry + 1)
 
 
 def get_state(url, retry=0):

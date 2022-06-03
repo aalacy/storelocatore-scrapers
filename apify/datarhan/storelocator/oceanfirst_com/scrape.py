@@ -30,8 +30,7 @@ def fetch_data():
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
 
-            location_name = loc_dom.xpath('//h1[@class="title"]/text()')
-            location_name = location_name[0] if location_name else ""
+            location_name = loc_dom.xpath("//h1/text()")[0]
             raw_address = loc_dom.xpath('//div[@class="branch-address"]/text()')
             raw_address = [elem.strip() for elem in raw_address if elem.strip()]
             if not raw_address:

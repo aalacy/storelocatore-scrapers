@@ -69,7 +69,7 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = "BE"
+            country_code = "SE"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
