@@ -23,10 +23,10 @@ def fetch_data():
     all_locations = dom.xpath('//li[@class="location"]')
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//a/text()")[0]
-        latitude = poi_html.xpath("//@data-lat")[0]
-        longitude = poi_html.xpath("//@data-lng")[0]
+        latitude = poi_html.xpath(".//@data-lat")[0]
+        longitude = poi_html.xpath(".//@data-lng")[0]
         poi = dom.xpath(f'//div[h4[contains(text(), "{location_name}")]]')[0]
-        raw_address = poi.xpath("./p[1]/text()")
+        raw_address = poi.xpath("./p/text()")
         raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1

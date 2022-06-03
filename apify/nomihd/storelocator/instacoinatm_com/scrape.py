@@ -63,14 +63,15 @@ def fetch_data():
         phone = "<MISSING>"
         hours_list = []
 
-        try:
-            hours_sel = lxml.html.fromstring(store_json["biz_hours_en"])
-            days = hours_sel.xpath("//dt/text()")
-            time = hours_sel.xpath("//dd/text()")
-            for index in range(0, len(days)):
-                hours_list.append(days[index] + ":" + time[index])
-        except:
-            pass
+        if "biz_hours_en" in store_json:
+            if store_json["biz_hours_en"] and len(store_json["biz_hours_en"]) > 0:
+                hours_sel = lxml.html.fromstring(store_json["biz_hours_en"])
+                hours = hours_sel.xpath("//table//tr")
+                for hour in hours:
+                    day = "".join(hour.xpath("td[1]/text()")).strip()
+                    time = "".join(hour.xpath("td[2]/text()")).strip()
+                    hours_list.append(day + ":" + time)
+
         hours_of_operation = "; ".join(hours_list).strip()
         latitude = store_json["lat"]
         longitude = store_json["lng"]
