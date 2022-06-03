@@ -9,7 +9,6 @@ from sgscrape import simple_scraper_pipeline as sp
 
 from sglogging import sglog
 import ssl
-import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -26,8 +25,7 @@ def fetch_data():
         with SgFirefox() as driver:
 
             if x == 1:
-                driver.get(url)
-                time.sleep(70)
+                driver.get_and_wait_for_request(url)
 
             soup = bs(driver.page_source, "lxml")
             grids = soup.find("div", class_="store-list__scroll-container").find_all(
