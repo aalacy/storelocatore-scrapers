@@ -40,7 +40,7 @@ def fetch_data():
     }
     loclist = session.get(api_url, headers=headers_2).json()["data"]
     for loc in loclist:
-        location_name = loc["name"]
+        location_name = loc["name"].replace("&pizza //", "")
         log.info(location_name)
         addy = loc["location"]
         street_address = addy["address1"]
