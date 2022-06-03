@@ -14,7 +14,6 @@ from lxml import html
 import time
 import json
 import ssl
-from selenium.webdriver.chrome.service import Service
 
 
 try:
