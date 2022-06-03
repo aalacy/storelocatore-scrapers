@@ -42,7 +42,11 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
             )
-            hours_of_operation = " ".join(hours_of_operation.split())
+            hours_of_operation = (
+                " ".join(hours_of_operation.split())
+                .replace("TEMPORARILY CLOSED", "")
+                .strip()
+            )
         location_type = "<MISSING>"
         if str(store_number).find("TEMPORARILY CLOSED") != -1:
             location_type = str(store_number).split("-")[1].strip()
