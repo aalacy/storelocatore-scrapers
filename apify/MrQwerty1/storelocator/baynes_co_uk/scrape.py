@@ -21,7 +21,9 @@ def fetch_data(sgw: SgWriter):
         street_address = e.get("shop-street") or ""
         if street_address.endswith(","):
             street_address = street_address[:-1]
-        city = e.get("shop-town")
+        city = e.get("shop-town") or ","
+        if "," in city:
+            city = city.split(",")[0].strip()
         postal = e.get("shop-postal-code")
         country_code = "GB"
         store_number = j.get("id")
