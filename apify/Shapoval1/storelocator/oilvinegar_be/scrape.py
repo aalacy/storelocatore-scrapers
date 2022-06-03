@@ -32,7 +32,10 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
         phone_lst = tree.xpath('//a[contains(@href, "tel")]/text()')
         phone_lst = list(filter(None, [a.strip() for a in phone_lst]))
-        phone = "".join(phone_lst[0]).strip()
+        try:
+            phone = "".join(phone_lst[0]).strip()
+        except:
+            phone = "<MISSING>"
         hours_of_operation = (
             " ".join(
                 tree.xpath(

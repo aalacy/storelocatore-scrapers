@@ -47,7 +47,10 @@ def fetch_data():
             for item in uklist:
                 if "</a></li>" in item:
                     locs.append("https://www.fairmont.com" + item.split('"')[0] + "|GB")
-    intllocs = []
+
+    intllocs = [
+        "https://www.fairmont.com/norfolk-hotel-nairobi/",
+    ]
     url = "https://www.fairmont.com/destinations/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -127,6 +130,10 @@ def fetch_data():
                 zc = zc.split(" Est")[0].strip()
             if "900 Canada Place" in add:
                 zc = "V6C 3L5"
+            if "banff-springs" in loc:
+                country = "CA"
+                phone = "+1 403 762 2211"
+                store = "BSH"
             if "900 West Georgia Street" in add:
                 zc = "V6C 2W6"
             if "1038 Canada Place" in add:
@@ -158,6 +165,41 @@ def fetch_data():
                 lat = "32.939137"
                 store = "GDM"
                 name = "Fairmont Grand Del Mar"
+            if "Banff" in name:
+                city = "Banff"
+            if "Carton House" in name:
+                city = "Maynooth"
+            if country == "Monaco":
+                city = "Monaco"
+            if country == "Singapore":
+                city = "Singapore"
+            if "Los Angeles" in name:
+                city = "Los Angeles"
+            if "Mara Safari Club" in name:
+                city = "Nairobi"
+            if "Taghazout Bay" in name:
+                city = "Taghazout"
+            if "Acapulco" in name:
+                city = "Acapulco"
+            if "Makkah Clock" in name:
+                city = "Mecca"
+            if "Fairmont Heritage Place Mayakoba" in name:
+                city = "Mayakoba"
+            if "Riviera Maya" in name:
+                city = "Riviera Maya"
+            if "/tremblant" in purl:
+                add = "3045 Chemin de la Chapelle"
+                city = "Mont Tremblant"
+                zc = "J8E1E1"
+            if "Baku" in city:
+                city = "Baku"
+                zc = "Az1006"
+            if "3045 Chemin" in add:
+                state = "Quebec"
+            if "7713 King" in add:
+                lat = "24.809"
+                lng = "46.642"
+            raw_address = add + " " + city + ", " + state + " " + zc
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -172,10 +214,12 @@ def fetch_data():
                 store_number=store,
                 latitude=lat,
                 longitude=lng,
+                raw_address=raw_address,
                 hours_of_operation=hours,
             )
         except:
             pass
+
     for loc in intllocs:
         try:
             purl = loc
@@ -221,12 +265,15 @@ def fetch_data():
                         else "<MISSING>"
                     )
                 if 'aria-label="Phone number"' in line2:
-                    phone = (
-                        line2.split('aria-label="Phone number"')[1]
-                        .split(">")[1]
-                        .split("<")[0]
-                        .replace("%20", " ")
-                    )
+                    try:
+                        phone = (
+                            line2.split('aria-label="Phone number"')[1]
+                            .split(">")[1]
+                            .split("<")[0]
+                            .replace("%20", " ")
+                        )
+                    except:
+                        phone = "<MISSING>"
                 if 'Latitude" value="' in line2:
                     lat = line2.split('Latitude" value="')[1].split('"')[0]
                 if 'Longitude" value="' in line2:
@@ -238,6 +285,40 @@ def fetch_data():
                 lat = "<MISSING>"
             if lng == "":
                 lng = "<MISSING>"
+            if "Banff" in name:
+                city = "Banff"
+            if "Carton House" in name:
+                city = "Maynooth"
+            if country == "Monaco":
+                city = "Monaco"
+            if country == "Singapore":
+                city = "Singapore"
+            if "Los Angeles" in name:
+                city = "Los Angeles"
+            if "Mara Safari Club" in name:
+                city = "Nairobi"
+            if "Taghazout Bay" in name:
+                city = "Taghazout"
+            if "Acapulco" in name:
+                city = "Acapulco"
+            if "Makkah Clock" in name:
+                city = "Mecca"
+            if "Fairmont Heritage Place Mayakoba" in name:
+                city = "Mayakoba"
+            if "Riviera Maya" in name:
+                city = "Riviera Maya"
+            if "/tremblant" in purl:
+                add = "3045 Chemin de la Chapelle"
+                city = "Mont Tremblant"
+                zc = "J8E1E1"
+            if "Baku" in city:
+                city = "Baku"
+                zc = "Az1006"
+            if "3045 Chemin" in add:
+                state = "Quebec"
+            if "7713 King" in add:
+                lat = "24.809"
+                lng = "46.642"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -252,10 +333,42 @@ def fetch_data():
                 store_number=store,
                 latitude=lat,
                 longitude=lng,
+                raw_address=raw_address,
                 hours_of_operation=hours,
             )
         except:
             pass
+    purl = "https://www.fairmont.com/st-andrews-scotland/"
+    name = "Fairmont St Andrews"
+    add = "<MISSING>"
+    city = "St Andrews"
+    state = "Scotland"
+    country = "GB"
+    zc = "KY16 8PN"
+    phone = "+44 1334 837000"
+    hours = "<MISSING>"
+    lat = "56.320085"
+    lng = "-2.7305622"
+    store = "SAB"
+    typ = "<MISSING>"
+    raw_address = "St Andrews Scotland KY16 8PN"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=purl,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        raw_address=raw_address,
+        hours_of_operation=hours,
+    )
 
 
 def scrape():

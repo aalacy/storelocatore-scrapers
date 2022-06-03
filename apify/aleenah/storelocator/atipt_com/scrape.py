@@ -1,106 +1,116 @@
-import csv
 import json
-from sgrequests import SgRequests
+from typing import Iterable
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
+from sglogging import sglog
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
-logger = SgLogSetup().get_logger('atipt_com')
+
+website = "atipt_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://www.atipt.com/"
+MISSING = SgRecord.MISSING
 
 
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-session = SgRequests()
-def fetch_data():
-
-    all=[]
-    res= session.get("https://locations.atipt.com/")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    states = soup.find('ul', {'class': 'list-unstyled'}).find_all('a') #states
-    headers={'accept': 'text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'en-US,en;q=0.9',
-             'referer': 'https://locations.atipt.com//fort-wayne-in-lima-rd',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-            'x-requested-with': 'XMLHttpRequest'}
-    for state in states:
-        res = session.get("https://locations.atipt.com/"+state.get('href'))
-        soup = BeautifulSoup(res.text, 'html.parser')
-        cities = soup.find('ul', {'class': 'list-unstyled'}).find_all('a')  #cities
-        for city in cities:
-            res = session.get("https://locations.atipt.com/" + city.get('href'))
-            soup = BeautifulSoup(res.text, 'html.parser')
-            stores = soup.find_all('a', {'class': 'name'})  #stores
+def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
+    store_url_list = []
+    http = SgRequests()
+    res = http.get("https://locations.atipt.com/")
+    soup = BeautifulSoup(res.text, "html.parser")
+    states = soup.find("ul", {"class": "list-unstyled"}).find_all("a")
+    for state_url in states:
+        log.info(f"Fetching Stores from State {state_url.text}....")
+        res = http.get("https://locations.atipt.com" + state_url.get("href"))
+        soup = BeautifulSoup(res.text, "html.parser")
+        cities = soup.find("ul", {"class": "list-unstyled"}).find_all("a")
+        for city_url in cities:
+            res = http.get("https://locations.atipt.com" + city_url.get("href"))
+            soup = BeautifulSoup(res.text, "html.parser")
+            stores = soup.find_all("a", {"class": "name"})
             for store in stores:
-                loc = store.find('h3').text
-                url="https://locations.atipt.com/" + store.get('href')
-                """if url != "https://locations.atipt.com//fort-wayne-in-lima-rd":
-                    res = session.get(url,headers=headers)
-                    soup = BeautifulSoup(res.text, 'html.parser')
-                else:
-                    driver.get("https://locations.atipt.com//fort-wayne-in-lima-rd")
-                    soup = BeautifulSoup(driver.page_source, 'html.parser')"""
-                res = session.get(url,headers=headers)
-                soup = BeautifulSoup(res.text, 'html.parser')
-                jso = soup.find('script', {'type': 'application/ld+json'}).text
-                jso=json.loads(jso)
+                loc = "https://locations.atipt.com" + store.get("href")
+                store_url_list.append(loc)
+                log.info(loc)
+                state.push_request(SerializableRequest(url=loc))
+    return True
 
-                addr=jso["address"]
-                city=addr["addressLocality"]
-                state=addr["addressRegion"]
-                zip=addr["postalCode"]
-                street=addr["streetAddress"]
-                lat=jso["geo"]["latitude"]
-                long=jso["geo"]["longitude"]
-                type=jso["name"]
-                phone=soup.find('p', {'class': 'btn businesscard__info-btn hidden-xs'}).text.replace("Call","").strip()
-                days=soup.find_all('p', {'class': 'day'})
 
-                hours=soup.find_all('div', {'class': 'hours'})
+def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
+    for next_r in state.request_stack_iter():
+        r = http.get(next_r.url, headers=headers)
+        log.info(f"Pulling the data from: {next_r.url}")
+        page_url = next_r.url
+        soup = BeautifulSoup(r.text, "html.parser")
+        jso = soup.find("script", {"type": "application/ld+json"}).text.split('"name"')[
+            1
+        ]
+        jso = '{"name"' + jso
+        jso = json.loads(jso)
+        addr = jso["address"]
+        city = addr["addressLocality"]
+        state = addr["addressRegion"]
+        zip_postal = addr["postalCode"]
+        street_address = addr["streetAddress"]
+        latitude = jso["geo"]["latitude"]
+        longitude = jso["geo"]["longitude"]
+        location_type = jso["name"]
+        phone = jso["telephone"]
+        location_name = jso["name"]
+        hours_of_operation = (
+            str(jso["openingHours"])
+            .replace("','", " ")
+            .replace("['", " ")
+            .replace("']", " ")
+        )
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-                tim=""
-                logger.info(url)
-                #logger.info(len(hours))
-                if len(hours)!=0:
-                    for i in range(7):
-                        ps = hours[i].find_all('p')
-                        tim+= days[i].text+ps[0].text+" - "+ps[1].text+" "
-
-                    tim=tim.replace("  - Closed","Closed")
-                else:
-                    tim="<MISSING>"
-
-                all.append([
-                    "https://atipt.com/",
-                    loc,
-                    street,
-                    city,
-                    state,
-                    zip,
-                    "US",
-                    "<MISSING>",  # store #
-                    phone,  # phone
-                    type,  # type
-                    lat,  # lat
-                    long,  # long
-                    tim.strip(),  # timing
-                    url])
-
-    return all
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    state = CrawlStateSingleton.get_instance()
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        with SgRequests() as http:
+            state.get_misc_value(
+                "init", default_factory=lambda: record_initial_requests(http, state)
+            )
+            for rec in fetch_records(http, state):
+                writer.write_row(rec)
+                count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
