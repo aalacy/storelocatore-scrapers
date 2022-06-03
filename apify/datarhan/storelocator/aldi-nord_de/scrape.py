@@ -18,7 +18,6 @@ def fetch_data():
         page_url = f"https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html/l/{city.lower()}/{street_address.lower().replace(' ', '-')}/{store_number}"
         poi_url = f"https://uberall.com/api/storefinders/ALDINORDDE_UimhY3MWJaxhjK9QdZo3Qa4chq1MAu/locations?v=20211005&language=de&locationIds={store_number}"
         poi_data = session.get(poi_url).json()
-        print(poi_data)
         hoo = []
         days_dict = {
             7: "Sunday",
