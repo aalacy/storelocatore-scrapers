@@ -73,7 +73,12 @@ def fetch_data(sgw: SgWriter):
             longitude = ""
             try:
                 raw_data = base.find(id="popmenu-apollo-state").contents[0]
-                js = raw_data.split("STATE =")[1].strip().split("window.POPMENU")[0].strip()[:-1]
+                js = (
+                    raw_data.split("STATE =")[1]
+                    .strip()
+                    .split("window.POPMENU")[0]
+                    .strip()[:-1]
+                )
                 store_data = json.loads(js)
 
                 for loc in store_data:
