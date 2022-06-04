@@ -213,7 +213,7 @@ def fetch_records_america(zipcode, search, current_country, sgw: SgWriter):
 
             sgw.write_row(row)
     except:
-        print(f"DataNotAvailable: {api_endpoint_url}")
+        logger.info(f"DataNotAvailable: {api_endpoint_url}")
         return
 
 
