@@ -39,6 +39,7 @@ def fetch_data():
             phone = raw_data[1].split(":")[-1]
         else:
             phone = raw_data[0].split("Fono:")[-1]
+        phone = phone.split(" – ")[0]
         city = addr.city
         if not city:
             city = location_name
