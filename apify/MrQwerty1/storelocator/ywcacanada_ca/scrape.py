@@ -13,7 +13,7 @@ def get_coords():
     js = r.json()
 
     for j in js:
-        _id = j.get("association_id")
+        _id = str(j.get("association_id"))
         lat = j.get("lat")
         lng = j.get("lng")
         coords[_id] = (lat, lng)
@@ -39,8 +39,6 @@ def fetch_data(sgw: SgWriter):
         state = "".join(d.xpath("./parent::div/preceding-sibling::div/text()")).strip()
         country_code = "CA"
         store_number = "".join(d.xpath(".//a/@data-id"))
-        if store_number:
-            store_number = int(store_number)
         location_name = "".join(
             d.xpath(".//div[@class='association-title']/text()")
         ).strip()
