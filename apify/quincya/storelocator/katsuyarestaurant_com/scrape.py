@@ -1,5 +1,6 @@
 import json
 import re
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -8,25 +9,20 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
     locator_domain = "katsuyarestaurant.com"
 
     base_link = "https://www.katsuyarestaurant.com/locations"
 
-    with SgRequests() as http:
-        r = http.get(base_link, headers=headers)
-        base = BeautifulSoup(r.text, "lxml")
+    with SgChrome() as driver:
+        driver.get_and_wait_for_request(base_link)
+        base = BeautifulSoup(driver.page_source, "lxml")
 
         scripts = base.find_all("script", attrs={"type": "application/ld+json"})
         for script in scripts:
@@ -66,8 +62,8 @@ def fetch_data(sgw: SgWriter):
             if "dubai" in link:
                 link = "https://www.sbe.com/restaurants/katsuya/dubai"
 
-            req = http.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+            driver.get_and_wait_for_request(link)
+            base = BeautifulSoup(driver.page_source, "lxml")
 
             latitude = ""
             longitude = ""
