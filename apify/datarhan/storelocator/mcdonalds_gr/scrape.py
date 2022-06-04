@@ -1,4 +1,5 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+import re
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -9,14 +10,21 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://mcdonalds.gr/wp-admin/admin-ajax.php"
     domain = "mcdonalds.gr"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    frm = {"action": "get_locations", "token": "38c7a72ec2"}
+
+    response = session.get("https://mcdonalds.gr/locate/")
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[contains(text(), "wpjs")]/text()')[0]
+    data = re.findall("wpjs =(.+);", data)[0]
+    data = json.loads(data)
+
+    frm = {"action": "get_locations", "token": data["ajax_nonce"]}
     data = session.post(start_url, headers=hdr, data=frm).json()
 
     all_locations = data["data"]
@@ -24,11 +32,9 @@ def fetch_data():
         page_url = poi["permalink"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath(
-            '//div[a[contains(text(), "Outdoor Lobby")]]/following-sibling::div//tr//text()'
-        )
+        hoo = loc_dom.xpath('//table[@class="location-hours-table"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo)
+        hours_of_operation = " ".join(hoo).split(" Δευτέρα")[0]
         if poi["latlng"].get("street_name"):
             if poi["latlng"].get("street_number"):
                 street_address = (
@@ -38,6 +44,8 @@ def fetch_data():
                 street_address = poi["latlng"]["street_name"]
         else:
             street_address = poi["latlng"]["address"].split(",")[0]
+        if "McDonald" in street_address:
+            street_address = etree.HTML(poi["address"]).xpath("//text()")[0]
 
         item = SgRecord(
             locator_domain=domain,

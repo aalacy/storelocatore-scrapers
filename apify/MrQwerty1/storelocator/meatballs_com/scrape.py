@@ -18,10 +18,15 @@ def get_coords_from_embed(text):
 
 
 def get_urls():
-    r = session.get("https://www.meatballs.com", headers=headers)
+    urls = []
+    r = session.get(locator_domain, headers=headers)
     tree = html.fromstring(r.text)
+    slugs = tree.xpath("//a[text()='Locations']/following-sibling::ul//a/text()")
+    for s in slugs:
+        slug = s.lower().replace(", ", "-")
+        urls.append(f"https://www.meatballs.com/locations/{slug}/")
 
-    return tree.xpath("//a[text()='Locations']/following-sibling::ul//a/@href")
+    return urls
 
 
 def get_data(page_url, sgw: SgWriter):
@@ -32,7 +37,7 @@ def get_data(page_url, sgw: SgWriter):
     line = tree.xpath("//div[@class='address-info']/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
-    phone = "<MISSING>"
+    phone = SgRecord.MISSING
     cnt = 0
     for l in line:
         if "Tel" in l:
@@ -64,9 +69,7 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
-        store_number=SgRecord.MISSING,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,

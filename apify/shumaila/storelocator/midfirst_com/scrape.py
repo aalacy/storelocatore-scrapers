@@ -1,43 +1,26 @@
-import csv
 from sgrequests import SgRequests
 from sgselenium import SgSelenium
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
+import ssl
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
+    mylist = static_coordinate_list(10, SearchableCountries.USA)
+    mylist = mylist + [
+        ("35.4923225", "-97.5656498"),
+        ("35.46438", "-97.58406"),
+        ("33.4528335", "-112.0738079"),
+    ]
+
     driver = SgSelenium().chrome()
     addresses = []
     base_url = "https://www.midfirst.com"
@@ -60,7 +43,7 @@ def fetch_data():
         "accept": "*/*",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-
+    driver.quit()
     r_token = session.get("https://www.midfirst.com/api/Token/get", headers=headers)
     token_for_post = r_token.json()["Token"]
     token_for_cookie = r_token.headers["Set-Cookie"].split(";")[0] + ";"
@@ -84,14 +67,9 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    addresses = []
-    mylist = static_coordinate_list(10, SearchableCountries.USA)
     MAX_RESULTS = 25
     MAX_DISTANCE = 150
-    p = 0
 
-    base_url = "https://www.midfirst.com"
-    data = []
     for lat, lng in mylist:
         try:
             json_data = session.post(
@@ -149,34 +127,32 @@ def fetch_data():
                 phone = "<MISSING>"
             if len(hours_of_operation) < 3:
                 hours_of_operation = "<MISSING>"
-            addresses.append(street_address)
-            data.append(
-                [
-                    base_url,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zipp,
-                    "US",
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            yield SgRecord(
+                locator_domain=base_url,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zipp.strip(),
+                country_code="US",
+                store_number=str(store_number),
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=str(latitude),
+                longitude=str(longitude),
+                hours_of_operation=hours_of_operation,
             )
-
-            p += 1
-    driver.quit()
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
