@@ -11,7 +11,7 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests(verify_ssl=False, proxy_country="uk")
-
+    scraped_urls = []
     start_url = "https://www.anchor.org.uk/our-properties/locations"
     domain = "anchorhanover.org.uk"
     hdr = {
@@ -23,12 +23,18 @@ def fetch_data():
         '//h4[contains(text(), "Select a county")]/following-sibling::ul[1]//a/@href'
     )
     for url in all_counties:
+        if url in scraped_urls:
+            continue
+        scraped_urls.append(url)
         response = session.get(url, headers=hdr)
         if response.status_code != 200:
             continue
         dom = etree.HTML(response.text)
         all_cities = dom.xpath('//ul[@class="mb-30 list-reset"]//a/@href')
         for url in all_cities:
+            if url in scraped_urls:
+                continue
+            scraped_urls.append(url)
             url = urljoin(start_url, url)
             response = session.get(url, headers=hdr)
             dom = etree.HTML(response.text)
@@ -40,7 +46,8 @@ def fetch_data():
             )
             total = dom.xpath('//span[@class="js-result-count"]/text()')
             if total:
-                for i in range(0, int(total[0]) + 12):
+                total_pages = int(round((int(total[0]) + 12) / 12, 0))
+                for i in range(0, total_pages):
                     data = session.get(
                         f"https://www.anchor.org.uk/internals/property-finder/search?offset={str(i)}"
                     ).json()
@@ -50,6 +57,9 @@ def fetch_data():
 
             for url in list(set(all_locations)):
                 page_url = urljoin(start_url, url)
+                if page_url in scraped_urls:
+                    continue
+                scraped_urls.append(page_url)
                 loc_response = session.get(page_url, headers=hdr)
                 if loc_response.status_code != 200:
                     continue
