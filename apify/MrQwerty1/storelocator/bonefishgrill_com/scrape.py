@@ -27,7 +27,10 @@ def fetch_data(sgw: SgWriter):
             state = a.get("region")
             postal = a.get("postalCode")
             country_code = "US"
-            store_number = j.get("Id")
+            try:
+                store_number = j["meta"]["id"]
+            except KeyError:
+                store_number = SgRecord.MISSING
             location_name = f"Bonefish Grill {city}, {state}"
             page_url = j.get("c_pagesURL")
 

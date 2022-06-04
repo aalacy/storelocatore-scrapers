@@ -18,8 +18,12 @@ def fetch_data(sgw: SgWriter):
         loc = j.get("location") or {}
         e = loc.get("extra_fields") or {}
         raw_address = j.get("address")
-        street_address = e.get("shop-street")
-        city = e.get("shop-town")
+        street_address = e.get("shop-street") or ""
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        city = e.get("shop-town") or ","
+        if "," in city:
+            city = city.split(",")[0].strip()
         postal = e.get("shop-postal-code")
         country_code = "GB"
         store_number = j.get("id")

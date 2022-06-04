@@ -43,7 +43,7 @@ user_agent = (
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response(urlnum, url):
-    with SgRequests() as http:
+    with SgRequests(verify_ssl=False) as http:
         logger.info(f"[{urlnum}] Pulling the data from: {url}")
         r = http.get(url, headers=headers)
         if r.status_code == 200:
@@ -82,9 +82,8 @@ def get_googlemap_place_details_urls():
             time.sleep(10)
             s1 = set()
             for i in range(0, 3):
-                driver2.find_element_by_xpath(
-                    f'//div[@role="button" and contains(@style, "z-index: {str(i)};")]/img'
-                ).click()
+                zindex_xpath = f'//div[@role="button" and contains(@style, "z-index: {str(i)};")]/img'
+                driver2.find_element(by=By.XPATH, value=zindex_xpath).click()
                 time.sleep(10)
                 sel = html.fromstring(driver2.page_source)
                 getplacedetails_xpath = (
