@@ -24,7 +24,6 @@ search = DynamicGeoSearch(
 
 
 def fetch_data():
-    ids = []
     url = "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx/GetLocations"
     for lat, lng in search:
         x = lat
@@ -60,31 +59,31 @@ def fetch_data():
                         store = item.split("\\u003cLocationId\\u003e")[1].split("\\")[0]
                         lat = item.split("Latitude\\u003e")[1].split("\\")[0]
                         lng = item.split("Longitude\\u003e")[1].split("\\")[0]
-                        if store not in ids:
-                            ids.append(store)
-                            logger.info(("Pulling Store ID #%s..." % store))
-                            purl = "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
-                            yield SgRecord(
-                                locator_domain=website,
-                                page_url=purl,
-                                location_name=name,
-                                street_address=add,
-                                city=city,
-                                state=state,
-                                zip_postal=zc,
-                                country_code=country,
-                                phone=phone,
-                                location_type=typ,
-                                store_number=store,
-                                latitude=lat,
-                                longitude=lng,
-                                hours_of_operation=hours,
-                            )
+                        logger.info(("Pulling Store ID #%s..." % store))
+                        purl = (
+                            "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
+                        )
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=purl,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
 

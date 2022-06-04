@@ -153,8 +153,12 @@ def scrape():
         latitude=MappingField(
             mapping=["latitude"],
             part_of_record_identity=True,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
-        longitude=MappingField(mapping=["longitude"]),
+        longitude=MappingField(
+            mapping=["longitude"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
         street_address=MultiMappingField(
             mapping=[["address", "line1"], ["address", "line2"]],
             multi_mapping_concat_with=", ",

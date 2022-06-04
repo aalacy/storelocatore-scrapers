@@ -10,10 +10,6 @@ from sgscrape.sgwriter import SgWriter
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 import json
-import random
-import time
-
-session = SgRequests()
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -39,11 +35,11 @@ class ExampleSearchIteration(SearchIteration):
         """
 
         lati, lngi = coord
-        url = f"https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude={lati}&geoPoint.longitude={lngi}&radius=50&currentPage=1"
 
+        url = f"https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude={lati}&geoPoint.longitude={lngi}&radius=5000"
         try:
+            session = SgRequests()
             r = session.get(url, headers=headers)
-            time.sleep(random.randint(1, 3))
             website = "swarovski.com"
             res_json = json.loads(r.content)["results"]
 
@@ -113,7 +109,7 @@ if __name__ == "__main__":
 
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=100,
     )
 
     with SgWriter(
