@@ -1,115 +1,136 @@
-import csv
-import os
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-import sgzip
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from concurrent import futures
 
-logger = SgLogSetup().get_logger('chick-fil-a_com')
 
+def get_data(zips, sgw: SgWriter):
 
+    locator_domain = "https://www.chick-fil-a.com/"
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+    session = SgRequests()
 
-PATH_TEMPLATE = "/search?q={}&r=1000&per=50"
-URL_TEMPLATE = 'https://locator.chick-fil-a.com.yext-cdn.com' + PATH_TEMPLATE
-
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize(country_codes = ['us'])
-
-MAX_RESULTS = 50
-MAX_DISTANCE = 20
-
-session = SgRequests()
-
-def get_headers(zc):
-    return {
-        'Authority': 'locator.chick-fil-a.com.yext-cdn.com',
-        'Method': 'GET',
-        #'Path': PATH_TEMPLATE.format(zc),
-        'Scheme': 'https',
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9',
-        #'Referrer': URL_TEMPLATE.format(zc),
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://locator.chick-fil-a.com.yext-cdn.com/search?q=10001&per=10",
+        "Alt-Used": "locator.chick-fil-a.com.yext-cdn.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
     }
 
-COOKIES = {
-    'UTMsessionStart': 'true',
-    'emHashed': 'undefined',
-    '_ga': 'GA1.2.422645551.1582838311',
-    '_gid': 'GA1.2.1700769816.1582838311',
-    '_mibhv': 'anon-1582838280841-7352020692_8351',
-    '_micpn': 'esp:-1::1582838310656',
-    '_derived_epik': 'dj0yJnU9QW44aWU5MTl5clNPUUR0TzRvMHpUUjI0eGUwbDBWOHImbj1BZVhNVmVoSC1TSHNWelozaE5VREFRJm09NyZ0PUFBQUFBRjVZTTFB'
-}
+    params = {
+        "q": f"{zips}",
+        "per": "50",
+        "r": "250",
+    }
 
-def handle_missing(field):
-    if field == None or (type(field) == type('x') and len(field.strip()) == 0):
-        return '<MISSING>'
-    return field
+    r = session.get(
+        "https://locator.chick-fil-a.com.yext-cdn.com/search",
+        headers=headers,
+        params=params,
+    )
+    try:
+        js = r.json()["response"]["entities"]
+    except:
+        return
 
-def parse_hours(json_hours):
-    hours = []
-    for day in json_hours:
-        if day['isClosed']:
-            hours.append("{}: CLOSED".format(day['day']))
-        else:
-            hours.append("{}: {}-{}".format(day['day'], day['intervals'][0]['start'], day['intervals'][0]['end']))
-    return ', '.join(hours)
+    for j in js:
 
-def fetch_data():
-    keys = set()
-    coord = search.next_zip()
-    while coord:
-        result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        r = session.get(URL_TEMPLATE.format(coord), cookies=COOKIES, headers=get_headers(coord)).json()
-        stores = r['response']['entities']
-        result_coords = []
-        for store in stores:
-            if 'c_status' in store['profile'] and store['profile']['c_status'].lower() == 'future':
-                continue
-            address = store['profile']['address']
-            city =  address['city']
-            state = address['region'] 
-            country = address['countryCode']
-            website = 'chick-fil-a.com'
-            typ = '<MISSING>'
-            add = address['line1'] 
-            zc = address['postalCode'] 
-            name = store['profile']['c_locationName'] 
-            store_number = store['profile']['meta']['id'] 
-            phone = '<MISSING>'
-            if 'mainPhone' in store['profile']:
-                phone = store['profile']['mainPhone']['number']
-            loc = store['profile']['websiteUrl'] 
-            lat = store['profile']['displayCoordinate']['lat'] 
-            lng = store['profile']['displayCoordinate']['long']
-            yext_lat = store['profile']['yextDisplayCoordinate']['lat']
-            yext_lng = store['profile']['yextDisplayCoordinate']['long']
-            result_coords.append((yext_lat, yext_lng))
-            hours = parse_hours(store['profile']['hours']['normalHours'])
-            key = '|'.join([name, add, city, state, zc, country])
-            if key not in keys:
-                keys.add(key)
-                yield [website, loc, name, add, city, state, zc, country, store_number, phone, typ, lat, lng, hours]
-        if len(result_coords) > 0:
-            search.max_count_update(result_coords)
-        else:
-            logger.info("max distance update")
-            search.max_distance_update(20)
-        coord = search.next_zip()
+        a = j.get("profile")
+        page_url = a.get("websiteUrl")
+        location_name = a.get("c_locationName") or "<MISSING>"
+        street_address = a.get("address").get("line1") or "<MISSING>"
+        city = a.get("address").get("city") or "<MISSING>"
+        state = a.get("address").get("region") or "<MISSING>"
+        postal = a.get("address").get("postalCode") or "<MISSING>"
+        if str(street_address).find("4531 Weitzel St Timnath CO80547") != -1:
+            street_address = str(street_address).split(f"{city}")[0].strip()
+        country_code = a.get("address").get("countryCode")
+        if country_code == "CA":
+            page_url = "https://www.chick-fil-a.com/locations"
+        try:
+            phone = a.get("mainPhone").get("display")
+        except:
+            phone = "<MISSING>"
+        latitude = a.get("displayCoordinate").get("lat") or "<MISSING>"
+        longitude = a.get("displayCoordinate").get("long") or "<MISSING>"
+        days = a.get("hours", {}).get("normalHours") or []
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        _tmp = []
+        for d in days:
+            day = d.get("day")[:3].capitalize()
+            try:
+                interval = d.get("intervals")[0]
+                start = str(interval.get("start"))
+                end = str(interval.get("end"))
 
-scrape()
+                if len(start) == 3:
+                    start = f"0{start}"
+
+                if len(end) == 3:
+                    end = f"0{end}"
+
+                line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+            except IndexError:
+                line = f"{day}  Closed"
+
+            _tmp.append(line)
+
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        if (
+            hours_of_operation.count("Closed") == 7
+            or location_name.lower().find("closed") != -1
+        ):
+            hours_of_operation = "Closed"
+        store_number = a.get("meta").get("id") or "<MISSING>"
+        status = a.get("c_status")
+        if status == "FUTURE":
+            hours_of_operation = "Coming Soon"
+        if status == "TEMPORARY_CLOSE" and location_name != "Northpark Mall (IA)":
+            hours_of_operation = "TEMPORARY CLOSE"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    zips = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=70,
+        expected_search_radius_miles=70,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "rockymountainurgentcare.com"
@@ -31,6 +33,11 @@ def fetch_data():
         locator_domain = website
 
         location_name = store["store"].strip().replace("&#038;", "&")
+        if "Cherry Creek" in location_name:
+            page_url = page_url + "/locations/cherry-creek/"
+
+        if "Boulder-Broadway" in location_name:
+            continue  # available in json but not available on locator under urgent care
 
         street_address = store["address"].strip()
         if "address2" in store and store["address2"].strip():
@@ -54,8 +61,11 @@ def fetch_data():
             '//div[@class="siteorigin-widget-tinymce textwidget"]'
         )
         for sec in sections:
-            if "Urgent Care" in "".join(sec.xpath("h2/text()")).strip():
-                phone = sec.xpath('p/a[contains(@href,"tel:")][1]/text()')
+            if (
+                "Urgent Care" in "".join(sec.xpath("h2//text()")).strip()
+                or "Family Practice" in "".join(sec.xpath("h2//text()")).strip()
+            ):
+                phone = sec.xpath('p//a[contains(@href,"tel:")][1]/text()')
                 if len(phone) > 0:
                     phone = phone[0]
                 break
@@ -65,9 +75,17 @@ def fetch_data():
             '//div[@class="siteorigin-widget-tinymce textwidget"]/p'
         )
         for sec in text_sections:
-            if "Mon-" in "".join(sec.xpath(".//text()")).strip():
+            if (
+                "Mon-" in "".join(sec.xpath(".//text()")).strip()
+                or "Monday" in "".join(sec.xpath(".//text()")).strip()
+            ):
                 hours_of_operation = (
-                    "; ".join(sec.xpath(".//text()")).strip().replace("\n", "").strip()
+                    "; ".join(sec.xpath(".//text()"))
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                    .replace("Hours:;", "")
+                    .strip()
                 )
                 break
 
@@ -98,7 +116,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

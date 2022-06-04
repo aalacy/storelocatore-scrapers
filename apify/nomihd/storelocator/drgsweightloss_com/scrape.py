@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "drgsweightloss.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -29,6 +31,8 @@ def fetch_data():
         locator_domain = website
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
+        if isinstance(store_req, SgRequestError):
+            continue
         store_sel = lxml.html.fromstring(store_req.text)
         json_text = "".join(
             store_sel.xpath('//script[@type="application/ld+json"]/text()')
@@ -51,7 +55,11 @@ def fetch_data():
         zip = json_data["address"]["postalCode"]
         country_code = json_data["address"]["addressCountry"]
 
-        phone = json_data["telephone"]
+        phone = "<MISSING>"
+        try:
+            phone = json_data["telephone"]
+        except:
+            phone = json_data["contactPoint"][0]["telephone"]
 
         hours_of_operation = (
             ("; ".join(json_data["openingHours"]).replace(" ", ":").strip())
@@ -88,7 +96,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

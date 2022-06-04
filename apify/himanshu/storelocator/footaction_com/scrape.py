@@ -1,9 +1,14 @@
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
 
 session = SgRequests()
 base_url = "https://stores.footaction.com/"
+log = sglog.SgLogSetup().get_logger(logger_name="footaction.com")
 
 
 def fetch_data():
@@ -75,29 +80,34 @@ def fetch_data():
                         longi = location[1]
                         hrs_table = final_soup.find("div", {"class": "c-hours"})
                         days = hrs_table.find_all("tr")
-                        hours_of_operation = ""
+                        hours_list = []
                         for day in days[1:]:
-                            hours_of_operation = (
-                                hours_of_operation + " " + day.get_text()
-                            )
+                            hours_list.append(day.get_text())
+
+                        hours_of_operation = "; ".join(hours_list).strip()
+                        if hours_of_operation.lower().count("closed") == 7:
+                            location_type = "Temporarily Closed"
+
                         page_url = final_page_url
 
-                        locations = []
-                        locations.append(base_url)
-                        locations.append(name)
-                        locations.append(street)
-                        locations.append(cty)
-                        locations.append(st)
-                        locations.append(pin)
-                        locations.append(country_code)
-                        locations.append(store_number)
-                        locations.append(phone)
-                        locations.append(location_type)
-                        locations.append(lati)
-                        locations.append(longi)
-                        locations.append(hours_of_operation.replace("day", "day "))
-                        locations.append(page_url)
-                        yield locations
+                        yield SgRecord(
+                            locator_domain=base_url,
+                            page_url=page_url.replace("../", "").strip(),
+                            location_name=name,
+                            street_address=street,
+                            city=cty,
+                            state=st,
+                            zip_postal=pin,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=lati,
+                            longitude=longi,
+                            hours_of_operation=hours_of_operation.replace(
+                                "day", "day "
+                            ),
+                        )
 
                 else:
 
@@ -135,27 +145,32 @@ def fetch_data():
                     longi = location[1]
                     hrs_table = stores_soup.find("div", {"class": "c-hours"})
                     days = hrs_table.find_all("tr")
-                    hours_of_operation = ""
+                    hours_list = []
                     for day in days[1:]:
-                        hours_of_operation = hours_of_operation + " " + day.get_text()
+                        hours_list.append(day.get_text())
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    if hours_of_operation.lower().count("closed") == 7:
+                        location_type = "Temporarily Closed"
+
                     page_url = city_page_url
 
-                    locations = []
-                    locations.append(base_url)
-                    locations.append(name)
-                    locations.append(street)
-                    locations.append(cty)
-                    locations.append(st)
-                    locations.append(pin)
-                    locations.append(country_code)
-                    locations.append(store_number)
-                    locations.append(phone)
-                    locations.append(location_type)
-                    locations.append(lati)
-                    locations.append(longi)
-                    locations.append(hours_of_operation.replace("day", "day "))
-                    locations.append(page_url)
-                    yield locations
+                    yield SgRecord(
+                        locator_domain=base_url,
+                        page_url=page_url.replace("../", "").strip(),
+                        location_name=name,
+                        street_address=street,
+                        city=cty,
+                        state=st,
+                        zip_postal=pin,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=lati,
+                        longitude=longi,
+                        hours_of_operation=hours_of_operation,
+                    )
 
         else:
             stores_page = session.get(state_page_url)
@@ -165,7 +180,10 @@ def fetch_data():
                 "span", {"class": "c-address-street-1"}
             ).get_text()
             cty = stores_soup.find("span", {"class": "c-address-city"}).get_text()
-            st = stores_soup.find("abbr", {"class": "c-address-state"}).get("title")
+            st = stores_soup.find("abbr", {"class": "c-address-state"})
+            if st:
+                st = st.get("title")
+
             pin = stores_soup.find(
                 "span", {"class": "c-address-postal-code"}
             ).get_text()
@@ -185,59 +203,47 @@ def fetch_data():
             longi = location[1]
             hrs_table = stores_soup.find("div", {"class": "c-hours"})
             days = hrs_table.find_all("tr")
-            hours_of_operation = ""
+            hours_list = []
             for day in days[1:]:
-                hours_of_operation = hours_of_operation + " " + day.get_text()
+                hours_list.append(day.get_text())
+
+            hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation.lower().count("closed") == 7:
+                location_type = "Temporarily Closed"
+
             page_url = state_page_url
 
-            locations = []
-            locations.append(base_url)
-            locations.append(name)
-            locations.append(street)
-            locations.append(cty)
-            locations.append(st)
-            locations.append(pin)
-            locations.append(country_code)
-            locations.append(store_number)
-            locations.append(phone)
-            locations.append(location_type)
-            locations.append(lati)
-            locations.append(longi)
-            locations.append(hours_of_operation.replace("day", "day "))
-            locations.append(page_url)
-            yield locations
-
-
-def load_data(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+            yield SgRecord(
+                locator_domain=base_url,
+                page_url=page_url.replace("../", "").strip(),
+                location_name=name,
+                street_address=street,
+                city=cty,
+                state=st,
+                zip_postal=pin,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=lati,
+                longitude=longi,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    load_data(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,3 @@
+--ignore CountryCodeFillRateChecker (Philippines)
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)

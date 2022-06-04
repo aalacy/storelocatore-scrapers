@@ -1,37 +1,43 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sglogging import sglog
+
+
+def get_hoo(url):
+    r = session.get(url, headers=headers)
+    logger.info(f"{url}: {r.status_code}")
+    tree = html.fromstring(r.text)
+
+    if tree.xpath("//span[contains(text(), 'COMING SOON')]"):
+        return "COMING SOON"
+    return SgRecord.MISSING
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://mayweather.fit/wp-admin/admin-ajax.php?action=cr_load_map_locations"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+    api = "https://mayweather.fit/wp-admin/admin-ajax.php?action=asl_load_stores&lang=&load_all=1&layout=1"
     r = session.get(api, headers=headers)
     js = r.json()
 
     for j in js:
-        a = j.get("Address") or {}
-        l = j.get("Location") or {}
-        location_name = j.get("Name")
-        page_url = "<INACCESSIBLE>"
-
-        store_number = j.get("Id")
-        street_address = a.get("Street")
-        city = a.get("City")
-        state = a.get("StateProv")
-        postal = a.get("PostalCode")
+        page_url = j.get("website")
+        location_name = j.get("title")
+        adr1 = j.get("street") or ""
+        adr2 = j.get("street2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postal_code")
         country_code = "US"
-        phone = j.get("Phone")
-        latitude = l.get("lat")
-        longitude = l.get("lng")
-
-        if "Your" in phone:
-            continue
+        store_number = j.get("id")
+        phone = j.get("phone") or ""
+        phone = phone.replace("?", "")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        hours_of_operation = get_hoo(page_url)
 
         row = SgRecord(
             page_url=page_url,
@@ -41,20 +47,23 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            hours_of_operation=hours_of_operation,
             locator_domain=locator_domain,
-            hours_of_operation=SgRecord.MISSING,
         )
 
         sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     locator_domain = "https://mayweather.fit/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    logger = sglog.SgLogSetup().get_logger(logger_name="mayweather.fit")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

@@ -2,8 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 import us
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -27,19 +27,21 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             street_address = _["street_address"]
-            if _["street_address2"]:
-                street_address += " " + _["street_address2"]
             _city = _["city"].replace(" ", "-").lower()
             page_url = f"https://bitstop.co/{_state(_['state']).replace(' ','-')}/{_city}/{_['slug']}-{_city}-bitcoin-atm"
             country_code = _["country"]
             if country_code == "TX":
                 country_code = "US"
+            state = _["state"]
+            if state == "PR":
+                country_code = "PR"
+                state = ""
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
                 street_address=street_address,
                 city=_["city"],
-                state=_["state"],
+                state=state,
                 zip_postal=_["zipcode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
