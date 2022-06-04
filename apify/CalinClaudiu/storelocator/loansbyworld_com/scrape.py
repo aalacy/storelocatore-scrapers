@@ -60,8 +60,13 @@ def fetch_data():
             return actual_req(session, long)["data"]
         except Exception as smh:
             logzilla.error("smh", exc_info=smh)
+            logzilla.error(f"smhlong {str(long)}")
             long = "0" + str(long)
-            return actual_req(session, long)["data"]
+            try:
+                return actual_req(session, long)["data"]
+            except Exception as ff:
+                logzilla.error("FF", exc_info=ff)
+                return []
 
     def fetch_sub(session, k):
         headers = {}
@@ -148,8 +153,12 @@ def scrape():
         latitude=MappingField(
             mapping=["latitude"],
             part_of_record_identity=True,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
-        longitude=MappingField(mapping=["longitude"]),
+        longitude=MappingField(
+            mapping=["longitude"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
         street_address=MultiMappingField(
             mapping=[["address", "line1"], ["address", "line2"]],
             multi_mapping_concat_with=", ",

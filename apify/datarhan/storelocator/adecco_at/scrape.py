@@ -20,7 +20,9 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="filiale_list_city"]//a/@href')[1:]
+    all_locations = dom.xpath('//div[contains(@class, "filiale_list_city")]//a/@href')[
+        1:
+    ]
     for url in all_locations:
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
