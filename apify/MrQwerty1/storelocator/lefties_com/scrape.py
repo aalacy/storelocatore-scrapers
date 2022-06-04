@@ -36,6 +36,8 @@ def fetch_data(sgw: SgWriter):
             street_address = " ".join(lines)
             if "(" in street_address:
                 street_address = street_address.split("(")[0].strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             city = j.get("city") or ""
             postal = j.get("zipCode") or ""
             if str(postal) == "0":

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -21,22 +20,27 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@class="cnt"]')
+    all_locations += dom.xpath('//div[@class="cnt black"]')
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//h3/text()")
-        if not location_name:
+        p_class = poi_html.xpath("@class")[0]
+        if not location_name and p_class != "cnt black":
             continue
-        location_name = location_name[0]
+        location_name = location_name[0] if location_name else ""
         street_address = poi_html.xpath(".//a/text()")[0]
         if street_address.endswith("."):
             street_address = street_address[:-1]
-        city = poi_html.xpath(".//parent::div/preceding-sibling::h2/text()")[0]
+        city = poi_html.xpath(".//parent::div/preceding-sibling::h2/text()")
+        if not city:
+            city = poi_html.xpath(".//preceding-sibling::h2/text()")
+        city = city[0]
         if city == "Divisiones Especializadas":
             city = ""
+        phone = poi_html.xpath('.//p[contains(text(), "PBX")]/text()')
         phone = (
-            poi_html.xpath('.//p[contains(text(), "PBX")]/text()')[0]
-            .split(":")[-1]
-            .split("/")[0]
-            .split("-")[0]
+            phone[0].split(":")[-1].split("/")[0].split("-")[0].replace("PBX", "")
+            if phone
+            else ""
         )
         geo = poi_html.xpath(".//a/@href")[0].split("/@")[-1].split(",")[:2]
         latitude = ""

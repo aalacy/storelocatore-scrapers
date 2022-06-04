@@ -12,9 +12,6 @@ from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIter
 import json
 
 
-session = SgRequests()
-
-
 class ExampleSearchIteration(SearchIteration):
     def do(
         self,
@@ -38,9 +35,10 @@ class ExampleSearchIteration(SearchIteration):
         """
 
         lati, lngi = coord
-        url = f"https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude={lati}&geoPoint.longitude={lngi}&radius=50&currentPage=1"
 
+        url = f"https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude={lati}&geoPoint.longitude={lngi}&radius=5000"
         try:
+            session = SgRequests()
             r = session.get(url, headers=headers)
             website = "swarovski.com"
             res_json = json.loads(r.content)["results"]
@@ -111,7 +109,7 @@ if __name__ == "__main__":
 
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=100,
     )
 
     with SgWriter(
@@ -126,116 +124,7 @@ if __name__ == "__main__":
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
             search_iteration=search_iter,
-            country_codes=[
-                "US",
-                "AE",
-                "AL",
-                "AM",
-                "AT",
-                "AU",
-                "AW",
-                "AZ",
-                "BA",
-                "BE",
-                "BG",
-                "BH",
-                "BO",
-                "BR",
-                "CA",
-                "CH",
-                "CI",
-                "CO",
-                "CR",
-                "CY",
-                "CZ",
-                "DE",
-                "DK",
-                "DO",
-                "DZ",
-                "EC",
-                "EE",
-                "EG",
-                "ES",
-                "FI",
-                "FJ",
-                "FR",
-                "GB",
-                "GE",
-                "GI",
-                "GN",
-                "GR",
-                "GT",
-                "HK",
-                "HR",
-                "HU",
-                "ID",
-                "IE",
-                "IL",
-                "IN",
-                "IQ",
-                "IR",
-                "IS",
-                "IT",
-                "JO",
-                "JP",
-                "KE",
-                "KN",
-                "KR",
-                "KW",
-                "KY",
-                "KZ",
-                "LB",
-                "LC",
-                "LK",
-                "LT",
-                "LU",
-                "LV",
-                "MA",
-                "MD",
-                "ME",
-                "MG",
-                "MK",
-                "MN",
-                "MO",
-                "MT",
-                "MU",
-                "MY",
-                "NC",
-                "NL",
-                "NO",
-                "NZ",
-                "OM",
-                "PA",
-                "PH",
-                "PK",
-                "PL",
-                "PR",
-                "PT",
-                "PY",
-                "QA",
-                "RO",
-                "RU",
-                "SA",
-                "SG",
-                "SI",
-                "SK",
-                "SM",
-                "SR",
-                "SX",
-                "TH",
-                "TR",
-                "TW",
-                "UA",
-                "AD",
-                "UY",
-                "UZ",
-                "VA",
-                "VE",
-                "VN",
-                "VU",
-                "XK",
-                "ZA",
-            ],
+            country_codes=["AU", "BR", "CA", "GB", "NZ", "US"],
         )
 
         for rec in par_search.run():
