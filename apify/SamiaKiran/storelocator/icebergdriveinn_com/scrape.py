@@ -49,16 +49,16 @@ def fetch_data():
                     x.get_text(separator="|", strip=True).replace("|", " ")
                     for x in temp[1:]
                 )
-                hours_of_operation = hours_of_operation.replace(phone, "")
+                hours_of_operation = hours_of_operation.replace(phone, "").replace(
+                    "Delivery through Door Dash", ""
+                )
             else:
                 address = temp[0].text + " " + temp[1].text
                 phone = temp[-1].text
                 hours_of_operation = MISSING
                 phone = phone.replace("Delivery through DoorDash", "")
-                raw_address = (
-                    address.replace(",", " ")
-                    .replace("Delivery through Door Dash", "")
-                    .replace("99Fillmore", "99 Fillmore")
+                raw_address = address.replace(",", " ").replace(
+                    "99Fillmore", "99 Fillmore"
                 )
             pa = parse_address_intl(raw_address)
 
