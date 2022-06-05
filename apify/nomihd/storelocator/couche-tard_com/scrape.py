@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("couche-tard_com")
-session = SgRequests()
+session = SgRequests(dont_retry_status_codes=([404]))
 
 
 def fetch_data():

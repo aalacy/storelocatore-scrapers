@@ -45,7 +45,7 @@ def fetch_data():
 
     for poi_html in all_locations:
         location_name = poi_html.xpath('.//div[@class="h2"]/text()')[0]
-        street_address = poi_html.xpath(".//div[2]/text()")[0]
+        street_address = poi_html.xpath(".//div[2]/text()")[0].split("(")[0]
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else ""
         raw_data = poi_html.xpath("./div[4]/text()")
@@ -55,6 +55,10 @@ def fetch_data():
             raw_data = raw_data[0].split()
             city = " ".join(raw_data[1:])
             zip_code = raw_data[0]
+        if zip_code:
+            street_address = street_address.split(zip_code)[0].strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
         geo = poi_html.xpath('.//div[@class="gmaps"]//a/@href')[0]
         latitude = ""
         longitude = ""
