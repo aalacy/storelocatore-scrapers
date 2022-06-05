@@ -11,41 +11,62 @@ from sglogging import sglog
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def gimme_hours(soup):
+def parse_hrs(soup):
     soup = b4(soup, "lxml")
-    potH = soup.find_all("ul")
-    hours = []
-    data = None
-    for h in potH:
-        if "ours" in h:
-            data = h.find_all("li")
-    if data:
-        for i in data:
-            hours.append(
-                str(
-                    i.find("span", {"class": "day"}).text
-                    + ": "
-                    + i.find("span", {"class": "hours"}).text
-                )
-            )
-    return "; ".join(hours)
+    days = soup.find_all("span", {"class": "day"})
+    hors = soup.find_all("span", {"class": "hours"})
+    hours = ", ".join(
+        [
+            str(days[i].text.strip() + ": " + hors[i].text.strip())
+            for i in range(len(days))
+        ]
+    )
+    if "unday" not in hours.lower():
+        spans = soup.find_all("span")
+        for i in range(len(spans)):
+            if "unday" in spans[i].text.lower():
+                try:
+                    hours = (
+                        hours
+                        + ", "
+                        + spans[i].text.strip()
+                        + ": "
+                        + spans[i + 1].text.strip()
+                    )
+                except Exception as eh:
+                    logzilla.error("eh", exc_info=eh)
+
+    return hours
 
 
 def fetch_data():
     def search_api(session, long):
-        url = "https://www.loansbyworld.com/api/yext/geosearch"
-        headers = {}
+        def actual_req(session, long):
+            url = "https://www.loansbyworld.com/api/yext/geosearch"
+            headers = {}
 
-        headers["Content-Type"] = "application/json"
-        data = str('{"location":"' + f"{long}" + '","radius":1000}')
+            headers["Content-Type"] = "application/json"
+            data = str('{"location":"' + f"{long}" + '","radius":1000}')
 
-        resp = session.post(url, headers=headers, data=data)
+            resp = session.post(url, headers=headers, data=data)
+            try:
+                resp = resp.json()
+            except Exception as e:
+                logzilla.error(f"{str(url)} \n {str(e)}", exc_info=e)
+                return []
+            return resp
+
         try:
-            resp = resp.json()
-        except Exception as e:
-            logzilla.error(f"{str(url)} \n {str(e)}", exc_info=e)
-            return []
-        return resp["data"]
+            return actual_req(session, long)["data"]
+        except Exception as smh:
+            logzilla.error("smh", exc_info=smh)
+            logzilla.error(f"smhlong {str(long)}")
+            long = "0" + str(long)
+            try:
+                return actual_req(session, long)["data"]
+            except Exception as ff:
+                logzilla.error("FF", exc_info=ff)
+                return []
 
     def fetch_sub(session, k):
         headers = {}
@@ -55,15 +76,23 @@ def fetch_data():
 
         #%5Bstate%5D/%5Bcity%5D/%5BpostalCode%5D/%5BstoreId% # noqa
         # https://www.loansbyworld.com/locations/alabama/alabaster/35007/1521 # noqa
-        url = str(
-            f"https://www.loansbyworld.com/locations/{k['state']['id']}/{k['address']['city']}/{k['address']['postalCode']}/{k['id']}"
+        url = (
+            str(
+                f"https://www.loansbyworld.com/locations/{k['state']['id']}/{k['address']['city']}/{k['address']['postalCode']}/{k['id']}"
+            )
+            .lower()
+            .replace(" ", "-")
         )
+        logzilla.info(url)
         resp = session.get(url, headers=headers)
-        k["hours"] = gimme_hours(resp.text)
+        k["page_url"] = url
+        k["hours"] = parse_hrs(resp.text)
+
+        return k
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=25,
+        expected_search_radius_miles=40,
         max_search_results=None,
     )
 
@@ -76,8 +105,14 @@ def fetch_data():
                         k["address"]["line2"] = k["address"]["line2"]
                     except Exception:
                         k["address"]["line2"] = ""
-                except Exception:
+                    yield k
+                except Exception as e:
+                    logzilla.error("", exc_info=e)
                     k = result
+                    try:
+                        k["address"]["line2"] = k["address"]["line2"]
+                    except Exception:
+                        k["address"]["line2"] = ""
                     k["hours"] = ""
                     yield k
 
@@ -105,7 +140,11 @@ def scrape():
     url = "https://www.loansbyworld.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MissingField(),
+        page_url=MappingField(
+            mapping=["page_url"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            part_of_record_identity=True,
+        ),
         location_name=MappingField(
             mapping=["store"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
@@ -114,8 +153,12 @@ def scrape():
         latitude=MappingField(
             mapping=["latitude"],
             part_of_record_identity=True,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
-        longitude=MappingField(mapping=["longitude"]),
+        longitude=MappingField(
+            mapping=["longitude"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
         street_address=MultiMappingField(
             mapping=[["address", "line1"], ["address", "line2"]],
             multi_mapping_concat_with=", ",
@@ -150,7 +193,7 @@ def scrape():
     )
 
     pipeline = SimpleScraperPipeline(
-        scraper_name="ajsfinefoods.com",
+        scraper_name="loansbyworld.com",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,
