@@ -5,9 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlparse
 from urllib.parse import unquote as stdlib_unquote
-from lxml import html
 from lxml import etree
 import ssl
 
@@ -107,9 +105,7 @@ def fetch_records(idx, quoted_url, sgw: SgWriter):
             throc = thro + " - " + thrc if thro and thrc else ""
 
             hours = f"{frioc}; {satoc}; {sunoc}; {monoc}; {tueoc}; {wedoc}; {throc}"
-            print(hours)
             hours = hours.replace("; ; ; ; ; ;", "").strip()
-            raw_address = sta
 
             item = SgRecord(
                 locator_domain="canadagoose.com",
