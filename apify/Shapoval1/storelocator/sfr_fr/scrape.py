@@ -44,36 +44,29 @@ def get_data(url, sgw: SgWriter):
     )
     latitude = "".join(tree.xpath('//meta[@itemprop="latitude"]/@content'))
     longitude = "".join(tree.xpath('//meta[@itemprop="longitude"]/@content'))
-    r = session.get(f"{page_url}.json")
-    j = r.json()["profile"]
-    days = j.get("hours", {}).get("normalHours") or []
-    _tmp = []
-    for d in days:
-        day = d.get("day")[:3].capitalize()
-        try:
-            interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            end = str(interval.get("end"))
-
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
-            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-        except IndexError:
-            line = f"{day}  Closed"
-
-        _tmp.append(line)
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = (
+        " ".join(
+            tree.xpath('//table[@class="c-location-hours-details"]//tr//td//text()')
+        )
+        .replace("\n", "")
+        .strip()
+    )
+    hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
     if (
         hours_of_operation.count("Closed") == 7
         or location_name.lower().find("closed") != -1
     ):
         hours_of_operation = "Closed"
-    postal = j.get("address").get("postalCode") or "<MISSING>"
+    postal = (
+        "".join(
+            tree.xpath(
+                '//div[@class="NAP"]//span[@class="c-address-postal-code"]/text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
     state = (
         "".join(tree.xpath('//ol[@class="c-bread-crumbs-list"]/li[2]//text()'))
         or "<MISSING>"
