@@ -60,8 +60,6 @@ def fetch_data():
                     "div", {"class": "amlocator-location-info"}
                 ).findAll("div", {"class": "amlocator-block"})
                 raw_address = address[4].findAll("span")[-1].text
-                print(raw_address)
-
                 pa = parse_address_intl(raw_address)
                 try:
                     street_address = pa.street_address_1 + " " + pa.street_address_2
