@@ -49,6 +49,10 @@ def fetch_data(sgw: SgWriter):
             _tmp = []
             intervals = j.get("hours") or {}
             for day, interval in intervals.items():
+                if "holiday" in day.lower():
+                    continue
+                if isinstance(interval, list):
+                    interval = interval.pop(0)
                 if interval.get("isClosed"):
                     _tmp.append(f"{day.capitalize()}: Closed")
                     continue
@@ -58,6 +62,9 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(f"{day.capitalize()}: {start} - {end}")
 
             hours_of_operation = ";".join(_tmp)
+            location_type = SgRecord.MISSING
+            if hours_of_operation.count("Closed") == 7:
+                location_type = "Closed"
 
             row = SgRecord(
                 page_url=page_url,
@@ -70,6 +77,7 @@ def fetch_data(sgw: SgWriter):
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,
+                location_type=location_type,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
             )

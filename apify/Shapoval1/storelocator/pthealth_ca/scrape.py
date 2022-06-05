@@ -62,7 +62,7 @@ def get_data(url, sgw: SgWriter):
             or "<MISSING>"
         )
     hours_of_operation = (
-        " ".join(tree.xpath('//table[@id="operation-hours"]//tr/td/text()'))
+        " ".join(tree.xpath('//table[@id="operation-hours-pth"]//tr/td/text()'))
         .replace("\n", "")
         .strip()
         or "<MISSING>"
@@ -91,7 +91,7 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

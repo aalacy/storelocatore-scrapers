@@ -4,8 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-import math
-from concurrent.futures import ThreadPoolExecutor
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = SgLogSetup().get_logger("totalenergies")
 
@@ -29,47 +28,23 @@ hr_obj = {
     "7": "Sunday",
 }
 
-max_workers = 24
 
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(7))
+def _d(store_number):
+    with SgRequests() as http:
+        store_url = f"https://datastore-webapp-p.azurewebsites.net/REVERSE/api/Info/Poi?Lang=fr_FR&AdditionalData=Items&AdditionalDataFields=Items_Code,Items_Price,Items_Availability,Items_UpdateDate&Code={store_number}"
+        res = http.get(store_url, headers=_headers).json()
+        if res["ErrorCode"] == "0001":
+            return {}
 
-def fetchConcurrentSingle(store):
-    logger.info(store["store_id"])
-    url = f"https://api.woosmap.com/stores/{store['store_id']}?key=mapstore-prod-woos"
-    loc = request_with_retries(url).json()
-    _ = loc["properties"]
-    return loc, _
-
-
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            if result:
-                count = count + 1
-                if count % reminder == 0:
-                    logger.debug(f"Concurrent Operation count = {count}")
-                output.append(result)
-    return output
-
-
-def request_with_retries(url):
-    with SgRequests() as session:
-        return session.get(url, headers=_headers)
+        return res["Pois"][0]
 
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(1, 11):
-            for b in range(20):
-                for c in range(10):
+        for a in range(20):
+            for b in range(50):
+                for c in range(100):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
@@ -78,8 +53,11 @@ def fetch_data():
                     except:
                         break
                     logger.info(f"[{a, b, c}] {len(data.keys())} found")
-                    stores = [store for kk, store in data.items()]
-                    for loc, _ in fetchConcurrentList(stores):
+                    for kk, store in data.items():
+                        logger.info(store["store_id"])
+                        url = f"https://api.woosmap.com/stores/{store['store_id']}?key=mapstore-prod-woos"
+                        loc = http.get(url, headers=_headers).json()
+                        _ = loc["properties"]
                         addr = _["address"]
                         raw_address = " ".join(addr["lines"])
                         raw_address += " " + addr["city"]
@@ -129,11 +107,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -2,7 +2,6 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import us
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -23,7 +22,10 @@ def fetch_data():
         stores_req = session.get(search_url, headers=headers)
         stores = json.loads(
             "["
-            + stores_req.text.split("var stores = [")[1].strip().split("}];")[0].strip()
+            + stores_req.text.split("var locations = [")[1]
+            .strip()
+            .split("}];")[0]
+            .strip()
             + "}]"
         )
 
@@ -37,10 +39,7 @@ def fetch_data():
             state = store["state"]
             zip = store["zipCode"]
 
-            country_code = "<MISSING>"
-            if us.states.lookup(state):
-                country_code = "US"
-
+            country_code = "US"
             store_number = store["storeID"]
             phone = store["phone"]
 
@@ -73,6 +72,12 @@ def fetch_data():
                 )
                 .strip()
                 .split(";;")[0]
+                .strip()
+                .split("Pharmacy")[0]
+                .strip()
+                .split("Pizza")[0]
+                .strip()
+                .replace("\n", ";")
                 .strip()
             )
 

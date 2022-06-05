@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("bjc_org")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +22,6 @@ def fetch_data():
     ltyp = "Hospital"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'class="tab-pane " id="' in line:
             ltyp = (
                 line.split('class="tab-pane " id="')[1]
@@ -54,7 +29,7 @@ def fetch_data():
                 .replace("-", " ")
                 .title()
             )
-        if "more information" in line.lower():
+        if "more information" in line.lower() and "href=" in line:
             locs.append(line.split('href="')[1].split('"')[0] + "|" + ltyp)
     for loc in locs:
         lurl = loc.split("|")[0]
@@ -74,15 +49,12 @@ def fetch_data():
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<h1>" in line2:
                 name = line2.split("<h1>")[1].split("<")[0]
             if 'lass="address">' in line2:
                 next(lines)
                 g = next(lines)
                 h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
                 add = g.split("<")[0].strip().replace("\t", "")
                 addinfo = (
                     h.strip().replace("\t", "").replace("\r", "").replace("\n", "")
@@ -129,82 +101,74 @@ def fetch_data():
         hours = hours.replace("<br><strong>", "; ")
         if phone == "":
             phone = "<MISSING>"
-        if city != "":
-            yield [
-                website,
-                lurl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
-    typ = "Convenient Care"
-    name = "Boone Medical Group Convenient Care at Nifong"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    add = "900 W. Nifong Boulevard, Suite 101"
-    city = "Columbia"
-    state = "MO"
-    zc = "65203"
-    phone = "573.815.6631"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    yield [
-        website,
-        lurl,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
-    typ = "Hospital"
-    name = "Boone Hospital Center"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    add = "1600 East Broadway"
-    city = "Columbia"
-    state = "MO"
-    zc = "65201"
-    phone = "573.815.8000"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    yield [
-        website,
-        lurl,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
+        if "Eunice-Smith-Home" in lurl:
+            name = "Alton Memorial Rehabilitation & Therapy"
+            add = "1251 College Avenue"
+            city = "Alton"
+            state = "IL"
+            zc = "62002"
+            phone = "618-463-7330"
+        if "Barnes-Jewish-Extended-Care" in lurl:
+            name = "Barnes-Jewish Extended Care"
+            city = "Clayton"
+            state = "MO"
+            phone = "314-725-7447"
+            add = "401 Corporate Park Drive"
+            zc = "63105"
+        if "Christian-Extended-Care-Rehabilitation" in lurl:
+            name = "Christian Extended Care & Rehabilitation"
+            city = "St. Louis"
+            state = "MO"
+            zc = "63136"
+            phone = "314-653-4848"
+            add = "11160 Village Drive North"
+        if "Memorial-Care-Center" in lurl:
+            name = "Memorial Care Center"
+            add = "4315 Memorial Drive"
+            city = "Belleville"
+            state = "IL"
+            zc = "62226"
+            phone = "618-619-5000"
+        if "Transitional-Care-Program" in lurl:
+            name = "Transitional Care Program"
+            city = "Sullivan"
+            state = "MO"
+            zc = "63080"
+            add = "751 Sappington Bridge Road"
+            phone = "573-468-1191"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=lurl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

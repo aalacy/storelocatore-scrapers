@@ -32,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = j.get("PostCode") or "<MISSING>"
         country_code = "ZA"
-        city = j.get("city") or "<MISSING>"
+        city = j.get("City") or "<MISSING>"
         slug = j.get("DealerUrl")
         page_url = f"https://www.triumph-motorcycles.co.za{slug}"
         phone = j.get("Phone") or "<MISSING>"
@@ -46,6 +46,10 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if city == "<MISSING>" and ad.find("Gqeberha") != -1:
+            city = "Gqeberha"
+        if ad.find("CAPE TOWN") != -1:
+            city = "CAPE TOWN"
 
         row = SgRecord(
             locator_domain=locator_domain,
