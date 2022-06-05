@@ -63,7 +63,8 @@ def fetch_data(sgw: SgWriter):
                 for inter in inters:
                     _t.append(f'{"-".join(inter)}')
 
-                _tmp.append(f'{day}: {"|".join(_t)}')
+                if inters:
+                    _tmp.append(f'{day}: {"|".join(_t)}')
 
             hours_of_operation = ";".join(_tmp)
 
