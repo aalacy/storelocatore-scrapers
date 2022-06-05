@@ -26,18 +26,18 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.select("a[href*=stores]")
         for loc in loclist:
-            page_url =loc['href']
+            page_url = loc["href"]
             location_type = MISSING
-            if 'coming-soon' in page_url:
-                location_type= "Temporarily Closed"
-            if 'doctorsofphysicaltherapy' not in page_url:
-                page_url = DOMAIN+loc['href']
+            if "coming-soon" in page_url:
+                location_type = "Temporarily Closed"
+            if "doctorsofphysicaltherapy" not in page_url:
+                page_url = DOMAIN + loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            temp = r.text.split('"locations":[')[1].split(']};')[0]
+            temp = r.text.split('"locations":[')[1].split("]};")[0]
             temp = json.loads(temp)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = temp['store']
+            location_name = temp["store"]
             try:
                 street_address = temp["address"] + " " + temp["address2"]
             except:
@@ -45,11 +45,15 @@ def fetch_data():
             city = temp["city"]
             state = temp["state"]
             zip_postal = temp["zip"]
-            latitude = temp['lat']
-            longitude = temp['lng']
-            store_number = temp['id']
+            latitude = temp["lat"]
+            longitude = temp["lng"]
+            store_number = temp["id"]
             phone = soup.find("div", {"class": "wpsl-contact-details"}).find("a").text
-            hours_of_operation  =soup.find("table", {"class": "wpsl-opening-hours"}).get_text(separator='|', strip=True).replace('|'," ")
+            hours_of_operation = (
+                soup.find("table", {"class": "wpsl-opening-hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
