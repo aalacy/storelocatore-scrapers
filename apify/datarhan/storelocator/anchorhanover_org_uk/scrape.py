@@ -46,15 +46,14 @@ def fetch_data():
             )
             total = dom.xpath('//span[@class="js-result-count"]/text()')
             if total:
-                total_pages = int(round((int(total[0]) + 12) / 12, 0))
-                for i in range(0, total_pages):
+                total_pages = int(total[0]) + 12
+                for i in range(0, total_pages, 12):
                     data = session.get(
                         f"https://www.anchor.org.uk/internals/property-finder/search?offset={str(i)}"
                     ).json()
                     for e in data["results"]:
                         poi = json.loads(e)
                         all_locations.append(poi["metatag"]["value"]["canonical_url"])
-
             for url in list(set(all_locations)):
                 page_url = urljoin(start_url, url)
                 if page_url in scraped_urls:
@@ -105,9 +104,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            ),
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS}),
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
