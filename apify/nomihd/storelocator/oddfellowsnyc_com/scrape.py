@@ -126,6 +126,8 @@ def fetch_data():
             .split(", charleston@")[0]
             .strip()
             .replace("StreetBrooklyn", "Street, Brooklyn")
+            .split(", DAILY")[0]
+            .strip()
         )
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
@@ -175,7 +177,10 @@ def fetch_data():
                     ],
                 )
             )
-        hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+        hours_of_operation = (
+            "; ".join(hours).replace("; :", ":").strip().split("(")[0].strip()
+        )
+
         if "843.203.6139;" in hours_of_operation:
             hours_of_operation = hours_of_operation.replace("843.203.6139;", "").strip()
             phone = "843.203.6139"

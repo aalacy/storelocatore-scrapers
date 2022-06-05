@@ -26,6 +26,9 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        if "Opening Fall" in location_name:
+            continue
+
         raw_address = list(base.find(class_="footer-widget").stripped_strings)
         phone = ""
         try:
