@@ -2,51 +2,75 @@
 import re
 import json
 from lxml import etree
-from urllib.parse import urljoin
-
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgselenium import SgFirefox
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+
+logger = sglog.SgLogSetup().get_logger(logger_name="bipa.at")
+
+
+def fetch_locations(session, url, latlng, retry=0):
+    lat, lng = latlng
+
+    try:
+
+        html = session.execute_async_script(
+            f"""
+            fetch("{url}", {{
+                "credentials": "include",
+                "headers": {{
+                    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Upgrade-Insecure-Requests": "1",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "same-origin",
+                    "Sec-Fetch-User": "?1"
+                }},
+                "referrer": "https://www.bipa.at/filialen",
+                "body": "&latitude={lat}&longitude={lng}",
+                "method": "POST",
+                "mode": "cors"
+            }})
+            .then(res => res.text())
+            .then(arguments[0])
+        """
+        )
+
+        return html
+    except:
+        if retry < 3:
+            return fetch_locations(session, url, latlng, retry + 1)
 
 
 def fetch_data():
-    start_url = "https://www.bipa.at/filialen"
     domain = "bipa.at"
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=50
+    search = DynamicGeoSearch(
+        max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
+        country_codes=[SearchableCountries.AUSTRIA],
     )
-    with SgFirefox() as driver:
-        for code in all_codes:
-            driver.get(start_url)
-            try:
-                driver.find_element_by_xpath(
-                    '//button[contains(text(), "Cookies erlauben")]'
-                ).click()
-            except Exception:
-                pass
-            driver.find_element_by_id("addressstring").send_keys(code)
-            driver.find_element_by_id("findButton").click()
-            dom = etree.HTML(driver.page_source)
+
+    with SgFirefox() as session:
+        session.get("https://www.bipa.at/filialen")
+        session.set_script_timeout(300)
+
+        tree = etree.HTML(session.page_source)
+        url = tree.xpath('//form[@id="frmStorelocator"]/@action')[0]
+
+        for latlng in search:
+            html = fetch_locations(session, url, latlng)
+
+            dom = etree.HTML(html)
 
             all_locations = dom.xpath("//@data-options")
-            try:
-                count = 0
-                next_page = driver.find_element_by_class_name("next_link")
-                while next_page:
-                    if count > 9:
-                        break
-                    next_page.click()
-                    dom = etree.HTML(driver.page_source)
-                    all_locations += dom.xpath("//@data-options")
-                    next_page = driver.find_element_by_class_name("next_link")
-                    count += 1
-            except Exception:
-                pass
-
             for poi in all_locations:
                 poi = poi.replace("null", '""')
                 if poi.startswith("["):
@@ -69,8 +93,6 @@ def fetch_data():
                     else:
                         hours.append(f"{d}: closed")
                 hours = ", ".join(hours)
-                page_url = re.findall('url":"(.+?)",', poi)[0][0]
-                page_url = urljoin(start_url, page_url)
                 store_number = re.findall('storeid":"(.+?)"', poi)[0]
                 latitude = re.findall('latitude":(.+?),', poi)[0]
                 longitude = re.findall('longitude":(.+?),', poi)[0]
@@ -99,8 +121,13 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

@@ -32,7 +32,9 @@ def fetch_data():
     search_url = "https://www.biscuitsandbath.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="wp-block-columns"]')
+    stores = stores_sel.xpath(
+        '//div[contains(@class,"wp-block-column")][./span[@role="heading"]]'
+    )
     for store in stores:
         store_url = "".join(
             store.xpath(".//p//a[contains(@href,'/locations/')]/@href")
@@ -47,14 +49,13 @@ def fetch_data():
 
         location_type = "<MISSING>"
         locator_domain = website
-        location_name = "".join(store.xpath("div[2]/span[1]//text()")).strip()
+        location_name = "".join(store.xpath("span[1]//text()")).strip()
         if (
             len(location_name) <= 0
-            or "COMING SOON"
-            in "".join(store.xpath("div[2]/span/span/strong/text()")).strip()
+            or "COMING SOON" in "".join(store.xpath("span/span/strong/text()")).strip()
         ):
             continue
-        raw_address = store.xpath("div[2]/p[1]/a")
+        raw_address = store.xpath("p[1]/a")
         address = []
         for add in raw_address:
             if "".join(add.xpath("@data-type")).strip() == "tel":
@@ -76,19 +77,21 @@ def fetch_data():
         zip = address.split(",")[1].strip().split(" ")[-1].strip()
         country_code = "US"
 
-        phone = "".join(store.xpath('div[2]/p[1]/a[@data-type="tel"]/text()')).strip()
+        phone = "".join(store.xpath('p[1]/a[@data-type="tel"]/text()')).strip()
         if len(phone) <= 0:
             phone = "".join(
-                store.xpath('div[2]/p[1]/a[contains(@href,"tel:")]/text()')
+                store.xpath('p[1]/a[contains(@href,"tel:")]/text()')
             ).strip()
 
-        temp_days = store.xpath("div[2]/p[1]/strong/mark/text()")
+        temp_days = store.xpath("p[1]/strong/mark/text()")
+        if "coming soon" in "".join(temp_days).lower():
+            continue
         days_list = []
         for day in temp_days:
             if len("".join(day).strip()) > 0:
                 days_list.append("".join(day).strip())
 
-        temp_time = store.xpath("div[2]/p[1]/text()")
+        temp_time = store.xpath("p[1]/text()")
         time_list = []
         for time in temp_time:
             if len("".join(time).strip()) > 0:

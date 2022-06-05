@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sgpostal.sgpostal import parse_address_intl
@@ -28,10 +28,10 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locs = soup.find_all("a", href=re.compile(r"www.google.com/maps/place/"))
-        locations = soup.select(
-            "div.main-page-wrapper div.entry-content div.vc_row div.wpb_column.vc_col-sm-6 > div > div"
-        )
+        locations = soup.select("div.vc_column_container.vc_col-sm-4")
         for _ in locations:
+            if not _.text.strip() or not _.strong:
+                continue
             location_name = _.strong.text.strip()
             coord = _coord(locs, location_name)
             raw_address = " ".join(
@@ -49,18 +49,24 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
 
             _hr = _.find("strong", string=re.compile(r"Shop Opening Hours"))
+            hoo = {}
+            temp = []
             hours = []
             if _hr:
-                temp = list(_hr.find_parent().find_next_sibling("div").stripped_strings)
-                days = [tt.strip() for tt in temp[0].split("\xa0") if tt.strip()]
-                hh = [[], []]
-                for times in temp[1:]:
-                    _hr = [tt.strip() for tt in times.split("\xa0") if tt.strip()]
-                    hh[0].append(_hr[0])
-                    hh[1].append(_hr[1])
+                for ho in _hr.find_parent().find_next_siblings("div"):
+                    temp += list(ho.stripped_strings)
+            for hh in temp:
+                day1 = hh.replace("\xa0", " ").split("  ")[0].strip()
+                day2 = hh.replace("\xa0", " ").split("  ")[-1].strip()
+                if not hoo:
+                    hoo[day1] = []
+                    hoo[day2] = []
+                else:
+                    hoo[list(hoo.keys())[0]].append(day1)
+                    hoo[list(hoo.keys())[1]].append(day2)
 
-                for x, day in enumerate(days):
-                    hours.append(f"{day}: {', '.join(hh[x])}")
+            for day, times in hoo.items():
+                hours.append(f"{day}: {', '.join(times)}")
 
             yield SgRecord(
                 page_url=base_url,
@@ -70,7 +76,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Republic of Maldives",
-                phone=phone,
+                phone=phone.replace("P", "").strip(),
                 latitude=coord[0],
                 longitude=coord[1],
                 locator_domain=locator_domain,
@@ -80,7 +86,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

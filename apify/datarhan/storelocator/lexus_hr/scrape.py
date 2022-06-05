@@ -17,6 +17,11 @@ def fetch_data():
         "Spain": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/es/es/drive/-3.703583/40.416705?count=500&extraCountries=&isCurrentLocation=false",
         "France": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/fr/fr/drive/0.428551/44.064432?count=500&extraCountries=AD|MC&isCurrentLocation=false",
         "Estonia": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/ee/et/drive/24.745369/59.437216?count=500&extraCountries=&isCurrentLocation=false",
+        "Germany": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/de/de/drive/13.38333/52.51667?count=500&extraCountries=&isCurrentLocation=false",
+        "Sweden": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/se/sv/drive/18.071093/59.325117?count=500&extraCountries=&isCurrentLocation=false",
+        "Netherlands": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/nl/nl/drive/4.893604/52.37276?count=500&extraCountries=&isCurrentLocation=false",
+        "Portugal": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/pt/pt/drive/-7.4333/39.2911?count=500&extraCountries=&isCurrentLocation=false",
+        "Italy": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/it/it/drive/15.436903/38.051059?count=500&extraCountries=&isCurrentLocation=false",
     }
     l_url = {
         "hr": "https://www.lexus.hr/contact/dealers",
@@ -25,6 +30,11 @@ def fetch_data():
         "es": "https://www.lexusauto.es/#/publish/my_lexus_my_dealers",
         "fr": "https://www.lexus.fr/#/publish/my_lexus_my_dealers",
         "ee": "https://ee.lexus.ee/#/publish/my_lexus_my_dealers",
+        "de": "https://www.lexus.de/#/publish/my_lexus_my_dealers",
+        "se": "https://www.lexus.se/#/publish/my_lexus_my_dealers",
+        "nl": "https://www.lexus.nl/#/publish/my_lexus_my_dealers",
+        "it": "https://www.lexus.it/#/publish/my_lexus_my_dealers",
+        "pt": "https://www.lexus.pt/#publish/my_lexus_my_dealers",
     }
 
     domain = "lexus.hr"

@@ -84,14 +84,17 @@ base_url = "https://7eleven-api-prod.jenosize.tech/v1/Store/GetStoreByCurrentLoc
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.THAILAND],
     granularity=Grain_1_KM(),
-    expected_search_radius_miles=4,
+    expected_search_radius_miles=0.2,
 )
 
 
 @retry(stop=stop_after_attempt(7), wait=wait_random(min=100, max=160))
 def get_locs(data):
     locations = []
-    with SgRequests(proxy_country="th", retries_with_fresh_proxy_ip=10) as session:
+    with SgRequests(
+        proxy_country="th",
+        retries_with_fresh_proxy_ip=10,
+    ) as session:
         locations = session.post(
             base_url,
             headers={"user-agent": random.choices(_headers)[0]},
@@ -123,7 +126,6 @@ def fetch_data():
                     store["address"].replace(store["province"], "").strip()
                 )
             phone = store["tel"].split()[0].split(",")[0] if store.get("tel") else ""
-            search.found_location_at(store["lat"], store["lng"])
             yield SgRecord(
                 page_url="https://www.7eleven.co.th/find-store",
                 store_number=store["id"],
