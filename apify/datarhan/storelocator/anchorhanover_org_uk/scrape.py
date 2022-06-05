@@ -54,7 +54,6 @@ def fetch_data():
                     for e in data["results"]:
                         poi = json.loads(e)
                         all_locations.append(poi["metatag"]["value"]["canonical_url"])
-            print(len(list(set(all_locations))))
             for url in list(set(all_locations)):
                 page_url = urljoin(start_url, url)
                 if page_url in scraped_urls:
