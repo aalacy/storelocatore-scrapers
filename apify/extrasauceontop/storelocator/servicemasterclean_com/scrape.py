@@ -6,11 +6,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup as bs
+from proxyfier import ProxyProviders
 
 
 def get_data():
     page_urls = []
-    with SgFirefox(block_third_parties=False, is_headless=True) as driver:
+    with SgFirefox(
+        block_third_parties=False,
+        is_headless=False,
+        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
+    ) as driver:
         search = DynamicZipSearch(
             country_codes=[SearchableCountries.USA],
             granularity=Grain_8(),
