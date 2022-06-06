@@ -39,7 +39,6 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("div", {"id": "LocationsCont"}).findAll("li")
         for loc in loclist:
-            hours_of_operation = MISSING
             location_name = loc.find("h2").text
             if "COMING SOON" in location_name:
                 continue
@@ -50,20 +49,11 @@ def fetch_data():
             )
             log.info(location_name)
             page_url = loc.findAll("a")[-1]["href"]
-            page_url = "https://www.duckdonuts.com" + page_url
+            if "duckdonuts" not in page_url:
+                page_url = DOMAIN + page_url
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            if "View All Hours" in r.text:
-                payload = (
-                    "_m_=HoursPopup&HoursPopup%24_edit_=16580&HoursPopup%24_command_="
-                )
-                r2 = session.post(page_url, headers=headers_2, data=payload)
-                hours_of_operation = (
-                    BeautifulSoup(r2.text, "html.parser")
-                    .find("table")
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
+            hours_of_operation = "<INACCESSIBLE>"
             try:
                 longitude, latitude = (
                     soup.select_one("iframe[src*=maps]")["src"]
