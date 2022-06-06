@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "everbowl.com"
@@ -18,7 +20,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.everbowl.com/locations-1"
+    search_url = "https://www.everbowl.com/locations"
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
@@ -32,13 +34,18 @@ def fetch_data():
         locator_domain = website
 
         location_name = (
-            "".join(store.xpath(".//h2//text()")).strip().split(". ")[1].strip()
+            "".join(store.xpath(".//h2//text()")).strip().split(". ", 1)[1].strip()
         )
         if "COMING SOON" in location_name:
             continue
 
         address_info = list(filter(str, store.xpath(".//h3//text()")))
-        raw_address = " ".join(address_info[:2])
+        if address_info[-1] == "—":
+            raw_address = ", ".join(address_info[:-2]).strip()
+            phone = address_info[-2]
+        else:
+            raw_address = ", ".join(address_info[:-1]).strip()
+            phone = address_info[-1]
 
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
@@ -53,8 +60,7 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
-        phone = "".join(address_info[2:]).strip()
-        if "(" not in phone:
+        if "(" not in phone and "-" not in phone:
             phone = "<MISSING>"
 
         location_type = "<MISSING>"
@@ -94,7 +100,17 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

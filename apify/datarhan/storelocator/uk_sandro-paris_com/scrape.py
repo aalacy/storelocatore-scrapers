@@ -1,79 +1,54 @@
-import csv
-import json
-
+# -*- coding: utf-8 -*-
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "sandro-paris.com"
-
+    domain = "sandro-paris.com"
     start_url = "https://uk.sandro-paris.com/on/demandware.store/Sites-Sandro-UK-Site/en_GB/Stores-GetStores"
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
-    for poi in data:
-        store_url = "https://uk.sandro-paris.com/en/stores"
+    all_locations = session.get(start_url).json()
+    for poi in all_locations:
         location_name = poi["properties"]["title"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["properties"]["address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["properties"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["properties"]["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["properties"]["zip"]
-        zip_code = zip_code.strip() if zip_code else "<MISSING>"
-        if len(zip_code) > 5:
-            state = zip_code[:2]
-            zip_code = zip_code[2:].strip()
+        raw_address = f'{poi["properties"]["address"]}, {poi["properties"]["city"]}, {poi["properties"]["state"]}, {poi["properties"]["zip"]}'
+        addr = parse_address_intl(raw_address.replace("None", ""))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
+        street_address = street_address.replace("None", "")
+        if street_address.endswith("."):
+            street_address = street_address[:-1]
+        city = addr.city
+        if city:
+            city = city.replace("None", "")
+        if city and len(city) == 3:
+            city = ""
+        if city and city.endswith("."):
+            city = city[:-1]
+        state = addr.state
+        if state:
+            state = state.replace("None", "")
+        if state and "." in state:
+            state = ""
+        zip_code = addr.postcode
+        if zip_code:
+            zip_code = zip_code.replace("None", "").replace("NONE", "")
         country_code = poi["properties"]["countryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        if country_code != "us":
-            continue
         store_number = poi["id"]
-        store_number = store_number if store_number else "<MISSING>"
         phone = poi["properties"]["phone"]
-        phone = phone if phone and phone != "0" else "<MISSING>"
-        location_type = "<MISSING>"
+        phone = phone if phone and phone != "0" else ""
+        if "A COMPLETER LIVRAISO" in phone:
+            phone = ""
+        if phone:
+            phone = phone.split("/")[0].strip()
+        if phone == "-":
+            phone = ""
         latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
         hoo = []
         if poi["properties"].get("storeHours"):
             days = [
@@ -87,33 +62,39 @@ def fetch_data():
             ]
             hours = poi["properties"]["storeHours"].split(" | ")
             hoo = list(map(lambda d, h: d + " " + h, days, hours))
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else ""
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://uk.sandro-paris.com/en/stores",
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address.replace(" None,", ""),
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

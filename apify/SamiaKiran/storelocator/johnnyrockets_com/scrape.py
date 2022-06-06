@@ -1,125 +1,123 @@
-from sglogging import sglog
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
 
-session = SgRequests()
-website = "johnnyrockets_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+logger = SgLogSetup().get_logger("johnnyrockets")
 
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36",
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+header1 = {
+    "accept": "application/json, text/plain, */*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
+    "origin": "https://locations.johnnyrockets.com",
+    "referer": "https://locations.johnnyrockets.com/",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+locator_domain = "https://www.johnnyrockets.com/"
+base_url = "https://locations.johnnyrockets.com/site-map/all"
+MISSING = SgRecord.MISSING
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
 }
 
 
-DOMAIN = "https://www.johnnyrockets.com/https://goodnessme.ca/"
-MISSING = "<MISSING>"
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
+def _u(url):
+    return (
+        url.split("#")[0]
+        .replace("+~", "%26")
+        .replace("-", "+")
+        .replace("_", ".")
+        .replace("~", "-")
+        .replace("*", ",")
+        .replace("'", "%27")
+    )
 
 
 def fetch_data():
-    if True:
-        linklist = []
-        token_url = "https://locations.johnnyrockets.com/"
-        token = session.get(token_url, headers=headers)
-        token = BeautifulSoup(token.text, "html.parser")
-        token = token.select_one("script[src*=app]")["src"]
-        token = "https://locations.johnnyrockets.com/" + token
-        log.info(token)
-        log.info("Fetching the Token...")
-        token = session.get(token, headers=headers)
-        token = token.text.split('API_TOKEN",')[1].split(").")[0].replace('"', "")
-        url = (
-            "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token="
-            + token
-            + "&country=US&multi_account=true"
+    with SgRequests() as session:
+        app_url = (
+            "https://locations.johnnyrockets.com/"
+            + bs(session.get(base_url, headers=_headers).text, "lxml").find_all(
+                "script"
+            )[-1]["src"]
         )
-        loclist = session.get(url, headers=headers).json()["locations"]
-        headers2 = {
-            "authorization": token,
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36",
-        }
-        for loc in loclist:
-            location_type = loc["open_or_closed"]
-            if "temp closed" in location_type:
+        token = (
+            session.get(app_url, headers=_headers)
+            .text.split('constant("API_TOKEN",')[1]
+            .split(")")[0][1:-1]
+        )
+        json_url = f"https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token={token}&multi_account=true"
+        locations = session.get(json_url, headers=_headers).json()["locations"]
+        logger.info(f"{len(locations)} found")
+        header1["authorization"] = token
+        for store in locations:
+            if store["open_or_closed"] != "open":
                 location_type = "Temporarily Closed"
             else:
                 location_type = MISSING
-            page_url = "https://locations.johnnyrockets.com" + loc["llp_url"]
-            if page_url in linklist:
-                continue
-            linklist.append(page_url)
-            log.info(page_url)
-            loc = loc["store_info"]
-            street_address = loc["address"]
-            city = loc["locality"]
-            state = loc["region"]
-            try:
-                API = (
-                    "https://api.momentfeed.com/v1/analytics/api/llp.json?address="
-                    + street_address
-                    + "&locality="
-                    + city
-                    + "&region="
-                    + state
+            url = store["llp_url"].split("/")
+            street = _u(url[-1])
+            locality = _u(url[-2])
+            region = _u(url[-3])
+            j_url = f"https://api.momentfeed.com/v1/analytics/api/llp.json?address={street}&locality={locality}&multi_account=true&pageSize=30&region={region}"
+            logger.info(j_url)
+            for loc in session.get(j_url, headers=header1).json():
+                try:
+                    _ = loc["store_info"]
+                except:
+                    continue
+                street_address = _["address"]
+                if _["address_extended"]:
+                    street_address += " " + _["address_extended"]
+                if _.get("address_3"):
+                    street_address += " " + _["address_3"]
+                hours = []
+                if _.get("store_hours"):
+                    for hh in _["store_hours"].split(";"):
+                        if not hh:
+                            continue
+                        hr = hh.split(",")
+                        hours.append(f"{hr_obj[hr[0]]}: {_time(hr[1])}-{_time(hr[2])}")
+                yield SgRecord(
+                    page_url=_["website"],
+                    location_name=_["name"],
+                    street_address=street_address,
+                    city=_["locality"],
+                    state=_.get("region"),
+                    zip_postal=_.get("postcode"),
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    country_code=_["country"],
+                    phone=_["phone"],
+                    location_type=location_type,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
                 )
-                temp = session.get(API, headers=headers2).json()[0]["store_info"]
-            except:
-                continue
-            latitude = temp["latitude"]
-            longitude = temp["longitude"]
-            location_name = temp["name"]
-            zip_postal = temp["postcode"]
-            country_code = temp["country"]
-            phone = temp["phone"]
-            store_number = temp["corporate_id"]
-            hours_of_operation = (
-                (
-                    temp["hours"]
-                    .replace("1,", "Mon: ")
-                    .replace("2,", " Tue: ")
-                    .replace("3,", " Wed: ")
-                    .replace("4,", " Thu: ")
-                    .replace("5,", " Fri: ")
-                    .replace("6,", " Sat: ")
-                    .replace("7,", " Sun: ")
-                )
-                .replace(",", "-")
-                .replace("00", ":00")
-                .replace(";", " ")
-                .replace("1:000", "10:00")
-                .replace("2:000", "20:00")
-            )
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code.strip(),
-                store_number=store_number,
-                phone=phone.strip(),
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-            )
-
-
-def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

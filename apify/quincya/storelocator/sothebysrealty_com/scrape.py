@@ -1,4 +1,3 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
@@ -7,40 +6,15 @@ from sglogging import sglog
 
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 log = sglog.SgLogSetup().get_logger(logger_name="sothebysrealty.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -101,9 +75,7 @@ def fetch_data():
         "WY",
     ]
 
-    data = []
     found_poi = []
-
     locator_domain = "sothebysrealty.com"
 
     for state in states:
@@ -117,7 +89,7 @@ def fetch_data():
             req = session.get(base_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            items = base.find_all(class_="Entities-card__container")
+            items = base.find_all("li", {"id": re.compile(r"Entity_180.+")})
 
             for item in items:
                 try:
@@ -132,23 +104,22 @@ def fetch_data():
                     class_="Entities-card__entity-name"
                 ).text.strip()
                 street_address = (
-                    item.find(
-                        class_="Entities-card__address Entities-card__address--main"
-                    )
+                    item.find(class_="Entities-card__address")
                     .text.replace("  ", " ")
                     .strip()
                 )
                 city_line = (
-                    item.find(
-                        class_="Entities-card__address Entities-card__address--secondary"
-                    )
+                    item.find_all(class_="Entities-card__address")[1]
                     .text.split("United")[0]
                     .split(",")
                 )
                 city = city_line[0].strip()
                 state = city_line[-1].strip().split()[0].strip()
                 zip_code = city_line[-1].strip().split()[1].strip()
-                phone = item.find(class_="h6").text.replace("O.", "").strip()
+                try:
+                    phone = item.find(class_="h6").text.replace("O.", "").strip()
+                except:
+                    phone = "<MISSING>"
                 country_code = "US"
                 store_number = "<MISSING>"
                 location_type = "<MISSING>"
@@ -162,18 +133,6 @@ def fetch_data():
 
                 if req.status_code == 200:
                     page_base = BeautifulSoup(req.text, "lxml")
-
-                    street_address = " ".join(
-                        list(
-                            page_base.find(
-                                class_="OfficeHero__content-item OfficeHero__content-item--address h6 u-mercury-italic u-color-grey"
-                            ).stripped_strings
-                        )[:-2]
-                    ).replace("  ", " ")
-
-                    if street_address[-1:] == ",":
-                        street_address = street_address[:-1]
-
                     try:
                         map_str = page_base.find(
                             class_="OfficeHero__content-item OfficeHero__content-item--directions"
@@ -187,23 +146,23 @@ def fetch_data():
                     except:
                         pass
 
-                data.append(
-                    [
-                        locator_domain,
-                        link,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
                 )
 
             # Check for next page
@@ -219,12 +178,15 @@ def fetch_data():
             except:
                 page_next = False
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+            }
+        )
+    )
+) as writer:
+    fetch_data(writer)

@@ -1,101 +1,84 @@
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "doctorsofphysicaltherapy_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://doctorsofphysicaltherapy.com/"
-MISSING = "<MISSING>"
+DOMAIN = "https://doctorsofphysicaltherapy.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        identities = set()
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA],
-            max_radius_miles=1000,
-            max_search_results=35,
-        )
-        for lat, long in search:
-            url = (
-                "https://doctorsofphysicaltherapy.com/wp-admin/admin-ajax.php?action=store_search&lat="
-                + str(lat)
-                + "&lng="
-                + str(long)
-                + "&autoload=1"
+        url = "https://doctorsofphysicaltherapy.com/our-locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.select("a[href*=stores]")
+        for loc in loclist:
+            page_url = loc["href"]
+            location_type = MISSING
+            if "coming-soon" in page_url:
+                location_type = "Temporarily Closed"
+            if "doctorsofphysicaltherapy" not in page_url:
+                page_url = DOMAIN + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            temp = r.text.split('"locations":[')[1].split("]};")[0]
+            temp = json.loads(temp)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = temp["store"]
+            try:
+                street_address = temp["address"] + " " + temp["address2"]
+            except:
+                street_address = temp["address"]
+            city = temp["city"]
+            state = temp["state"]
+            zip_postal = temp["zip"]
+            latitude = temp["lat"]
+            longitude = temp["lng"]
+            store_number = temp["id"]
+            phone = soup.find("div", {"class": "wpsl-contact-details"}).find("a").text
+            hours_of_operation = (
+                soup.find("table", {"class": "wpsl-opening-hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            loclist = session.get(url, headers=headers).json()
-            for loc in loclist:
-                page_url = loc["permalink"]
-                if "coming-soon" in page_url:
-                    location_type = "Coming Soon"
-                else:
-                    location_type = MISSING
-                phone = loc["phone"]
-                location_name = loc["store"]
-                hours_of_operation = loc["hours"]
-                hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
-                hours_of_operation = (
-                    hours_of_operation.find("table")
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
-                try:
-                    street_address = loc["address"] + " " + loc["address2"]
-                except:
-                    street_address = loc["address"]
-                city = loc["city"]
-                zip_postal = loc["zip"]
-                country_code = loc["country"]
-                state = loc["state"]
-                latitude = loc["lat"]
-                longitude = loc["lng"]
-                if not state:
-                    state = "MI"
-
-                identity = (
-                    str(zip_postal)
-                    + ","
-                    + str(state)
-                    + ","
-                    + str(street_address)
-                    + ","
-                    + str(city)
-                )
-                if identity not in identities:
-                    identities.add(identity)
-                    log.info(page_url)
-                    yield SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address.strip(),
-                        city=city.strip(),
-                        state=state.strip(),
-                        zip_postal=zip_postal.strip(),
-                        country_code=country_code,
-                        store_number=MISSING,
-                        phone=phone.strip(),
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation.strip(),
-                    )
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

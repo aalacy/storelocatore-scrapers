@@ -1,324 +1,195 @@
-from requests.exceptions import RequestException  # ignore_check
-from concurrent.futures import ThreadPoolExecutor, as_completed, wait, ALL_COMPLETED
-import threading
-import random
+from sgpostal.sgpostal import parse_address_usa
+from lxml import html
 import time
-import csv
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-import lxml.html
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger("homelessshelterdirectory_org")
+from concurrent import futures
+import re
 
+DOMAIN = "homelessshelterdirectory.org"
+website = "https://www.homelessshelterdirectory.org"
+MISSING = SgRecord.MISSING
 
-show_logs = False
-thread_local = threading.local()
-max_workers = 64
-unique_locations = []
-base_url = "https://www.homelessshelterdirectory.org/"
+headers = {
+    "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
+}
 
-
-def sleep(min=0.5, max=2.5):
-    duration = random.uniform(min, max)
-    time.sleep(duration)
-
-
-def log(*args, **kwargs):
-    if show_logs is True:
-        logger.info(" ".join(map(str, args)), **kwargs)
-        logger.info("")
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def get_session(reset=False):
-    # give each thread its own session object.
-    # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 10 requests
-    if (
-        (not hasattr(thread_local, "session"))
-        or (hasattr(thread_local, "request_count") and thread_local.request_count == 10)
-        or (reset is True)
-    ):
-        thread_local.session = SgRequests()
-        reset_request_count()
-        # print out what the new IP is ...
-        if show_logs is True:
-            r = thread_local.session.get("https://jsonip.com/")
-            log(
-                f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}"
-            )
-
-    return thread_local.session
+def request_with_retries(url):
+    return session.get(url, headers=headers)
 
 
-def reset_request_count():
-    if hasattr(thread_local, "request_count"):
-        thread_local.request_count = 0
+def fetch_stores():
+    response = request_with_retries(f"{website}")
+    body = html.fromstring(response.text, "lxml")
+    state_urls = body.xpath(
+        '//select[contains(@id, "states_home_search")]/option/@value'
+    )
+    log.info(f"total states = {len(state_urls)}")
+
+    city_urls = []
+    for state_url in state_urls:
+        if state_url == "":
+            continue
+        log.info(f"State URL: {state_url}")
+        response = request_with_retries(state_url)
+        body = html.fromstring(response.text, "lxml")
+        city_urls = city_urls + body.xpath('//tr/td/a[contains(@href, "/city/")]/@href')
+
+    log.info(f"total cities = {len(city_urls)}")
+
+    store_urls = []
+    for city_url in city_urls:
+        log.info(f"City URL: {city_url}")
+        response = request_with_retries(city_url)
+        body = html.fromstring(response.text, "lxml")
+        for url in body.xpath('//a[contains(@class, "btn_red")]/@href'):
+            if url not in store_urls and "/shelter/" in url:
+                store_urls.append(url)
+
+    return store_urls
 
 
-def increment_request_count():
-    if not hasattr(thread_local, "request_count"):
-        thread_local.request_count = 1
+def get_address(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No Address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def get_text(body, xpath, replaceW=None):
+    sel = body.xpath(xpath)
+    if len(sel) == 0:
+        return MISSING
+
     else:
-        thread_local.request_count += 1
+        sel = sel[0]
+        if replaceW is not None:
+            sel = sel.replace(replaceW, "")
+        sel = sel.strip()
+        if len(sel) == 0:
+            return MISSING
+        return sel
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_data(page_url, sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "updated_date",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    log.debug(f"Scrapping {page_url} ...")
+    response = request_with_retries(page_url)
+    body = html.fromstring(response.text, "lxml")
 
-
-def get(url, attempt=1):
-
-    if attempt == 5:
-        log(
-            f"***** cannot get {url} on thread {threading.current_thread().ident} after {attempt} tries. giving up *****"
-        )
-        return None
-
-    headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9,la;q=0.8",
-        "Connection": "keep-alive",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-    }
+    store_number = MISSING
+    location_type = "Shelter"
+    latitude = MISSING
+    longitude = MISSING
+    country_code = "US"
 
     try:
-        sleep()
-        session = get_session()
-        session.get_session().cookies.clear()
-        log(f"getting {url}")
-        r = session.get(url, headers=headers, timeout=15)
-        log(f"status for {url} >>> ", r.status_code)
-        r.raise_for_status()
-        increment_request_count()
-        return r
+        location_name = body.xpath('//h1[@class="entry_title"]/text()')[0]
+    except:
+        location_name = get_text(body, "//h1/text()")
 
-    except (RequestException, OSError) as err:
-        if err.response is not None and err.response.status_code == 404:
-            log(f"Got 404 getting {url}")
-            return None
+    # Website has some Test pages which are not useful for data, skipped these
+    if "TEST" not in str(location_name) and "Test Clinic" not in str(location_name):
 
-        # attempt to handle 403 forbidden and other errors such as "cannot connect to proxy, timed out, etc"
-        log(f"***** error getting {url} on thread {threading.current_thread().ident}")
-        log(err)
-        log("****** resetting session")
-        session = get_session(reset=True)
-        # try this request again
-        return get(url, attempt=attempt + 1)
+        raw_address = body.xpath('//div[@class="col col_4_of_12"]/p/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        raw_address = ", ".join(raw_address)
+        if raw_address == ",  -":
+            raw_address = MISSING
 
-
-def crawl_state_url(state_url):
-    city_urls = []
-    r = get(state_url)
-    if not r:
-        return city_urls
-
-    if len(r.text) > 0:
-        state_sel = lxml.html.fromstring(r.text)
-        cities = state_sel.xpath("//table//tr[position()>1]/td[1]/a/@href")
-        for url in cities:
-            city_urls.append(url)
-
-    return city_urls
-
-
-def crawl_city_url(url):
-    location_urls = []
-    r = get(url)
-    if not r:
-        return location_urls
-    soup = bs(r.content.decode("utf-8", "ignore"), "lxml")
-    for url in soup.find_all("a", {"class": "btn btn_red"}):
-        page_url = url["href"]
-        if "homelessshelterdirectory.org" not in page_url:
-            continue
-        location_urls.append(page_url)
-    return location_urls
-
-
-def crawl_location_url(url):
-    store = []
-    r = get(url)
-    if not r:
-        return None
-    location_soup = bs(r.content.decode("utf-8", "ignore"), "lxml")
-    if len(r.text) > 0:
-        location_sel = lxml.html.fromstring(r.text)
-
-        try:
-            location_name = location_soup.find("h1", {"class": "entry_title"}).text
-        except:
-            location_name = "<MISSING>"
-
-        addr = list(
-            location_soup.find("div", {"class": "col col_4_of_12"})
-            .find("p")
-            .stripped_strings
-        )
-        street_address = addr[1]
-        city = addr[-1].split(",")[0]
-        state = addr[-1].split(",")[1].split("-")[0]
-        if len(addr[-1].split(",")[1].split("-")) == 2:
-            zipp = addr[-1].split(",")[1].split()[-1]
-        else:
-            zipp = "<MISSING>"
-        phone = "".join(
-            location_sel.xpath(
-                '//div[@class="col col_8_of_12"]//a[contains(@href,"tel:")]/text()'
-            )
-        ).strip()
-
+        street_address, city, state, zip_postal = get_address(raw_address)
+        phone = get_text(body, '//a[contains(@href, "tel:")]/@href', "tel:")
         if "ext" in phone.lower():
-            phone = phone.lower().split("ext")[0].strip()
-        if "or" in phone:
-            phone = phone.split("or")[0]
-        store_number = "<MISSING>"
+            phone = (phone.lower()).split("ext")[0]
+        if "or" in phone.lower():
+            phone = (phone.lower()).split("or")[0]
+        if "()" in phone:
+            phone = phone.replace("()", "")
 
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        update_date = location_sel.xpath('//span[@class="meta_date"]/text()')
-        if len(update_date) > 0:
-            update_date = (
-                "".join(update_date[0]).strip().replace("Last updated", "").strip()
-            )
-        else:
-            update_date = "<MISSING>"
-
-        hours = location_sel.xpath('//div[@class="col col_12_of_12 hours"]/ul/li')
+        hours = body.xpath('//div[@class="col col_12_of_12 hours"]/ul/li')
         hours_list = []
         for hour in hours:
             day = "".join(hour.xpath("text()")).strip()
             time = "".join(hour.xpath("span/text()")).strip()
+            time = re.sub(r"\s+", " ", time, flags=re.UNICODE)
             hours_list.append(day + ": " + time)
 
         hours_of_operation = "; ".join(hours_list).strip()
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address.replace("?", "").strip())
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append(store_number)
-        store.append(phone)
-        store.append("Shelter")
-        store.append(lat)
-        store.append(lng)
-        store.append(update_date)
-        store.append(hours_of_operation)
-        store.append(url)
+        # To handle PO BOX address where lib failed
+        if "p.o" in raw_address.lower():
+            street_address = raw_address.split(",")[0]
 
-        store_key = location_name + street_address
-        if store_key in unique_locations:
-            return None
-        unique_locations.append(store_key)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
+        if street_address is MISSING and "box" in raw_address.lower():
+            street_address = raw_address.split(",")[0]
 
-    return store
+        row = SgRecord(
+            locator_domain=DOMAIN,
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+        sgw.write_row(row)
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+    urls = fetch_stores()
+    log.info(f"Total stores = {len(urls)}")
 
-    state_urls = []
-    city_urls = []
-    loc_urls = []
-
-    r = get(base_url)
-    if not r:
-        logger.info("could not get initial locator page. giving up")
-        raise SystemExit
-
-    soup = bs(r.content, "lxml")
-    for s_link in soup.find_all("area", {"shape": "poly"}):
-        log(s_link["href"])
-        state_urls.append(s_link["href"])
-        # break
-
-    for url in state_urls:
-        log(url)
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(crawl_state_url, url) for url in state_urls]
-        # return when all finished or after 20 min regardless
-        done, not_done = wait(futures, timeout=1200, return_when=ALL_COMPLETED)
-        log(f"Done crawl_state futures: {len(done)}")
-        log(f"Not Done crawl_state futures: {len(not_done)}")
-        for result in futures:
-            try:
-                cities_in_state = result.result()
-                city_urls.extend(cities_in_state)
-            except Exception as ex:
-                log(f"crawl_state_url with result {result} threw exception: {ex}")
-
-    log(f"found {len(city_urls)} city urls")
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(crawl_city_url, url) for url in city_urls]
-        # return when all finished or after 2 hours regardless
-        done, not_done = wait(futures, timeout=7200, return_when=ALL_COMPLETED)
-        log(f"Done crawl_city futures: {len(done)}")
-        log(f"Not Done crawl_city futures: {len(not_done)}")
-        for result in futures:
-            location_urls = []
-            try:
-                location_urls = result.result()
-            except Exception as ex:
-                log(f"crawl_city_url with result {result} threw exception: {ex}")
-            for url in location_urls:
-                if url not in loc_urls:
-                    loc_urls.append(url)
-
-    log(f"found {len(loc_urls)} location urls")
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(crawl_location_url, url) for url in loc_urls]
-        for result in as_completed(futures):
-            store = None
-            try:
-                store = result.result()
-            except Exception as ex:
-                log(f"crawl_location_url with result {result} threw exception: {ex}")
-                raise
-            if store:
-                yield store
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info(f"Start Crawling {website} ...")
+    start = time.time()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

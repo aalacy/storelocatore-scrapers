@@ -1,106 +1,143 @@
-import csv
-import re
 from bs4 import BeautifulSoup
-import requests
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
+import ssl
+from lxml import html
 
-logger = SgLogSetup().get_logger('donatos_com')
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+DOMAIN = "donatos.com"
+MISSING = SgRecord.MISSING
+logger = SgLogSetup().get_logger("donatos_com")
+MAX_WORKERS = 5
+
+headers = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(15))
+def get_response(url):
+    with SgRequests(timeout_config=600) as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")  # noqa
+            return response
+        raise Exception(
+            f"{url} Please fix GetResponseError or HttpCodeError: {response.status_code}"
+        )
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_records(num, link, sgw: SgWriter):
+    try:
+        logger.info(f"[{num}] Pulling data from {link}")  # noqa
+        r = get_response(link)
+        soup = BeautifulSoup(r.text, "html.parser")
+        div = soup.find("main", {"id": "location-details"})
+        try:
+            title = div.find("h2").text
+        except:
+            return
+        street = div.find("span", {"itemprop": "streetAddress"}).text
+        city = div.find("span", {"itemprop": "addressLocality"}).text
+        state = div.find("span", {"itemprop": "addressRegion"}).text
+        pcode = div.find("span", {"itemprop": "postalCode"}).text
+        phone = div.find("dd", {"itemprop": "phone"}).text
+        lat = r.text.split('data-lat="', 1)[1].split('"', 1)[0]
+        longt = r.text.split('data-lng="', 1)[1].split('"', 1)[0]
+        store = div.find("a", {"class": "btn"})["href"].split("=", 1)[1]
+        hours = (
+            div.text.split("Hours", 1)[1]
+            .split("Order ", 1)[0]
+            .replace("\n", " ")
+            .strip()
+        )
 
-def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    types=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
-    page_url=[]
+        rec = SgRecord(
+            locator_domain="donatos.com",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
+        sgw.write_row(rec)
+    except Exception as e:
+        logger.info(f"Fix FetchRecordsError: << {e} >> << {num} | {link} >>")
 
-    res=requests.get("https://www.donatos.com/locations/all")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    lis = soup.find('div', {'id': 'locationresults'}).find_all('li')
 
-    for li in lis:
-        addr=li.find('p').text.split(",")
-        sz=addr[-1].strip().split(" ")
-        del addr[-1]
-        zips.append(sz[1])
-        states.append(sz[0])
-        cities.append(addr[-1])
-        del addr[-1]
-        street.append(",".join(addr))
-        lat.append(li.get('data-lat'))
-        long.append(li.get('data-lng'))
-        locs.append(li.find('h2').text)
-        ph = li.find('a').text.strip()
-        if ph == "":
-            ph = "<MISSING>"
-        phones.append(ph)
-        page_url.append(li.find('div', {'class': 'actions'}).find_all('a')[3].get('href'))
-        id=re.findall(r'location=(.*)',li.find('div', {'class': 'actions'}).find_all('a')[0].get('href'))
-        if id==[]:
-            id="<MISSING>"
-        else:
-            id=id[0]
-        ids.append(id)
+def get_store_urls():
+    all_store_url = "https://www.donatos.com/locations/find?address=300&mode=&redirect="
+    rall = get_response(all_store_url)
+    sel = html.fromstring(rall.text, "lxml")
+    locurls = sel.xpath(
+        '//*[contains(@href, "https://www.donatos.com/locations")]/@href'
+    )
+    locurls_dedup = list(set(locurls))
+    locurls_dedup = sorted(locurls_dedup)
+    return locurls_dedup
 
-    for url in page_url:
-        res = requests.get(url)
-        soup = BeautifulSoup(res.text, 'html.parser')
 
-        tim=soup.find_all('div', {'class': 'box-content'})
+def fetch_data(sgw: SgWriter):
+    store_urls = get_store_urls()
+    logger.info(f"Total Store Urls: {len(store_urls)}")  # noqa
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task = [
+            executor.submit(fetch_records, num, link, sgw)
+            for num, link in enumerate(store_urls[0:])
+        ]
+        tasks.extend(task)
+        for future in as_completed(tasks):
+            if future.result() is not None:
+                future.result()
+            else:
+                continue
 
-        if tim==[]:
-            timing.append("<MISSING>")
-            continue
-        tim=tim[0]
-        tim=tim.find_all('dd')[2].text.replace("\n"," ").strip()
-        if tim=="":
-            tim="<MISSING>"
-        logger.info(tim)
-        timing.append(tim)
-
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.donatos.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append("https://www.donatos.com/locations/all")  # page url
-
-        all.append(row)
-    return all
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")  # noqa
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
+    logger.info("Finished")  # noqa
 
-scrape()
 
+if __name__ == "__main__":
+    scrape()

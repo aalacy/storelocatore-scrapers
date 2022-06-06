@@ -8,8 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.farmersfridge.com/page-data/sq/d/3661717568.json"
-    session = SgRequests()
+    api_url = "https://www.farmersfridge.com/page-data/locations-map/page-data.json"
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -44,7 +43,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     js = r.json()
-    for j in js["data"]["arabesque"]["locations"]["locations"]:
+    for j in js["result"]["pageContext"]["fridgeAndWholesaleLocations"]:
         a = j.get("operationConfigs")
         b = j.get("locationConfigs")
         ad = a.get("address")
@@ -58,6 +57,9 @@ def fetch_data(sgw: SgWriter):
             location_type = "".join(b.get("accessTo")) + " " + "".join(j.get("type"))
         except:
             location_type = "".join(j.get("type"))
+
+        if location_type == "DELIVERY":
+            continue
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
@@ -118,6 +120,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.farmersfridge.com/"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)

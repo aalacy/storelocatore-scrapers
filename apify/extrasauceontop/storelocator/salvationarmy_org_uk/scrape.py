@@ -1,138 +1,135 @@
 from sgrequests import SgRequests
-import pandas as pd
 from bs4 import BeautifulSoup as bs
 import re
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgscrape import simple_scraper_pipeline as sp
 
-page_urls = []
-locator_domains = []
-country_codes = []
-location_types = []
-names = []
-addresses = []
-citys = []
-states = []
-zips = []
-phones = []
-hours = []
-store_numbers = []
-lats = []
-lngs = []
 
-search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
-
-session = SgRequests()
-
-for zip_code in search:
-    url = (
-        "https://www.salvationarmy.org.uk/map-page?near%5Bvalue%5D="
-        + str(zip_code)
-        + "&near%5Bdistance%5D%5Bfrom%5D=40.22"
+def get_data():
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2()
     )
-    response = session.get(url).text
 
-    soup = bs(response, "html.parser")
+    session = SgRequests()
 
-    grids = soup.find_all("div", attrs={"class": "geolocation-location js-hide"})
+    for zip_code in search:
 
-    for grid in grids:
-        locator_domain = "salvationarmy.org.uk"
-        page_url = url
-        country_code = "UK"
+        url = (
+            "https://www.salvationarmy.org.uk/map-page?near%5Bvalue%5D="
+            + str(zip_code)
+            + "&near%5Bdistance%5D%5Bfrom%5D=40.22"
+        )
+        response = session.get(url).text
 
-        name = grid.find("p", attrs={"class": "field-content title"}).text.strip()
+        soup = bs(response, "html.parser")
 
-        full_address = grid.find("p", attrs={"class": "address"}).text.strip()
-        full_address = full_address.split("\n")
-        full_address = [item.strip() for item in full_address]
+        grids = soup.find_all("div", attrs={"class": "geolocation-location js-hide"})
+        x = 0
+        for grid in grids:
+            locator_domain = "salvationarmy.org.uk"
 
-        address = full_address[0]
+            page_url = "salvationarmy.org.uk" + grid.find_all("p")[-1].find("a")["href"]
+            country_code = "UK"
 
-        city_zipp = full_address[1].replace("  ", " ").replace(",", "").split(" ")
+            location_name = grid.find(
+                "p", attrs={"class": "field-content title"}
+            ).text.strip()
 
-        city = ""
-        zipp = ""
+            full_address = grid.find("p", attrs={"class": "address"}).text.strip()
+            full_address = full_address.split("\n")
+            full_address = [item.strip() for item in full_address]
 
-        for item in city_zipp:
-            if re.search(r"\d", item) is None:
-                city = city + " " + item
-            else:
-                zipp = zipp + " " + item
+            address = full_address[0]
 
-        zipp = zipp.strip()
-        city = city.strip()
+            city_zipp = full_address[1].replace("  ", " ").replace(",", "").split(" ")
 
-        current_lat = grid["data-lat"]
-        current_lng = grid["data-lng"]
+            city = ""
+            zipp = ""
 
-        state = "<MISSING>"
+            for item in city_zipp:
+                if re.search(r"\d", item) is None:
+                    city = city + " " + item
+                else:
+                    zipp = zipp + " " + item
 
-        phone_list = grid.find("a").text.strip()
-        phone = ""
-        for item in phone_list:
-            if re.search(r"\d", item) is not None:
-                phone = phone + item
-            if len(phone) == 11:
-                break
+            zipp = zipp.strip()
+            city = city.strip()
 
-        if phone == "":
-            phone = "<MISSING>"
+            latitude = grid["data-lat"]
+            longitude = grid["data-lng"]
 
-        hour = "<MISSING>"
+            state = "<MISSING>"
 
-        store_number = grid["id"]
+            phone_list = grid.find("a").text.strip()
+            phone = ""
+            for item in phone_list:
+                if re.search(r"\d", item) is not None:
+                    phone = phone + item
+                if len(phone) == 11:
+                    break
 
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        country_codes.append(country_code)
-        hours.append(hour)
-        store_numbers.append(store_number)
+            if phone == "":
+                phone = "<MISSING>"
 
-        names.append(name)
-        addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        phones.append(phone)
-        lats.append(current_lat)
-        lngs.append(current_lng)
-        search.found_location_at(current_lat, current_lng)
+            hours = "<MISSING>"
 
-    grids = soup.find_all("div", attrs={"class": "e-grid-column"})
-    for grid in grids:
-        location_type = grid.find("p").text.strip()
-        location_types.append(location_type)
+            store_number = grid["id"]
 
+            location_type = grid["data-icon"].split("/")[-1].split(".")[0].split("_")[0]
+            if location_type == "corps":
+                location_type = "Church"
+            search.found_location_at(latitude, longitude)
+            x = x + 1
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": names,
-        "latitude": lats,
-        "longitude": lngs,
-        "street_address": addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "phone": phones,
-        "hours_of_operation": hours,
-        "country_code": country_codes,
-        "store_number": store_numbers,
-        "location_type": location_types,
-    }
-)
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
-df.to_csv("data.csv", index=False)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"]),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], part_of_record_identity=True
+        ),
+        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
+        state=sp.MappingField(mapping=["state"], part_of_record_identity=True),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"]),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(
+            mapping=["location_type"], part_of_record_identity=True
+        ),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

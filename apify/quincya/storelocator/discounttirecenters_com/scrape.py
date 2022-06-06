@@ -1,150 +1,90 @@
-import csv
-import re
+import json
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("discounttirecenters_com")
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://www.discounttirecenters.com/location-detail"
+    base_link = "https://www.discounttirecenters.com/stores/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
+
+    locator_domain = "https://www.discounttirecenters.com/"
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
+    js = str(base).split("m35_retailers = ")[1].split("];")[0] + "]"
 
-    main_links = []
-    main_items = base.find(id="dm_content").find_all("a")
-    for main_item in main_items:
-        main_link = "https://www.discounttirecenters.com" + main_item["href"]
-        main_links.append(main_link)
+    stores = json.loads(js)
 
-    for link in main_links:
-        logger.info(link)
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        locator_domain = "discounttirecenters.com"
-
-        if "COMING SOON" in base.find(id="dm_content").text.upper():
-            continue
-
-        location_name = " ".join(list(base.h1.stripped_strings))
-        base.find("h4", attrs={"data-uialign": "center"})
-
-        city = location_name.split(" in")[1].split(",")[0].strip()
-        state = location_name.split(" in")[1].split(",")[1].strip()
-
-        raw_data = list(
-            base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
-        )
-        if len(raw_data) > 1:
-            street_address = raw_data[0].split(city + ",")[0].strip()
-
-            if state in raw_data[0]:
-                zip_code = raw_data[0].split(state)[-1].strip()
-            elif state in raw_data[1]:
-                zip_code = raw_data[1].split(state)[-1].strip()
-            else:
-                zip_code = "<MISSING>"
-
-            phone = raw_data[-2]
-
-            try:
-                hours_of_operation = " ".join(
-                    list(base.find(id="main").stripped_strings)
-                )
-            except:
-                hours_of_operation = "<MISSING>"
-        else:
-            raw_data = base.find(class_="m-font-size-11 font-size-14").text.strip()
-            street_address = raw_data.split(city + ",")[0].replace(",", "").strip()
-
-            if state in raw_data:
-                zip_code = raw_data.split(state)[-1].strip()
-            elif state in raw_data:
-                zip_code = raw_data.split(state)[-1].strip()
-            else:
-                zip_code = "<MISSING>"
-
-            phone = base.find(class_="m-font-size-14 font-size-18").text.strip()
-            hours_of_operation = base.find_all(class_="dmNewParagraph")[3].get_text(" ")
-
+    for store in stores:
+        location_name = store["Name"]
+        street_address = (
+            store["Location"]["Address1"]
+            + " "
+            + store["Location"]["Address2"]
+            + " "
+            + store["Location"]["Address3"]
+        ).strip()
+        city = store["Location"]["City"]
+        state = store["Location"]["State"]
+        zip_code = store["Location"]["PostCode"]
+        phone = store["Phone"]
+        latitude = store["Location"]["Latitude"]
+        longitude = store["Location"]["Longitude"]
+        store_number = store["ID"]
         country_code = "US"
-        store_number = "<MISSING>"
         location_type = "<MISSING>"
-
-        geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(base))[0].split(
-            ","
-        )
-        latitude = geo[0]
-        longitude = geo[1]
-
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        link = (
+            "https://www.discounttirecenters.com/stores/view/" + store["CustomField7"]
         )
 
-    return data
+        hours_of_operation = (
+            "Monday "
+            + store["OpeningTimes"]["MondaySchedule"]
+            + " Tuesday "
+            + store["OpeningTimes"]["TuesdaySchedule"]
+            + " Wednesday "
+            + store["OpeningTimes"]["WednesdaySchedule"]
+            + " Thursday "
+            + store["OpeningTimes"]["ThursdaySchedule"]
+            + " Friday "
+            + store["OpeningTimes"]["FridaySchedule"]
+            + " Saturday "
+            + store["OpeningTimes"]["SaturdaySchedule"]
+            + " Sunday "
+            + store["OpeningTimes"]["SundaySchedule"]
+        )
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

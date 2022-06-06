@@ -1,41 +1,14 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.hsn.com"
     api_url = "https://www.hsn.com/content/HSN_Outlet/261#"
     session = SgRequests()
     headers = {
@@ -48,33 +21,35 @@ def fetch_data():
 
         page_url = "https://www.hsn.com/content/HSN_Outlet/261#"
         location_name = "".join(d.xpath(".//text()"))
+
         location_type = "outlet"
         ad = (
             "".join(d.xpath(".//following-sibling::p[1]/text()[1]"))
             .replace("\n", "")
             .strip()
         )
-        if location_name.find("Bardmoor") != -1:
+
+        if location_name == "HSN Retail Outlet of Bardmoor":
             ad = (
                 "".join(d.xpath(".//following-sibling::p[1]/text()[2]"))
                 .replace("\n", "")
                 .strip()
             )
-        ad = ad.replace("FL 34654", "FL, 34654").replace("FL.", "FL")
-        street_address = ad.split(",")[0].strip()
-        state = ad.split(",")[2].strip()
-        postal = ad.split(",")[3].strip()
+
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        city = ad.split(",")[1].strip()
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        city = a.city or "<MISSING>"
         phone = (
             "".join(d.xpath(".//following-sibling::p[1]/text()[2]"))
             .replace("\n", "")
             .strip()
         )
-        if location_name.find("Bardmoor") != -1:
+        if location_name == "HSN Retail Outlet of Bardmoor":
             phone = (
                 "".join(d.xpath(".//following-sibling::p[1]/text()[3]"))
                 .replace("\n", "")
@@ -89,31 +64,31 @@ def fetch_data():
         if hours_of_operation.find("and") != -1:
             hours_of_operation = hours_of_operation.split("and")[0].strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.hsn.com"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
