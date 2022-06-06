@@ -1,6 +1,5 @@
 from sgselenium.sgselenium import SgChrome
 import ssl
-from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape import simple_scraper_pipeline as sp
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -21,7 +20,7 @@ def clean_phone(text):
 
 def get_data():
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
+        block_third_parties=False,
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
     ) as driver:
@@ -126,4 +125,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

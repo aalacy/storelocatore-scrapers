@@ -115,7 +115,7 @@ def fetch_data():
                             location_type=MISSING,
                             latitude=latitude,
                             longitude=longitude,
-                            hours_of_operation=MISSING,
+                            hours_of_operation="<INACCESIBLE>",
                             raw_address=raw_address,
                         )
                 else:
@@ -143,7 +143,7 @@ def fetch_data():
                         location_type=MISSING,
                         latitude=latitude,
                         longitude=longitude,
-                        hours_of_operation=MISSING,
+                        hours_of_operation="<INACCESIBLE>",
                         raw_address=raw_address,
                     )
 
