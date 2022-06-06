@@ -27,7 +27,6 @@ def fetch_data(sgw: SgWriter):
         div = tree.xpath('//div[@class="state-list"]//ul//li//a')
         for d in div:
 
-            state = "".join(d.xpath(".//text()"))
             state_url_slug = "".join(d.xpath(".//@href"))
             state_url = f"https://www.crateandbarrel.com{state_url_slug}"
             r = session.get(state_url, headers=headers)
@@ -41,6 +40,7 @@ def fetch_data(sgw: SgWriter):
                 location_name = js.get("name") or "<MISSING>"
                 a = js.get("address")
                 street_address = a.get("streetAddress") or "<MISSING>"
+                state = a.get("addressRegion") or "<MISSING>"
                 postal = a.get("postalCode") or "<MISSING>"
                 country_code = a.get("addressCountry") or "<MISSING>"
                 city = a.get("addressLocality") or "<MISSING>"
@@ -50,7 +50,12 @@ def fetch_data(sgw: SgWriter):
                 except:
                     latitude, longitude = "<MISSING>", "<MISSING>"
                 phone = js.get("telephone") or "<MISSING>"
-                hours_of_operation = " ".join(js.get("openingHours"))
+                if phone == "() -":
+                    phone = "<MISSING>"
+                hours = js.get("openingHours") or "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                if hours != "<MISSING>":
+                    hours_of_operation = " ".join(hours)
                 page_url_slug = "".join(
                     tree.xpath(f'//a[./h2[text()="{location_name}"]]/@href')
                 )

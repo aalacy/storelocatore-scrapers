@@ -4,7 +4,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 logger = SgLogSetup().get_logger("becn_com")
 
@@ -52,7 +52,7 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(",")[0]
                         lng = item.split('"longitude":')[1].split(",")[0]
                         hours = "<MISSING>"
-                        loc = "<MISSING>"
+                        loc = "https://www.becn.com/find-a-store"
                         phone = item.split('"phone":"')[1].split('"')[0]
                         if country == "UNITED STATES":
                             country = "US"
@@ -85,7 +85,20 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

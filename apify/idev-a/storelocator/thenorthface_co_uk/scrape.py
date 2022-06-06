@@ -59,6 +59,7 @@ def _v(val):
     if val:
         return (
             val.replace("&#xa0;", " ")
+            .replace("&#xa0", " ")
             .replace("&#xb0;", "°")
             .replace("&#xb4;", "'")
             .replace("&#xba;", "º")
@@ -103,6 +104,7 @@ def _v(val):
             .replace("&#x96;", "-")
             .replace("&#x9a;", "š")
             .replace("&amp;", "&")
+            .strip()
         )
     else:
         return ""
@@ -147,7 +149,7 @@ class ExampleSearchIteration(SearchIteration):
                     location_type = "the north face outletstore"
 
                 phone = (
-                    _.phone.text.strip().split("or")[0].split(";")[0].split("and")[0]
+                    _.phone.text.strip().split("or")[0].split("and")[0]
                     if _.phone is not None and _.phone.text.strip() != "TBD"
                     else "<MISSING>"
                 )
@@ -180,7 +182,7 @@ class ExampleSearchIteration(SearchIteration):
                     state=_v(state),
                     zip_postal=_.postalcode.text.strip(),
                     country_code=_.country.text.strip(),
-                    phone=_v(phone),
+                    phone=_v(phone).split(";")[0],
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
