@@ -1,41 +1,45 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://tacobell.co.th/"
-    api_url = "https://tacobell.co.th/#branch"
+    locator_domain = "https://tacobell.co.th"
+    page_url = "https://tacobell.co.th/branches/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="icon-box-boxed top"]')
+    div = tree.xpath('//div[@class="elementor-image-box-wrapper"]')
     for d in div:
 
-        page_url = "https://tacobell.co.th/#branch"
-        location_name = "".join(d.xpath(".//h4/a/text()"))
+        location_name = "".join(d.xpath(".//h3//text()")).strip()
         ad = (
-            " ".join(d.xpath("./p[1]/text()"))
+            "".join(d.xpath(".//h3/following-sibling::p[1]/text()[1]"))
             .replace("\n", "")
-            .replace("ที่อยู่: ", "")
+            .replace("SEE MAP >", "")
             .strip()
+            or "<MISSING>"
         )
-
+        hours_of_operation = "<MISSING>"
+        if ad.find("10.00 - 21.00 น.") != -1:
+            hours_of_operation = "10.00 - 21.00 น."
+            ad = ad.replace("10.00 - 21.00 น.", "").strip()
         a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
-        country_code = "Thailand"
+        country_code = "TH"
         city = a.city or "<MISSING>"
 
         row = SgRecord(
@@ -52,7 +56,7 @@ def fetch_data(sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
             raw_address=ad,
         )
 
