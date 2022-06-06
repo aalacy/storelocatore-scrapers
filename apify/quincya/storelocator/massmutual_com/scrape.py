@@ -96,20 +96,22 @@ def fetch_data(sgw: SgWriter):
     logger.info("Processing " + str(len(all_links)) + " potential links ..")
     for row in all_links:
         link = row[0]
+        got_page = False
         try:
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
-        except:
-            logger.info("Retrying ..")
-            session = SgRequests()
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
-        got_page = True
-        try:
             location_name = base.find(class_="es-agency-name").text.strip()
+            got_page = True
         except:
-            got_page = False
+            try:
+                logger.info("Retrying ..")
+                session = SgRequests()
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                location_name = base.find(class_="es-agency-name").text.strip()
+                got_page = True
+            except:
+                pass
 
         country_code = "US"
         store_number = "<MISSING>"

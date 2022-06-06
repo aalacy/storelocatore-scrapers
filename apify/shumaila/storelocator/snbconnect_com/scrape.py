@@ -22,7 +22,6 @@ def fetch_data():
     statelist = soup.find("table", {"class": "Table-Staff-3Column"}).findAll("td")
     for state in statelist:
         link = state.find("a", {"class": "Button2"})["href"]
-
         state = state.find("h2").text
         r = session.get(link, headers=headers)
 
@@ -98,6 +97,7 @@ def fetch_data():
 
                 title = loc[0]
                 address = loc[1].split(", ")
+
                 try:
                     hours = (
                         loc[2]
@@ -152,14 +152,14 @@ def fetch_data():
             except:
                 phone = "<MISSING>"
             try:
-                hours = (
+                phone = (
                     soup.text.split("Hours: ", 1)[1]
                     .split("In", 1)[0]
                     .strip()
                     .replace("\n", "")
                 )
             except:
-                hours = "<MISSING>"
+                phone = "<MISSING>"
             address = soup.text.split("LOCATED AT THE UNION:", 1)[1].split(
                 "Security", 1
             )[0]

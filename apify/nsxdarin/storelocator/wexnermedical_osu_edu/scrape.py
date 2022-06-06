@@ -87,6 +87,8 @@ def fetch_data(sgw: SgWriter):
         if len(lat) < 3:
             lat = i["Latitude"]
             lng = i["Longitude"]
+        if not hours:
+            hours = "Monday: Closed Tuesday: Closed Wednesday: Closed Thursday: Closed Friday: Closed Saturday: Closed Sunday: Closed"
         if not add.strip():
             continue
         if name + add in found:

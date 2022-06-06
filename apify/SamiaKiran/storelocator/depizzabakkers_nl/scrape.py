@@ -33,6 +33,8 @@ def fetch_data():
             page_url = loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            if "Binnenkort open!" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             try:
                 phone = soup.select_one("a[href*=tel]").text
