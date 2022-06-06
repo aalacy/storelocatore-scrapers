@@ -61,7 +61,7 @@ def get_address(line):
     return street_address, city, state, postal
 
 
-@retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
+@retry(stop=stop_after_attempt(2), wait=wait_fixed(5))
 def get_json(api):
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r}")
@@ -72,7 +72,9 @@ def get_json(api):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=10,
+        max_search_distance_miles=10000,
     )
     for lat, lng in search:
         api = f"https://www.stinker.com/system/wp-admin/admin-ajax.php?action=lookupLocations&lkp={token}&lat={lat}&lng={lng}"
