@@ -32,7 +32,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         country = "US"
         typ = "Rite-Aid Pharmacy"
-        lines = r.iter_lines()
         website = "riteaid.com/pharmacy"
         for item in json.loads(r.content)["Data"]["stores"]:
             store = item["storeNumber"]
