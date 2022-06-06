@@ -84,7 +84,7 @@ def fetch_data(sgw: SgWriter):
         adr = ", ".join(line)
         street_address, city, state = get_address(adr)
         hours = d.xpath(".//p/strong/text()")
-        hours = list(filter(None, [h.replace("OPEN", "").strip() for h in hours]))
+        hours = list(filter(None, [h.replace("OPEN", "Daily").strip() for h in hours]))
         hours_of_operation = ";".join(hours)
         phone = "".join(d.xpath(".//p/em/text()")).strip()
         if slug.startswith("/"):

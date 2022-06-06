@@ -110,12 +110,53 @@ def fetch_data():
                     rawadd = add + " " + city + " " + state
                 if hours == "":
                     hours = "<MISSING>"
-                add = add.replace("&#39;", "'").replace("&amp;", "&")
-                name = name.replace("&#39;", "'").replace("&amp;", "&")
+                try:
+                    add = add.replace("&#39;", "'").replace("&amp;", "&")
+                except:
+                    add = "<MISSING>"
+                try:
+                    name = name.replace("&#39;", "'").replace("&amp;", "&")
+                except:
+                    name = "<MISSING>"
                 if country == "CANADA":
                     country = "CA"
                 if country == "UNITED STATES":
                     country = "US"
+                hours = hours.replace("::", ":")
+                if "," in phone:
+                    phone = phone.split(",")[0].strip()
+                if "y" in phone:
+                    phone = phone.split("y")[0].strip()
+                if " /" in phone:
+                    phone = phone.split(" /")[0].strip()
+                if "a" in phone:
+                    phone = phone.split("a")[0].strip()
+                try:
+                    if "9" in city:
+                        city = "<MISSING>"
+                except:
+                    pass
+                try:
+                    if "No." in city:
+                        city = "<MISSING>"
+                except:
+                    pass
+                try:
+                    if "Km" in city:
+                        city = "<MISSING>"
+                except:
+                    pass
+                rawadd = rawadd.replace("&#39;", "'")
+                try:
+                    city = city.replace("&#39;", "'")
+                except:
+                    city = "<MISSING>"
+                name = (
+                    name.replace("&#243;", "o")
+                    .replace("&#250;", "u")
+                    .replace("&#225;", "a")
+                    .replace("&#233;", "e")
+                )
                 yield SgRecord(
                     locator_domain=website,
                     page_url=lurl,

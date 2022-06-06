@@ -38,7 +38,7 @@ def fetch_data():
             city=" ".join(poi[2].split()[1:]),
             state="",
             zip_postal=poi[2].split()[0],
-            country_code="CZ",
+            country_code="",
             store_number="",
             phone="",
             location_type="",

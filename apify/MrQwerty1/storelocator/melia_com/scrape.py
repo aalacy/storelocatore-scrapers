@@ -41,7 +41,12 @@ def get_data(store_number, sgw: SgWriter):
     if "," in city:
         city = city.split(",")[0].strip()
     postal = j.get("postalCode")
-    phone = j.get("phoneContact")
+    phone = j.get("phoneContact") or ""
+    black_list = ["Fast", ";", "-", "/"]
+    for b in black_list:
+        if b in phone:
+            phone = phone.split(b)[0].strip()
+
     latitude = j.get("latitudeCoordinates")
     longitude = j.get("longitudeCoordinates")
     slug = j.get("url")

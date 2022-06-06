@@ -1,103 +1,61 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
-from urllib.parse import urljoin
+from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+from sgpostal.sgpostal import parse_address_intl
+import re
 
-from util import Util  # noqa: I900
+logger = SgLogSetup().get_logger("rentall")
 
-myutil = Util()
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def _phone(phone):
-    if phone:
-        return phone.split("\n")[0].strip().replace("Phone:", "")
-    else:
-        return "<MISSING>"
+locator_domain = "https://af-rentall.com"
+base_url = "https://af-rentall.com/pages/locations"
 
 
 def fetch_data():
-    data = []
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        locations = soup.select("main table tr")
+        for _ in locations:
+            td = _.select("td")
+            page_url = td[-1].a["href"]
+            if not page_url.startswith("http"):
+                page_url = locator_domain + page_url
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            raw_address = " ".join(td[1].stripped_strings)
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            hours = []
+            _hr = sp1.find("strong", string=re.compile(r"Hours:"))
+            if _hr:
+                hours = list(_hr.find_parent().stripped_strings)[1:]
 
-    locator_domain = "https://af-rentall.com/"
-    base_url = "https://af-rentall.com/index.php?mact=Locations,cntnt01,searchresults,0&cntnt01showtemplate=false&cntnt01returnid=44&cntnt01zipcode=&cntnt01distance=25"
-    rr = session.get(base_url)
-    locations = json.loads(rr.text)
-    for location in locations:
-        page_url = urljoin("https://af-rentall.com", location.get("url"))
-        store_number = location["id"].strip()
-        location_name = myutil._valid(location["name"])
-        country_code = "US"
-        street_address = location["address"] + myutil._valid1(location["address2"])
-        city = location["city"]
-        state = location["state"]
-        zip = location["zipcode"]
-        phone = myutil._valid(location["phone"])
-        location_type = "<MISSING>"
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        hours_of_operation = myutil._valid(
-            ";".join(location.get("store_hours").split("<br>"))
-        )
-
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        myutil._check_duplicate_by_loc(data, _item)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            yield SgRecord(
+                page_url=page_url,
+                location_name=td[0].text.strip(),
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="US",
+                phone=td[2].text.strip(),
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

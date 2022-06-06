@@ -12,7 +12,7 @@ from sgzip.dynamic import SearchableCountries, DynamicZipAndGeoSearch
 def fetch_data():
     session = SgRequests()
     domain = "alphagraphics.com"
-    start_url = "https://www.alphagraphics.com/agmapapi/AGLocationFinder/SearchByLocation?ParentSiteIds%5B%5D=e5792715-7cfc-40ef-8fdc-8b7188a178f8&ParentSiteIds%5B%5D=759afee9-1554-4283-aa6c-b1e5c4a2b1de&MetroAreaName=&SearchLocation={}&Latitude={}&Longitude={}&Radius=200"
+    start_url = "https://www.alphagraphics.com/agmapapi/AGLocationFinder/AGLocationSearch?ParentSiteIds%5B%5D=e5792715-7cfc-40ef-8fdc-8b7188a178f8&ParentSiteIds%5B%5D=759afee9-1554-4283-aa6c-b1e5c4a2b1de&MetroAreaName=&SearchLocation={}&Latitude={}&Longitude={}&Radius=200"
     scraped_items = []
     all_coords = DynamicZipAndGeoSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
@@ -33,7 +33,7 @@ def fetch_data():
             state = poi["state"]
             zip_code = poi["zip"]
             store_number = poi["extCode"]
-            phone = poi["fullAddress"].split("|")[-1]
+            phone = poi["phone"]
             latitude = poi.get("lat")
             longitude = poi.get("long")
 
