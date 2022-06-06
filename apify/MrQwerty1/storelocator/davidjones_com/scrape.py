@@ -1,4 +1,5 @@
 import re
+import ssl
 
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -79,6 +80,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    ssl._create_default_https_context = ssl._create_unverified_context
     locator_domain = "https://www.davidjones.com/"
     logger = sglog.SgLogSetup().get_logger(logger_name="davidjones.com")
     session = SgRequests()
