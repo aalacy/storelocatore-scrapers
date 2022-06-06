@@ -6,7 +6,6 @@ from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape import simple_utils as utils
 from sglogging import sglog
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from bs4 import BeautifulSoup
 
 
@@ -19,17 +18,26 @@ def stubborn_store(url):
         session.get("https://sobeyspharmacy.com/stores/" + url, headers=headers)
     )
     soup = BeautifulSoup(son.text, "lxml")
+    with open("fml.txt", mode="w", encoding="utf-8") as file:
+        file.write(str(soup))
+
     k = {}
-    coords = soup.find("div", {"data-lat": True, "data-lng": True})
-    k["lat"] = coords["data-lat"]
-    k["lng"] = coords["data-lng"]
+    try:
+        coords = soup.find("div", {"data-lat": True, "data-lng": True})
+        k["lat"] = coords["data-lat"]
+        k["lng"] = coords["data-lng"]
+    except Exception:
+        pass
     try:
         k["phone"] = soup.find(
             "a", {"href": lambda x: x and x.startswith("tel:")}
         ).text.strip()
     except Exception:
-        k["phone"] = SgRecord.MISSING
-    k["zip"] = soup.find("span", {"class": "postal_code"}).text.strip()
+        pass
+    try:
+        k["zip"] = soup.find("span", {"class": "postal_code"}).text.strip()
+    except Exception:
+        pass
     return k
 
 
@@ -63,8 +71,8 @@ def para(idey):
         except Exception:
             son["location"] = {}
             son["location"]["address"] = {}
-            son["location"]["address"]["address_1"] = SgRecord.MISSING
-            son["location"]["address"]["address_2"] = SgRecord.MISSING
+            son["location"]["address"]["address_1"] = "<MISSING>"
+            son["location"]["address"]["address_2"] = "<MISSING>"
 
     try:
         son["location"]["coordinates"]["latitude"] = son["location"]["coordinates"][
@@ -84,22 +92,22 @@ def para(idey):
             ]
         except Exception:
             son["location"]["coordinates"] = {}
-            son["location"]["coordinates"]["latitude"] = SgRecord.MISSING
-            son["location"]["coordinates"]["longitude"] = SgRecord.MISSING
+            son["location"]["coordinates"]["latitude"] = "<MISSING>"
+            son["location"]["coordinates"]["longitude"] = "<MISSING>"
     try:
         son["location"]["address"]["city"] = son["location"]["address"]["city"]
     except Exception:
         try:
             son["location"]["address"]["city"] = son["store_details"]["city"]
         except Exception:
-            son["location"]["address"]["city"] = SgRecord.MISSING
+            son["location"]["address"]["city"] = "<MISSING>"
     if idey == "832":
         # there's no better way of doing this, they hard coded this location, so shall I...
         son["contact_details"] = {}
         son["contact_details"]["phone_details"] = {}
         son["contact_details"]["phone_details"]["phone"] = "204-832-8605"
         son["location"]["address"]["postal_code"] = "R3K 2G6"
-        son["location"]["address"]["province"] = SgRecord.MISSING
+        son["location"]["address"]["province"] = "<MISSING>"
 
     try:
         son["location"]["address"] = son["location"]["address"]
@@ -109,14 +117,14 @@ def para(idey):
     try:
         son["location"]["address"]["province"] = son["location"]["address"]["province"]
     except Exception:
-        son["location"]["address"]["province"] = SgRecord.MISSING
+        son["location"]["address"]["province"] = "<MISSING>"
 
     try:
         son["location"]["address"]["postal_code"] = son["location"]["address"][
             "postal_code"
         ]
     except Exception:
-        son["location"]["address"]["postal_code"] = SgRecord.MISSING
+        son["location"]["address"]["postal_code"] = "<MISSING>"
 
     try:
         son["contact_details"] = son["contact_details"]
@@ -135,11 +143,11 @@ def para(idey):
             "phone_details"
         ]["phone"]
     except Exception:
-        son["contact_details"]["phone_details"]["phone"] = SgRecord.MISSING
+        son["contact_details"]["phone_details"]["phone"] = "<MISSING>"
 
-    if son["location"]["address"]["province"] == SgRecord.MISSING:
-        if son["location"]["address"]["postal_code"] == SgRecord.MISSING:
-            if son["contact_details"]["phone_details"]["phone"] == SgRecord.MISSING:
+    if son["location"]["address"]["province"] == "<MISSING>":
+        if son["location"]["address"]["postal_code"] == "<MISSING>":
+            if son["contact_details"]["phone_details"]["phone"] == "<MISSING>":
                 extras = stubborn_store(son["slug"])
                 son["location"]["coordinates"]["latitude"] = extras["lat"]
                 son["location"]["coordinates"]["longitude"] = extras["lng"]
@@ -177,14 +185,14 @@ def fetch_data():
 def nice_hours(x):
     x = str(x)
     x = (
-        x.replace("None", SgRecord.MISSING)
+        x.replace("None", "<MISSING>")
         .replace("', '", "; ")
         .replace("': '", ": ")
         .replace("'", "")
         .replace("}", "")
         .replace("{", "")
     )
-    if x.count(SgRecord.MISSING) == 7:
+    if x.count("<MISSING>") == 7:
         x = "Open 24 Hours"
     return x
 
@@ -195,7 +203,7 @@ def scrape():
         locator_domain=ConstantField(url),
         page_url=MappingField(
             mapping=["slug"],
-            value_transform=lambda x: "https://www.sobeys.com/stores/" + x + "/",
+            value_transform=lambda x: "https://sobeyspharmacy.com/stores/" + x + "/",
         ),
         location_name=MappingField(mapping=["title", "rendered"]),
         latitude=MappingField(

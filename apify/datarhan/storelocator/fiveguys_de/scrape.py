@@ -9,8 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://restaurants.fiveguys.de/index.html"
     domain = "fiveguys.de"
     hdr = {
@@ -35,6 +34,11 @@ def fetch_data():
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
+        coming_soon = loc_dom.xpath(
+            '//div[@class="Hero-hoursToday"]/span[contains(text(), "Coming Soon")]'
+        )
+        if coming_soon:
+            continue
         location_name = loc_dom.xpath(
             '//span[@class="LocationName"]/span[@class="LocationName-geo"]/text()'
         )[0]
