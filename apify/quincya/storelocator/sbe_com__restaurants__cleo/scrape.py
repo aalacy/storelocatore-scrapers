@@ -39,7 +39,10 @@ def fetch_data(sgw: SgWriter):
             continue
         country_code = store["address"]["addressCountry"]
         street_address = (
-            store["address"]["streetAddress"].replace("“", "").replace("”", "").replace("\u200b", "")
+            store["address"]["streetAddress"]
+            .replace("“", "")
+            .replace("”", "")
+            .replace("\u200b", "")
         )
         try:
             city = store["address"]["addressLocality"]
