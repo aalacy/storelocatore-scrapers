@@ -71,6 +71,12 @@ def fetch_data():
                 .replace("%28", "(")
                 .replace("%29", ")")
             )
+            if "ull" in phone:
+                phone = "<MISSING>"
+            name = name.replace("&#039;", "'")
+            add = add.replace("&#039;", "'")
+            if "2-301" in add:
+                phone = "587-537-5000"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

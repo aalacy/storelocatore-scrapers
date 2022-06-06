@@ -59,7 +59,6 @@ def fetch_data():
                         store = item.split("\\u003cLocationId\\u003e")[1].split("\\")[0]
                         lat = item.split("Latitude\\u003e")[1].split("\\")[0]
                         lng = item.split("Longitude\\u003e")[1].split("\\")[0]
-                        logger.info(("Pulling Store ID #%s..." % store))
                         purl = (
                             "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
                         )
