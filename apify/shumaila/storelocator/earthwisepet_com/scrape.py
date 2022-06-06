@@ -1,7 +1,7 @@
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -17,10 +17,9 @@ def fetch_data():
     loclist = session.post(url, data=dataobj, headers=headers).json()
     for loc in loclist:
         loc = loclist[loc]
-
         store = loc["ID"]
         title = loc["na"]
-        link = loc["gu"]
+
         lat = loc["lat"]
         longt = loc["lng"]
         street = loc["st"]
@@ -35,6 +34,10 @@ def fetch_data():
             phone = loc["te"].strip()
         except:
             phone = "<MISSING>"
+        try:
+            link = loc["we"]
+        except:
+            link = "<MISSING>"
         yield SgRecord(
             locator_domain="https://earthwisepet.com/",
             page_url=link,
@@ -56,7 +59,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
 
         results = fetch_data()

@@ -1,139 +1,118 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-# import  pprint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bigredstores_net')
-
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-#####  branches  ######
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://bigredstores.net/"
+    api_url = "https://bigredstores.net/locations/"
+    session = SgRequests()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    base_url = "https://bigredstores.net/"
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[contains(@id ,"post-")]')
+    for d in div:
 
-    addresses = []
-    result_coords = []
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "US"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    raw_address = ""
-    hours_of_operation = ""
+        page_url = "".join(d.xpath("./a[1]/@href"))
+        loc_name = "".join(d.xpath("./h2[1]//text()"))
+        cms = "".join(d.xpath('.//*[contains(text(), "Coming Soon")]/text()'))
+        a = parse_address(International_Parser(), loc_name)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-    location_url = "https://bigredstores.net/findus/"
-    r = session.get(location_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup.prettify())
-    for link in soup.find_all("div", class_="has-post-thumbnail"):
-        list_add = list(link.stripped_strings)
-        street_address = list_add[0].strip()
+        store_number = "<MISSING>"
+        latitude = "".join(tree.xpath("//div/@data-lat")) or "<MISSING>"
+        longitude = "".join(tree.xpath("//div/@data-lng")) or "<MISSING>"
+        location_name = "".join(tree.xpath("//div/@data-title")).strip() or "<MISSING>"
+        if location_name == "<MISSING>":
+            location_name = loc_name
+        sub_loc = (
+            " ".join(tree.xpath('//div[@class="et_pb_tab_content"]/strong[1]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if "Big Red" in sub_loc:
+            location_name = sub_loc
+        if page_url.find("store155") != -1:
+            location_name = "Store #155"
+        if location_name.find("Big Red") != -1:
+            store_number = location_name.split("Big Red")[1].strip()
+        if location_name.find("Store #") != -1:
+            store_number = location_name.split("Store #")[1].strip()
+        if store_number.find(" ") != -1:
+            store_number = store_number.split(" ")[0].strip()
+        info = tree.xpath('//div[@class="et_pb_tab_content"]//text()')
+        info = list(filter(None, [b.strip() for b in info]))
+        info_str = " ".join(info)
+        phone_list = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", info_str)
+        phone = "<MISSING>"
+        if phone_list:
+            phone = "".join(phone_list[0]).strip()
+        info_1 = tree.xpath(
+            '//ul[./li/a[text()="ADDRESS"]]/following-sibling::div[1]//text()'
+        )
+        add = "<MISSING>"
+        if info_1:
+            add = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="et_pb_tab_content"]/strong[1]/following-sibling::text()[2] | //div[@class="et_pb_tab_content"]/h4[./strong][3]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        if add != "<MISSING>":
+            city = add.split(",")[0].strip()
+            state = add.split(",")[1].split()[0].strip()
+            postal = add.split(",")[1].split()[1].strip()
 
-        city = list_add[-1].strip()
-        page_url = link.a['href']
-        r_loc = session.get(link.a['href'], headers=headers)
-        soup_loc = BeautifulSoup(r_loc.text, "lxml")
-        try:
-            coords = soup_loc.find("div", class_="et_pb_map_pin")
-            if coords == None:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            else:
-                latitude = coords["data-lat"]
-                longitude = coords["data-lng"]
-            content = list(soup_loc.find_all(
-                "div", class_="et_pb_tab_content")[1].stripped_strings)
+        hours_of_operation = "<MISSING>"
+        if cms:
+            hours_of_operation = "Coming Soon"
+        hoo_info = tree.xpath('//div[@class="et_pb_tab_content"]//text()')
+        hoo_info = list(filter(None, [b.strip() for b in hoo_info]))
+        for i in hoo_info:
+            if "24 Hours" in i:
+                hours_of_operation = "Open 24 Hours"
 
-            if "|" not in " ".join(content):
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-                if len(content) > 2:
-                    location_name = content[0].strip()
-                    state = content[2].split(',')[1].split()[0].strip()
-                    zipp = content[2].split(',')[1].split()[-1].strip()
-                    phone_list = re.findall(re.compile(
-                        ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(content[-1]))
-                    if phone_list:
-                        phone = phone_list[-1]
-                    else:
-                        phone = "<MISSING>"
-                    # phone = content[-1].strip()
-                else:
-                    location_name = "<MISSING>"
-                    state = content[-1].split(',')[1].split()[0].strip()
-                    zipp = content[-1].split(',')[1].split()[-1].strip()
-                    phone = "<MISSING>"
-                # logger.info(phone)
-            else:
-                location_name = "<MISSING>"
-                state = content[-1].split(',')[1].split()[0].strip()
-                zipp = content[-1].split(',')[1].split()[-1].strip()
-                phone = "<MISSING>"
-
-        except:
-            location_name = "<MISSING>"
-            state = "<MISSING>"
-            zipp = "<MISSING>"
-            phone = "<MISSING>"
-        # logger.info(phone)
-        if "72015" in phone:
-            # logger.info(phone)
-            phone = "<MISSING>"
-        if "3544 Airport Road, Pearcy, AR" in street_address:
-            street_address = list_add[0].split(',')[0].strip()
-            city = list_add[0].split(',')[1].strip()
-            state = list_add[0].split(',')[-1].strip()
-            zipp = "<MISSING>"
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone.replace("\t", " "), location_type, latitude, longitude, hours_of_operation, page_url]
-
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-
-        store = [x.encode('ascii', 'ignore').decode(
-            'ascii').strip() if x else "<MISSING>" for x in store]
-
-        # logger.info("data = " + str(store))
-        # logger.info(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        yield store
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

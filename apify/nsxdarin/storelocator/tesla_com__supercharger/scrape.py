@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import re
 
 session = SgRequests()
 headers = {
@@ -35,47 +36,42 @@ def fetch_data():
                 "https://www.tesla.com/cua-api/tesla-location?translate=en_US&id=" + lid
             )
             r2 = session.get(lurl, headers=headers)
-            for line in r2.iter_lines():
-                add = (
-                    line.split('"address_line_1":"')[1].split('"')[0]
-                    + " "
-                    + line.split('"address_line_2":"')[1].split('"')[0]
-                )
-                add = add.strip()
-                name = line.split('"title":"')[1].split('"')[0]
-                try:
-                    city = line.split('"city":"')[1].split('"')[0]
-                except:
-                    city = "<MISSING>"
-                try:
-                    state = (
-                        line.split('"province_state":')[1]
-                        .split(',"')[0]
-                        .replace('"', "")
-                    )
-                except:
-                    state = "<MISSING>"
-                try:
-                    zc = line.split('"postal_code":"')[1].split('"')[0]
-                except:
-                    zc = "<MISSING>"
-                country = line.split('"country":"')[1].split('"')[0]
-                lat = line.split('"latitude":"')[1].split('"')[0]
-                lng = line.split('"longitude":"')[1].split('"')[0]
-                store = lid
-                typ = "Supercharger"
-                try:
-                    hours = line.split('"hours":"')[1].split('"')[0]
-                except:
-                    hours = "<MISSING>"
-                if hours == "":
-                    hours = "<MISSING>"
-                if state == "" or state == "null":
-                    state = "<MISSING>"
-                try:
-                    phone = line.split('"number":"')[1].split('"')[0].strip()
-                except:
-                    phone = "<MISSING>"
+            js = json.loads(r2.text)
+            add = js["address_line_1"] + " " + js["address_line_2"]
+            add = add.strip()
+            name = js["title"]
+            city = js["city"]
+            state = js["province_state"]
+            zc = js["postal_code"]
+            country = js["country"]
+            lat = js["latitude"]
+            lng = js["longitude"]
+            store = lid
+            typ = "Supercharger"
+            hours = js["hours"]
+            if state == "" or state == "null":
+                state = "<MISSING>"
+            phonestr = str(js["sales_phone"])
+            try:
+                phone = phonestr.split("'number': '")[1].split("'")[0].strip()
+            except:
+                phone = "<MISSING>"
+            clean = re.compile("<.*?>")
+            hours = (
+                re.sub(clean, "", hours)
+                .replace("\n", ";")
+                .replace("\\n", ";")
+                .replace("\\t", "")
+                .replace("\t", "")
+                .replace("\\r", ";")
+                .replace("\r", ";")
+            )
+            hours = hours.replace(";;", ";").replace(";;", ";")
+            if "Store Hours;" in hours:
+                hours = hours.split("Store Hours;")[1]
+            if ";Service" in hours:
+                hours = hours.split(";Service")[0]
+            hours = hours.replace("Supercharger Hours", "")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
