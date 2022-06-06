@@ -1,106 +1,74 @@
-import csv
-import sgrequests
-import bs4
+# -*- coding: utf-8 -*-
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+from lxml import etree
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    locator_domain = "https://ladybirdacademy.com/"
-    missingString = "<MISSING>"
+    session = SgRequests()
 
-    def initSoup(site):
-        h = {
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36"
-        }
-        s = sgrequests.SgRequests()
-        return bs4.BeautifulSoup(s.get(site, headers=h).text, features="lxml")
+    start_url = "http://ladybirdacademy.com/locations"
+    domain = "ladybirdacademy.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    def getAllStores():
-        r = []
+    all_locations = dom.xpath('//p[@class="link_visit"]/a/@href')
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-        def getAllLinks():
-            url = "http://ladybirdacademy.com/locations"
-            s = initSoup(url)
-            res = []
-            for p in s.findAll("p", {"class": "link_visit"}):
-                res.append(p.find("a")["href"])
-            return res
+        location_name = loc_dom.xpath('//div[@class="left clearfix"]/h2/text()')[
+            0
+        ].split("Welcome to")[1]
+        raw_address = loc_dom.xpath('//div[@class="gray-box"]/p[2]/strong/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        phone = loc_dom.xpath('//p[strong[contains(text(), "Phone:")]]/text()')[0]
+        geo = (
+            loc_dom.xpath("//iframe/@src")[0]
+            .split("!2d")[1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
+        hoo = loc_dom.xpath('//p[strong[contains(text(), "Hours:")]]/text()')[0]
 
-        for link in getAllLinks():
-            s = initSoup(link)
-            name = (
-                s.find("title").text.strip().replace("| Ladybird Academy", "").strip()
-            )
-            gb = s.find("div", {"class": "gray-box"})
-            addr = list(
-                filter(
-                    None,
-                    gb.findAll("p")[1].get_text(separator="\n").strip().split("\n"),
-                )
-            )
-            street = addr[0].strip()
-            city = addr[1].strip().replace(",", "")
-            state = list(filter(None, addr[-1].strip().split(" ")))[0]
-            zp = list(filter(None, addr[-1].strip().split(" ")))[1]
-            h = gb.findAll("p")[2].text.strip().replace("Hours:", "").strip()
-            ph = gb.findAll("p")[3].text.strip().replace("Phone:", "").strip()
-            r.append(
-                [
-                    locator_domain,
-                    link,
-                    name,
-                    street,
-                    city,
-                    state,
-                    zp,
-                    missingString,
-                    missingString,
-                    ph,
-                    missingString,
-                    missingString,
-                    missingString,
-                    h,
-                ]
-            )
-        return r
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(",")[0],
+            state=raw_address[1].split(",")[1].split()[0],
+            zip_postal=raw_address[1].split(",")[1].split()[1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[1],
+            longitude=geo[0],
+            hours_of_operation=hoo,
+        )
 
-    result = getAllStores()
-    return result
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

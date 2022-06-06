@@ -57,9 +57,19 @@ def fix_record2(rec):
 
 def fix_record(rec, host):
     k = {}
+    if host[-1] != "/":
+        if host[-2:] != "//":
+            if host[-1] != "//":
+                host = host + "/"
 
     try:
-        k["page_url"] = host + "/" + rec["storeIdentifier"]
+        k["page_url"] = (
+            host
+            + "stores/"
+            + rec["address"]["countryCode"].lower()
+            + "-"
+            + rec["storeIdentifier"]
+        )
     except Exception:
         k["page_url"] = "<MISSING>"
     try:
