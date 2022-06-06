@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
     base_link = "https://www.bakersplus.com/storelocator-sitemap.xml"
     with SgRequests() as http:
         r = http.get(base_link, headers=headers)
-        print(f"HTTPStatusCode:{r.status_code}")
         soup = BeautifulSoup(r.text, "lxml")
 
         for url in soup.find_all("loc")[:-1]:
