@@ -6,11 +6,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup as bs
+import os
 
 
 def get_data():
     page_urls = []
-    with SgFirefox(block_third_parties=False, is_headless=True) as driver:
+    with SgFirefox(
+        block_third_parties=False,
+        is_headless=False,
+    ) as driver:
         search = DynamicZipSearch(
             country_codes=[SearchableCountries.USA],
             granularity=Grain_8(),
@@ -110,6 +114,15 @@ def get_data():
 
 
 def scrape():
+    try:
+        proxy_pass = os.environ["PROXY_PASSWORD"]
+
+    except Exception:
+        proxy_pass = "No"
+
+    if proxy_pass == "No":
+        raise Exception("Run this with a proxy")
+
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
