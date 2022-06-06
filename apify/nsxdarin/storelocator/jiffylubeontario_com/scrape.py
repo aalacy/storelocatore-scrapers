@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("jiffylubeontario_com")
 
@@ -19,6 +20,8 @@ headers2 = {
 
 def fetch_data():
     locs = [
+        "https://www.jiffylubeontario.com/huntsville-19-kinton-avenue/|P1H 1M3|Huntsville||"
+        "https://www.jiffylubeontario.com/hanover-717-10th-st/|N4N 1S1|Hanover||"
         "https://www.jiffylubeontario.com/sudbury-1003-kingsway|P3B 2E6|Sudbury||",
         "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard|P3A 5W8|Sudbury||",
         "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15|P0M 1L0|Chelmsford||",
@@ -143,6 +146,7 @@ def fetch_data():
     coords = []
 
     for city in cities:
+        time.sleep(3)
         logger.info("Pulling City %s..." % city)
         payload = {
             "action": "load_map",
@@ -182,6 +186,7 @@ def fetch_data():
         except:
             pass
     for loc in locs:
+        time.sleep(3)
         try:
             logger.info("Pulling Location %s..." % loc)
             lurl = loc.split("|")[0]
