@@ -11,7 +11,7 @@ from sglogging import sglog
 
 
 def get_urls():
-    r = session.get('https://www.davidjones.com/sitemaps/stores-sitemap.xml')
+    r = session.get("https://www.davidjones.com/sitemaps/stores-sitemap.xml")
     tree = html.fromstring(r.content)
 
     return tree.xpath("//loc/text()")
@@ -19,39 +19,45 @@ def get_urls():
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    logger.info(f'{len(urls)} URLs need to crawl...')
+    logger.info(f"{len(urls)} URLs need to crawl...")
 
     with SgChrome(block_third_parties=False) as fox:
         for page_url in urls:
-            logger.info(f'Starting {page_url}')
+            logger.info(f"Starting {page_url}")
             fox.get_and_wait_for_request(page_url)
             source = fox.page_source
-            logger.info(f'{page_url} got HTML')
+            logger.info(f"{page_url} got HTML")
             tree = html.fromstring(source)
-            street_address = ''.join(tree.xpath("//span[@class='store-suburb']/text()")).strip()
-            city = ''.join(tree.xpath("//span[@class='store-city']/text()")).strip()
-            state = ''.join(tree.xpath("//span[@class='store-state']/text()")).strip()
-            postal = ''.join(tree.xpath("//span[@class='store-postcode']/text()")).strip()
-            country_code = ''.join(tree.xpath("//span[@class='store-country']/text()")).strip()
-            text = ''.join(tree.xpath("//script[contains(text(), 'stores:')]/text()"))
+            street_address = "".join(
+                tree.xpath("//span[@class='store-suburb']/text()")
+            ).strip()
+            city = "".join(tree.xpath("//span[@class='store-city']/text()")).strip()
+            state = "".join(tree.xpath("//span[@class='store-state']/text()")).strip()
+            postal = "".join(
+                tree.xpath("//span[@class='store-postcode']/text()")
+            ).strip()
+            country_code = "".join(
+                tree.xpath("//span[@class='store-country']/text()")
+            ).strip()
+            text = "".join(tree.xpath("//script[contains(text(), 'stores:')]/text()"))
             store_number = re.findall(r'id: "(.+?)"', text)[-1]
-            location_name = ''.join(tree.xpath("//h1/text()")).strip()
-            phone = ''.join(tree.xpath("//span[@class='tel-no']/text()")).strip()
-            latitude = ''.join(tree.xpath("//meta[@itemprop='latitude']/@content"))
-            longitude = ''.join(tree.xpath("//meta[@itemprop='longitude']/@content"))
+            location_name = "".join(tree.xpath("//h1/text()")).strip()
+            phone = "".join(tree.xpath("//span[@class='tel-no']/text()")).strip()
+            latitude = "".join(tree.xpath("//meta[@itemprop='latitude']/@content"))
+            longitude = "".join(tree.xpath("//meta[@itemprop='longitude']/@content"))
 
             _tmp = []
             hours = tree.xpath("//div[@class='opening-hours']//tr")
             for h in hours:
-                day = ''.join(h.xpath("./td[1]//text()")).strip()
-                inter = ''.join(h.xpath("./td[2]//text()")).strip()
+                day = "".join(h.xpath("./td[1]//text()")).strip()
+                inter = "".join(h.xpath("./td[2]//text()")).strip()
 
-                if day.endswith('th'):
+                if day.endswith("th"):
                     continue
 
-                _tmp.append(f'{day}: {inter}')
+                _tmp.append(f"{day}: {inter}")
 
-            hours_of_operation = ';'.join(_tmp)
+            hours_of_operation = ";".join(_tmp)
 
             row = SgRecord(
                 page_url=page_url,
@@ -74,7 +80,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.davidjones.com/"
-    logger = sglog.SgLogSetup().get_logger(logger_name='davidjones.com')
+    logger = sglog.SgLogSetup().get_logger(logger_name="davidjones.com")
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
