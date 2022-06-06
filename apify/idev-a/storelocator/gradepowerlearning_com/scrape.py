@@ -4,17 +4,19 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("gradepowerlearning")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://gradepowerlearning.com/"
+base_url = "https://gradepowerlearning.com/locations/"
 
 
 def fetch_data():
-    locator_domain = "https://gradepowerlearning.com/"
-    base_url = "https://gradepowerlearning.com/locations/"
     with SgRequests() as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
@@ -32,6 +34,11 @@ def fetch_data():
                     session.get(_["url"], headers=_headers).text, "lxml"
                 ).select("dl.margin-b-0.clearfix > div")
             ]
+            latitude = _["latitude"]
+            longitude = _["longitude"]
+            if not latitude:
+                latitude = ""
+                longitude = ""
             yield SgRecord(
                 page_url=_["url"],
                 store_number=x,
@@ -40,8 +47,8 @@ def fetch_data():
                 city=_["city"],
                 state=_["prov"],
                 zip_postal=_["postal"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
+                latitude=latitude,
+                longitude=longitude,
                 country_code="US",
                 phone=_["phone"],
                 locator_domain=locator_domain,
@@ -50,7 +57,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

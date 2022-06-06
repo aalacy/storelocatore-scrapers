@@ -1,5 +1,10 @@
-import csv
 from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sglogging import SgLogSetup
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_coordinate_list
@@ -8,38 +13,7 @@ logger = SgLogSetup().get_logger("lesliespool_com")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", newline="", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    addresses = []
+def fetch_data(sgw: SgWriter):
     headers = {
         "authority": "lesliespool.com",
         "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
@@ -64,7 +38,11 @@ def fetch_data():
             headers=headers,
         ).json()
 
-        for dt in r["stores"]:
+        try:
+            stores = r["stores"]
+        except:
+            continue
+        for dt in stores:
             page_url = ""
             if dt["contentAssetId"]:
                 page_url = "https://lesliespool.com/" + dt["contentAssetId"] + ".html"
@@ -84,37 +62,34 @@ def fetch_data():
                 latitude = dt["latitude"]
                 longitude = dt["longitude"]
 
-            hours_of_operation = dt["storeHours"].replace("*", " ")
-            phone = dt["phone"]
-
-            store = []
-            store.append(base_url)
-            store.append(location_name.replace("#" + str(dt["ID"]), ""))
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append(dt["ID"])
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(
-                hours_of_operation.replace("Hours not scheduled for this gro", "")
+            hours_of_operation = (
+                dt["storeHours"]
+                .replace("*", " ")
+                .replace("Hours not scheduled for this gro", "")
             )
-            store.append(page_url)
-            store = [x.strip() if type(x) == str else x for x in store]
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
+            phone = dt["phone"]
+            store_number = dt["ID"]
+            location_type = ""
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=base_url,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code="US",
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

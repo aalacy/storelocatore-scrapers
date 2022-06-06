@@ -1,232 +1,182 @@
-import csv
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "jimmysegg_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-logger = SgLogSetup().get_logger("jimmysegg_com")
+DOMAIN = "https://www.jimmysegg.com"
+MISSING = SgRecord.MISSING
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def get_data(temp):
+    location_name = temp[0]
+    log.info(location_name)
+    if "Monday" in temp[-2] or "May & Hefner" in location_name:
+        raw_address = " ".join(temp[1:-3])
+        hours_of_operation = temp[-2] + " " + temp[-1]
+        phone = temp[-3]
+    else:
+        raw_address = " ".join(temp[1:-2])
+        hours_of_operation = temp[-1]
+        phone = temp[-2]
+    if "MENU" in raw_address:
+        raw_address.split("MENU")[0]
+    address = raw_address.replace(",", " ")
+    address = usaddress.parse(address)
+    i = 0
+    street_address = ""
+    city = ""
+    state = ""
+    zip_postal = ""
+    while i < len(address):
+        temp = address[i]
+        if (
+            temp[1].find("Address") != -1
+            or temp[1].find("Street") != -1
+            or temp[1].find("Recipient") != -1
+            or temp[1].find("Occupancy") != -1
+            or temp[1].find("BuildingName") != -1
+            or temp[1].find("USPSBoxType") != -1
+            or temp[1].find("USPSBoxID") != -1
+        ):
+            street_address = street_address + " " + temp[0]
+        if temp[1].find("PlaceName") != -1:
+            city = city + " " + temp[0]
+        if temp[1].find("StateName") != -1:
+            state = state + " " + temp[0]
+        if temp[1].find("ZipCode") != -1:
+            zip_postal = zip_postal + " " + temp[0]
+        i += 1
+    state = state.replace("Location", "")
+    if "Falls" in state:
+        state = location_name.split(",")[1]
+    country_code = "US"
+    return (
+        location_name,
+        raw_address,
+        street_address,
+        city,
+        state,
+        zip_postal,
+        country_code,
+        phone,
+        hours_of_operation,
+    )
 
 
 def fetch_data():
-    locs = []
-    url = "https://www.jimmysegg.com/online-ordering/"
-    r = session.get(url, headers=headers)
-    website = "jimmysegg.com"
-    typ = "<MISSING>"
-    country = "US"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "ORDER NOW<" in line:
-            locs.append(line.split('href="')[1].split('"')[0])
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = "<MISSING>"
-        phone = ""
-        lat = ""
-        lng = ""
-        HFound = False
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if "Hours of Business</div>" in line2:
-                HFound = True
-            if HFound and "carryout" in line2:
-                HFound = False
-            if HFound and '<div class="hours-day">' in line2:
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                day = g.split("<")[0].strip().replace("\t", "")
-            if HFound and '<div class="hours-time">' in line2:
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                day = (
-                    day
-                    + ": "
-                    + g.replace("\r", "").replace("\t", "").replace("\n", "").strip()
-                )
-                if hours == "":
-                    hours = day
-                else:
-                    hours = hours + "; " + day
-            if '"name": "' in line2:
-                name = line2.split('"name": "')[1].split('"')[0].replace("\\u0027", "'")
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"latitude": "' in line2:
-                lat = line2.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line2:
-                lng = line2.split('"longitude": "')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '<h1 class="restaurant-name">' in line2:
-                name = (
-                    line2.split('<h1 class="restaurant-name">')[1]
-                    .split("<")[0]
-                    .strip()
-                    .replace("&#39;", "'")
-                )
-            if "var _locationLat = " in line2:
-                lat = line2.split("var _locationLat = ")[1].split(";")[0]
-            if "var _locationLng = " in line2:
-                lng = line2.split("var _locationLng = ")[1].split(";")[0]
-            if 'var _locationAddress = "' in line2:
-                addinfo = line2.split('var _locationAddress = "')[1].split('"')[0]
-                add = addinfo.split(",")[0]
-                zc = addinfo.split(",")[2].rsplit(" ", 1)[1]
-                city = addinfo.split(",")[1].strip()
-                state = addinfo.split(",")[2].strip().split(" ")[0]
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-        name = name.replace("\\u0026", "&")
-        if hours == "":
-            hurl = loc.replace("/#", "") + "/Website/Hours"
-            r3 = session.get(hurl, headers=headers)
-            lines2 = r3.iter_lines()
-            for line3 in lines2:
-                line3 = str(line3.decode("utf-8"))
-                if "day</td>" in line3:
-                    day = line3.split(">")[1].split("<")[0]
-                if '"text-right">' in line3:
-                    if '<td class="text-right">Closed' in line3:
-                        day = day + ": Closed"
-                    else:
-                        g = next(lines2)
-                        g = str(g.decode("utf-8"))
-                        day = (
-                            day
-                            + ": "
-                            + g.replace("\r", "")
-                            .replace("\t", "")
-                            .replace("\n", "")
-                            .strip()
-                        )
-                        if hours == "":
-                            hours = day
-                        else:
-                            hours = hours + "; " + day
-        if "3948 S Peoria" in add:
-            hours = "Monday-Friday: 7:00AM-1:00PM, Saturday and Sunday: 6:00AM-2:00PM"
-        if "1616 N May Ave" in add:
-            hours = "Monday - Sunday: 6:30 AM - 2:00 PM"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
-    loc = "<MISSING>"
-    name = "McAllen, TX"
-    add = "4100 N. 10th St."
-    city = "McAllen"
-    state = "TX"
-    zc = "78504"
-    phone = "<MISSING>"
-    hours = "Sun-Sat: 6am-2pm"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    yield [
-        website,
-        loc,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
-    loc = "<MISSING>"
-    name = "Mission, TX"
-    add = "614 N. Shary Road"
-    city = "Mission"
-    state = "TX"
-    zc = "78572"
-    phone = "<MISSING>"
-    hours = "Sun-Sat: 6am-2pm"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
-    yield [
-        website,
-        loc,
-        name,
-        add,
-        city,
-        state,
-        zc,
-        country,
-        store,
-        phone,
-        typ,
-        lat,
-        lng,
-        hours,
-    ]
+    if True:
+        url = "https://www.jimmysegg.com/online-ordering/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "wolf-row-inner"})[-1]
+        loclist = str(loclist).split("ORDER")[:-1]
+        for loc in loclist:
+            temp_var_1 = (
+                BeautifulSoup(loc, "html.parser")
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
+            if "PICKUP OR DELIVERY" in temp_var_1[0] or "NOW" in temp_var_1[0]:
+                del temp_var_1[0]
+            if "MENU" in temp_var_1[0]:
+                del temp_var_1[0]
+            if temp_var_1[0].isupper():
+                del temp_var_1[0]
+            if len(temp_var_1) > 10:
+                loclist_2 = loc.split("MENU")
+                for loc_2 in loclist_2:
+                    temp_var_2 = (
+                        BeautifulSoup(loc_2, "html.parser")
+                        .get_text(separator="|", strip=True)
+                        .split("|")
+                    )
+                    if (
+                        "PICKUP OR DELIVERY" in temp_var_2[0]
+                        or "JOIN THE WAITLIST" in temp_var_2[0]
+                        or "POSTMATES" in temp_var_2[0]
+                        or "GRUBHUB" in temp_var_2[0]
+                    ):
+                        del temp_var_2[0]
+                    if not temp_var_2:
+                        continue
+                    (
+                        location_name,
+                        raw_address,
+                        street_address,
+                        city,
+                        state,
+                        zip_postal,
+                        country_code,
+                        phone,
+                        hours_of_operation,
+                    ) = get_data(temp_var_2)
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=url,
+                        location_name=location_name,
+                        street_address=street_address.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=zip_postal.strip(),
+                        country_code=country_code,
+                        store_number=MISSING,
+                        phone=phone.strip(),
+                        location_type=MISSING,
+                        latitude=MISSING,
+                        longitude=MISSING,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
+                continue
+            (
+                location_name,
+                raw_address,
+                street_address,
+                city,
+                state,
+                zip_postal,
+                country_code,
+                phone,
+                hours_of_operation,
+            ) = get_data(temp_var_1)
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

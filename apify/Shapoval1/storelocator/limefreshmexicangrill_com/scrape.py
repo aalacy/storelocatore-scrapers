@@ -30,9 +30,6 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         street_address = "".join(j.get("address"))
-        city = "<MISSING>"
-        postal = "".join(j.get("zip")) or "<MISSING>"
-        state = "<MISSING>"
         phone = "".join(j.get("phone"))
         country_code = "".join(j.get("country"))
         location_name = "".join(j.get("store")).replace(" &#8211;", "–").strip()
@@ -45,13 +42,28 @@ def fetch_data(sgw: SgWriter):
             " ".join(a.xpath('//*[contains(text(), "AM")]/text()')).replace("\r\n", "")
             or "<MISSING>"
         )
+        state = "<MISSING>"
+        links = a.xpath("//a/@href")
+        for i in links:
+            if "-fl-" in i:
+                state = "FL"
+        if "FL" in hours:
+            state = "FL"
+        perm_cls = "".join(
+            a.xpath('//*[contains(text(), "permanently closed")]//text()')
+        )
+        if perm_cls:
+            hours_of_operation = "Permanently closed"
         if location_name.find("Orlando") != -1:
             line = j.get("description")
             b = html.fromstring(line)
-            add = b.xpath("//p[1]//text()")
-            city = "".join(add[1]).split(",")[0]
-            state = "".join(add[1]).split(",")[1].strip().split()[0]
             hours_of_operation = " ".join(b.xpath("//p[2]//text()"))
+        postal = j.get("zip") or "<MISSING>"
+        city = location_name
+        if city.find("–") != -1:
+            city = city.split("–")[1].strip()
+        if city.find(":") != -1:
+            city = city.split(":")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -1,127 +1,83 @@
-import csv
-import sgrequests
-import bs4
+# -*- coding: utf-8 -*-
+import re
+from lxml import etree
+from urllib.parse import urljoin
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    locator_domain = "https://www.kendrascott.com/"
-    url = "https://www.kendrascott.com/stores/directory"
-    missingString = "<MISSING>"
+    session = SgRequests()
 
-    s = sgrequests.SgRequests()
+    start_url = "https://www.kendrascott.com/stores/directory"
+    domain = "kendrascott.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    stores = bs4.BeautifulSoup(s.get(url).text, features="lxml").findAll(
-        "div", {"class": "search-item"}
-    )
+    all_locations = dom.xpath('//a[@class="btn btn-link highlight-directory"]/@href')
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-    result = []
-
-    for store in stores:
-        name = store.find("div", {"class": "store-name"}).text.strip().title()
-        link = "{}{}".format(
-            "https://www.kendrascott.com",
-            store.find("a", {"class": "btn btn-link highlight-pin"})["href"],
+        location_name = loc_dom.xpath('//h1[@class="store-name"]/text()')[0]
+        if "coming soon" in location_name:
+            continue
+        raw_data = loc_dom.xpath(
+            '//div[@class="store-location-details"]//p[contains(@class, "store-details")]//text()'
         )
-        addressJSON = {
-            "address": store.find("p", {"class": "store-address"})
-            .text.split("\n")[1]
-            .title(),
-            "city": store.find("p", {"class": "store-address"})
-            .text.split("\n")[2]
-            .title(),
-            "state": store.find("p", {"class": "store-address"}).text.split("\n")[4],
-            "zip": store.find("p", {"class": "store-address"}).text.split("\n")[5],
-        }
-        phone = store.find("a", {"class": "store-hours"}).text.strip()
-        hours = (
-            store.find("div", {"class": "store-hours"})
-            .text.replace(
-                "NOW OFFERING:LIMITED CAPACITY WALK-IN SHOPPING (MASK REQUIRED)BUY ONLINE, PICK UP CURBSIDEBUY ONLINE, PICK UP IN STOREHOURS (WEEK OF 12/28 - 1/4)",
-                "",
-            )
-            .replace(
-                "NOW OFFERING:LIMITED CAPACITY WALK-IN SHOPPING (MASK REQUIRED)BUY ONLINE, PICK UP CURBSIDEBUY ONLINE, PICK UP IN STOREHOURS (WEEK OF 12/28-1/4)",
-                "",
-            )
-            .replace(
-                "NOW OFFERING:LIMITED CAPACITY WALK-IN SHOPPING (MASK REQUIRED)BUY ONLINE, PICK UP CURBSIDEBUY ONLINE, PICK UP IN STOREHOURS (WEEK OF 12/28- 1/4)",
-                "",
-            )
-            .replace(
-                "NOW OFFERING:LIMITED CAPACITY WALK-IN SHOPPING (MASK REQUIRED)BUY ONLINE, PICK UP CURBSIDEBUY ONLINE, PICK UP IN STORESTORE & CAFÉ HOURS (WEEK OF 12/28 - 1/4)",
-                "",
-            )
-            .replace(
-                "View Our Sips & Sweets Café Menu",
-                "",
-            )
-            .replace(
-                "NOW OFFERING:LIMITED CAPACITY WALK-IN SHOPPING (MASK REQUIRED)BUY ONLINE, PICK UP CURBSIDEBUY ONLINE, PICK UP IN STORESTORE HOURS (WEEK OF 12/28 - 1/4)",
-                "",
-            )
-            .replace("CLOSED", "Closed, ")
-            .replace("MT", "M, T")
-            .replace("MW", "M, W")
-            .replace("MF", "M, F")
-            .replace("MS", "M, S")
-            .replace("MM", "M, M")
-            .strip()
+        raw_data = [e.strip() for e in raw_data if e.strip() and e.strip() != ","]
+        phone = loc_dom.xpath(
+            '//div[@class="store-contact-details"]/p[@class="store-details text-m"]/text()'
+        )[0]
+        latitude = re.findall("latitude = (.+?),", loc_response.text)[0]
+        longitude = re.findall("longitude = (.+?);", loc_response.text)[0]
+        hoo = loc_dom.xpath('//div[@class="store-hours-details"]/time//text()')
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("Hours")[-1]
+            .split("HOURS ")[-1]
         )
-        result.append(
-            [
-                locator_domain,
-                link,
-                name,
-                addressJSON["address"],
-                addressJSON["city"],
-                addressJSON["state"],
-                addressJSON["zip"],
-                missingString,
-                missingString,
-                phone,
-                missingString,
-                store["data-storelat"],
-                store["data-storelong"],
-                hours,
-            ]
+        if "PERMANENTLY CLOSED" in hoo:
+            continue
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_data[0],
+            city=raw_data[1],
+            state=raw_data[2],
+            zip_postal=raw_data[3],
+            country_code="",
+            store_number=page_url.split("/")[-1],
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
         )
-    return result
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

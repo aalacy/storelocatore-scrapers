@@ -19,10 +19,12 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
         session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            continue
 
         location_name = "".join(
             tree.xpath('//div[@class="location-hero__content"]/h1/text()')
@@ -72,6 +74,9 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("5th") != -1:
             hours_of_operation = hours_of_operation.split("5th")[1].strip()
+        if hours_of_operation.find("APPOINTMENT") != -1:
+            hours_of_operation = hours_of_operation.split("APPOINTMENT")[1].strip()
+        hours_of_operation = hours_of_operation.replace("OPEN DAILY!", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

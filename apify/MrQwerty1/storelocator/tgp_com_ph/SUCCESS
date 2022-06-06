@@ -1,0 +1,3 @@
+VALIDATOR_VERSION: 0.0.71
+COMMAND: python validate.py data.csv --ignore CountryCodeFillRateChecker --ignore CentroidValidator --ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator --ignore LatLngDuplicationValidator
+PYTHON_VERSION: sys.version_info(major=3, minor=8, micro=9, releaselevel='final', serial=0)
