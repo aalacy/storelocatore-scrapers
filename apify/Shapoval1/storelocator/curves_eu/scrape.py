@@ -1,10 +1,11 @@
-from sgpostal.sgpostal import International_Parser, parse_address
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 from concurrent import futures
 
 
@@ -19,12 +20,11 @@ def get_urls():
 
 
 def get_data(url, sgw: SgWriter):
-    locator_domain = "https://www.anthonys.com"
+    locator_domain = "https://www.curves.eu/"
     page_url = "".join(url)
     if page_url.count("/") != 6:
         return
 
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
@@ -49,13 +49,36 @@ def get_data(url, sgw: SgWriter):
     if country_code == "EN":
         country_code = "UK"
     city = a.city or "<MISSING>"
-
-    latitude = "".join(tree.xpath("//div/@data-lat")) or "<MISSING>"
-    longitude = "".join(tree.xpath("//div/@data-lng")) or "<MISSING>"
+    if location_name.find("Curves Dundalk") != -1:
+        street_address = "".join(ad[1]).strip()
+        postal = "".join(ad[2]).strip()
+        city = str(location_name).split()[1].strip()
+    js_block = "".join(tree.xpath("//div/@data-positions"))
+    js = json.loads(js_block)
+    latitude = js[0].get("lat") or "<MISSING>"
+    longitude = js[0].get("lng") or "<MISSING>"
     hours_of_operation = (
-        " ".join(tree.xpath("//table//tr/td/text()")).replace("\n", "").strip()
+        " ".join(
+            tree.xpath(
+                "//table//tr/td/text() | //h2[contains(text(), 'Öppettider')]/following::div[./p][1]//p//text()"
+            )
+        )
+        .replace("\n", "")
+        .strip()
         or "<MISSING>"
     )
+    if page_url == "https://www.curves.eu/ch/curves/curves-genevelesacacias/":
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Heures ")]/following::table[1]//tr//td//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+    if hours_of_operation.find("Curves") != -1:
+        hours_of_operation = hours_of_operation.split("Curves")[0].strip()
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -80,7 +103,7 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

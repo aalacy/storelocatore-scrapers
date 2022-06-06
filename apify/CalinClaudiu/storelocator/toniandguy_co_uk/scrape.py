@@ -14,7 +14,19 @@ from selenium.webdriver.support.ui import WebDriverWait  # noqa
 from selenium.webdriver.common.by import By  # noqa
 from selenium.webdriver.support import expected_conditions as EC  # noqa
 from selenium.webdriver.common.keys import Keys  # noqa
+from selenium.webdriver.chrome.options import Options  # noqa
 from bs4 import BeautifulSoup as b4
+import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -170,18 +182,23 @@ class ExampleSearchIteration(SearchIteration):
         :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
         :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
         """
-
-        with SgChrome() as driver:
+        chrome_optionz = ["ignore-certificate-errors"]
+        with SgChrome(extra_option_args=chrome_optionz) as driver:
             lat, lng = coord
             url = "https://toniandguy.com/salon-finder"
             driver.get(url)
-            searchbox_xpath = '//*[@id="content"]/main/section/section/div/div/div/form/div/div[1]/input'  # Might break
+            searchbox_xpath = "/html/body/div[2]/main/section/section/div/div/div/form/div/div[1]/input"  # Might break
             inputel = WebDriverWait(driver, 30).until(
                 EC.visibility_of_element_located((By.XPATH, searchbox_xpath))
             )
             inputel.send_keys(f"{lat}, {lng}")
             inputel.send_keys(Keys.ENTER)
+            time.sleep(20)
             soup = b4(driver.page_source, "lxml")
+            locs = soup.find_all("div", {"data-map-marker": True})
+            time.sleep(5)
+            if not locs:
+                time.sleep(150)
             locs = soup.find_all("div", {"data-map-marker": True})
             for loc in locs:
                 data = loc["data-map-marker"].split(",")
@@ -195,12 +212,48 @@ class ExampleSearchIteration(SearchIteration):
                 yield {"lat": data[0], "lng": data[1], "link": data[-1]}
 
 
+def testfetch(
+    coord: Tuple[float, float],
+):
+    """
+    This method gets called on each iteration of the search.
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    :param coord: The current coordinate (lat, long)
+    :param zipcode: The current zipcode (In DynamicGeoSearch instances, please ignore!)
+    :param current_country: The current country (don't assume continuity between calls - it's meant to be parallelized)
+    :param items_remaining: Items remaining in the search - per country, if `ParallelDynamicSearch` is used.
+    :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
+    """
+    chrome_optionz = ["ignore-certificate-errors"]
+    with SgChrome(extra_option_args=chrome_optionz) as driver:
+        lat, lng = coord
+        url = "https://toniandguy.com/salon-finder"
+        driver.get(url)
+        searchbox_xpath = "/html/body/div[2]/main/section/section/div/div/div/form/div/div[1]/input"  # Might break
+        inputel = WebDriverWait(driver, 30).until(
+            EC.visibility_of_element_located((By.XPATH, searchbox_xpath))
+        )
+        inputel.send_keys(f"{lat}, {lng}")
+        inputel.send_keys(Keys.ENTER)
+        time.sleep(20)
+        soup = b4(driver.page_source, "lxml")
+        locs = soup.find_all("div", {"data-map-marker": True})
+        time.sleep(5)
+        if not locs:
+            time.sleep(150)
+        locs = soup.find_all("div", {"data-map-marker": True})
+        for loc in locs:
+            data = loc["data-map-marker"].split(",")
+            yield {"lat": data[0], "lng": data[1], "link": data[-1]}
+
+
 def fetch_records(http, state):
     for next_r in state.request_stack_iter():
         lat = next_r.context.get("lat")
         lng = next_r.context.get("lng")
         url = next_r.url
-        page = SgRequests.raise_on_err(http.get(url))
+        page = SgRequests.raise_on_err(http.get(url, verify=False))
         try:
             soup = b4(page.text, "lxml")
             return ret_record(soup, url, lat, lng)
@@ -212,7 +265,9 @@ if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_8()
+        search_type="DynamicGeoSearch",
+        granularity=Grain_8(),
+        expected_search_radius_miles=250,
     )
 
     with SgWriter(
@@ -227,6 +282,9 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
+        test = testfetch(coord=(53.3498053, -6.2603097))
+        for i in test:
+            logzilla.info(f"{i}")
         search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
@@ -241,6 +299,7 @@ if __name__ == "__main__":
                         url=rec["link"], context={"lat": rec["lat"], "lng": rec["lng"]}
                     )
                 )
+            return True
 
         state.get_misc_value(
             "init", default_factory=lambda: record_initial_requests(par_search, state)

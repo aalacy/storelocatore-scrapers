@@ -21,7 +21,7 @@ def fetch_data():
     url = "https://andpizza.com/wp-content/themes/andpizza/assets/js/scripts.js?ver=06072021"
     log.info("Fetching the Bearer Token...")
     r = session.get(url, headers=headers)
-    Bearer = r.text.split("'Authorization','")[1].split("');},")[0]
+    Bearer = "Bearer" + r.text.split("Bearer")[1].split("')")[0]
     api_url = "https://api.andpizza.com/webapi/v100/partners/shops"
     headers_2 = {
         "authority": "api.andpizza.com",
@@ -40,7 +40,7 @@ def fetch_data():
     }
     loclist = session.get(api_url, headers=headers_2).json()["data"]
     for loc in loclist:
-        location_name = loc["name"]
+        location_name = loc["name"].replace("&pizza //", "")
         log.info(location_name)
         addy = loc["location"]
         street_address = addy["address1"]

@@ -28,13 +28,21 @@ def fetch_data():
             logger.info(_["url"])
             sp1 = bs(session.get(_["url"], headers=_headers).text, "lxml")
             _hr = sp1.find("strong", string=re.compile(r"Hours of Operation"))
-            hours = ""
+            hours = []
             if _hr:
-                hours = _hr.find_next_sibling("strong").text.strip()
+                for hh in _hr.find_next_siblings("strong"):
+                    if not hh.text.strip():
+                        continue
+                    hours.append(hh.text.strip())
             if not hours:
-                hours = sp1.select_one("section#intro strong").text
-                if "AM" not in hours:
-                    hours = ""
+                _hr = sp1.select("section#intro strong")
+                if _hr:
+                    for hh in _hr:
+                        if not hh.text.strip():
+                            continue
+                        if "AM" not in hours:
+                            hours = ""
+                        hours.append(hh.text.strip())
             coord = (
                 sp1.select_one("div.gmaps")["data-gmaps-static-url-mobile"]
                 .split("&center=")[1]
@@ -54,7 +62,7 @@ def fetch_data():
                 country_code="US",
                 phone=_["telephone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation="; ".join(hours),
             )
 
 

@@ -70,13 +70,11 @@ def fetch_data():
             for location in fetch_data_from_files(data_files, domain, url_country):
                 yield location
         except:
-            for location in fetch_data_from_site(
-                home_sel, domain, url_country, session
-            ):
+            for location in fetch_data_from_site(home_sel, domain, session):
                 yield location
 
 
-def fetch_data_from_site(home_sel, domain, url_country, session):
+def fetch_data_from_site(home_sel, domain, session):
     locations = []
     urls = home_sel.xpath(
         '//table[@class="desktop"]/tbody/tr/td/a[contains(@href, "branch-list")]/@href'
@@ -131,6 +129,29 @@ def fetch_data_from_site(home_sel, domain, url_country, session):
     return locations
 
 
+def resolve_phone(store):
+    if "phoneNumber" not in store:
+        return None
+
+    phones = store["phoneNumber"]
+    phone_nums = phones.get("existingCustomers") or phones.get("newCustomers")
+
+    phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
+    phone = phone.rsplit("  ")[0]
+    if len(re.sub("[^0-9]", "", phone)) < 5:
+        phone = phone_nums
+
+    match = re.search(r"(\(\d+\) \d+-\d+)", phone_nums)
+    if match:
+        phone = match.group(1)
+
+    match = re.search(r"(\d+) o", phone)
+    if match:
+        phone = match.group(1)
+
+    return phone
+
+
 def fetch_data_from_files(data_files, domain, url_country):
     locations = []
     for key in data_files.keys():
@@ -144,7 +165,7 @@ def fetch_data_from_files(data_files, domain, url_country):
 
         for store in stores:
             locator_domain = website
-            location_name = store["name"]
+            location_name = re.sub("\n", "", store["name"]).strip()
 
             city = store["address"].get("townOrCity", "<MISSING>")
             state = store["address"].get("stateRegionCounty", "<MISSING>")
@@ -162,17 +183,7 @@ def fetch_data_from_files(data_files, domain, url_country):
                 if re.search("po box", cleaned_zip, re.IGNORECASE):
                     cleaned_zip = SgRecord.MISSING
 
-            phone = ""
-            if "phoneNumber" in store:
-                phones = store["phoneNumber"]
-                phone_nums = phones.get("existingCustomers") or phones.get(
-                    "newCustomers"
-                )
-
-                phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
-                phone = phone.rsplit("  ")[0]
-                if len(re.sub("[^0-9]", "", phone)) < 5:
-                    phone = phone_nums
+            phone = resolve_phone(store)
 
             street_address = ""
             if "street" in store["address"]:
