@@ -43,7 +43,7 @@ def fetch_data():
             lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
             longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0]
             phone = r.text.split("Call Now (", 1)[1].split('"', 1)[0]
-            phone = phone + "("
+            phone = "(" + phone
             hours = (
                 soup.text.split("OFFICE HOURS", 1)[1]
                 .split("ACCESS HOURS", 1)[0]
