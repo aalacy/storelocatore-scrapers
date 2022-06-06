@@ -1,10 +1,10 @@
+import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
 
@@ -20,6 +20,16 @@ def get_international(line):
     return street, city, postal
 
 
+def get_phone(page_url):
+    r = session.get(page_url, headers=headers)
+    logger.info(f"{page_url}: {r.status_code}")
+    tree = html.fromstring(r.text)
+    phone = "".join(tree.xpath("//p[contains(text(), 'Telefon')]/text()"))
+    phone = phone.replace("Telefon", "").replace(":", "").strip()
+
+    return phone
+
+
 def get_api():
     r = session.get("https://www.peek-cloppenburg.com/en/stores/", headers=headers)
     tree = html.fromstring(r.text)
@@ -31,39 +41,11 @@ def get_api():
     return f"https://www.peek-cloppenburg.com/_next/data/{key}/en/stores.json"
 
 
-def get_urls():
-    urls = []
+def fetch_data(sgw: SgWriter):
     api = get_api()
-    logger.info(f"The API URL: {api}")
     r = session.get(api, headers=headers)
-    js = r.json()["pageProps"]["layoutDocs"]["countriesDoc"]
-    for j in js:
-        cc = j.get("country")
-        if cc == "en":
-            continue
-        url = api.replace("/en/", f"/{cc}/")
-        logger.info(f"Country {cc} was added")
-        urls.append(url)
-
-    return urls
-
-
-def get_phone(page_url):
-    r = session.get(page_url, headers=headers)
-    logger.info(f"{page_url}: {r.status_code}")
-    tree = html.fromstring(r.text)
-    phone = "".join(tree.xpath("//p[contains(text(), 'Telefon')]/text()"))
-    phone = phone.replace("Telefon", "").replace(":", "").strip()
-
-    return phone
-
-
-def get_data(api, sgw: SgWriter):
-    r = session.get(api, headers=headers)
-    logger.info(f"{api}: {r.status_code}")
-    if r.status_code != 200:
-        return
     js = r.json()["pageProps"]["pageDoc"]["data"]["body"][1]["data"]["body"]
+    logger.info(f"{api}: {r.status_code} | {len(js)} records found")
 
     for j in js:
         try:
@@ -81,15 +63,39 @@ def get_data(api, sgw: SgWriter):
         for li in lines:
             text = li.get("text")
             if "Telefon" in text:
-                phone = text.replace("Telefon", "").replace(":", "").strip()
+                phone = (
+                    text.replace("Telefon", "")
+                    .replace(":", "")
+                    .replace("as", "")
+                    .strip()
+                )
+                if "Pro" in phone:
+                    phone = " ".join(phone.split("Pro")[0].split())
+                if "Dar" in phone:
+                    phone = " ".join(phone.split("Dar")[0].split())
                 continue
-            if text:
-                line.append(text)
+            if "email" in text.lower() or "product" in text.lower():
+                continue
+            if "hours" in text.lower() or "Öffnungszeiten" in text:
+                text = "Opening Hours"
 
-        country = api.split("/")[-2]
+            if text:
+                line.append(text.strip())
+
         location_name = line.pop(0)
-        raw_address = line.pop(0).replace("\n", ", ")
+        index = line.index("Opening Hours")
+        raw_address = " ".join(", ".join(line[:index]).split())
         street_address, city, postal = get_international(raw_address)
+
+        _tmp = []
+        text = line[index + 1 :]
+        for t in text:
+            if re.findall(r"\d{2}\.\d{2}\.\d{2}", t):
+                continue
+            _tmp.append(" ".join(t.split()))
+
+        hours_of_operation = ";".join(_tmp)
+
         try:
             page_url = j["text"][-1]["spans"][-1]["data"]["url"]
             if phone == SgRecord.MISSING:
@@ -98,17 +104,11 @@ def get_data(api, sgw: SgWriter):
                 except Exception as e:
                     logger.info(f"Error during scraping phone: {e}")
         except:
-            page_url = f"https://www.peek-cloppenburg.com/{country}/stores/"
+            page_url = "https://www.peek-cloppenburg.com/en/stores/"
 
-        hours_of_operation = SgRecord.MISSING
-        if "Opening Hours" in line:
-            _tmp = []
-            hours = line[line.index("Opening Hours") + 1 :]
-            for h in hours:
-                if "Product" in h:
-                    break
-                _tmp.append(h)
-            hours_of_operation = ";".join(_tmp).replace("\n", ";")
+        country_code = SgRecord.MISSING
+        if not page_url.endswith("/stores/"):
+            country_code = page_url.split("cloppenburg.")[1].split("/")[0]
 
         row = SgRecord(
             page_url=page_url,
@@ -118,7 +118,7 @@ def get_data(api, sgw: SgWriter):
             zip_postal=postal,
             latitude=latitude,
             longitude=longitude,
-            country_code=country.upper(),
+            country_code=country_code,
             phone=phone,
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
@@ -129,16 +129,6 @@ def get_data(api, sgw: SgWriter):
         sgw.write_row(row)
 
 
-def fetch_data(sgw: SgWriter):
-    urls = get_urls()
-    logger.info(f"{len(urls)} countries will be scraped")
-
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
-
-
 if __name__ == "__main__":
     locator_domain = "https://www.peek-cloppenburg.com/"
     logger = sglog.SgLogSetup().get_logger(logger_name="peek-cloppenburg.com")
@@ -146,5 +136,9 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.STORE_NUMBER})
+        )
+    ) as writer:
         fetch_data(writer)

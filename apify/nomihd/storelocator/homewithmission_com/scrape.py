@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -115,6 +115,12 @@ def fetch_data():
                         country_code = "US"
 
                         location_name = store["title"]
+                        if "Bonneville" in location_name:
+                            continue
+                        location_type = "<MISSING>"
+                        if "Headquarters" in location_name:
+                            location_type = "Headquarters"
+
                         if (
                             location_name
                             == "dvanced Healthcare Services Home Health- Newark"
@@ -137,14 +143,14 @@ def fetch_data():
 
                         store_number = "<MISSING>"
 
-                        location_type = "<MISSING>"
-
                         hours_of_operation = "<MISSING>"
                         latitude, longitude = "<MISSING>", "<MISSING>"
 
                         if len(page_url) > 0:
                             log.info(page_url)
                             loc_res = session.get(page_url, headers=headers)
+                            if isinstance(loc_res, SgRequestError):
+                                continue
                             loc_sel = lxml.html.fromstring(loc_res.text)
 
                             hours_list = []

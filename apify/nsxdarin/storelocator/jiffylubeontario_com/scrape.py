@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("jiffylubeontario_com")
 
@@ -19,6 +20,8 @@ headers2 = {
 
 def fetch_data():
     locs = [
+        "https://www.jiffylubeontario.com/huntsville-19-kinton-avenue/|P1H 1M3|Huntsville||"
+        "https://www.jiffylubeontario.com/hanover-717-10th-st/|N4N 1S1|Hanover||"
         "https://www.jiffylubeontario.com/sudbury-1003-kingsway|P3B 2E6|Sudbury||",
         "https://www.jiffylubeontario.com/sudbury-900-lasalle-boulevard|P3A 5W8|Sudbury||",
         "https://www.jiffylubeontario.com/chelmsford-4764-regional-road-15|P0M 1L0|Chelmsford||",
@@ -143,6 +146,7 @@ def fetch_data():
     coords = []
 
     for city in cities:
+        time.sleep(3)
         logger.info("Pulling City %s..." % city)
         payload = {
             "action": "load_map",
@@ -182,6 +186,7 @@ def fetch_data():
         except:
             pass
     for loc in locs:
+        time.sleep(3)
         try:
             logger.info("Pulling Location %s..." % loc)
             lurl = loc.split("|")[0]
@@ -200,31 +205,31 @@ def fetch_data():
             name = ""
             r2 = session.get(lurl, headers=headers2)
             lines = r2.iter_lines()
-            hrurl = lurl + "/wp-admin/admin-ajax.php?action=load_hours"
+            hrurl = lurl + "/wp-admin/admin-ajax.php?action=load_hours_map_single_ajax"
             r3 = session.get(hrurl, headers=headers2)
             lines2 = r3.iter_lines()
             for line3 in lines2:
-                if '<span class="textday">' in line3:
-                    g = next(lines2)
-                    day = g.split("<")[0].strip().replace("\t", "")
-                if "<strong>CLOSED</strong>" in line3:
-                    day = day + ": CLOSED"
-                    if hours == "":
-                        hours = day
-                    else:
-                        hours = hours + "; " + day
-                if '<span class="hours-start">' in line3:
-                    day = (
-                        day
-                        + ": "
-                        + line3.split('<span class="hours-start">')[1].split("<")[0]
-                        + "-"
-                        + line3.split('"hours-end">')[1].split("<")[0]
-                    )
-                    if hours == "":
-                        hours = day
-                    else:
-                        hours = hours + "; " + day
+                if '"textday\\">' in line3:
+                    days = line3.split('"textday\\">')
+                    for day in days:
+                        if '{"hours_panel":"' not in day:
+                            if "<strong>CLOSED<" in day:
+                                hrs = (
+                                    day.split("day")[0].rsplit("\\t", 1)[1]
+                                    + "day: Closed"
+                                )
+                            else:
+                                hrs = (
+                                    day.split("day")[0].rsplit("\\t", 1)[1]
+                                    + "day: "
+                                    + day.split('hours-start\\">')[1].split("<")[0]
+                                    + "-"
+                                    + day.split('hours-end\\">')[1].split("<")[0]
+                                )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             for line2 in lines:
                 if 'itemprop="name address">' in line2:
                     g = next(lines)
@@ -235,8 +240,9 @@ def fetch_data():
                     name = line2.split("<title>")[1].split("|")[0].strip()
             if phone == "":
                 phone = "<MISSING>"
-            name = name.replace("</title>", "").strip()
+            name = name.replace("</title>", "").strip().replace("<link", "")
             name = name.replace("&#8211;", "-").strip()
+            add = add.replace("<link", "")
             if zc == "":
                 zc = "<MISSING>"
             if lat == "":
@@ -245,22 +251,24 @@ def fetch_data():
                 lng = "<MISSING>"
             if "-514-brock-st-n" in loc:
                 add = "514 Brock St N"
-            yield SgRecord(
-                locator_domain=website,
-                page_url=lurl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+            phone = phone.replace('"', "")
+            if "Page Not" not in name:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=lurl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
         except:
             pass
 

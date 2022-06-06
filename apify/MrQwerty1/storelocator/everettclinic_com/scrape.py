@@ -1,20 +1,34 @@
 import json
-from sgscrape.sgrecord import SgRecord
+from typing import Iterable, Tuple, Callable
+
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 
-def fetch_data(sgw: SgWriter):
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=30
-    )
-    for lat, lng in search:
+class ExampleSearchIteration(SearchIteration):
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
+
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+
+        lat, lng = coord
         data = {
             "search": "",
-            "radius": "100mi",
+            "radius": "20mi",
             "isAcceptingNewPatients": True,
             "latitude": str(lat),
             "longitude": str(lng),
@@ -44,7 +58,7 @@ def fetch_data(sgw: SgWriter):
 
             street_address = a.get("line1")
             city = a.get("city")
-            state = a.get("state")
+            region = a.get("state")
             postal = a.get("zip")
             country_code = "US"
             phone = loc.get("telephoneNumbers")[0].get("telephoneNumber")
@@ -81,12 +95,12 @@ def fetch_data(sgw: SgWriter):
                     if d not in hours_of_operation:
                         hours_of_operation += f";{d}: Closed"
 
-            row = SgRecord(
+            yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
-                state=state,
+                state=region,
                 zip_postal=postal,
                 country_code=country_code,
                 latitude=latitude,
@@ -98,10 +112,9 @@ def fetch_data(sgw: SgWriter):
                 locator_domain=locator_domain,
             )
 
-            sgw.write_row(row)
-
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     locator_domain = "https://www.everettclinic.com/"
     api = "https://www.everettclinic.com/bin/optumcare/findlocations"
     headers = {
@@ -118,10 +131,25 @@ if __name__ == "__main__":
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    session = SgRequests()
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        expected_search_radius_miles=10,
+    )
+
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        fetch_data(writer)
+        with SgRequests(verify_ssl=False) as session:
+            search_iter = ExampleSearchIteration(http=session)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[SearchableCountries.USA],
+            )
+
+            for rec in par_search.run():
+                writer.write_row(rec)
+
+    state = CrawlStateSingleton.get_instance()
