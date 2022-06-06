@@ -1,5 +1,4 @@
-selenium==3.141.0
-sgselenium==0.0.15
-sgvalidator==0.0.71
-sgscrape==0.0.23
-beautifulsoup4==4.9.3
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+dirtyjson==1.0.7
+sgscrape==0.2.6
+sgselenium==0.1.4

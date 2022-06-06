@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -16,9 +16,8 @@ logger = SgLogSetup().get_logger("boostmobile_com")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=20,
-    expected_search_radius_miles=20,
     max_search_results=None,
+    granularity=Grain_8(),
 )
 
 
@@ -33,7 +32,7 @@ def fetch_data():
         all_zips.append(coord)
 
     logger.info("Searching zip_codes .. ")
-    for i, coord in enumerate(all_zips):
+    for coord in all_zips:
         url = (
             "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
             + coord

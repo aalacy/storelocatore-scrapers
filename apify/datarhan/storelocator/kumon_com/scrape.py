@@ -1,4 +1,5 @@
 import json
+from lxml import etree
 
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sgrequests import SgRequests
@@ -45,15 +46,27 @@ def fetch_data():
                 "latitude": lat,
                 "longitude": lng,
                 "radius": 50,
+                "searchAddress": "",
+                "showVirtualFlg": 0,
             }
             response = session.post(start_url, json=frm, headers=hdr)
             data = json.loads(response.text)
 
             all_poi = data["d"]
             for poi in all_poi:
+                hdr = {
+                    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+                }
                 page_url = "https://www.kumon.com/{}".format(poi["EpageUrl"])
                 if page_url == "https://www.kumon.com/":
                     continue
+                loc_response = session.get(page_url, headers=hdr)
+                loc_dom = etree.HTML(loc_response.text)
+                hoo = loc_dom.xpath(
+                    '//input[@id="hour1"]/following-sibling::div[@class="card-hour"]//text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
+
                 location_name = poi["CenterName"]
                 street_address = poi["Address"]
                 if poi.get("Address2"):
@@ -82,10 +95,10 @@ def fetch_data():
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone,
-                    location_type=SgRecord.MISSING,
+                    location_type="",
                     latitude=latitude,
                     longitude=longitude,
-                    hours_of_operation=SgRecord.MISSING,
+                    hours_of_operation=hoo,
                 )
 
                 yield item

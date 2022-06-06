@@ -1,188 +1,132 @@
-import csv
-
-from concurrent import futures
+import threading
 from lxml import html
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.static import static_zipcode_list, SearchableCountries
+from sglogging import sglog
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+locator_domain = "https://www.alwaysbestcare.com/"
+logger = sglog.SgLogSetup().get_logger(logger_name="alwaysbestcare.com")
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+}
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+local = threading.local()
 
 
-def get_states():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Moz": "prefetch",
-        "Connection": "keep-alive",
-        "Referer": "https://www.alwaysbestcare.com/locations/?srchtype=state&srch=CA",
-        "TE": "Trailers",
-    }
-    r = session.get("https://www.alwaysbestcare.com/locations/", headers=headers)
-    tree = html.fromstring(r.text)
+def get_session(retry=False):
+    if not hasattr(local, "session") or retry:
+        local.session = SgRequests()
 
-    return tree.xpath("//div[@class='locationlist']/ul/li/a/@href")
+    return local.session
 
 
-def get_urls():
-    urls = []
-    states = get_states()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Moz": "prefetch",
-        "Connection": "keep-alive",
-        "Referer": "https://www.alwaysbestcare.com/locations/?srchtype=state&srch=CA",
-        "TE": "Trailers",
-    }
-    session = SgRequests()
-
-    for state in states:
-        r = session.get(state, headers=headers)
-        tree = html.fromstring(r.text)
-        urls += tree.xpath(
-            "//div[@id='resultstop']/ul/li/p/a[text()='Click here']/@href"
-        )
-
-    return set(urls)
-
-
-def get_coords_from_google_url(url):
+def get_param(_zip, retry=0):
     try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        params = []
+        api = f"https://www.alwaysbestcare.com/wp-json/ral/v1/location/offices?q={_zip}"
+        r = get_session(retry).get(api, headers=headers)
+        js = r.json()["features"]
+        logger.info(f"{_zip}: {len(js)} location(s) found")
 
-    return latitude, longitude
+        for j in js:
+            p = j.get("properties") or {}
+            store_number = p.get("storeid")
+            page_url = p.get("url")
+            g = j.get("geometry") or {}
+            lng, lat = g.get("coordinates") or (SgRecord.MISSING, SgRecord.MISSING)
+            params.append((page_url, lat, lng, store_number))
+
+        return params
+    except:
+        if retry < 3:
+            return get_param(_zip, retry + 1)
+
+        return []
 
 
-def get_data(page_url):
-    locator_domain = "https://www.alwaysbestcare.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Moz": "prefetch",
-        "Connection": "keep-alive",
-        "Referer": "https://www.alwaysbestcare.com/locations/?srchtype=state&srch=CA",
-        "TE": "Trailers",
-    }
+def get_params():
+    params = set()
+    search = static_zipcode_list(5, SearchableCountries.USA)
 
-    session = SgRequests()
-    r = session.get(page_url, headers=headers)
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(get_param, postal) for postal in search]
+        for future in as_completed(futures):
+            for param in future.result():
+                params.add(param)
+
+    return params
+
+
+def get_data(param):
+    page_url, latitude, longitude, store_number = param
+    r = get_session().get(page_url, headers=headers)
+    logger.info(f"{page_url}: {r.status_code}")
+    if r.status_code != 200:
+        logger.info(f"{page_url} skipped b/c status code is {r.status_code}")
+        return
     tree = html.fromstring(r.text)
 
-    location_name = (
-        tree.xpath("//h1//text()|//h3/span/strong/text()|//h3/span/text()")[0]
-        .replace("Welcome to", "")
-        .strip()
-    )
-    street_address = (
-        " ".join(
-            "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).split()
+    try:
+        location_name = (
+            tree.xpath("//p[span[contains(@itemprop,'streetAddress')]]/text()")[0]
+            .replace("|", "")
+            .strip()
         )
-        or "<MISSING>"
+    except IndexError:
+        location_name = SgRecord.MISSING
+    street_address = " ".join(
+        "".join(tree.xpath("//span[@itemprop='streetAddress']/text()")).split()
     )
-    city = (
-        "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
-        or "<MISSING>"
-    )
-    state = (
-        "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
-        or "<MISSING>"
-    )
-    postal = (
-        "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
-        or "<MISSING>"
-    )
+    city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
+    state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
+    postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
     country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//strong[contains(text(), 'Call Us:')]/text()"))
-        .replace("Call Us:", "")
-        .strip()
-        or "<MISSING>"
-    )
-    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
-    latitude, longitude = get_coords_from_google_url(text)
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    phone = "".join(tree.xpath("//h3/a[contains(@href, 'tel:')]/text()")).strip()
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    if latitude == SgRecord.MISSING or latitude == 0:
+        text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
+        if "/@" in text:
+            latitude, longitude = text.split("/@")[1].split(",")[:2]
+
+    if latitude == SgRecord.MISSING or str(latitude) == "0":
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+    )
 
     return row
 
 
-def fetch_data():
-    out = []
-    s = set()
-    urls = get_urls()
+def fetch_data(sgw: SgWriter):
+    params = get_params()
+    logger.info(f"{len(params)} URLs to scrape")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                _id = row[3]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with ThreadPoolExecutor() as executor:
+        future_to_url = {executor.submit(get_data, param): param for param in params}
+        for future in as_completed(future_to_url):
+            poi = future.result()
+            if poi:
+                sgw.write_row(poi)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

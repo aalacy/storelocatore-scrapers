@@ -1,5 +1,10 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("michaelkors_com")
@@ -10,56 +15,32 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     locs = []
+    found = []
     url = "https://locations.michaelkors.com/sitemap.xml"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if "<loc>https://locations.michaelkors.com/" in line and "/fr_ca/" not in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 6:
                 locs.append(lurl)
     url = "https://locations.michaelkors.ca/sitemap.xml"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
-        if "<loc>https://locations.michaelkors.ca/" in line:
+    for line in r.iter_lines():
+        if "<loc>https://locations.michaelkors.ca/" in line and "/fr_ca/" not in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 5:
                 locs.append(lurl)
+    url = "https://locations.michaelkors.co.uk/sitemap.xml"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if "<loc>https://locations.michaelkors.co.uk/" in line:
+            lurl = line.split("<loc>")[1].split("<")[0]
+            if lurl.count("/") > 3:
+                locs.append(lurl)
     logger.info(len(locs))
     for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
         website = "michaelkors.com"
         typ = "<MISSING>"
         hours = ""
@@ -71,10 +52,10 @@ def fetch_data():
         zc = ""
         if "locations.michaelkors.ca" in loc:
             country = "CA"
-        if "/us/" in loc:
-            country = "US"
-        if "/united-kingdom/" in loc:
+        elif "locations.michaelkors.co.uk" in loc:
             country = "GB"
+        else:
+            country = loc.split("com/")[1].split("/")[0].replace("-", " ").upper()
         phone = ""
         lat = ""
         lng = ""
@@ -82,9 +63,7 @@ def fetch_data():
         store = "<MISSING>"
         HFound = False
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if '<span class="Heading-sub Heading--pre">' in line2:
                 typ = line2.split('<span class="Heading-sub Heading--pre">')[1].split(
                     "<"
@@ -95,10 +74,20 @@ def fetch_data():
                     + line2.split('span class="Heading-main">')[1].split("<")[0]
                 )
             if '"dimension4":"' in line2:
-                country = line2.split('temprop="address" data-country="')[1].split('"')[
-                    0
-                ]
-                add = line2.split('"dimension4":"')[1].split('"')[0]
+                try:
+                    country = line2.split('temprop="address" data-country="')[1].split(
+                        '"'
+                    )[0]
+                except:
+                    pass
+                add = (
+                    line2.split('"dimension4":"')[1]
+                    .split('"')[0]
+                    .replace("\u0026", "&")
+                    .replace("\\", "")
+                    .split(". Santiago")[0]
+                    .strip()
+                )
                 zc = line2.split('"dimension5":"')[1].split('"')[0]
                 city = line2.split('"dimension3":"')[1].split('"')[0]
                 state = line2.split('"dimension2":"')[1].split('"')[0]
@@ -137,34 +126,29 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        if hours == "":
-            hours = "<MISSING>"
-        if zc == "":
-            zc = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if name != "" and ".ca/fr_ca" not in loc:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if name + add in found:
+            continue
+        found.append(name + add)
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

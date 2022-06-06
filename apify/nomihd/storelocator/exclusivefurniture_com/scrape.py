@@ -4,25 +4,24 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import json
 
 website = "exclusivefurniture.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "exclusivefurniture.com",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "Connection": "keep-alive",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
     "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "Accept": "*/*",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-Mode": "no-cors",
+    "Sec-Fetch-Dest": "script",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
@@ -40,88 +39,41 @@ def split_fulladdress(address_info):
     return street_address, city, state, zip, country_code
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
-    search_url = "https://exclusivefurniture.com/store-locator"
+    search_url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/13949/stores.js"
     search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+    stores = json.loads(search_res.text)["stores"]
 
-    store_list = search_sel.xpath('//div[@class="card text-white bg-primary mb-3"]')
+    for store in stores:
 
-    for store in store_list:
-
-        page_url = search_url
+        page_url = store["url"]
         locator_domain = website
 
-        location_name = "".join(store.xpath("div[@class='card-header']/text()")).strip()
+        location_name = store["name"]
 
-        full_address = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store.xpath(
-                        ".//p[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029235_000001-test-product.png']]/text()"
-                    )
-                ],
-            )
+        store_number = store["id"]
+        phone = store["phone"]
+        location_type = "<MISSING>"
+        log.info(page_url)
+        store_req = session.get(page_url, headers=headers)
+        store_sel = lxml.html.fromstring(store_req.text)
+        full_address = (
+            "".join(store_sel.xpath('//a[contains(text(),"Get Direction:")]/text()'))
+            .strip()
+            .replace("Get Direction:", "")
+            .strip()
+            .split(",")
         )
-        street_address, city, state, zip, country_code = split_fulladdress(
-            "".join(full_address).strip().split(",")
-        )
+        street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
-        store_number = "<MISSING>"
-        phone = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store.xpath('.//a[contains(@href,"tel:")]/text()')
-                    ],
-                )
+        hours_of_operation = "; ".join(
+            store_sel.xpath(
+                '//div[@class="card"][./h4[contains(text(),"Store Hours")]]//li/text()'
             )
         ).strip()
-
-        location_type = "<MISSING>"
-
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store.xpath(
-                        ".//p[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029239_000001-test-product.png']]/text()"
-                    )
-                ],
-            )
-        )
-        hours_of_operation = "; ".join(hours)
-
-        map_link = "".join(
-            store.xpath('.//a[contains(text(),"Drive to Our Store")]/@href')
-        )
-
-        latitude, longitude = get_latlng(map_link)
+        latitude, longitude = store["latitude"], store["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -145,15 +97,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.ZIP,
-                }
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

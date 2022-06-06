@@ -1,6 +1,5 @@
 import json
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -18,7 +17,7 @@ headers = {
 }
 
 
-DOMAIN = "https://kentsgrocery.com"
+DOMAIN = "https://kentsgrocery.com/"
 MISSING = SgRecord.MISSING
 
 
@@ -28,10 +27,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         loclist = r.text.split("jsonpcallbackInfoAll(")[1].split("}])")[0]
         loclist = json.loads(loclist + "}]")
-        url = "https://kentsgrocery.com/all"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        page_list = soup.find("li", {"class": "dropdown"}).findAll("a")
         for loc in loclist:
             location_name = loc["store_name"]
             log.info(location_name)
@@ -39,10 +34,11 @@ def fetch_data():
             phone = loc["store_phone"]
             street_address = loc["store_address"]
             city = loc["store_city"]
-            for page in page_list[1:]:
-                if city.split()[0].lower() in page["href"]:
-                    page_url = DOMAIN + page["href"]
-                    break
+            page_url = (
+                "https://www.kentsgrocery.com/locations/"
+                + city.replace(" ", "-").lower()
+            )
+            log.info(page_url)
             state = loc["store_state"]
             zip_postal = loc["store_zip"]
             country_code = "US"

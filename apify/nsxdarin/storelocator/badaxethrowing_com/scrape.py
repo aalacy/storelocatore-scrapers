@@ -14,7 +14,7 @@ logger = SgLogSetup().get_logger("badaxethrowing_com")
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://badaxethrowing.com/locations/axe-throwing-san-francisco/|US"]
     url = "https://badaxethrowing.com/locations/"
     r = session.get(url, headers=headers)
     website = "badaxethrowing.com"
@@ -66,10 +66,15 @@ def fetch_data():
                     zc = add.rsplit(" ", 1)[1]
                     add = add.split(",")[0]
                 if '"streetAddress": "' in line2:
-                    add = line2.split('"streetAddress": "')[1].split('"')[0]
-                    if "," in add:
-                        add = add.split(",")[0]
-                    zc = add.rsplit(" ", 1)[1]
+                    addfull = line2.split('"streetAddress": "')[1].split('"')[0]
+                    if "," in addfull:
+                        add = addfull.split(",")[0]
+                    else:
+                        add = addfull
+                    try:
+                        zc = addfull.rsplit(" ", 1)[1]
+                    except:
+                        zc = "<MISSING>"
                 if '"addressLocality": "' in line2:
                     city = line2.split('"addressLocality": "')[1].split('"')[0]
                 if '"addressRegion": "' in line2:
@@ -124,22 +129,45 @@ def fetch_data():
                     zc = "20018"
                 if "30 Hill St" in add:
                     zc = "94014"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=lurl,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                if "Minneapolis" in name:
+                    city = "Minneapolis"
+                if "axe-throwing-surrey" in loc:
+                    add = "8132, 109 130 St #109"
+                if "axe-throwing-vaughan" in loc:
+                    add = "171, 3 Maplecrete Rd #3"
+                if "axe-throwing-winnipeg" in loc:
+                    add = "1393, 6 Border St #6"
+                if "axe-throwing-burlington" in loc:
+                    zc = "L7R 2E4"
+                if "axe-throwing-mississauga/" in loc:
+                    zc = "L4W 1J8"
+                if "-throwing-ottawa" in loc:
+                    zc = "K1B 4L2"
+                if "axe-throwing-surrey" in loc:
+                    zc = "V3W 8J9"
+                if "throwing-vaughan" in loc:
+                    zc = "L4K 2B4"
+                if "xe-throwing-waterloo" in loc:
+                    zc = "N2J 3H8"
+                if "/axe-throwing-winnipeg" in loc:
+                    zc = "R3H 0N1"
+                if "location" in lurl:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=lurl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
