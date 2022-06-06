@@ -24,7 +24,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests(verify_ssl=False)
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def getAddress(raw_address):
@@ -63,15 +63,21 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     data = json.loads(
-        soup.find("script", id="popmenu-apollo-state")
-        .string.replace("window.POPMENU_APOLLO_STATE = ", "")
-        .replace("};", "}")
-        .replace('" + "', "")
-        .strip()
+        re.sub(
+            r"window\.POPMENU_SERVER_SIDE_MEMO.*",
+            "",
+            soup.find("script", id="popmenu-apollo-state")
+            .string.replace("window.POPMENU_APOLLO_STATE = ", "")
+            .replace("};", "}")
+            .replace('" + "', ""),
+        ).strip()
     )
     for key, value in data.items():
         if key.startswith("RestaurantLocation:"):
-            if "Coming Soon!" in value["customLocationContent"]:
+            if (
+                "COMING SOON" in value["name"]
+                or "Coming Soon!" in value["customLocationContent"]
+            ):
                 continue
             if "Acworth" in value["name"]:
                 page_url = BASE_URL + value["slug"]
@@ -93,6 +99,8 @@ def fetch_data():
             country_code = value["country"]
             phone = value["displayPhone"]
             location_type = MISSING
+            if value["isLocationClosed"]:
+                location_type = "temporary_closed"
             store_number = MISSING
             latitude = value["lat"]
             longitude = value["lng"]

@@ -19,7 +19,7 @@ def get_json(api):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for _zip in search:
         for i in range(777):

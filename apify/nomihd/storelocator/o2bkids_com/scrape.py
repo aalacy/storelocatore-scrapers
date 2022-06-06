@@ -102,10 +102,29 @@ def fetch_data():
 
                 else:
                     temp_address = "".join(address).strip()
-                    street_address = ", ".join(temp_address.rsplit(",")[:-2]).strip()
-                    city = temp_address.rsplit(",")[-2].strip()
-                    state = temp_address.rsplit(",")[-1].strip().split(" ")[0].strip()
-                    zip = temp_address.rsplit(",")[-1].strip().split(" ")[-1].strip()
+                    if (
+                        temp_address.replace("(", "")
+                        .replace(")", "")
+                        .replace("-", "")
+                        .replace(" ", "")
+                        .strip()
+                        .isdigit()
+                    ):
+                        street_address = "<MISSING>"
+                        city = location_name.split(",")[0].strip()
+                        state = location_name.split(",")[1].strip()
+                        zip = "<MISSING>"
+                    else:
+                        street_address = ", ".join(
+                            temp_address.rsplit(",")[:-2]
+                        ).strip()
+                        city = temp_address.rsplit(",")[-2].strip()
+                        state = (
+                            temp_address.rsplit(",")[-1].strip().split(" ")[0].strip()
+                        )
+                        zip = (
+                            temp_address.rsplit(",")[-1].strip().split(" ")[-1].strip()
+                        )
 
                 country_code = "US"
                 store_number = "<MISSING>"

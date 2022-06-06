@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("couche-tard_com")
-session = SgRequests()
+session = SgRequests(dont_retry_status_codes=([404]))
 
 
 def fetch_data():
@@ -60,10 +60,7 @@ def fetch_data():
                             "store-locator", "trouvez-votre-magasin"
                         ).strip()
                         logger.info(page_url)
-                        try:
-                            store_req = session.get(page_url, headers=headers)
-                        except:
-                            continue
+                        store_req = session.get(page_url, headers=headers)
                         store_sel = lxml.html.fromstring(store_req.text)
                         json_list = store_sel.xpath(
                             '//script[@type="application/ld+json"]/text()'

@@ -1,6 +1,6 @@
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -31,17 +31,29 @@ def fetch_data(sgw: SgWriter):
             .split("Sta. Cata")[0]
             .split(", Guatemala")[0]
             .split(", GUAT")[0]
+            .split(", Jocoten")[0]
+            .split(",. Huehue")[0]
+            .split(", Sta.")[0]
+            .split(", Livings")[0]
             .replace("Guatemala", "")
             .split(city)[0]
-        )
+            .split("(")[0]
+        ).strip()
         if street_address[:1] == ",":
             street_address = street_address[1:].strip()
+        if street_address[-1:] in [",", ";"]:
+            street_address = street_address[:-1].strip()
+
+        street_address = street_address.replace("19,  .", "19")
         store_number = store["id"]
         location_type = "<MISSING>"
         phone = store["Telefono"]
         hours_of_operation = store["Hora_apertura"] + "-" + store["Hora_Cierre"]
         latitude = store["Latitud"]
         longitude = store["Longitud"]
+        if "." not in latitude:
+            latitude = ""
+            longitude = ""
         link = "https://www.supermercadoslatorre.com/web/index.php/ubicaciones"
 
         sgw.write_row(
@@ -64,5 +76,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)
