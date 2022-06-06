@@ -43,11 +43,19 @@ def fetch_data(sgw: SgWriter):
             store_number = uuid.uuid4().hex
             location_name = j.get("name")
             phone = j.get("phone") or ""
-            phone = phone.replace("Sementara", "").strip()
+            phone = (
+                phone.replace("Sementara", "")
+                .replace(":", "")
+                .replace("Telp.", "")
+                .replace("Nil", "")
+                .strip()
+            )
             if "/" in phone:
                 phone = phone.split("/")[0].strip()
             if "E" in phone:
                 phone = phone.split("E")[0].strip()
+            if "," in phone:
+                phone = phone.split(",")[0].strip()
 
             latitude = j.get("lat")
             longitude = j.get("lng")
