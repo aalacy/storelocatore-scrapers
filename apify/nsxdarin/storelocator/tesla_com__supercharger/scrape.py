@@ -72,6 +72,24 @@ def fetch_data():
             if ";Service" in hours:
                 hours = hours.split(";Service")[0]
             hours = hours.replace("Supercharger Hours", "")
+            if "/" in phone:
+                phone = phone.split("/")[0].strip()
+            phone = (
+                phone.replace("</p>", "")
+                .replace("\\r", "")
+                .replace("\r", "")
+                .replace("\\n", "")
+                .replace("\n", "")
+            )
+            add = (
+                add.replace("\\n", "")
+                .replace("\\r", "")
+                .replace("\n", "")
+                .replace("\r", "")
+            )
+            if "San Fran" in zc:
+                zc = "94129"
+                city = "San Francisco"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
