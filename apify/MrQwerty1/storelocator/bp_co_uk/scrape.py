@@ -104,13 +104,7 @@ def fetch_data():
                     pass
 
             hours_of_operation = ";".join(_tmp)
-            raw_address = f"{street_address}, {city}, {state} {postal}".replace(
-                MISSING, ""
-            )
-            raw_address = " ".join(raw_address.split())
-            raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
-            if raw_address[len(raw_address) - 1] == ",":
-                raw_address = raw_address[:-1]
+
             store_added = store_added + 1
             yield SgRecord(
                 locator_domain=website,
@@ -127,7 +121,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
     log.info(f"Total stores added {store_added}; skipped={store_skipped}")
 
