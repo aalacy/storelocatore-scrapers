@@ -74,7 +74,8 @@ class ExampleSearchIteration(SearchIteration):
                             hours = hours + "; " + hrs
                     if len(phone) < 6:
                         phone = "<MISSING>"
-
+                    if "," in city:
+                        city = city.split(",")[0]
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
