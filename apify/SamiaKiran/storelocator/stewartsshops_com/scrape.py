@@ -69,8 +69,8 @@ def fetch_data():
                     store_number=store_number,
                     phone=phone,
                     location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
 
