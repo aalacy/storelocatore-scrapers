@@ -36,11 +36,21 @@ def fetch_data():
             page += 1
 
             location_url = "https://www.couche-tard.com/stores_new.php?lat={}&lng={}&distance=9999999999&services=&region=quebec&page={}"
-            stores = session.get(
-                location_url.format("43.653482", "-79.383935", str(page)),
-                headers=headers,
-            ).json()["stores"]
-            if len(stores) <= 0:
+            retry_count = 0
+            stores = None
+            while retry_count <= 3:
+                stores = None
+                stores = session.get(
+                    location_url.format("43.653482", "-79.383935", str(page)),
+                    headers=headers,
+                ).json()["stores"]
+                if len(stores) > 0:
+                    break
+                else:
+                    logger.info("retrying to get stores")
+                    retry_count = retry_count + 1
+
+            if stores is None:
                 cont = False
                 break
             logger.info(f"visiting pageno:{page}")
