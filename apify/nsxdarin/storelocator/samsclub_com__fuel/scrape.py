@@ -47,19 +47,48 @@ def fetch_data():
         for line in r.iter_lines():
             if 'Name":"Fuel Center","name":"GAS"' in line:
                 Fuel = True
-                mf = line.split('Name":"Fuel Center","name":"GAS"')[1].split('"monToFriHrs":{"startHrs":"')[1].split('"')[0] + '-' + line.split('Name":"Fuel Center","name":"GAS"')[1].split('"monToFriHrs":{"')[1].split('"endHrs":"')[1].split('"')[0]
-                sat = line.split('Name":"Fuel Center","name":"GAS"')[1].split('"saturdayHrs":{"startHrs":"')[1].split('"')[0] + '-' + line.split('Name":"Fuel Center","name":"GAS"')[1].split('"saturdayHrs":{"')[1].split('"endHrs":"')[1].split('"')[0]
-                sun = line.split('Name":"Fuel Center","name":"GAS"')[1].split('"sundayHrs":{"startHrs":"')[1].split('"')[0] + '-' + line.split('Name":"Fuel Center","name":"GAS"')[1].split('"sundayHrs":{"')[1].split('"endHrs":"')[1].split('"')[0]
-                hours = 'Mon-Fri: ' + mf + '; Sat: ' + sat + '; Sun: ' + sun
+                mf = (
+                    line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"monToFriHrs":{"startHrs":"')[1]
+                    .split('"')[0]
+                    + "-"
+                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"monToFriHrs":{"')[1]
+                    .split('"endHrs":"')[1]
+                    .split('"')[0]
+                )
+                sat = (
+                    line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"saturdayHrs":{"startHrs":"')[1]
+                    .split('"')[0]
+                    + "-"
+                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"saturdayHrs":{"')[1]
+                    .split('"endHrs":"')[1]
+                    .split('"')[0]
+                )
+                sun = (
+                    line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"sundayHrs":{"startHrs":"')[1]
+                    .split('"')[0]
+                    + "-"
+                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"sundayHrs":{"')[1]
+                    .split('"endHrs":"')[1]
+                    .split('"')[0]
+                )
+                hours = "Mon-Fri: " + mf + "; Sat: " + sat + "; Sun: " + sun
             if '"clubDetails":' in line:
-                name = line.split('"clubDetails":')[1].split('"name":"')[1].split('"')[0]
+                name = (
+                    line.split('"clubDetails":')[1].split('"name":"')[1].split('"')[0]
+                )
                 add = line.split('"address1":"')[1].split('"')[0]
                 city = line.split('"city":"')[1].split('"')[0]
                 zc = line.split('postalCode":"')[1].split('"')[0]
                 state = line.split('state":"')[1].split('"')[0]
                 phone = line.split('"phone":"')[1].split('"')[0]
                 lat = line.split('"latitude":')[1].split('"')[0]
-                lng = line.split('"longitude":')[1].split('}')[0]
+                lng = line.split('"longitude":')[1].split("}")[0]
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
