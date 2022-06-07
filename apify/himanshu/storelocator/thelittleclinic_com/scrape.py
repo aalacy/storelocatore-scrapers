@@ -1,7 +1,3 @@
-import time
-import json
-
-from bs4 import BeautifulSoup
 from sglogging import sglog
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape.sgrecord import SgRecord
