@@ -64,36 +64,7 @@ def get_data():
                 country_code = location["Country"]
 
                 y = 0
-                while True:
-                    y = y + 1
-                    if y == 10:
-                        hours = "<MISSING>"
-                        break
-                    try:
-                        driver.get(page_url)
-                        element = driver.find_element_by_id(
-                            "HoursContainer"
-                        ).find_element_by_class_name("text-btn")
-                        driver.execute_script("arguments[0].click();", element)
-                        WebDriverWait(driver, 20).until(
-                            EC.presence_of_element_located((By.CLASS_NAME, "Wednesday"))
-                        )
-                        hours_response = driver.page_source
-                        hours_soup = bs(hours_response, "html.parser")
-
-                        hours_rows = hours_soup.find_all("table")[-1].find_all("tr")
-                        hours = ""
-                        for row in hours_rows:
-                            day = row.find("td").text.strip()
-                            times = row.find_all("td")[-1].text.strip()
-
-                            hours = hours + day + " " + times + ", "
-
-                        hours = hours[:-2]
-                        break
-
-                    except Exception:
-                        continue
+                hours = "<INACCESSIBLE>"
 
                 yield {
                     "locator_domain": locator_domain,
