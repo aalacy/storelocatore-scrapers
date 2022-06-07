@@ -27,12 +27,10 @@ def fetch_data():
         loc_response = session.get(city_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        all_poi = (
-            loc_dom.xpath('//script[contains(text(), "branch_details =")]/text()')[0]
-            .split("details =")[-1]
-            .split(";\r\n")[0]
-        )
-        all_poi = json.loads(all_poi)
+        all_poi = loc_dom.xpath('//script[contains(text(), "branch_details =")]/text()')
+        if not all_poi:
+            continue
+        all_poi = json.loads(all_poi[0].split("details =")[-1].split(";\r\n")[0])
         for poi in all_poi:
             page_url = urljoin(start_url, poi["SeoBranchUrl"])
             hoo = []

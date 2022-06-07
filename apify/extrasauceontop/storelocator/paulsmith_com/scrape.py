@@ -139,8 +139,32 @@ def get_data():
 
                 phone = loc_data["telephone"]
                 location_type = "<MISSING>"
-                hours = "<MISSING>"
                 country_code = loc_data["country_name"]
+
+                try:
+                    hours_parts = json.loads(loc_data["opening_hours"])
+
+                    hours = ""
+                    count = 0
+                    for day in hours_parts["weekday"].keys():
+                        if (
+                            hours_parts["weekday"][day]["not_open"] == "1"
+                            or hours_parts["weekday"][day]["open"].lower() == "closed"
+                        ):
+                            hours = hours + day + " closed" + ", "
+                            count = count + 1
+                        else:
+                            start = hours_parts["weekday"][day]["open"]
+                            end = hours_parts["weekday"][day]["close"]
+
+                            hours = hours + day + " " + start + "-" + end + ", "
+
+                    hours = hours[:-2]
+                    if count == 7:
+                        hours = "CLOSED"
+
+                except Exception:
+                    hours = "<MISSING>"
 
                 yield {
                     "locator_domain": locator_domain,

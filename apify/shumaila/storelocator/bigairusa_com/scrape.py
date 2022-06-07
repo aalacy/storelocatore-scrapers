@@ -19,10 +19,15 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.find("section", {"data-id": "3d481e14"}).findAll("a")
+    t = 0
     for link in linklist:
         link = link["href"]
         if ("http") in link:
-            continue
+            if t == 0:
+                link = "https://www.bigairusa.com/columbus/"
+                t = 1
+            else:
+                continue
         else:
             link = "https://www.bigairusa.com" + link
         r = session.get(link, headers=headers)

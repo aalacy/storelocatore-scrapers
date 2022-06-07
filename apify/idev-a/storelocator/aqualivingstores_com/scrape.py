@@ -41,7 +41,7 @@ def _addr(_aa):
     addr = list(_aa.find_parent("p").stripped_strings)[1:]
     if not addr:
         addr = []
-        for cc in _aa.find_parent("p").find_next_siblings("p"):
+        for cc in _aa.find_parent("p").find_next_siblings():
             if "Hours:" in cc.text:
                 break
 
@@ -244,8 +244,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.ZIP,
-                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

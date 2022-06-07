@@ -4,9 +4,7 @@ import time
 import json
 from lxml import html
 
-from webdriver_manager.chrome import ChromeDriverManager  # noqa
-from selenium import webdriver  # noqa
-import undetected_chromedriver as uc  # noqa
+from sgselenium import SgFirefox
 
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
@@ -23,20 +21,6 @@ website = "https://www.cookieskids.com"
 page_url = f"{website}/locations.aspx"
 MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-
-def get_driver(url, driver=None):
-    log.info("Driver Initiation")
-    options = webdriver.ChromeOptions()
-    options.add_argument("start-maximized")
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
-
-    driver.get(url)
-
-    return driver
 
 
 def get_markers(response, noVal=MISSING):
@@ -76,56 +60,57 @@ def get_address(raw_address):
 
 
 def fetch_data():
+    with SgFirefox() as driver:
 
-    driver = get_driver(page_url)
-    response = driver.page_source
-    body = html.fromstring(response, "lxml")
-    columns = body.xpath('//div[contains(@class, "large-5")]/div')
-    log.info(f"Total Stores: {len(columns)}")
-    markers = get_markers(response)
+        driver.get(page_url)
+        response = driver.page_source
+        body = html.fromstring(response, "lxml")
+        columns = body.xpath('//div[contains(@class, "large-5")]/div')
+        log.info(f"Total Stores: {len(columns)}")
+        markers = get_markers(response)
 
-    for column in columns:
-        hours_of_operation = column.xpath(
-            './/div[contains(@class, "sl-hours-heading")]/text()'
-        )[0]
-        for info in column.xpath('.//div[contains(@class, "sl-info")]'):
-            store_number = MISSING
-            location_type = MISSING
+        for column in columns:
+            hours_of_operation = column.xpath(
+                './/div[contains(@class, "sl-hours-heading")]/text()'
+            )[0]
+            for info in column.xpath('.//div[contains(@class, "sl-info")]'):
+                store_number = MISSING
+                location_type = MISSING
 
-            location_name = info.xpath(".//strong/text()")[0].strip()
-            divTexts = info.xpath(".//div/text()")
-            raw_address = divTexts[0].strip() + " " + divTexts[1].strip()
-            phone = divTexts[2].strip()
-            latitude = MISSING
-            longitude = MISSING
-            country_code = "US"
+                location_name = info.xpath(".//strong/text()")[0].strip()
+                divTexts = info.xpath(".//div/text()")
+                raw_address = divTexts[0].strip() + " " + divTexts[1].strip()
+                phone = divTexts[2].strip()
+                latitude = MISSING
+                longitude = MISSING
+                country_code = "US"
 
-            for marker in markers:
-                if marker[0].lower() in raw_address.lower():
-                    latitude = str(marker[1])
-                    longitude = str(marker[2])
+                for marker in markers:
+                    if marker[0].lower() in raw_address.lower():
+                        latitude = str(marker[1])
+                        longitude = str(marker[2])
 
-            street_address, city, state, zip_postal = get_address(raw_address)
-            if city == MISSING:
-                city = raw_address.split(",")[0].split(" ")[-1]
+                street_address, city, state, zip_postal = get_address(raw_address)
+                if city == MISSING:
+                    city = raw_address.split(",")[0].split(" ")[-1]
 
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                store_number=store_number,
-                page_url=page_url,
-                location_name=location_name,
-                location_type=location_type,
-                street_address=street_address,
-                city=city,
-                zip_postal=zip_postal,
-                state=state,
-                country_code=country_code,
-                phone=phone,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    store_number=store_number,
+                    page_url=page_url,
+                    location_name=location_name,
+                    location_type=location_type,
+                    street_address=street_address,
+                    city=city,
+                    zip_postal=zip_postal,
+                    state=state,
+                    country_code=country_code,
+                    phone=phone,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

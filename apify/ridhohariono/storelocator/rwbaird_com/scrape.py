@@ -9,7 +9,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
 import ssl
-from sgselenium import SgSelenium
+from sgselenium import SgChrome
 
 try:
     _create_unverified_https_context = (
@@ -81,15 +81,15 @@ def get_latlong(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-    driver.implicitly_wait(10)
-    soup = bs(driver.page_source, "lxml")
-    driver.quit()
+    with SgChrome() as driver:
+        driver.get(LOCATION_URL)
+        driver.implicitly_wait(10)
+        soup = bs(driver.page_source, "lxml")
+        driver.quit()
     contents = soup.select("div.tab-content-container")
     for row in contents:
-        location_type = row.find("h2").text.strip()
-        if "PRIVATE WEALTH MANAGEMENT" in location_type:
+        type = row.find("h2").text.strip()
+        if "PRIVATE WEALTH MANAGEMENT" in type:
             locations = row.select("div.row.no-mar-btm a")
             for location in locations:
                 page_url = location["href"]
@@ -100,18 +100,38 @@ def fetch_data():
                     )
                 except:
                     continue
-                location_name = info["name"]
+                try:
+                    location_name = (
+                        store.find("div", {"class": "addresscontent"})
+                        .find("h2")
+                        .text.strip()
+                    )
+                except:
+                    location_name = (
+                        store.find(
+                            "span", {"data-tag": "qa-modernwithtopbar-header-city"}
+                        )
+                        .text.replace(",", "")
+                        .strip()
+                    )
                 addr = info["address"]
-                street_address = addr["streetAddress"].strip().rstrip(",")
+                street_address = (
+                    addr["streetAddress"]
+                    .replace("One Boulder Plaza,", "")
+                    .replace(", Southgatge Shopping Center", "")
+                    .strip()
+                    .rstrip(",")
+                )
                 city = addr["addressLocality"]
                 state = addr["addressRegion"]
                 zip_postal = addr["postalCode"]
                 country_code = addr["addressCountry"]
                 phone = info["telephone"]
+                location_type = info["name"]
                 country_code = "US"
                 hours_of_operation = MISSING
-                latitude = MISSING
-                longitude = MISSING
+                map_content = store.select_one("div.mapContainer iframe")
+                latitude, longitude = get_latlong(map_content["src"])
                 store_number = MISSING
                 raw_address = f"{street_address}, {city}, {state}, {zip_postal}"
                 log.info("Append {} => {}".format(location_name, street_address))
@@ -132,126 +152,7 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
-        else:
-            locations = row.select("div.col.s12 p")
-            for store in locations:
-                page_url = LOCATION_URL
-                if (
-                    "With more than 35" in store.text.strip()
-                    or "Baird Trust headquarters" in store.text.strip()
-                    or "This part of our" in store.text.strip()
-                    or "This unit consists" in store.text.strip()
-                    or "Baird Capital has" in store.text.strip()
-                ):
-                    continue
-                try:
-                    phone_content = store.find("a", {"href": re.compile(r"tel.*")})
-                    phone = phone_content.text.strip()
-                    phone_content.decompose()
-                except:
-                    phone = MISSING
-                info = (
-                    store.get_text(strip=True, separator="@@")
-                    .replace("@@*", "")
-                    .replace("@@+", "")
-                    .replace("@@Five Post Oak Park", "")
-                    .split("@@")
-                )
-                location_name = info[0]
-                total_len = len(info)
-                if total_len > 6:
-                    html_string = str(store).strip()
-                    locations = html_string.split("<br/><br/>")
-                    for store in locations:
-                        store = bs(store, "lxml")
-                        try:
-                            phone_content = store.find(
-                                "a", {"href": re.compile(r"tel.*")}
-                            )
-                            phone = phone_content.text.strip()
-                            phone_content.decompose()
-                        except:
-                            phone = MISSING
-                        info2 = (
-                            store.get_text(strip=True, separator="@@")
-                            .replace("@@*", "")
-                            .replace("@@+", "")
-                            .replace("@@Five Post Oak Park", "")
-                            .replace(location_name + "@@", "")
-                            .split("@@")
-                        )
-                        if (
-                            "Research" in store.text.strip()
-                            or "Equity Sales" in store.text.strip()
-                            or "Investment Banking" in store.text.strip()
-                        ):
-                            location_name = info[0] + " " + info2[0]
-                            del info2[0]
-                        raw_address = re.sub(
-                            r", Indianapolis, Indiana,.*", "", ", ".join(info2).strip()
-                        ).strip()
-                        (
-                            street_address,
-                            city,
-                            state,
-                            zip_postal,
-                            country_code,
-                        ) = getAddress(raw_address)
-                        if country_code == MISSING:
-                            country_code = "US"
-                        hours_of_operation = MISSING
-                        latitude = MISSING
-                        longitude = MISSING
-                        store_number = MISSING
-                        log.info(
-                            "Append {} => {}".format(location_name, street_address)
-                        )
-                        yield SgRecord(
-                            locator_domain=DOMAIN,
-                            page_url=LOCATION_URL,
-                            location_name=location_name,
-                            street_address=street_address,
-                            city=city,
-                            state=state,
-                            zip_postal=zip_postal,
-                            country_code=country_code,
-                            store_number=store_number,
-                            phone=phone,
-                            location_type=location_type,
-                            latitude=latitude,
-                            longitude=longitude,
-                            hours_of_operation=hours_of_operation,
-                            raw_address=raw_address,
-                        )
-                else:
-                    raw_address = ", ".join(info[1:]).strip()
-                    street_address, city, state, zip_postal, country_code = getAddress(
-                        raw_address
-                    )
-                    if country_code == MISSING:
-                        country_code = "US"
-                    hours_of_operation = MISSING
-                    latitude = MISSING
-                    longitude = MISSING
-                    store_number = MISSING
-                    log.info("Append {} => {}".format(location_name, street_address))
-                    yield SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip_postal,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                        raw_address=raw_address,
-                    )
+            break
 
 
 def scrape():

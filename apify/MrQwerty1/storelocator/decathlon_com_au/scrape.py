@@ -46,7 +46,9 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             if "australia" in api:
                 locator_domain = "https://decathlon.com.au/"
-                page_url = j.get("web") or ""
+                page_url = (
+                    j.get("web") or "https://decathlon.com.au/pages/store-locator"
+                )
                 page_url = page_url.replace("\\", "")
             else:
                 locator_domain = "https://decathlon.lk/"

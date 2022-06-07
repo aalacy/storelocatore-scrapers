@@ -43,46 +43,112 @@ def fetch_data():
         session = SgRequests()
         time.sleep(3)
         store = loc.rsplit("/", 1)[1]
-        locurl = "https://www.samsclub.com/api/node/clubfinder/" + store
-        r2 = session.get(locurl, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"postalCode":"' in line2 and '"displayName":"Fuel Center"' in line2:
+        r = session.get(loc, headers=headers)
+        for line in r.iter_lines():
+            if 'Name":"Fuel Center","name":"GAS"' in line:
                 Fuel = True
-                name = line2.split('"isActive":')[1].split('"name":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
                 try:
-                    add = line2.split('"address1":"')[1].split('"')[0]
+                    mf = (
+                        line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"monToFriHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"monToFriHrs":{"')[1]
+                        .split('"endHrs":"')[1]
+                        .split('"')[0]
+                    )
                 except:
-                    add = ""
-                try:
-                    add = add + " " + line2.split('"address2":"')[1].split('"')[0]
-                except:
-                    pass
-                city = line2.split('"city":"')[1].split('"')[0]
-                state = line2.split('"state":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split("}")[0]
-                lng = line2.split('"longitude":')[1].split(",")[0]
-                try:
-                    fcinfo = line2.split(
-                        '"displayName":"Fuel Center","operationalHours":{'
-                    )[1].split("}}},")[0]
-                    days = fcinfo.split('},"')
-                    for day in days:
-                        hrs = (
-                            day.split('"startHr":"')[1].split('"')[0]
-                            + "-"
-                            + day.split('"endHr":"')[1].split('"')[0]
-                        )
-                        dname = day.split('Hrs":')[0].replace('"', "")
-                        hrs = dname + ": " + hrs
-                        hrs = hrs.replace("To", "-")
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-                except:
-                    hours = ""
+                    mf = (
+                        "Mon: "
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"mondayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                    mf = (
+                        mf
+                        + "; Tue: "
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"tuesdayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"tuesdayHrs":')[1]
+                        .split('endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                    mf = (
+                        mf
+                        + "; Wed: "
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"wednesdayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"wednesdayHrs":')[1]
+                        .split('endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                    mf = (
+                        mf
+                        + "; Thu: "
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"thursdayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"thursdayHrs":')[1]
+                        .split('endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                    mf = (
+                        mf
+                        + "; Fri: "
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"fridayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"fridayHrs":')[1]
+                        .split('endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                sat = (
+                    line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"saturdayHrs":{"startHrs":"')[1]
+                    .split('"')[0]
+                    + "-"
+                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"saturdayHrs":{"')[1]
+                    .split('"endHrs":"')[1]
+                    .split('"')[0]
+                )
+                sun = (
+                    line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"sundayHrs":{"startHrs":"')[1]
+                    .split('"')[0]
+                    + "-"
+                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                    .split('"sundayHrs":{"')[1]
+                    .split('"endHrs":"')[1]
+                    .split('"')[0]
+                )
+                hours = "Mon-Fri: " + mf + "; Sat: " + sat + "; Sun: " + sun
+            if '"clubDetails":' in line:
+                name = (
+                    line.split('"clubDetails":')[1].split('"name":"')[1].split('"')[0]
+                )
+                add = line.split('"address1":"')[1].split('"')[0]
+                city = line.split('"city":"')[1].split('"')[0]
+                zc = line.split('postalCode":"')[1].split('"')[0]
+                state = line.split('state":"')[1].split('"')[0]
+                phone = line.split('"phone":"')[1].split('"')[0]
+                lat = line.split('"latitude":')[1].split('"')[0]
+                lng = line.split('"longitude":')[1].split("}")[0]
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
