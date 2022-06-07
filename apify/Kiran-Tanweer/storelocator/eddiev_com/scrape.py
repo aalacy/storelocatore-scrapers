@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from datetime import datetime as dt
