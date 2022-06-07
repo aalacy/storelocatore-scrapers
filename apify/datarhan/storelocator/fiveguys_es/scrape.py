@@ -20,6 +20,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
     all_urls = dom.xpath('//a[@class="Directory-listLink"]/@href')
     for url in all_urls:
+        all_locations = []
         if len(url.split("/")) > 1:
             all_locations.append(url)
             continue
