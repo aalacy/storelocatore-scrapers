@@ -32,9 +32,13 @@ def fetch_data():
                 if street_address_2:
                     street_address += " " + street_address_2
                 hoo = []
-                for e in poi_data["pageProps"]["siteApiData"]["departments"][0][
-                    "workdays"
-                ]:
+                hoo_data = [
+                    e["workdays"]
+                    for e in poi_data["pageProps"]["siteApiData"]["departments"]
+                    if e["workdays"]
+                ]
+                hoo_data = hoo_data[0] if hoo_data else []
+                for e in hoo_data:
                     hoo.append(
                         f'{e["dayOfWeek"]}: {e["openTime"][:-3]} - {e["closeTime"][:-3]}'
                     )

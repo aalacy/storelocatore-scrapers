@@ -21,7 +21,12 @@ def stubborn_store(url):
     with open("fml.txt", mode="w", encoding="utf-8") as file:
         file.write(str(soup))
 
-    k = {}
+    k = {
+        "lat": None,
+        "lng": None,
+        "phone": None,
+        "zip": None,
+    }
     try:
         coords = soup.find("div", {"data-lat": True, "data-lng": True})
         k["lat"] = coords["data-lat"]
@@ -145,14 +150,22 @@ def para(idey):
     except Exception:
         son["contact_details"]["phone_details"]["phone"] = "<MISSING>"
 
-    if son["location"]["address"]["province"] == "<MISSING>":
-        if son["location"]["address"]["postal_code"] == "<MISSING>":
-            if son["contact_details"]["phone_details"]["phone"] == "<MISSING>":
-                extras = stubborn_store(son["slug"])
-                son["location"]["coordinates"]["latitude"] = extras["lat"]
-                son["location"]["coordinates"]["longitude"] = extras["lng"]
-                son["location"]["address"]["postal_code"] = extras["zip"]
-                son["contact_details"]["phone_details"]["phone"] = extras["phone"]
+    if any(
+        i == "<MISSING>"
+        for i in [
+            son["location"]["address"]["province"],
+            son["location"]["address"]["postal_code"],
+            son["contact_details"]["phone_details"]["phone"],
+        ]
+    ):
+        extras = stubborn_store(son["slug"])
+        if extras["lat"]:
+            son["location"]["coordinates"]["latitude"] = extras["lat"]
+            son["location"]["coordinates"]["longitude"] = extras["lng"]
+        if extras["zip"]:
+            son["location"]["address"]["postal_code"] = extras["zip"]
+        if extras["phone"]:
+            son["contact_details"]["phone_details"]["phone"] = extras["phone"]
 
     return son
 

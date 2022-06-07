@@ -77,8 +77,10 @@ def fetch_data():
             if "0" not in hours:
                 hours = "<MISSING>"
             hours = hours.strip()
-            if hours[-1:] == ",":
-                hours = hours[:-1]
+            if add[-1:] == ",":
+                add = hours[:-1]
+            lat = lat.replace(",", "")
+            lng = lng.replace(",", "")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

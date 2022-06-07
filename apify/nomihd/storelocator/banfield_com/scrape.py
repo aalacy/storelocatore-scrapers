@@ -38,12 +38,20 @@ def stores_number(hid):
 
 def fetch_data():
     with SgRequests(dont_retry_status_codes=([404])) as session:
-        stores_req = session.get(
-            "https://www.banfield.com/locations/hospitals-by-state", headers=headers
-        )
-        stores_sel = lxml.html.fromstring(stores_req.text)
-        locs = stores_sel.xpath('//div[@class="state-hospital-name"]/h4/a/@href')
-        logger.info(len(locs))
+        while True:
+            stores_req = session.get(
+                "https://www.banfield.com/locations/hospitals-by-state", headers=headers
+            )
+            stores_sel = lxml.html.fromstring(stores_req.text)
+            locs = list(
+                set(stores_sel.xpath('//div[@class="state-hospital-name"]/h4/a/@href'))
+            )
+            logger.info(len(locs))
+            if len(locs) > 1010:
+                break
+            else:
+                logger.info("retrying to fetch all urls")
+
         for loc in locs:
             page_url = "https://www.banfield.com" + loc
             logger.info(("Pulling Location %s..." % page_url))

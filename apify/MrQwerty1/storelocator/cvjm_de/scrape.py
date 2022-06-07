@@ -6,6 +6,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from tenacity import retry, stop_after_attempt, wait_fixed
+from sglogging import sglog
 
 
 def get_ids():
@@ -20,14 +22,21 @@ def get_ids():
     return ids
 
 
-def get_data(store_number, sgw: SgWriter):
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(5))
+def get_j(_id):
     data = {
-        "clubId": store_number,
+        "clubId": _id,
         "ajax": "1",
     }
     r = session.post(api, headers=headers, data=data)
+    logger.info(f"{_id}: {r}")
     j = r.json()
 
+    return j
+
+
+def get_data(store_number, sgw: SgWriter):
+    j = get_j(store_number)
     location_name = j.get("clubname")
     source = j.get("html") or "<html>"
     tree = html.fromstring(source)
@@ -81,6 +90,7 @@ def get_data(store_number, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     ids = get_ids()
+    logger.info(f"{len(ids)} IDs to crawl..")
 
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
@@ -89,6 +99,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    logger = sglog.SgLogSetup().get_logger(logger_name="cvjm.de")
     locator_domain = "https://www.cvjm.de/"
     page_url = "https://aktiv.cvjm.de/"
     api = "https://aktiv.cvjm.de/index/ajax-load-club"

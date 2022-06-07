@@ -59,7 +59,6 @@ def fetch_data():
                         store = item.split("\\u003cLocationId\\u003e")[1].split("\\")[0]
                         lat = item.split("Latitude\\u003e")[1].split("\\")[0]
                         lng = item.split("Longitude\\u003e")[1].split("\\")[0]
-                        logger.info(("Pulling Store ID #%s..." % store))
                         purl = (
                             "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
                         )
@@ -83,7 +82,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

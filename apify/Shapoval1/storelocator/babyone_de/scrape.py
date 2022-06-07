@@ -1,4 +1,5 @@
 import json
+import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -80,7 +81,13 @@ def get_data(zipps, sgw: SgWriter):
                 r = session.get(page_url, headers=headers)
                 tree = html.fromstring(r.text)
             except:
-                continue
+                try:
+                    time.sleep(40)
+                    r = session.get(page_url, headers=headers)
+                    tree = html.fromstring(r.text)
+                except:
+                    continue
+
             js_block = "".join(tree.xpath("//div/@data-google-map-options"))
             js = json.loads(js_block)
             a = js.get("storeData")
@@ -92,7 +99,7 @@ def get_data(zipps, sgw: SgWriter):
             city = a.get("city") or "<MISSING>"
             state = "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
-            country_code = "DE"
+            country_code = a.get("countryCode")
             phone = a.get("phone") or "<MISSING>"
             latitude = a.get("latitude") or "<MISSING>"
             longitude = a.get("longitude") or "<MISSING>"
@@ -124,13 +131,17 @@ def get_data(zipps, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     coords = DynamicZipSearch(
-        country_codes=[SearchableCountries.GERMANY],
+        country_codes=[
+            SearchableCountries.GERMANY,
+            SearchableCountries.AUSTRIA,
+            SearchableCountries.SWITZERLAND,
+        ],
         max_search_distance_miles=100,
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=50,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
