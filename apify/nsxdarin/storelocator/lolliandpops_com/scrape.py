@@ -1,59 +1,77 @@
-import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("lolliandpops_com")
+
 
 def fetch_data():
-    locs = []
-    url = 'https://www.lolliandpops.com/pages/stores'
+    logger.info("Pulling Stores")
+    url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/4652/stores.js?callback=SMcallback2"
     r = session.get(url, headers=headers)
-    website = 'lolliandpops.com'
-    typ = '<MISSING>'
-    country = 'US'
-    loc = '<MISSING>'
-    store = '<MISSING>'
-    hours = '<MISSING>'
-    lat = '<MISSING>'
-    lng = '<MISSING>'
+    website = "lolliandpops.com"
+    typ = "<MISSING>"
+    country = "US"
+    loc = "https://www.lolliandpops.com/pages/stores"
+    hours = "<MISSING>"
     for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
-        if '{\\"name\\":\\"' in line:
-            items = line.split('{\\"name\\":\\"')
+        if '"id":' in line:
+            items = line.split('"id":')
             for item in items:
-                if '\\"address\\"' in item:
-                    name = item.split('\\"')[0]
-                    add = item.split('"address\\":\\"')[1].split('\\')[0]
-                    city = item.split('"city\\":\\"')[1].split('\\')[0]
-                    state = item.split('"state_code\\":\\"')[1].split('\\')[0]
-                    zc = item.split('"zip\\":\\"')[1].split('\\')[0]
-                    phone = item.split('phone\\":\\"')[1].split('\\')[0]
-                    try:
-                        lat = item.split('\\/@')[1].split(',')[0]
-                        lng = item.split('\\/@')[1].split(',')[1]
-                    except:
-                        lat = '<MISSING>'
-                        lng = '<MISSING>'
-                    if '\\"mon_fri_hours\\":\\"' in item:
-                        hours = item.split('\\"mon_fri_hours\\":\\"')[1].split('\\')[0]
-                        try:
-                            hours = hours + '; ' + item.split('"weekend_hours\\":\\"')[1].split('\\')[0]
-                        except:
-                            pass
+                if "SMcallback2" not in item:
+                    store = item.split(",")[0]
+                    name = item.split(',"name":"')[1].split('"')[0]
+                    addinfo = item.split('"address":"')[1].split('"')[0]
+                    if addinfo.count(",") == 3:
+                        add = addinfo.split(",")[0].strip()
+                        city = addinfo.split(",")[1].strip()
+                        state = addinfo.split(",")[2].strip()
+                        zc = addinfo.split(",")[3].strip()
                     else:
-                        hours = '<MISSING>'
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        add = (
+                            addinfo.split(",")[0].strip()
+                            + " "
+                            + addinfo.split(",")[1].strip()
+                        )
+                        city = addinfo.split(",")[2].strip()
+                        state = addinfo.split(",")[3].strip()
+                        zc = addinfo.split(",")[4].strip()
+                    phone = item.split(',"phone":"')[1].split('"')[0]
+                    lat = item.split('"latitude":')[1].split(",")[0]
+                    lng = item.split('"longitude":')[1].split(",")[0]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
