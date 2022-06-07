@@ -49,8 +49,9 @@ def fetch_data():
                     x.get_text(separator="|", strip=True).replace("|", " ")
                     for x in temp[1:]
                 )
-                hours_of_operation = hours_of_operation.replace(phone)
-
+                hours_of_operation = hours_of_operation.replace(phone, "").replace(
+                    "Delivery through Door Dash", ""
+                )
             else:
                 address = temp[0].text + " " + temp[1].text
                 phone = temp[-1].text

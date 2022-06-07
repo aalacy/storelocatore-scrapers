@@ -63,11 +63,14 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     data = json.loads(
-        soup.find("script", id="popmenu-apollo-state")
-        .string.replace("window.POPMENU_APOLLO_STATE = ", "")
-        .replace("};", "}")
-        .replace('" + "', "")
-        .strip()
+        re.sub(
+            r"window\.POPMENU_SERVER_SIDE_MEMO.*",
+            "",
+            soup.find("script", id="popmenu-apollo-state")
+            .string.replace("window.POPMENU_APOLLO_STATE = ", "")
+            .replace("};", "}")
+            .replace('" + "', ""),
+        ).strip()
     )
     for key, value in data.items():
         if key.startswith("RestaurantLocation:"):
@@ -96,6 +99,8 @@ def fetch_data():
             country_code = value["country"]
             phone = value["displayPhone"]
             location_type = MISSING
+            if value["isLocationClosed"]:
+                location_type = "temporary_closed"
             store_number = MISSING
             latitude = value["lat"]
             longitude = value["lng"]

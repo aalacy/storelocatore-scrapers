@@ -48,7 +48,7 @@ def fetch_data():
             street_address = poi["address"]["streetAddress"]
             city = poi["address"]["addressLocality"]
             zip_code = poi["address"]["postalCode"]
-            phone = poi["telephone"]
+            phone = poi["telephone"].split(", ")[0]
             latitude = poi["geo"]["latitude"]
             longitude = poi["geo"]["longitude"]
 

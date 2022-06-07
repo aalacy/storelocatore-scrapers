@@ -5,12 +5,12 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import SgLogSetup
+import dirtyjson as json
 
 logger = SgLogSetup().get_logger("caliber")
 
 _headers = {
     "accept": "*/*",
-    "accept-encoding": "gzip, deflate, br",
     "accept-language": "en-US,en;q=0.9,ko;q=0.8",
     "content-type": "application/json",
     "origin": "https://www.caliber.com",
@@ -34,7 +34,7 @@ def data(lat, lng):
                 },
                 "filter": {
                     "geo_distance": {
-                        "distance": "80.4672km",
+                        "distance": "1000km",
                         "center.latlong": {"lat": str(lat), "lon": str(lng)},
                     }
                 },
@@ -52,11 +52,12 @@ def fetch_records(search):
                 maxZ = search.items_remaining()
             logger.info(("Pulling Geo Code %s..." % lat, lng))
 
+            res = None
             try:
-                locations = session.post(
-                    base_url, headers=_headers, json=data(lat, lng)
-                ).json()["contentlets"]
-            except:
+                res = session.post(base_url, headers=_headers, json=data(lat, lng)).text
+                locations = json.loads(res)["contentlets"]
+            except Exception as err:
+                logger.warning(str(err))
                 continue
             total += len(locations)
             for store in locations:
@@ -126,7 +127,7 @@ def fetch_records(search):
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=["us"], expected_search_radius_miles=500)
+    search = DynamicGeoSearch(country_codes=["us"], expected_search_radius_miles=50)
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10

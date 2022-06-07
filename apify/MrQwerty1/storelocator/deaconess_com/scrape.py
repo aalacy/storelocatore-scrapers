@@ -42,7 +42,9 @@ def fetch_data(sgw: SgWriter):
         else:
             page_url = f"https://www.deaconess.com{slug}"
 
-        location_name = j.get("LocationName")
+        location_name = j.get("LocationName") or ""
+        if "-" in location_name:
+            location_name = location_name.split("-")[0].strip()
         phone = j.get("Phone") or ""
         phone = phone.replace("&nbsp;", "").strip()
         if ">" in phone:

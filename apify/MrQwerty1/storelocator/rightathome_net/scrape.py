@@ -1,6 +1,7 @@
 import json
 import re
 import usaddress
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -52,9 +53,25 @@ def get_address(line):
         adr = line.split(",")
         state, postal = adr.pop().strip().split()
         city = adr.pop().strip()
-        street_address = ",".join(line)
+        street_address = ",".join(adr)
 
     return street_address, city, state, postal
+
+
+def get_additional(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+
+    line = tree.xpath("//div[@class='para' and ./a]//text()")
+    line = list(filter(None, [li.strip() for li in line]))
+    adr = line[: line.index("Phone:")]
+    raw_address = ", ".join(adr)
+    try:
+        phone = tree.xpath(".//a[contains(@href, 'tel:')]/text()")[0].strip()
+    except IndexError:
+        phone = SgRecord.MISSING
+
+    return raw_address, phone
 
 
 def fetch_data(sgw: SgWriter):
@@ -70,6 +87,9 @@ def fetch_data(sgw: SgWriter):
         for d in divs:
             location_name = "".join(d.xpath(".//h4/a/text()")).strip()
             page_url = "".join(d.xpath(".//h4/a/@href"))
+            phone = "".join(
+                d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")
+            ).strip()
 
             _tmp = []
             black = [
@@ -107,11 +127,10 @@ def fetch_data(sgw: SgWriter):
                 correct = incorrect[:2] + " " + incorrect[2:]
                 raw_address = re.sub(regex, correct, raw_address)
 
-            street_address, city, state, postal = get_address(raw_address)
+            if not raw_address:
+                raw_address, phone = get_additional(page_url)
 
-            phone = "".join(
-                d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")
-            ).strip()
+            street_address, city, state, postal = get_address(raw_address)
 
             try:
                 text = "".join(d.xpath(".//script[@type='application/ld+json']/text()"))

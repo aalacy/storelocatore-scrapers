@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -5,7 +6,33 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_urls():
+    r = session.get("https://www.vr.de/service/filialen-a-z/a.html", headers=headers)
+    tree = html.fromstring(r.text)
+
+    return tree.xpath("//div[@class='module module-linklist ym-clearfix']//a/@href")
+
+
+def get_params():
+    params = dict()
+    urls = get_urls()
+
+    for url in urls:
+        r = session.get(url, headers=headers)
+        tree = html.fromstring(r.text)
+        divs = tree.xpath("//div[@class='module module-teaser ym-clearfix']")
+
+        for d in divs:
+            href = "".join(d.xpath(".//a[h2]/@href"))
+            name = "".join(d.xpath(".//h2/text()")).strip()
+            _id = href.split("-")[-1].replace(".html", "")
+            params[_id] = {"name": name, "page_url": href}
+
+    return params
+
+
 def fetch_data(sgw: SgWriter):
+    p = get_params()
     for i in range(1, 100):
         api = f"https://api.geno-datenhub.de/places?_per_page=1000&_page={i}&kind[]=bank&dynamic_attributes.teilnahme_vrde=true&_radius=20000&_fields[]=id&_fields[]=address&_fields[]=contact&_fields[]=kind&_fields[]=subtype&_fields[]=links&_fields[]=name&_fields[]=services&_fields[]=opening_hours&_fields[]=measure_code&_fields[]=is_open&_fields[]=institute&_fields[]=branch_name&_fields[]=uid_vrnet&_fields[]=alternative_bank_name&_fields[]=opening_hours_hint"
         r = session.get(api, headers=headers)
@@ -19,14 +46,11 @@ def fetch_data(sgw: SgWriter):
             city = a.get("city")
             postal = a.get("zip_code")
             country_code = "DE"
-            store_number = j.get("id")
-            location_name = j.get("name")
+            store_number = j.get("id") or ""
             location_type = j["institute"]["bank_type"]
-            try:
-                page_url = j["links"]["detail_page_url"]
-            except KeyError:
-                page_url = j["links"]["url"]
-
+            _id = store_number.replace("bank-", "").strip()
+            page_url = p[_id]["page_url"]
+            location_name = p[_id]["name"]
             phone = j["contact"]["i18n_phone_number"]
             latitude = a.get("latitude")
             longitude = a.get("longitude")
@@ -39,7 +63,8 @@ def fetch_data(sgw: SgWriter):
                 for inter in inters:
                     _t.append(f'{"-".join(inter)}')
 
-                _tmp.append(f'{day}: {"|".join(_t)}')
+                if inters:
+                    _tmp.append(f'{day}: {"|".join(_t)}')
 
             hours_of_operation = ";".join(_tmp)
 

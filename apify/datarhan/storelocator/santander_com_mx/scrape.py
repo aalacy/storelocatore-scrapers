@@ -27,19 +27,21 @@ def fetch_data():
             SearchableCountries.USA,
             SearchableCountries.PUERTO_RICO,
         ],
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=10,
     )
     for lat, lng in all_coords:
         start_url = f"https://back-scus.azurewebsites.net/branch-locator/find/defaultView?config=%7B%22coords%22%3A%5B{lat}%2C{lng}%5D%7D&globalSearch=true"
         all_locations = session.get(start_url.format(lat, lng), headers=hdr).json()
         for poi in all_locations:
-            hoo = []
-            for day, hours in poi["schedule"]["workingDay"].items():
-                if hours:
-                    hoo.append(f"{day}: {hours[0]}")
-                else:
-                    hoo.append(f"{day}: closed")
-            hoo = " ".join(hoo)
+            hoo = ""
+            if poi.get("schedule"):
+                hoo = []
+                for day, hours in poi["schedule"]["workingDay"].items():
+                    if hours:
+                        hoo.append(f"{day}: {hours[0]}")
+                    else:
+                        hoo.append(f"{day}: closed")
+                hoo = " ".join(hoo)
             street_address = poi["location"]["address"]
             if street_address:
                 street_address = street_address.split(", C.P")[0]
@@ -49,7 +51,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url=poi["urlDetailPage"],
+                page_url=poi.get("urlDetailPage"),
                 location_name=poi.get("name"),
                 street_address=street_address,
                 city=poi["location"]["city"],
@@ -72,7 +74,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
