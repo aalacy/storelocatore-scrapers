@@ -27,7 +27,8 @@ def fetch_data():
         if "_" in lid:
             lid = lid.split("_")[0]
         ltype = item["location_type"]
-        if "supercharger" in str(ltype):
+        opensoon = item["open_soon"]
+        if "supercharger" in str(ltype) and opensoon != "1":
             ids.append(lid)
     for lid in ids:
         try:
