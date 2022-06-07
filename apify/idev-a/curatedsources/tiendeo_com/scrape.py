@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
 from sgpostal.sgpostal import parse_address_intl
-from webdriver_manager.chrome import ChromeDriverManager
 import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
