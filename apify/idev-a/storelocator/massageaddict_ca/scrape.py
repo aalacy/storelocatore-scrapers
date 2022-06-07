@@ -29,7 +29,7 @@ def fetch_data():
                 "ul.clinicSearch li"
             )
             for _ in locations:
-                raw_address = list(_.select_one(".col-sm-8").stripped_strings)[-1]
+                raw_address = list(_.select("div.col-sm-8 a")[-1].stripped_strings)[0]
                 addr = parse_address_intl(raw_address)
                 street_address = addr.street_address_1
                 if addr.street_address_2:
@@ -41,6 +41,17 @@ def fetch_data():
                 if res.status_code != 200:
                     continue
                 sp2 = bs(res.text, "lxml")
+                if (
+                    sp2.select_one("a.overlay-btn")
+                    and "OPENING SOON" in sp2.select_one("a.overlay-btn").text
+                ):
+                    continue
+
+                if (
+                    sp2.select_one("div.cms-content-custom h1")
+                    and "OPENING" in sp2.select_one("div.cms-content-custom h1").text
+                ):
+                    continue
                 _hr = sp2.find("", string=re.compile(r"^Hours"))
                 if _hr:
                     hours = list(

@@ -103,12 +103,14 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_2()
+        search_type="DynamicGeoSearch",
+        granularity=Grain_2(),
+        expected_search_radius_miles=30,
     )
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
         with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:

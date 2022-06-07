@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://gumbyspizza.com"
     api_url = "http://gumbyspizza.com/locations"
-
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -82,12 +82,10 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split())
         if page_url == "https://www.gumbyspizzaaggieland.com/store-info/":
             ad = (
-                "".join(
-                    tree.xpath('//div[./h1[text()="Info"]]/following-sibling::text()')
-                )
+                "".join(tree.xpath('//p[./a[contains(@href, "tel")]]/text()[last()]'))
                 .replace("\n", "")
                 .replace("\r", "")
-                .split("Address:")[1]
+                .replace("Address:", "")
                 .strip()
             )
             street_address = " ".join(ad.split(",")[0].split()[:-2]).strip()
@@ -96,7 +94,7 @@ def fetch_data(sgw: SgWriter):
             postal = ad.split(",")[1].split()[1].strip()
             phone = "".join(
                 tree.xpath(
-                    '//div[@class="fusion-title title"]/following-sibling::a[contains(@href, "tel")]/text()'
+                    '//p[./a[contains(@href, "tel")]]//a[contains(@href, "tel")]/text()'
                 )
             )
             location_name = f"Gumby's Pizza {city}, {state}"
@@ -160,6 +158,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

@@ -55,32 +55,84 @@ def fetch_data():
                 .strip('" ')
                 .replace("MAJOR BRANDS INDIA PVT LTD, BATH & BODY WORKS,", "")
                 .strip()
+                .replace("MAJOR BRANDS INDIA PVT LTD,  Bath & Body Works,", "")
+                .strip()
+                .replace("MAJOR BRANDS INDIA PVT LTD,", "")
+                .strip()
             )
 
             formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-
-            city = formatted_addr.city
-
             state = formatted_addr.state
-            zip = formatted_addr.postcode
+            raw_address = (
+                raw_address.split("!!!")[-1]
+                .strip()
+                .replace("\\/", "/")
+                .strip()
+                .split("PH -")[0]
+                .strip()
+                .split("; Contact-")[0]
+                .strip()
+                .replace("\\u2013", "-")
+                .strip()
+                .split("; contact -")[0]
+                .strip()
+                .replace("\\n", "")
+                .strip()
+                .split("Email:")[0]
+                .strip()
+                .split(", INDIA")[0]
+                .strip()
+                .split(". Contact")[0]
+                .strip()
+            )
+            if raw_address[-1] == ",":
+                raw_address = "".join(raw_address[:-1]).strip()
 
-            if not state:
-                if zip and "-" in zip:
-                    state = zip.split("-")[0].strip()
-                    zip = zip.split("-")[1].strip()
+            street_address = ", ".join(raw_address.split(",")[:-1]).strip()
+            city = (
+                raw_address.split(",")[-1]
+                .strip()
+                .replace(
+                    "Chandigarh Industrial Area (Near centra mall) Phase", "Chandigarh"
+                )
+                .strip()
+            )
+            try:
+                city = city.split("-")[0].strip()
+            except:
+                pass
+            state = "<MISSING>"
+            zip = "<MISSING>"
+            try:
+                if "Pincode" in raw_address:
+                    city = city.split("Pincode")[0].strip()
+                    zip = raw_address.split("Pincode")[1].strip()
+                else:
+                    zip = raw_address.rsplit("-", 1)[-1].strip()
+            except:
+                pass
 
-            if not zip:
-                if city and "-" in city:
-                    zip = city.split("-")[1].strip()
-                    city = city.split("-")[0].strip()
+            if not zip.isdigit():
+                zip = "<MISSING>"
 
-            country_code = formatted_addr.country
+            if city == "Shop No":
+                street_address = (
+                    "Shop No - G 14 15 L2 Lower ground floor Hi-tech city opp to I Labs"
+                )
+                city = "Hyderabad"
+
+            if city == "Infinity 2 Link RD Malad(W) Mumbai":
+                street_address = "F-118, Infinity 2 Link RD Malad(W)"
+                city = "Mumbai"
+
+            try:
+                if city.split(" ")[-1].isdigit():
+                    zip = city.split(" ")[-1]
+                    city = " ".join(city.split(" ")[:-1]).strip()
+            except:
+                pass
+
+            country_code = "IN"
 
             store_number = "".join(
                 store.xpath('.//span[@class="store-number"]/text()')

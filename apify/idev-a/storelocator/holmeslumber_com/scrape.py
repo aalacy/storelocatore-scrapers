@@ -21,6 +21,8 @@ def fetch_data():
                 continue
             locations = table.select("td")
             for _ in locations:
+                if not _.text.strip():
+                    continue
                 addr = list(_.strong.stripped_strings)
                 block = list(_.stripped_strings)
                 phone = ""

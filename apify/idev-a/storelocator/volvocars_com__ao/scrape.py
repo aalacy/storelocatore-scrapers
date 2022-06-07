@@ -18,7 +18,7 @@ _headers = {
 locator_domain = "https://www.volvocars.com/ao"
 urls = {
     "Namibia": "https://www.volvocars.com/na",
-    "Angola": "https://www.volvocars.com/ao",
+    "Angola": "https://www.volvocars.com/ao/v/legal/contacte-nos",
     "Ecuador": "https://www.volvocars.com/ec",
     "Zambia": "https://www.volvocars.com/zm",
     "Zimbabwe": "https://www.volvocars.com/zw",
