@@ -7,7 +7,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup as bs
 import os
-from proxyfier import ProxyProviders
 
 
 def get_data():
@@ -71,7 +70,6 @@ def get_data():
                     with SgFirefox(
                         block_third_parties=False,
                         is_headless=False,
-                        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
                     ) as driver:
                         driver.get(page_url)
                         element = driver.find_element_by_id(
