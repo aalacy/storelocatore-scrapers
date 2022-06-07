@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import us
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -11,33 +10,20 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 website = "tonysbigpizza.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "authority": "tonysbigpizza.com",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "cross-site",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
 }
-
-
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-
-    if not city or us.states.lookup(zip):
-        city = city + " " + state
-        state = zip
-        zip = "<MISSING>"
-
-    if city and state:
-        if not us.states.lookup(state):
-            city = city + " " + state
-            state = "<MISSING>"
-
-    country_code = "US"
-    return street_address, city, state, zip, country_code
 
 
 def fetch_data():
@@ -45,42 +31,43 @@ def fetch_data():
 
     search_url = "https://tonysbigpizza.com/"
 
-    with SgRequests(
-        dont_retry_status_codes=set([404]), retries_with_fresh_proxy_ip=20
-    ) as session:
+    with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath('//ul[@class="list-location"]/li/a')
+        stores = list(
+            set(search_sel.xpath('//li/a[contains(text(),"Location Info")]/@href'))
+        )
 
-        for store in stores:
+        for store_url in stores:
 
-            page_url = "".join(store.xpath(".//@href")).strip()
+            page_url = store_url
+            log.info(page_url)
             page_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(page_res.text)
 
             locator_domain = website
 
-            location_name = "".join(store.xpath(".//text()")).strip()
-            full_address = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//div[contains(@class,"location-container match")]/div[p]/p[not(a)]//text()'
-                        )
-                    ],
-                )
-            )
-            street_address, city, state, zip, country_code = split_fulladdress(
-                full_address
+            location_name = (
+                "".join(store_sel.xpath("//h2[@class='info-top-title']/text()"))
+                .strip()
+                .replace('"', "")
+                .strip()
             )
 
+            raw_address = "".join(
+                store_sel.xpath('//p[@class="info-top-description"]/text()')
+            ).strip()
+
+            street_address = raw_address.split(",")[0].strip().rsplit(" ", 1)[0].strip()
+            city = raw_address.split(",")[0].strip().rsplit(" ", 1)[-1].strip()
+            state = raw_address.split(",")[-1].strip().split(" ")[0].strip()
+            zip = raw_address.split(",")[-1].strip().split(" ")[-1].strip()
+            country_code = "US"
             store_number = "<MISSING>"
 
             phone = "".join(
-                store_sel.xpath('//p/a[contains(@href,"tel:")]//text()')
+                store_sel.xpath('//a[@class="info-top-phone"]//text()')
             ).strip()
 
             location_type = "<MISSING>"
@@ -91,26 +78,14 @@ def fetch_data():
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            '//div[contains(@class,"hours-container match")]/div[p]/p[not(a)]//text()'
+                            '//div[@class="info-top-opening_hours"]//text()'
                         )
                     ],
                 )
             )
             hours_of_operation = "; ".join(hours)
-            map_link = "".join(
-                store_sel.xpath('//a[contains(@href,"/maps/dir/")]/@href')
-            )
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            try:
-                latitude = map_link.split("/")[-1].strip().split(",")[0].strip()
-            except:
-                pass
-            try:
-                longitude = map_link.split("/")[-1].strip().split(",")[1].strip()
-            except:
-                pass
-            raw_address = "<MISSING>"
+            latitude = "".join(store_sel.xpath('//div[@class="marker"]/@data-lat'))
+            longitude = "".join(store_sel.xpath('//div[@class="marker"]/@data-lng'))
 
             yield SgRecord(
                 locator_domain=locator_domain,

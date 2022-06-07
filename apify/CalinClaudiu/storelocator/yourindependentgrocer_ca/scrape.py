@@ -5,7 +5,7 @@ import ssl
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -461,6 +461,11 @@ def do_everything(k):
 
 
 def url_fix(url):
+    if "DoSearch2" not in url:
+        ClientId = url.split("ClientId=", 1)[1].split("&", 1)[0]
+        ApiKey = url.split("ApiKey=", 1)[1].split("&", 1)[0]
+        goodtype = f"https://ws2.bullseyelocations.com/RestSearch.svc/DoSearch2?ClientId={ClientId}&ApiKey={ApiKey}&CountryId=2&CountryScope=ALL&FillAttr=true&GetHoursForUpcomingWeek=true&LanguageCode=en&Latitude=44.6437182&Longitude=-63.6200314&Radius=20&SearchTypeOverride=1&MaxResults=15&PageSize=15&StartIndex=0&CategoryIDs=93238&MatchAllCategories=true"
+        url = str(goodtype)
     url = url.split("StartIndex")[0] + "StartIndex" + "=0"
     url = "Radius=200".join(url.split("Radius="))  # (means 20020)
     url = "MaxResults=100".join(url.split("MaxResults="))  # (means 10010)
@@ -470,9 +475,9 @@ def url_fix(url):
 
 def get_api_call(url):
     z = None
-    with SgChrome(block_javascript=False) as driver:
+    with SgFirefox() as driver:
         driver.get(url)
-        time.sleep(30)
+        time.sleep(60)
         url = None
         try:
             to_click = WebDriverWait(driver, 60).until(
@@ -514,6 +519,11 @@ def get_api_call(url):
         if "DoSearch2" in r.path:
             url = r.url
             headers = r.headers
+    for r in z:
+        if "RestSearch.svc/GetCategories" in r.path:
+            url = r.url
+            headers = r.headers
+
     if not url:
         for i in z:
             logzilla.info(i.path)
@@ -883,6 +893,7 @@ def scrape():
             mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
             multi_mapping_concat_with=" ",
             is_required=False,
+            part_of_record_identity=True,
         ),
     )
 

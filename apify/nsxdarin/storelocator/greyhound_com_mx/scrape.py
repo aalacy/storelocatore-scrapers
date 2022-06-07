@@ -86,6 +86,11 @@ def fetch_data():
                     phone = line.split(',"phoneNumber":"')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
+                if phone == "<MISSING>":
+                    try:
+                        phone = line.split('"phoneNumberMain":"')[1].split('"')[0]
+                    except:
+                        phone = "<MISSING>"
                 typ = line.split('"stationStopType":"')[1].split('"')[0]
                 hours = "<MISSING>"
                 zc = line.split('"postalCode":"')[1].split('"')[0]

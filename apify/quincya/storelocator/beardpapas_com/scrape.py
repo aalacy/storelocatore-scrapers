@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -30,9 +30,11 @@ def fetch_data(sgw: SgWriter):
     for item in items:
 
         try:
+            location_name = item.strong.text.strip()
             link = item.a["href"]
-            location_name = item.a.text.strip()
         except:
+            if "Cucamonga" in location_name:
+                link = ""
             pass
 
         raw_data = list(item.stripped_strings)
@@ -61,70 +63,75 @@ def fetch_data(sgw: SgWriter):
                 zip_code = raw_data[2].split(",")[2].strip()
         zip_code = zip_code.replace("5542", "55425")
         street_address = street_address.replace("San Tan Village /", "").strip()
-
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        store = json.loads(
-            base.find(class_="sqs-block map-block sqs-block-map")["data-block-json"]
-        )
-
+        location_type = ""
         country_code = "US"
-        store_number = "<MISSING>"
-        try:
-            phone = (
-                base.find_all(class_="row sqs-row")[1]
-                .find(string="contact us")
-                .find_next()
-                .text.split(":")[1]
-                .strip()
+        store_number = ""
+
+        if link:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            store = json.loads(
+                base.find(class_="sqs-block map-block sqs-block-map")["data-block-json"]
             )
-        except:
             try:
                 phone = (
                     base.find_all(class_="row sqs-row")[1]
-                    .find(string="Contact")
+                    .find(string="contact us")
                     .find_next()
                     .text.split(":")[1]
                     .strip()
                 )
             except:
-                phone = re.findall(
-                    r"[(\d)]{5} [\d]{3}-[\d]{4}",
-                    str(base.find_all(class_="row sqs-row")[1]),
-                )[0]
-        location_type = "<MISSING>"
-        try:
-            hours_of_operation = (
-                base.find_all(class_="row sqs-row")[1]
-                .find(string="Hours")
-                .find_previous("div")
-                .get_text(" ")
-                .replace("Hours", "")
-                .strip()
-            )
-        except:
-            hours_of_operation = (
-                base.find_all(class_="row sqs-row")[1]
-                .find(string="Temporary Hours")
-                .find_previous("div")
-                .get_text(" ")
-                .replace("Temporary Hours", "")
-                .strip()
-            )
-        if not hours_of_operation:
-            hours_of_operation = (
-                base.find_all(class_="row sqs-row")[1]
-                .find(string="Hours")
-                .find_previous(class_="col sqs-col-4 span-4")
-                .get_text(" ")
-                .replace("Hours", "")
-                .replace("\n ", "")
-                .strip()
-            )
-
-        latitude = store["location"]["mapLat"]
-        longitude = store["location"]["mapLng"]
+                try:
+                    phone = (
+                        base.find_all(class_="row sqs-row")[1]
+                        .find(string="Contact")
+                        .find_next()
+                        .text.split(":")[1]
+                        .strip()
+                    )
+                except:
+                    phone = re.findall(
+                        r"[(\d)]{5} [\d]{3}-[\d]{4}",
+                        str(base.find_all(class_="row sqs-row")[1]),
+                    )[0]
+            try:
+                hours_of_operation = (
+                    base.find_all(class_="row sqs-row")[1]
+                    .find(string="Hours")
+                    .find_previous("div")
+                    .get_text(" ")
+                    .replace("Hours", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = (
+                    base.find_all(class_="row sqs-row")[1]
+                    .find(string="Temporary Hours")
+                    .find_previous("div")
+                    .get_text(" ")
+                    .replace("Temporary Hours", "")
+                    .strip()
+                )
+            if not hours_of_operation:
+                hours_of_operation = (
+                    base.find_all(class_="row sqs-row")[1]
+                    .find(string="Hours")
+                    .find_previous(class_="col sqs-col-4 span-4")
+                    .get_text(" ")
+                    .replace("Hours", "")
+                    .replace("\n ", "")
+                    .strip()
+                )
+            latitude = store["location"]["mapLat"]
+            longitude = store["location"]["mapLng"]
+        else:
+            link = base_link
+            phone = ""
+            hours_of_operation = ""
+            latitude = ""
+            longitude = ""
 
         sgw.write_row(
             SgRecord(
@@ -146,5 +153,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)

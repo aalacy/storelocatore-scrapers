@@ -20,6 +20,8 @@ def fetch_data():
         "Germany": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/de/de/drive/13.38333/52.51667?count=500&extraCountries=&isCurrentLocation=false",
         "Sweden": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/se/sv/drive/18.071093/59.325117?count=500&extraCountries=&isCurrentLocation=false",
         "Netherlands": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/nl/nl/drive/4.893604/52.37276?count=500&extraCountries=&isCurrentLocation=false",
+        "Portugal": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/pt/pt/drive/-7.4333/39.2911?count=500&extraCountries=&isCurrentLocation=false",
+        "Italy": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/it/it/drive/15.436903/38.051059?count=500&extraCountries=&isCurrentLocation=false",
     }
     l_url = {
         "hr": "https://www.lexus.hr/contact/dealers",
@@ -31,6 +33,8 @@ def fetch_data():
         "de": "https://www.lexus.de/#/publish/my_lexus_my_dealers",
         "se": "https://www.lexus.se/#/publish/my_lexus_my_dealers",
         "nl": "https://www.lexus.nl/#/publish/my_lexus_my_dealers",
+        "it": "https://www.lexus.it/#/publish/my_lexus_my_dealers",
+        "pt": "https://www.lexus.pt/#publish/my_lexus_my_dealers",
     }
 
     domain = "lexus.hr"

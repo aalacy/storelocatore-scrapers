@@ -2,39 +2,73 @@
 import re
 import json
 from lxml import etree
-
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
+from sgselenium import SgFirefox
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+
+logger = sglog.SgLogSetup().get_logger(logger_name="bipa.at")
+
+
+def fetch_locations(session, url, latlng, retry=0):
+    lat, lng = latlng
+
+    try:
+
+        html = session.execute_async_script(
+            f"""
+            fetch("{url}", {{
+                "credentials": "include",
+                "headers": {{
+                    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Upgrade-Insecure-Requests": "1",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "same-origin",
+                    "Sec-Fetch-User": "?1"
+                }},
+                "referrer": "https://www.bipa.at/filialen",
+                "body": "&latitude={lat}&longitude={lng}",
+                "method": "POST",
+                "mode": "cors"
+            }})
+            .then(res => res.text())
+            .then(arguments[0])
+        """
+        )
+
+        return html
+    except:
+        if retry < 3:
+            return fetch_locations(session, url, latlng, retry + 1)
 
 
 def fetch_data():
-    start_url = "https://www.bipa.at/filialen?dwcont=C1344944564"
     domain = "bipa.at"
 
-    search = DynamicZipAndGeoSearch(
-        expected_search_radius_miles=1,
+    search = DynamicGeoSearch(
         max_search_distance_miles=1,
+        granularity=Grain_1_KM(),
         country_codes=[SearchableCountries.AUSTRIA],
     )
 
-    with SgRequests() as session:
-        headers = {
-            "Host": "www.bipa.at",
-            "Cookie": "dwsid=g-bfHLgGgRTX4rp9CDtWJUsAqCuiA7nk6kMHWOFpx3afRx43SdhAVLQhACRPFJHEvAiLTAkV79LGYBYSKYRAKg==;",
-        }
+    with SgFirefox() as session:
         session.get("https://www.bipa.at/filialen")
-        for code, (lat, lng) in search:
-            data = {
-                "dwfrm_storelocator_zipcity": code,
-                "latitude": str(lat),
-                "longitude": str(lng),
-            }
-            response = session.post(start_url, data=data, headers=headers)
-            dom = etree.HTML(response.text)
+        session.set_script_timeout(300)
+
+        tree = etree.HTML(session.page_source)
+        url = tree.xpath('//form[@id="frmStorelocator"]/@action')[0]
+
+        for latlng in search:
+            html = fetch_locations(session, url, latlng)
+
+            dom = etree.HTML(html)
 
             all_locations = dom.xpath("//@data-options")
             for poi in all_locations:
@@ -92,7 +126,8 @@ def scrape():
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

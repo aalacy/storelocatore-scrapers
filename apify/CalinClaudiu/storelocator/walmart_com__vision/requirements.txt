@@ -6,4 +6,5 @@ sgscrape==0.2.9
 sgzip==0.11.0
 urllib3==1.26.2
 beautifulsoup4==4.7.1
+sgselenium==0.3.5
 bs4==0.0.1

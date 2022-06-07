@@ -41,7 +41,7 @@ def fetch_data():
                 items = line.split('<a class="Directory-listLink" href="')
                 for item in items:
                     if 'data-count="(' in item:
-                        if 'data-count="(1}' in item:
+                        if 'data-count="(1)' in item:
                             locs.append(
                                 "https://www.theburgerspriest.com/en/locations/"
                                 + item.split('"')[0]

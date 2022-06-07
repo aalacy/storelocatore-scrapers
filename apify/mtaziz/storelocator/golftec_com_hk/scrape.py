@@ -63,7 +63,7 @@ def fetch_hk(page_url, http, sgw: SgWriter):
     hours_of_operation = ",".join(hours)
 
     item = SgRecord(
-        locator_domain="blacks.co.uk",
+        locator_domain="golftec.com.hk",
         page_url=page_url,
         location_name=location_name,
         street_address=street_address,
@@ -163,7 +163,7 @@ def fetch_jp(idx, page_url, http, sgw: SgWriter):
         longitude=lng,
         phone=s_data["telephone"],
         hours_of_operation=hours,
-        locator_domain="https://golftec.golfdigest.co.jp",
+        locator_domain="golftec.golfdigest.co.jp",
         raw_address=raw_address,
     )
     logger.info(f"ITEM: {item.as_dict()}")
