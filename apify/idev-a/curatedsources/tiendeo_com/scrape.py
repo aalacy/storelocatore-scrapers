@@ -265,6 +265,8 @@ def request_with_retries(page_url):
     ) as session:
         _headers["User-Agent"] = random.choice(user_agents)
         sp1 = session.get(page_url, headers=_headers)
+        if sp1.status_code != 200:
+            return None
         if not sp1.text.strip():
             raise Exception
         return sp1
@@ -278,8 +280,11 @@ def _d(loc, domain, country):
 
     logger.info(page_url)
     try:
+        res = request_with_retries(page_url)
+        if not res:
+            return None
         _ = json.loads(
-            bs(request_with_retries(page_url).text, "lxml")
+            bs(res.text, "lxml")
             .select_one("script#__NEXT_DATA__")
             .text
         )["props"]["pageProps"]["queryResult"]["Store"]
@@ -361,8 +366,11 @@ def fetch_data():
                         store_url = domain + navs[0]["url"]
                     except Exception as err:
                         logger.info(str(err))
+                    res = request_with_retries(store_url)
+                    if not res:
+                        continue
                     res_ss = json.loads(
-                        bs(request_with_retries(store_url).text, "lxml")
+                        bs(res.text, "lxml")
                         .select_one("script#__NEXT_DATA__")
                         .text
                     )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
@@ -375,9 +383,12 @@ def fetch_data():
                         store_location_url = domain + store["url"]
                         logger.info(store_location_url)
                         try:
+                            res = request_with_retries(store_url)
+                            if not res:
+                                continue
                             results = json.loads(
                                 bs(
-                                    request_with_retries(store_location_url).text,
+                                    res.text,
                                     "lxml",
                                 )
                                 .select_one("script#__NEXT_DATA__")
