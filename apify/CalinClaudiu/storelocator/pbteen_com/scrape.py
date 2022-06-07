@@ -17,6 +17,18 @@ else:
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def fix_comma(x):
+    try:
+        x = x.split(",")
+        copy = []
+        for i in x:
+            if len(i) > 0:
+                copy.append(i)
+        return ",".join(copy)
+    except Exception:
+        return x
+
+
 def fix_record2(rec):
     country = rec[1]
     rec = rec[0]
@@ -319,7 +331,9 @@ def scrape():
             is_required=False,
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours"], is_required=False, value_transform=fix_comma
+        ),
         location_type=sp.MappingField(mapping=["type"], is_required=False),
         raw_address=sp.MissingField(),
     )
