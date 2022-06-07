@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.signaturestyle.com/"
     api_url = "https://www.signaturestyle.com/salon-directory.html"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -35,7 +35,6 @@ def fetch_data(sgw: SgWriter):
     for d in div:
         slug = "".join(d.xpath(".//@href"))
         spage_url = f"https://www.signaturestyle.com{slug}"
-        session = SgRequests()
         r = session.get(spage_url, headers=headers)
         tree = html.fromstring(r.text)
         div = tree.xpath("//td[./a]")
@@ -49,7 +48,7 @@ def fetch_data(sgw: SgWriter):
                 == "https://www.signaturestyle.com/locations/wi/monroe/cost-cutters-located-inside-walmart-802-haircuts-17553.html"
             ):
                 continue
-            session = SgRequests()
+
             r = session.get(page_url, headers=headers)
             if r.status_code != 200:
                 continue
@@ -257,7 +256,6 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
             if hours_of_operation == "<MISSING>":
                 jsurl = f"https://info3.regiscorp.com/salonservices/siteid/5/salon/{store_number}"
-                session = SgRequests()
                 r = session.get(jsurl, headers=headers)
                 js = r.json()
                 hours = js.get("store_hours") or "<MISSING>"
@@ -275,6 +273,9 @@ def fetch_data(sgw: SgWriter):
                     == "Monday-Friday Closed Saturday Closed Sunday Closed"
                 ):
                     hours_of_operation = "Closed"
+            cls = "".join(tree.xpath('//i[contains(text(), "has closed")]/text()'))
+            if cls:
+                hours_of_operation = "Closed"
 
             row = SgRecord(
                 locator_domain=locator_domain,

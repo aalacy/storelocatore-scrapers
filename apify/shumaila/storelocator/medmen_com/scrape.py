@@ -1,5 +1,8 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -7,39 +10,8 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    p = 0
+
     headers = {
         "Sec-Fetch-Mode": "cors",
         "Origin": "https://www.medmen.com",
@@ -62,11 +34,16 @@ def fetch_data():
             link = "https://www.medmen.com/stores/" + store["slug"]
             location_id = store["securityId"]
             title = store["name"]
-            street = store["address"]
-            city, state = store["address2"].split(", ", 1)
-            state, pcode = state.lstrip().split(" ", 1)
-
+            try:
+                street = store["address"]
+                city, state = store["address2"].split(", ", 1)
+                state, pcode = state.lstrip().split(" ", 1)
+            except:
+                street, city, state = store["address"].split(", ")
+                state, pcode = state.lstrip().split(" ", 1)
             phone = store["phoneNumber"]
+            if "Check" in phone:
+                phone = "<MISSING>"
             lat = store["location"]["lat"]
             longt = store["location"]["lon"]
             hours = store["storeHours"]
@@ -79,33 +56,33 @@ def fetch_data():
                 pass
             else:
                 location_id = "<MISSING>"
-            data.append(
-                [
-                    "https://www.medmen.com",
-                    link,
-                    title,
-                    street.replace('"', ""),
-                    city.replace('"', ""),
-                    state.replace(",", "").replace('"', ""),
-                    pcode.replace('"', ""),
-                    "US",
-                    location_id,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            yield SgRecord(
+                locator_domain="https://www.medmen.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=str(location_id),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours.replace("|", " ").strip(),
             )
-
-            p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -21,7 +21,11 @@ MISSING = SgRecord.MISSING
 
 def store_data(soup):
     location_name = soup.find("h2", {"class": "Core-title"}).text
-    phone = soup.find("div", {"itemprop": "telephone"}).text
+
+    try:
+        phone = soup.find("div", {"itemprop": "telephone"}).text
+    except:
+        phone = ""
     try:
         street_address = (
             soup.find("span", {"class": "c-address-street-1"}).text
@@ -81,6 +85,8 @@ def fetch_data():
                     longitude,
                     country_code,
                 ) = store_data(soup)
+                if not hours_of_operation:
+                    continue
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=state_url,
@@ -121,6 +127,8 @@ def fetch_data():
                             longitude,
                             country_code,
                         ) = store_data(soup)
+                        if not hours_of_operation:
+                            continue
                         yield SgRecord(
                             locator_domain=DOMAIN,
                             page_url=city_url,
@@ -161,6 +169,8 @@ def fetch_data():
                                 longitude,
                                 country_code,
                             ) = store_data(soup)
+                            if not hours_of_operation:
+                                continue
                             yield SgRecord(
                                 locator_domain=DOMAIN,
                                 page_url=page_url,

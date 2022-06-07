@@ -5,11 +5,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 
 DOMAIN = "bagnbaggage.com"
 BASE_URL = "https://www.bagnbaggage.com/"
-LOCATION_URL = "https://www.bagnbaggage.com/pages/all-store-locations-1"
+LOCATION_URL = "https://www.bagnbaggage.com/pages/all-store-locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -24,7 +24,7 @@ MISSING = "<MISSING>"
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -56,21 +56,15 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    content = soup.find("main", {"class": "site-main"}).find("table").find_all("td")
+    content = soup.find("div", {"class": "page-content rte"}).find_all("table")
     for row in content:
-        info = row.get_text(strip=True, separator="@").split("@")
+        info = row.get_text(strip=True, separator="|").split("|")
         location_name = info[0].strip()
-        raw_address = ",".join(info[1:-1])
+        raw_address = ",".join(info[1:-2])
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = MISSING
-        phone = (
-            info[-1]
-            .replace("Phone: ", "")
-            .replace("Phone -", "")
-            .replace("Phone ", "")
-            .strip()
-        )
+        phone = info[-1].replace("line 1", "").strip()
         location_type = MISSING
         latitude = MISSING
         longitude = MISSING
@@ -111,7 +105,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

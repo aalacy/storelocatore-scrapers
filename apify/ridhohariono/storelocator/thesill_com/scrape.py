@@ -4,8 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_usa
 import re
 
 DOMAIN = "thesill.com"
@@ -24,14 +24,13 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -53,49 +52,45 @@ def pull_content(url):
     return soup
 
 
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return "<MISSING>", "<MISSING>"
-    return latlong.group(1), latlong.group(2)
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select(
-        "section.page-locations div.location.grid-x.grid-padding-x.grid-padding-y"
-    )
-    default_city = ""
+    contents = soup.find_all("span", text="Store Details & Inventory")
     for row in contents:
-        info = row.find(
-            "div", {"class": "location-content cell medium-9 large-12"}
-        ).find_all("p")
-        location_name = row.find("h3", {"class": "location-title"}).text
+        page_url = BASE_URL + row.parent.parent.parent["href"]
+        store = pull_content(page_url)
+        info = store.select_one(
+            "div.sill-container.w-full.h-full.flex.flex-col.gap-6.pt-6.pb-4"
+        )
+        location_name = info.find("h2").text.strip()
         if "Coming Soon" in location_name:
             continue
-        raw_address = info[0].text.split(",")[0].strip()
-        check_city = row.find_previous_sibling("div").find(
-            "h2", {"class": "section-subtitle"}
+        raw_address = info.find("div", {"class": "flex items-center gap-4"}).get_text(
+            strip=True, separator=","
         )
-        if check_city:
-            default_city = check_city.text
         street_address, city, state, zip_postal = getAddress(raw_address)
-        city = default_city.split(",")[0]
-        state = default_city.split(",")[1]
-        phone = row.find("a", {"href": re.compile(r"tel.*")}).text
-        hours_of_operation = info[2].get_text(strip=True, separator=",").strip()
-        if "Monday" not in hours_of_operation:
-            hours_of_operation = info[1].get_text(strip=True, separator=",").strip()
+        try:
+            phone = store.find("a", {"href": re.compile(r"tel.*")}).text.strip()
+        except:
+            phone = re.sub(
+                r"[a-zA-Z]|,|\.|:|@|-",
+                "",
+                store.find("meta", {"name": "description"})["content"],
+            ).strip()
+        hoo = ""
+        hoo_content = info.find_all("div", {"class": "flex gap-2"})
+        for hday in hoo_content:
+            hoo += hday.text.strip() + ", "
+        hours_of_operation = hoo.strip().rstrip(",")
         country_code = "US"
         store_number = MISSING
-        location_type = "thesill"
+        location_type = MISSING
         latitude = MISSING
         longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -115,20 +110,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

@@ -48,6 +48,9 @@ def fetch_data():
         store = "<MISSING>"
         try:
             r2 = session.get(loc, headers=headers)
+            logger.info(f"Response Status Code:{r2.status_code}")
+            if r2.status_code != 200:
+                continue
             for line2 in r2.iter_lines():
                 if '<p class="nmxo-utility-nav--text">' in line2:
                     name = (

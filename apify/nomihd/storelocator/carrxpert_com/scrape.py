@@ -4,7 +4,8 @@ from sglogging import sglog
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "carrxpert.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -59,9 +60,9 @@ def fetch_data():
             state = store_json["details"]["province"]
             zip = store_json["details"]["codePostal"]
 
-            country_code = "CA"
-            if us.states.lookup(state):
-                country_code = "US"
+            country_code = "US"
+            if zip and " " in zip:
+                country_code = "CA"
 
             store_number = store_json["details"]["key"]
             phone = ""
@@ -128,7 +129,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

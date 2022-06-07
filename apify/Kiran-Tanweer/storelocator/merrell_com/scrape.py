@@ -1,103 +1,92 @@
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-import re
-import json
-import time
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger('merrell_com')
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    data = []
-    url = 'https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=-4.263256414560601e-14&map_center_lng=-87.84986899999667&map_distance_diag=12578.772558487182&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=0.6366246000856579'
-    r = session.get(url, headers=headers, verify=False)
-    site = json.loads(r.text)
-    data_list = site['markers']
-    
-    for store in data_list:
-        country = store['country']
-        title = store['name']
-        if country == "US" and "Merrell" in title:
-            country = store['country']
-            street = store['address']
-            city =store['city']
-            state =store['state']
-            zipcode = store['zip']
-            tel = store['phone']
-            lat= store['lat']
-            longt=store['lng']
-            storeid= store['id']
-            storelink = "https://merrell.locally.com/store/"+str(storeid)
-            #phone = phonenumbers.parse(tel, 'US')
-            phone = tel.lstrip('+1')
-            
-            r = session.get(storelink, headers=headers, verify=False)
-            subsoup = BeautifulSoup(r.text, "html.parser")
-            storehours = '<MISSING>'
-            if (subsoup.find( 'div' , {'class' : 'landing-header-hours-inner'})):
-                storehours  =  subsoup.find( 'div' , {'class' : 'landing-header-hours-inner'}).findAll('span')
-                storehours= ' '.join([str(elem.text) for elem in storehours])    
-          
-            if len(storehours) == 0:
-                storehours = '<MISSING>'
-            data.append([
-                            'https://merrell.locally.com/',
-                            storelink,                   
-                            title,
-                            street,
-                            city,
-                            state,
-                            zipcode,
-                            'US',
-                            storeid,
-                            phone,
-                            '<MISSING>',
-                            lat,
-                            longt,
-                            storehours
-                        ])
-        
-    return data
+
+    start_url = "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat={}&map_center_lng={}&map_distance_diag=500&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4"
+    all_coords = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
+    )
+    for lat, lng in all_coords:
+        data_list = session.get(start_url.format(lat, lng), headers=headers).json()[
+            "markers"
+        ]
+        weeklist = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        for store in data_list:
+            ccode = store["country"]
+            street = store["address"]
+            city = store["city"]
+            state = store["state"]
+            pcode = store["zip"]
+            tel = store["phone"]
+            lat = store["lat"]
+            longt = store["lng"]
+            storeid = store["id"]
+            link = "https://merrell.locally.com/store/" + str(storeid)
+            ltype = "Dealer"
+            if store["company_id"] == 62:
+                ltype = "Outlet"
+            phone = tel.lstrip("+1")
+            title = store["name"]
+            hours = ""
+            try:
+                if store["mon_time_open"] > 0:
+                    for day in weeklist:
+                        closestr = str(store[day + "_time_close"])
+                        openstr = str(store[day + "_time_open"])
+                        if len(openstr) == 3:
+                            openstr = "0" + openstr
+                        if len(closestr) == 3:
+                            closestr = "0" + closestr
+                        if int(closestr[0:2]) < 12:
+                            closestr = closestr[0:2] + ":" + closestr[2:4] + " PM "
+                        else:
+                            check = int(closestr[0:2]) - 12
+                            closestr = str(check) + ":" + closestr[2:4] + " PM "
+                        openstr = openstr[0:2] + ":" + openstr[2:4] + " AM "
+
+                        hours = hours + day + " " + openstr + closestr
+                else:
+                    hours = "<MISSING>"
+            except:
+                hours = "<MISSING>"
+            yield SgRecord(
+                locator_domain="https://www.merrell.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=str(storeid),
+                phone=phone.strip(),
+                location_type=ltype,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

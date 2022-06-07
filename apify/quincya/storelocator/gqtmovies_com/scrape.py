@@ -16,9 +16,9 @@ logger = SgLogSetup().get_logger("gqtmovies_com")
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.gqtmovies.com/our-locations"
+    base_link = "https://www.gqtmovies.com/theaterinfo"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -27,9 +27,12 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.gqtmovies.com"
 
-    items = base.find_all(class_="css-4611wo")
+    items = base.find_all("picture")
 
     for item in items:
+        if str(item.find_next("div")).count("details") == 0:
+            continue
+        item = item.find_next("div")
         raw_address = list(item.stripped_strings)[:-1]
         location_name = raw_address[0].strip()
         street_address = raw_address[1].strip()
@@ -55,7 +58,7 @@ def fetch_data(sgw: SgWriter):
         if not phone:
             phone = "<MISSING>"
 
-        map_link = base.find("a", string="Get directions")["href"]
+        map_link = base.find(string="Get directions").find_previous("a")["href"]
         latitude = map_link[map_link.rfind("/") + 1 : map_link.rfind(",")].strip()
         longitude = map_link[map_link.rfind(",") + 1 :].strip()
 

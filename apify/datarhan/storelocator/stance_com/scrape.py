@@ -26,11 +26,6 @@ def fetch_data():
     all_stores = {"outlet": outlet_stores, "retail": retail_stores}
     for location_type, all_locations in all_stores.items():
         for poi_html in all_locations:
-            location_name = (
-                poi_html.xpath('.//div[@class="store-info"]//h6/text()')[0]
-                .split(" - ")[0]
-                .strip()
-            )
             page_url = poi_html.xpath('.//div[@class="store-info"]/div/a/@href')[0]
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
@@ -42,6 +37,9 @@ def fetch_data():
             phone = loc_dom.xpath('//p[@class="phone"]/text()')
             phone = phone[0] if phone else ""
             country_code = raw_address[-1] if len(raw_address) == 3 else ""
+            location_name = "STANCE Outlet"
+            if location_type == "retail":
+                location_name = "STANCE Store"
 
             item = SgRecord(
                 locator_domain=domain,

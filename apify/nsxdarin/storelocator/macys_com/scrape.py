@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("macys_com")
 
@@ -10,41 +13,11 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "operating_info",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
     url = "https://l.macys.com/sitemap.xml"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if "<loc>https://l.macys.com/" in line and ".html" not in line:
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 3:
@@ -55,7 +28,7 @@ def fetch_data():
         typ = "<MISSING>"
         hours = ""
         name = ""
-        opinfo = "<MISSING>"
+        hours = ""
         country = "US"
         city = ""
         add = ""
@@ -66,14 +39,7 @@ def fetch_data():
         phone = ""
         store = ""
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if (
-                'Thursday</td><td class="c-hours-details-row-intervals">Closed</td>'
-                in line2
-            ):
-                opinfo = "Closed"
+        for line2 in r2.iter_lines():
             if name == "" and '<span class="LocationName-geo">' in line2:
                 name = (
                     "Macy's "
@@ -95,23 +61,23 @@ def fetch_data():
                     .replace("+", "")
                 )
             if hours == "" and "data-days='[" in line2:
-                days = (
-                    line2.split("data-days='[")[1]
-                    .split("]' data-timezone=")[0]
-                    .split('"day":"')
-                )
+                days = line2.split("data-days='[")[1].split(']},"')[0].split('"day":"')
                 for day in days:
                     if "isClosed" in day:
                         if 'isClosed":true' in day:
                             hrs = day.split('"')[0] + ": Closed"
                         else:
-                            hrs = (
-                                day.split('"')[0]
-                                + ": "
-                                + day.split('"start":')[1].split("}")[0]
-                                + "-"
-                                + day.split('"end":')[1].split(",")[0]
-                            )
+                            dstart = day.split('"start":')[1].split("}")[0]
+                            dend = day.split('"end":')[1].split("}")[0]
+                            if len(dstart) == 3:
+                                dstart = dstart[:1] + ":" + dstart[-2:]
+                            else:
+                                dstart = dstart[:2] + ":" + dstart[-2:]
+                            if len(dend) == 3:
+                                dend = dend[:1] + ":" + dend[-2:]
+                            else:
+                                dend = dend[:2] + ":" + dend[-2:]
+                            hrs = day.split('"')[0] + ": " + dstart + "-" + dend
                         if hours == "":
                             hours = hrs
                         else:
@@ -130,28 +96,31 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            opinfo,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

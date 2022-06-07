@@ -38,11 +38,9 @@ def get_data(slug, sgw: SgWriter):
     longitude = "".join(d.xpath("./@data-longitude"))
     b = d.xpath("./following-sibling::div[1]")[0]
     street_address = "".join(b.xpath(".//p[@itemprop='streetAddress']/text()")).strip()
-    city = "".join(b.xpath(".//p[@itemprop='addressLocality']/text()")).strip() or " "
-    if city == " ":
-        city = location_name.replace("TK Maxx ", "")
-        if "(" in city:
-            city = city.split("(")[0].strip()
+    city = location_name.replace("TK Maxx ", "")
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
     phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
     try:
@@ -52,17 +50,18 @@ def get_data(slug, sgw: SgWriter):
     except IndexError:
         hours_of_operation = SgRecord.MISSING
 
+    if b.xpath("//p[@itemprop='Comment' and contains(text(), 'Open')]"):
+        hours_of_operation = "Coming Soon"
+
     row = SgRecord(
         page_url=page_url,
         location_name=location_name,
         street_address=street_address,
         city=city,
-        state=SgRecord.MISSING,
         zip_postal=postal,
         country_code="NL",
         store_number=store_number,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
@@ -75,7 +74,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

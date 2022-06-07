@@ -2,7 +2,7 @@ from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -37,6 +37,8 @@ def fetch_data(sgw: SgWriter):
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["countryCode"]
             store_number = store["id"]
+            if "-" in store_number or len(store_number) > 5:
+                store_number = ""
             try:
                 phone = store["mainPhone"]
             except:
@@ -99,5 +101,9 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.PAGE_URL})
+    )
+) as writer:
     fetch_data(writer)
