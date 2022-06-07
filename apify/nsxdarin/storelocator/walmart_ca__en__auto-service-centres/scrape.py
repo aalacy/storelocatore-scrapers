@@ -34,7 +34,10 @@ def fetch_data():
         r2 = session.get(url, headers=headers)
         for item in json.loads(r2.content)["payload"]["stores"]:
             Fuel = False
-            name = item["displayName"]
+            try:
+                name = item["displayName"]
+            except:
+                name = item["address"]["city"]
             store = item["id"]
             add = item["address"]["address1"]
             try:

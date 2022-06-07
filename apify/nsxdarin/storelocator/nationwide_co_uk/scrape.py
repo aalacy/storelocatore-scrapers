@@ -46,6 +46,7 @@ def fetch_data():
                         )
                         locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
     for loc in locs:
+        Closed = False
         logger.info(loc)
         name = ""
         add = ""
@@ -59,10 +60,19 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            if 'c-bread-crumbs-name">' in line2:
-                name = line2.split('"c-bread-crumbs-name">')[1].split("<")[0]
+            if "permanently closed" in line2.lower():
+                Closed = True
+            if "details_name']= \"" in line2:
+                name = line2.split("details_name']= \"")[1].split('"')[0]
             if add == "" and 'class="c-address-street-1">' in line2:
                 add = line2.split('class="c-address-street-1">')[1].split("<")[0]
+                if 'class="c-address-street-2">' in line2:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('class="c-address-street-2">')[1].split("<")[0]
+                    )
+                    add = add.strip()
                 city = line2.split('class="c-address-city">')[1].split("<")[0]
                 state = "<MISSING>"
                 try:
@@ -99,22 +109,25 @@ def fetch_data():
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        city = city.replace("&#39;", "'")
+        name = name.replace("&#39;", "'")
+        if Closed is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

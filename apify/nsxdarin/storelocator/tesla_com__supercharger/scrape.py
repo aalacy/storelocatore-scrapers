@@ -27,7 +27,8 @@ def fetch_data():
         if "_" in lid:
             lid = lid.split("_")[0]
         ltype = item["location_type"]
-        if "supercharger" in str(ltype):
+        opensoon = item["open_soon"]
+        if "supercharger" in str(ltype) and opensoon != "1":
             ids.append(lid)
     for lid in ids:
         try:
@@ -90,6 +91,23 @@ def fetch_data():
             if "San Fran" in zc:
                 zc = "94129"
                 city = "San Francisco"
+            if ";Sche" in hours:
+                hours = hours.split(";Sche")[0].strip()
+            if ";Sales Hours" in hours:
+                hours = hours.split(";Sales Hours")[1].strip()
+            if "null" in hours:
+                hours = "<MISSING>"
+            hours = (
+                hours.replace("0S", "0; S")
+                .replace("0T", "0; T")
+                .replace("0F", "0; F")
+                .replace("0M", "0; M")
+                .replace("0W", "0; W")
+            )
+            if "Service Hours" in hours:
+                hours = hours.split("Service Hours")[0].strip()
+            if "0" not in hours:
+                hours = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
