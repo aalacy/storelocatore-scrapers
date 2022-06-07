@@ -283,11 +283,9 @@ def _d(loc, domain, country):
         res = request_with_retries(page_url)
         if not res:
             return None
-        _ = json.loads(
-            bs(res.text, "lxml")
-            .select_one("script#__NEXT_DATA__")
-            .text
-        )["props"]["pageProps"]["queryResult"]["Store"]
+        _ = json.loads(bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text)[
+            "props"
+        ]["pageProps"]["queryResult"]["Store"]
     except Exception as err:
         logger.info(str(err))
         return None
@@ -370,9 +368,7 @@ def fetch_data():
                     if not res:
                         continue
                     res_ss = json.loads(
-                        bs(res.text, "lxml")
-                        .select_one("script#__NEXT_DATA__")
-                        .text
+                        bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text
                     )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
                     if not res_ss["links"]:
                         continue
