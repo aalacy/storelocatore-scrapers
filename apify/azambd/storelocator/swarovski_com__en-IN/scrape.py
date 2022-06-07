@@ -13,6 +13,7 @@ import json
 
 MISSING = "<MISSING>"
 
+
 def get_address(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
@@ -20,8 +21,8 @@ def get_address(raw_address):
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
-            city =  data.city
-            state =  data.state
+            city = data.city
+            state = data.state
 
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
@@ -34,6 +35,7 @@ def get_address(raw_address):
     except Exception:
         pass
     return MISSING, MISSING, MISSING
+
 
 class ExampleSearchIteration(SearchIteration):
     def do(
@@ -60,13 +62,15 @@ class ExampleSearchIteration(SearchIteration):
         lati, lngi = coord
 
         url = f"https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude={lati}&geoPoint.longitude={lngi}&radius=5000"
-        
+
         session = SgRequests()
         r = session.get(url, headers=headers)
         website = "swarovski.com"
         res_json = json.loads(r.content)["results"]
 
-        logger.info(f"[{current_country}] [{lati}, {lngi}] Stores: {len(res_json)}, {items_remaining}")
+        logger.info(
+            f"[{current_country}] [{lati}, {lngi}] Stores: {len(res_json)}, {items_remaining}"
+        )
         for item in json.loads(r.content)["results"]:
             name = item["displayName"]
             store = item["name"]
@@ -86,10 +90,10 @@ class ExampleSearchIteration(SearchIteration):
             zc = item["address"]["postalCode"]
             if zc is None:
                 zc = MISSING
-            
+
             phone = item["address"]["phone"]
             country = item["address"]["country"]["isocode"]
-            # Filter India 
+            # Filter India
             if "IN" not in str(country):
                 continue
             typ = item["distributionType"]
@@ -130,7 +134,6 @@ class ExampleSearchIteration(SearchIteration):
             )
 
 
-
 if __name__ == "__main__":
     logger = sglog.SgLogSetup().get_logger(logger_name="swarovski.com")
     CrawlStateSingleton.get_instance().save(override=True)
@@ -161,6 +164,6 @@ if __name__ == "__main__":
 
         for rec in par_search.run():
             writer.write_row(rec)
-    
+
     end = time.time()
     logger.info(f"Scrape took {(end-start)/60} minutes.")
