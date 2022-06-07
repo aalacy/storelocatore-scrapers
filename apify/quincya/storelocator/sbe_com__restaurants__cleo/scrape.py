@@ -1,4 +1,5 @@
 import json
+import re
 
 from bs4 import BeautifulSoup
 
@@ -24,7 +25,7 @@ def fetch_data(sgw: SgWriter):
     items = base.find(class_="cards__row cards__row--default").find_all(
         class_="card__content"
     )
-    locator_domain = "https://www.sbe.com/"
+    locator_domain = "http://sbe.com/restaurants/cleo"
 
     for item in items:
         link = item.a["href"]
@@ -61,25 +62,20 @@ def fetch_data(sgw: SgWriter):
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = store["telephone"]
-        hours_of_operation = "<MISSING>"
+        latitude = str(base).split('"lat":"')[1].split('"')[0]
+        longitude = str(base).split('"lng":"')[1].split('"')[0]
 
-        if street_address == "805 South Miami Ave":
-            latitude = "25.765855"
-            longitude = "-80.193079"
-        else:
-            try:
-                map_link = store["hasMap"]
-                at_pos = map_link.rfind("@")
-                latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-                longitude = map_link[
-                    map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-                ].strip()
-            except:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-        if len(latitude) > 50:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        hours_of_operation = (
+            " ".join(list(base.find(class_="card__hours-details").stripped_strings))
+            .replace("\xa0", " ")
+            .replace("Now Open", "")
+            .replace("Hours:", "")
+            .replace("(10:00AM Last Order)", "")
+            .replace("(21:00PM Last Order)", "")
+            .split("Please")[0]
+            .strip()
+        )
+        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
         sgw.write_row(
             SgRecord(
