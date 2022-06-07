@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
-        phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
+        phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

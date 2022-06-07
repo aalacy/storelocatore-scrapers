@@ -33,7 +33,7 @@ def fetch_data():
             street_address=street_address,
             city=city,
             state=raw_address.split(",")[-1].split()[0],
-            zip_postal=raw_address.split(",")[-1].split()[0],
+            zip_postal=raw_address.split(",")[-1].split()[1],
             country_code="",
             store_number="",
             phone="",

@@ -34,7 +34,7 @@ headers = {
     "accept-language": "en-US,en;q=0.9",
     "cookie": "marketingChannel=https://www.dominos.co.in/store-locations/new-delhi/tis-hazari-metro-station-new-delhi / Direct; brandreferral=yes; _gcl_au=1.1.330237308.1645888634; _ga=GA1.3.1679887606.1645888638; _gid=GA1.3.908597514.1645888638; _clck=cyt4w4|1|ezb|0; _uetsid=2fc39d20971711eca39617b0aac65430; _uetvid=2fc3e7a0971711ecbf8f913b4c7ef76e; WZRK_S_44Z-RW9-694Z=%7B%22p%22%3A2%7D; _fbp=fb.2.1645893389322.55916883; _clsk=111s9f3|1645893393783|2|1|l.clarity.ms/collect; XSRF-TOKEN=eyJpdiI6IlF3WFlsUWFnRWVWUUpIV1JuSGJ2aXc9PSIsInZhbHVlIjoiTlQ0SG5iRnNIQXdBVXJuM0hVeGE1cFRBMm45cVJqcklpSG1QR0lZSllTR1dCalFyYnErRXlIS2MzcGtVNGwwTCIsIm1hYyI6Ijg1ZmU2MDM5ZmJmZjQ5NjQ2ZGEzMWYzZDYzOTU4YzAzNjllMTc2MzNhMmQ0NjM3MmVkOWIwZDNlM2E2YThjZDMifQ%3D%3D; jubilant_session=eyJpdiI6ImlBZUVzSVZtclBPUFE5RzRRc2NnbFE9PSIsInZhbHVlIjoiY1dnQ1lUT0hhZ0VOUWc1YkVqUE50N2ttSUpxSllKZ2d5WHl5ZnJxWU5tbjZHMlNcL0hkY2xUUXQ4Y1VpWlQwWmEiLCJtYWMiOiIwMDRhOTFlMzEzZmUxNjNlNTA5NGNjZmMxZDdmNzM4ZTgxM2RlYWQxOTllMGYzMGI1YmNmNDAwMDMxNTcwNDQ4In0%3D",
 }
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -54,7 +54,7 @@ def request_with_retries(url, retry=1):
             return request_with_retries(url, retry + 1)
         return response.text, url
     except Exception as e:
-        log.info(f"Failed {url}: {response.status_code} err: {e}")
+        log.info(f"Failed {url}: err: {e}")
         pass
     if retry > 4:
         return None, url
@@ -75,7 +75,7 @@ def request_with_retries_stores(url, retry=1):
 
     except Exception as e:
         if retry > 4:
-            log.info(f"Failed {url}: {response.status_code}: Retried: {retry} err: {e}")
+            log.info(f"Failed {url}:: Retried: {retry} err: {e}")
             return None, url
         return request_with_retries_stores(url, retry + 1)
 
@@ -112,7 +112,7 @@ def fetch_stores():
                 log.info(f"Error Fetching Store: {e}")
                 pass
             if count % 50 == 0:
-                log.info(f"{count} page_urls {len(page_urls)}")
+                log.debug(f"{count} page_urls {len(page_urls)}")
 
     log.info(f"Total page_urls {len(page_urls)}")
     return page_urls
@@ -300,7 +300,7 @@ def fetch_data():
                     raw_address=raw_address,
                 )
             except Exception as e:
-                log.info(f"Failed Adding Data {page_url}, Err: {e}")
+                log.info(f"Failed Adding Data, Err: {e}")
                 pass
     return []
 

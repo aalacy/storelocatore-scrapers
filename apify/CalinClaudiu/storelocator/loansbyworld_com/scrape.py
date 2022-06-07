@@ -4,64 +4,50 @@ from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from bs4 import BeautifulSoup as b4
 from sglogging import sglog
+from sgselenium import SgFirefox
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+import seleniumwire as selw  # noqa
+import json
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def parse_hrs(soup):
+def gimme_hours(soup):
     soup = b4(soup, "lxml")
-    days = soup.find_all("span", {"class": "day"})
-    hors = soup.find_all("span", {"class": "hours"})
-    hours = ", ".join(
-        [
-            str(days[i].text.strip() + ": " + hors[i].text.strip())
-            for i in range(len(days))
-        ]
-    )
-    if "unday" not in hours.lower():
-        spans = soup.find_all("span")
-        for i in range(len(spans)):
-            if "unday" in spans[i].text.lower():
-                try:
-                    hours = (
-                        hours
-                        + ", "
-                        + spans[i].text.strip()
-                        + ": "
-                        + spans[i + 1].text.strip()
-                    )
-                except Exception as eh:
-                    logzilla.error("eh", exc_info=eh)
-
-    return hours
+    potH = soup.find_all("ul")
+    hours = []
+    data = None
+    for h in potH:
+        if "ours" in h:
+            data = h.find_all("li")
+    if data:
+        for i in data:
+            hours.append(
+                str(
+                    i.find("span", {"class": "day"}).text
+                    + ": "
+                    + i.find("span", {"class": "hours"}).text
+                )
+            )
+    return "; ".join(hours)
 
 
 def fetch_data():
     def search_api(session, long):
-        def actual_req(session, long):
-            url = "https://www.loansbyworld.com/api/yext/geosearch"
-            headers = {}
+        url = "https://www.loansbyworld.com/api/yext/geosearch"
+        headers = {}
 
-            headers["Content-Type"] = "application/json"
-            data = str('{"location":"' + f"{long}" + '","radius":1000}')
+        headers["Content-Type"] = "application/json"
+        data = str('{"location":"' + f"{long}" + '","radius":100}')
 
-            resp = session.post(url, headers=headers, data=data)
-            try:
-                resp = resp.json()
-            except Exception as e:
-                logzilla.error(f"{str(url)} \n {str(e)}", exc_info=e)
-                return []
-            return resp
-
-        try:
-            return actual_req(session, long)["data"]
-        except Exception as smh:
-            logzilla.error("smh", exc_info=smh)
-            long = "0" + str(long)
-            return actual_req(session, long)["data"]
+        resp = session.post(url, headers=headers, data=data).json()
+        if resp["error"]:
+            return []
+        return resp["data"]
 
     def fetch_sub(session, k):
         headers = {}
@@ -71,45 +57,67 @@ def fetch_data():
 
         #%5Bstate%5D/%5Bcity%5D/%5BpostalCode%5D/%5BstoreId% # noqa
         # https://www.loansbyworld.com/locations/alabama/alabaster/35007/1521 # noqa
-        url = (
-            str(
-                f"https://www.loansbyworld.com/locations/{k['state']['id']}/{k['address']['city']}/{k['address']['postalCode']}/{k['id']}"
-            )
-            .lower()
-            .replace(" ", "-")
+        url = str(
+            f"https://www.loansbyworld.com/locations/{str(k['state']['id']).lower()}/{str(k['address']['city']).lower()}/{str(k['address']['postalCode']).lower()}/{str(k['id']).lower()}"
         )
-        logzilla.info(url)
+        url = url.strip().replace(" ", "-")
         resp = session.get(url, headers=headers)
-        k["page_url"] = url
-        k["hours"] = parse_hrs(resp.text)
-
+        k["hours"] = gimme_hours(resp.text)
         return k
 
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=40,
-        max_search_results=None,
-    )
+    def selenium_data():
+        with SgFirefox() as driver:
+            driver.get("https://www.loansbyworld.com/locations")
+            try:
+                random = WebDriverWait(driver, 30).until(  # noqa
+                    EC.visibility_of_element_located(
+                        (
+                            By.XPATH,
+                            "/html/body/div[1]/div/div[2]/div[2]/div[16]/div/a",
+                        )
+                    )
+                )  # noqa
+            except Exception as e:
+                logzilla.error("Error waiting for page to load", exc_info=e)
+                try:
+                    logzilla.info(f"{driver.page_source}")
+                except Exception:
+                    pass
+            data = []
+            r = driver.requests
+            for req in r:
+                path = req.path
+                if "locations/state/" in path:
+                    if "json" in path:
+                        body = selw.utils.decode(
+                            req.response.body,
+                            req.response.headers.get("Content-Encoding", "identity"),
+                        )
+                        body = json.loads(body)
+                        data.append(body)
+            return data
+
+    data = selenium_data()
 
     with SgRequests() as session:
-        for long in search:
-            for result in search_api(session, long):
+        for state in data:
+            statedata = state["pageProps"]["yextLocations"]
+            for record in statedata:
                 try:
-                    k = fetch_sub(session, result)
+                    k = fetch_sub(session, record)
                     try:
                         k["address"]["line2"] = k["address"]["line2"]
                     except Exception:
                         k["address"]["line2"] = ""
-                    yield k
                 except Exception as e:
-                    logzilla.error("", exc_info=e)
-                    k = result
+                    logzilla.error("failed hours", exc_info=e)
+                    k = record
+                    k["hours"] = ""
                     try:
                         k["address"]["line2"] = k["address"]["line2"]
                     except Exception:
                         k["address"]["line2"] = ""
-                    k["hours"] = ""
-                    yield k
+                yield k
 
 
 def fix_comma(x):
@@ -135,11 +143,7 @@ def scrape():
     url = "https://www.loansbyworld.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(
-            mapping=["page_url"],
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
-            part_of_record_identity=True,
-        ),
+        page_url=MissingField(),
         location_name=MappingField(
             mapping=["store"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
@@ -184,7 +188,7 @@ def scrape():
     )
 
     pipeline = SimpleScraperPipeline(
-        scraper_name="loansbyworld.com",
+        scraper_name="ajsfinefoods.com",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,

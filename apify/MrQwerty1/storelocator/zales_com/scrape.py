@@ -8,7 +8,7 @@ from tenacity import stop_after_attempt, wait_fixed, retry
 from sglogging import sglog
 
 
-@retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
+@retry(stop=stop_after_attempt(1), wait=wait_fixed(5))
 def get_json(api):
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r}")
@@ -19,7 +19,7 @@ def get_json(api):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=8
     )
     for _zip in search:
         for i in range(777):

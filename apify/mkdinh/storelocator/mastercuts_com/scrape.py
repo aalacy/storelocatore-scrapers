@@ -1,4 +1,5 @@
 import re
+import threading
 from lxml import etree
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin
@@ -11,17 +12,28 @@ from sgrequests import SgRequests
 
 start_url = "https://www.signaturestyle.com/salon-directory.html"
 domain = "mastercuts.com"
-hdr = {
+headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 }
 
+local = threading.local()
 
-def fetch_location(poi_html, session, retry=0):
+
+def get_session():
+    if not hasattr(local, "session"):
+        local.session = SgRequests()
+
+    return local.session
+
+
+def fetch_location(poi_html, retry=0):
     try:
+        session = get_session()
         url = poi_html.xpath("@href")[0]
         raw_address = poi_html.xpath("text()")[0]
+        store_number = re.search(r"-(\d+).html", url).group(1)
         page_url = urljoin(start_url, url)
-        response = session.get(page_url)
+        response = session.get(page_url, headers=headers)
 
         if response.status_code == 404:
             return None
@@ -59,14 +71,19 @@ def fetch_location(poi_html, session, retry=0):
 
         latitude = latitude[0] if latitude else ""
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
-        hoo = loc_dom.xpath(
-            '//div[@class="salondetailspagelocationcomp"]//div[@class="store-hours sdp-store-hours"]//text()'
-        )
-        hoo = " ".join(hoo).split(" Monday")[0]
-        hoo = re.sub(r"\s\s+", " ", re.sub("\t|\n", "", hoo))
-        if not hoo:
-            hoo = loc_dom.xpath('//div[@class="salon-timings"]//text()')
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = loc_dom.xpath('//div[contains(@class,"salon-timings")]//span')
+
+        hours_of_operation = []
+        for dayhour in hoo:
+            if "closedNow" in dayhour.attrib["class"]:
+                continue
+
+            day = dayhour.xpath('div[contains(@class, "week-day")]/text()')[0]
+            hour = dayhour.xpath('div[contains(@class, "oper-hours")]/text()')[0]
+
+            hours_of_operation.append(f"{day}: {hour}")
+
+        hours_of_operation = ",".join(hours_of_operation)
 
         item = SgRecord(
             locator_domain=domain,
@@ -76,29 +93,30 @@ def fetch_location(poi_html, session, retry=0):
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code="",
-            store_number="",
+            country_code="US",
+            store_number=store_number,
             phone=phone,
             location_type="",
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hoo,
+            hours_of_operation=hours_of_operation,
         )
 
         return item
     except:
         if retry < 3:
-            return fetch_location(poi_html, session, retry + 1)
+            return fetch_location(poi_html, retry + 1)
 
 
-def get_state(url, session, retry=0):
+def get_state(url, retry=0):
     try:
+        session = get_session()
         response = session.get(url)
         dom = etree.HTML(response.text)
         return dom.xpath("//td/a")
     except:
         if retry < 3:
-            return get_state(url, session, retry + 1)
+            return get_state(url, retry + 1)
 
 
 def fetch_data():
@@ -109,7 +127,7 @@ def fetch_data():
         all_states = dom.xpath('//a[@class="btn btn-primary"]/@href')
         with ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(get_state, urljoin(start_url, url), session)
+                executor.submit(get_state, urljoin(start_url, url))
                 for url in all_states
             ]
             for future in as_completed(futures):
@@ -117,8 +135,7 @@ def fetch_data():
 
         with ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(fetch_location, poi_html, session)
-                for poi_html in locations
+                executor.submit(fetch_location, poi_html) for poi_html in locations
             ]
             for future in as_completed(futures):
                 poi = future.result()

@@ -26,8 +26,38 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
-        poi = json.loads(data)
+        if "lexus-pruhonice" not in page_url:
+            data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
+            poi = json.loads(data)
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            phone = poi["telephone"]
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+        else:
+            location_name = loc_dom.xpath('//div[@class="dealer-heading"]/div/text()')[
+                0
+            ]
+            raw_address = loc_dom.xpath(
+                '//div[@class="bottom-contact-item col-lg-8"]/div/text()'
+            )
+            raw_address = [e.strip() for e in raw_address if e.strip()]
+            street_address = raw_address[0]
+            city = " ".join(raw_address[1].split()[2:])
+            zip_code = " ".join(raw_address[1].split()[:2])
+            phone = (
+                loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+                .split(":")[-1]
+                .strip()
+            )
+            location_type = "AutomotiveBusiness"
+            geo = loc_dom.xpath("//@data-location")[0].split(",")
+            latitude = geo[1]
+            longitude = geo[0]
+
         hoo = loc_dom.xpath(
             '//div[contains(text(), "ShowRoom")]/following-sibling::ul//text()'
         )
@@ -36,17 +66,17 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
             state="",
-            zip_postal=poi["address"]["postalCode"],
+            zip_postal=zip_code,
             country_code="CZ",
             store_number="",
-            phone=poi["telephone"],
-            location_type=poi["@type"],
-            latitude=poi["geo"]["latitude"],
-            longitude=poi["geo"]["longitude"],
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 
@@ -56,9 +86,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.PAGE_URL})
         )
     ) as writer:
         for item in fetch_data():
