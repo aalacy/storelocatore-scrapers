@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("crowneplaza_ca")
 
@@ -10,42 +13,13 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     alllocs = []
     urls = ["https://www.ihg.com/crowneplaza/destinations/us/en/canada-hotels"]
     for url in urls:
         states = []
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if (
                 'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/'
                 in line
@@ -57,9 +31,7 @@ def fetch_data():
             cities = []
             logger.info(("Pulling State %s..." % state))
             r2 = session.get(state, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
+            for line2 in r2.iter_lines():
                 if (
                     'href="https://www.ihg.com/crowneplaza/destinations/us/en/canada/'
                     in line2
@@ -71,9 +43,7 @@ def fetch_data():
             for city in cities:
                 logger.info(("Pulling City %s..." % city))
                 r3 = session.get(city, headers=headers)
-                if r3.encoding is None:
-                    r3.encoding = "utf-8"
-                for line3 in r3.iter_lines(decode_unicode=True):
+                for line3 in r3.iter_lines():
                     if (
                         "https://www.ihg.com/crowneplaza/hotels/" in line3
                         and '{"@context":"https://www.schema.org"' in line3
@@ -105,27 +75,29 @@ def fetch_data():
                             lat = line3.split(',"latitude":')[1].split(",")[0]
                             lng = line3.split('"longitude":')[1].split("}")[0]
                             store = lurl.replace("/hoteldetail", "").rsplit("/", 1)[1]
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=lurl,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
