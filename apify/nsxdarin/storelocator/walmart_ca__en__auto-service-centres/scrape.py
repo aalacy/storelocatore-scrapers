@@ -63,7 +63,13 @@ def fetch_data():
                             Fuel = True
                             for day in svc["regularHours"]:
                                 try:
-                                    hrs = day["day"] + ": " + day["start"] + "-" + day["end"]
+                                    hrs = (
+                                        day["day"]
+                                        + ": "
+                                        + day["start"]
+                                        + "-"
+                                        + day["end"]
+                                    )
                                 except:
                                     hrs = day["day"] + ": Closed"
                                 if hours == "":
@@ -103,6 +109,7 @@ def fetch_data():
                         )
             except:
                 Retry = True
+
 
 def scrape():
     results = fetch_data()
