@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
 from sgpostal.sgpostal import parse_address_intl
-from webdriver_manager.chrome import ChromeDriverManager
 import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
@@ -328,7 +327,6 @@ def _d(loc, domain, country):
 
 def fetch_data():
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
     ) as driver:
