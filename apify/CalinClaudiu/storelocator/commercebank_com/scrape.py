@@ -65,12 +65,10 @@ def fetch_data(sgw: SgWriter):
             except Exception:
                 try:
                     hoo = j["formatted_hours"]["primary"]["grouped_days"]
-                    hours_of_operation = []
+                    hoz = []
                     for i in hoo:
-                        hours_of_operation.append(
-                            str(i["label_abbr"] + ": " + i["content"])
-                        )
-                    hours_of_operation = "; ".join(hours_of_operation)
+                        hoz.append(str(i["label_abbr"] + ": " + i["content"]))
+                    hours_of_operation = "; ".join(hoz)
                 except Exception:
                     hours_of_operation = "<MISSING>"
 
