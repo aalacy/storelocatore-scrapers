@@ -1,71 +1,48 @@
-import csv
-
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 
 log = SgLogSetup().get_logger("meijer.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    max_results = 40
-    max_distance = 200
-
-    dup_tracker = []
+    max_distance = 100
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
+        max_search_results=10,
+        granularity=Grain_4(),
     )
 
     locator_domain = "meijer.com"
 
     for postcode in search:
-        log.info(
-            "Searching: %s | Items remaining: %s" % (postcode, search.items_remaining())
-        )
         base_link = (
             "https://www.meijer.com/bin/meijer/store/search?locationQuery=%s&radius=%s"
             % (postcode, max_distance)
         )
 
         log.info(base_link)
-        stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        try:
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        except:
+            session = SgRequests()
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+
         for store in stores:
             location_name = store["displayName"]
             street_address = store["address"]["line1"].strip()
@@ -77,35 +54,55 @@ def fetch_data():
             longitude = store["geoPoint"]["longitude"]
             search.found_location_at(latitude, longitude)
             store_number = store["name"]
-            if store_number in dup_tracker:
-                continue
-            dup_tracker.append(store_number)
             location_type = "<MISSING>"
-            phone = store["phone"]
-            hours_of_operation = "<INACCESSIBLE>"
-            link = "<MISSING>"
-            # Store data
-            yield [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
+            try:
+                phone = store["phone"]
+            except:
+                phone = ""
+
+            hours_of_operation = ""
+
+            link = "https://www.meijer.com/bin/meijer/store/details?storeId=" + str(
+                store_number
+            )
+            raw_hours = session.get(link, headers=headers).json()["openingHours"][
+                "weekDayOpeningList"
             ]
+            for raw_hour in raw_hours:
+                day = raw_hour["weekDay"]
+                if raw_hour["closed"]:
+                    day_hours = day + " Closed"
+                else:
+                    open_ = raw_hour["openingTime"]["formattedHour"]
+                    close = raw_hour["closingTime"]["formattedHour"]
+                    day_hours = day + " " + open_ + "-" + close
+                hours_of_operation = (hours_of_operation + " " + day_hours).strip()
+
+            page_url = (
+                "https://www.meijer.com/shopping/store-locator/"
+                + str(store_number)
+                + ".html"
+            )
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

@@ -1,112 +1,81 @@
-import re
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
+    start_url = "https://www.illegalpetes.com/Locations/du"
+    domain = "illegalpetes.com"
 
-    items = []
-
-    start_url = "https://www.illegalpetes.com/hours-locations/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
-    data = dom.xpath('//script[@type="application/ld+json"]/text()')[0]
+    data = dom.xpath('//script[@id="__NEXT_DATA__"]/text()')[0]
     data = json.loads(data)
-
-    for poi in data["subOrganization"]:
-        store_url = poi["url"]
-        loc_response = session.get(store_url)
+    for poi in data["props"]["pageProps"]["locations"]:
+        page_url = "https://www.illegalpetes.com/Locations/" + poi["fields"]["linkName"]
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["telephone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = poi["@type"]
-        latitude = loc_dom.xpath("//@data-gmaps-lat")[0]
-        longitude = loc_dom.xpath("//@data-gmaps-lng")[0]
         hoo = loc_dom.xpath(
-            '//div[h2[contains(text(), "Hours & Location")]]/h3//text()'
+            '//h3[contains(text(), "Main Store Hours")]/following-sibling::div[@class="location-hours"]/text()'
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
         if not hoo:
-            location_type = "temporarily closed"
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            hoo = loc_dom.xpath(
+                '//h3[text()="Hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Main Hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Main Store hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Colfax Hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Hours")]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["fields"]["storeName"],
+            street_address=poi["fields"]["locationInfo"]["fields"]["addressLine1"],
+            city=poi["fields"]["locationInfo"]["fields"]["city"],
+            state=poi["fields"]["locationInfo"]["fields"]["state"],
+            zip_postal=poi["fields"]["locationInfo"]["fields"]["zip"],
+            country_code="",
+            store_number="",
+            phone=poi["fields"]["storePhone"],
+            location_type="",
+            latitude=poi["fields"]["locationInfo"]["fields"]["latLong"]["lat"],
+            longitude=poi["fields"]["locationInfo"]["fields"]["latLong"]["lon"],
+            hours_of_operation=hoo,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

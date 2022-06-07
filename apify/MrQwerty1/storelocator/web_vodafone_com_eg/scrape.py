@@ -11,24 +11,26 @@ def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    divs = tree.xpath(
-        "//table[@class='table table-striped table-bordered mb-0 text-center']//tr[./td]"
-    )
+    divs = tree.xpath("//div[@id='accordionExample']/div")
     for d in divs:
-        location_name = "".join(d.xpath("./td[2]//text()")).strip()
-        street_address = "".join(d.xpath("./td[3]//text()")).strip()
-        state = "".join(d.xpath("./td[1]//text()")).strip()
+        city = "".join(d.xpath(".//h4/span/text()")).strip()
+        tr = d.xpath(".//tr[./td]")
+        for t in tr:
+            location_name = "".join(t.xpath("./td[2]//text()")).strip()
+            street_address = "".join(t.xpath("./td[3]//text()")).strip()
+            state = "".join(t.xpath("./td[1]//text()")).strip()
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            state=state,
-            country_code="EG",
-            locator_domain=locator_domain,
-        )
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                country_code="EG",
+                locator_domain=locator_domain,
+            )
 
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":

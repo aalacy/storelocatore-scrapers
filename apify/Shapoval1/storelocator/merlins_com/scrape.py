@@ -1,62 +1,40 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from concurrent import futures
 
 
-def get_urls():
-    session = SgRequests()
-    ur = []
-    api_url = "https://api.merlins.com/api/stores/"
-    r = session.get(api_url)
-    js = json.loads(r.text)["message"]["stores"]
-    for j in js:
-        store_number = j.get("storeId")
-        ur.append(store_number)
-    return ur
+def fetch_data(sgw: SgWriter):
 
-
-def get_data(url, sgw: SgWriter):
     locator_domain = "https://www.merlins.com/"
-    api_url = f"https://api.merlins.com/api/store/{url}"
+    api_url = "https://api.merlins.com/api/stores/"
     session = SgRequests()
-    r = session.get(api_url)
-    js = json.loads(r.text)["message"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["message"]["stores"]
     for j in js:
-        if not j:
-            continue
-        store_number = j.get("storeId")
-        street_address = (
-            f"{j.get('streetAddress1')} {j.get('streetAddress2')}" or "<MISSING>"
-        ) or "<MISSING>"
-        city = "".join(j.get("locationCity")) or "<MISSING>"
-        state = "".join(j.get("locationState")) or "<MISSING>"
+
+        slug = j.get("locationCitySlug")
+        street_address = j.get("streetAddress1") or "<MISSING>"
+        state = j.get("locationState") or "<MISSING>"
         postal = j.get("locationPostalCode") or "<MISSING>"
         country_code = "US"
-        page_url = j.get("storeURL") or "<MISSING>"
-        if page_url.find("plainfieldsouth") != -1:
-            page_url = f"https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}"
-        if page_url.find("plainfieldnorth") != -1:
-            page_url = f"https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        r = session.get(page_url)
+        city = j.get("locationCity") or "<MISSING>"
+        store_number = j.get("storeId") or "<MISSING>"
+        page_url = f"https://www.merlins.com/locations/{str(state).lower()}/{slug}-{store_number}/"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("rawPhone") or "<MISSING>"
+        r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-
-        location_name = (
-            " ".join(tree.xpath("//h1//text()")).replace("\n", "").strip()
-            or "<MISSING>"
-        )
-        location_name = " ".join(location_name.split())
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//div[@class="location-content common-text"]/div[2]/p[position()>1]//text()'
+                    '//p[contains(text(), "HOURS")]/following-sibling::p//text()'
                 )
             )
             .replace("\n", "")
@@ -64,6 +42,8 @@ def get_data(url, sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        location_name = " ".join(tree.xpath("//h1//text()")).replace("\n", "").strip()
+        location_name = " ".join(location_name.split()) or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -80,23 +60,13 @@ def get_data(url, sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)
 
 
-def fetch_data(sgw: SgWriter):
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
-
-
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

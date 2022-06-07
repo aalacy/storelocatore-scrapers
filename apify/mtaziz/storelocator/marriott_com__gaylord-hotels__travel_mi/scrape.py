@@ -105,6 +105,7 @@ def get__regions_submit_search_urls():
 def fetch_data_for_non_api_based_child_brands():
     # This scrapes the Data for Edition Hotels across the world
     total = 0
+    items = []
     regions_submit_search_urls = get__regions_submit_search_urls()
     with SgChrome(
         executable_path=ChromeDriverManager().install(), is_headless=True
@@ -230,7 +231,7 @@ def fetch_data_for_non_api_based_child_brands():
                                     hours_of_operation=hours_of_operation,
                                     raw_address=raw_address,
                                 )
-                                yield rec
+                                items.append(rec.as_dict())
 
                         if i > 1:
                             url_base_findHotels_custom = (
@@ -328,7 +329,7 @@ def fetch_data_for_non_api_based_child_brands():
                                     hours_of_operation=hours_of_operation,
                                     raw_address=raw_address,
                                 )
-                                yield rec
+                                items.append(rec.as_dict())
 
                 else:
                     # No need to update referer
@@ -424,14 +425,66 @@ def fetch_data_for_non_api_based_child_brands():
                             hours_of_operation=hours_of_operation,
                             raw_address=raw_address,
                         )
-                        yield rec
+                        items.append(rec.as_dict())
         logger.info(f"Records Found per Country or State: {total}")
     logger.info(f"Total Records: {total}")
+    return items
+
+
+def scrape_until_all_stores_fetched():
+    logger.info("Started")
+    results = fetch_data_for_non_api_based_child_brands()
+    logger.info("=====================Results=====================")
+    logger.info(f"List of Results: \n{results}")
+    if not results:
+        logger.info(f"Results is Empty | List of Results: {results}")
+        logger.info("Attempting 2nd Round!!")
+        results = fetch_data_for_non_api_based_child_brands()
+        if not results:
+            logger.info("3rd Attempt!")
+            results = fetch_data_for_non_api_based_child_brands()
+            if not results:
+                return results
+            else:
+                logger.info("3rd Attempt SUCCEDED OK!")
+                return results
+        else:
+            logger.info("2nd Attempt SUCCEDED OK!")
+            return results
+    else:
+        logger.info("1st Attempt SUCCEDED OK!")
+        return results
+
+    logger.info(f"No of records being processed: {len(results)}")
+    logger.info("Finished")
+
+
+def fetch_data(sgw: SgWriter):
+    data = scrape_until_all_stores_fetched()
+    for item in data:
+        rec = SgRecord(
+            locator_domain=item["locator_domain"],
+            page_url=item["page_url"],
+            location_name=item["location_name"],
+            street_address=item["street_address"],
+            city=item["city"],
+            state=item["state"],
+            zip_postal=item["zip"],
+            country_code=item["country_code"],
+            store_number=item["store_number"],
+            phone=item["phone"],
+            location_type=item["location_type"],
+            latitude=item["latitude"],
+            longitude=item["longitude"],
+            hours_of_operation=item["hours_of_operation"],
+            raw_address=item["raw_address"],
+        )
+
+        sgw.write_row(rec)
 
 
 def scrape():
     logger.info("Started")
-    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -446,13 +499,7 @@ def scrape():
             )
         )
     ) as writer:
-        results = fetch_data_for_non_api_based_child_brands()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+        fetch_data(writer)
 
 
 if __name__ == "__main__":

@@ -36,9 +36,12 @@ def fetch_data():
                 location_name = loc.find("h3").text
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
-                temp = soup.findAll("div", {"class": "col span_3_of_12"})
-                if len(temp) > 3:
-                    temp = temp[1:-1]
+                temp = (
+                    soup.find("article")
+                    .find_all("div", class_="section")[-1]
+                    .find_all("div", class_="span_3_of_12")
+                )
+
                 address = temp[0].find("a")
                 try:
                     phone = temp[2].find("a").text
@@ -50,6 +53,9 @@ def fetch_data():
                     .replace("|", " ")
                     .replace("Hours", "")
                 )
+                if "Phone" in hours_of_operation:
+                    phone = hours_of_operation.split("Phone")[1]
+                    hours_of_operation = MISSING
                 try:
                     coords = address["href"].split("@")[1].split(",")
                     latitude = coords[0]

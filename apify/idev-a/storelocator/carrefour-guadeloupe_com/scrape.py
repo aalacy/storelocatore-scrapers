@@ -26,7 +26,7 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.h2.text.strip(),
+                location_name=" ".join(_.h2.stripped_strings),
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,

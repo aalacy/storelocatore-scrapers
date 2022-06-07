@@ -43,8 +43,8 @@ def fetch_data(sgw: SgWriter):
             country_code = j.get("properties").get("country")
             city = a.city or "<MISSING>"
             store_number = j.get("properties").get("id")
-            latitude = j.get("geometry").get("coordinates")[1]
-            longitude = j.get("geometry").get("coordinates")[0]
+            latitude = j.get("geometry").get("coordinates")[0]
+            longitude = j.get("geometry").get("coordinates")[1]
             phone = j.get("properties").get("telephone")
             if city.isdigit():
                 city = "<MISSING>"

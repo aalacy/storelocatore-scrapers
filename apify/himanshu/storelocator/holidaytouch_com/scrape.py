@@ -1,93 +1,76 @@
-import json
-from lxml import html
-from sgscrape.sgrecord import SgRecord
+# -*- coding: utf-8 -*-
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
-def fetch_data(sgw: SgWriter):
+def fetch_data():
+    session = SgRequests(verify_ssl=False)
 
-    locator_domain = "https://www.holidayseniorliving.com/"
-    api_url = "https://www.holidayseniorliving.com/search-for-senior-apartments"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    start_url = "https://www.holidayseniorliving.com/retirement-communities"
+    domain = ""
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//li[@class="footer-top__item text"]/a')
-    for d in div:
-        slug = "".join(d.xpath(".//@href"))
-        spage_url = f"https://www.holidayseniorliving.com{slug}"
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-        session = SgRequests()
-        r = session.get(spage_url, headers=headers)
-        tree = html.fromstring(r.text)
-        jsblock = (
-            "".join(tree.xpath('//script[contains(text(), "var communities")]/text()'))
-            .split("var communities = ")[1]
-            .split(";")[0]
-            .strip()
-        )
-        js = json.loads(jsblock)
-        for j in js:
-            slug = j.get("Url")
-            page_url = f"https://www.holidayseniorliving.com{slug}"
-            location_name = j.get("Name") or "<MISSING>"
-            street_address = j.get("Address") or "<MISSING>"
-            state = j.get("State") or "<MISSING>"
-            postal = j.get("ZipCode") or "<MISSING>"
-            country_code = "US"
-            city = j.get("City") or "<MISSING>"
-            latitude = j.get("Latitude") or "<MISSING>"
-            longitude = j.get("Longitude") or "<MISSING>"
-            session = SgRequests()
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-
-            ph = tree.xpath('//a[contains(@href, "tel")]/text()')
-            phone = "".join(ph[1]).replace("Call", "").strip() or "<MISSING>"
-
-            hours = (
-                " ".join(
-                    tree.xpath(
-                        '//h2[contains(text(), "Senior Apartments")]/following-sibling::div[1]/p/span/text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
+    all_states = dom.xpath(
+        '//a[@class="super-footer-li-links" and contains(@href, "senior-living-communities")]/@href'
+    )
+    for url in all_states:
+        state_url = urljoin(start_url, url)
+        response = session.get(state_url)
+        dom = etree.HTML(response.text)
+        all_locations = dom.xpath('//div[@class="communityCard__info"]/div/a/@href')
+        for url in all_locations:
+            page_url = urljoin(start_url, url)
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            raw_address = loc_dom.xpath(
+                '//p[@class="community-info__community-address"]/text()'
             )
-            hours_of_operation = "<MISSING>"
-            if hours.find("We're here from") != -1:
-                hours_of_operation = (
-                    hours.split("We're here from")[1].split("and ")[0].strip()
-                )
+            phone = loc_dom.xpath(
+                '//div[@class="community-info__phone-number-container"]/a/text()'
+            )
+            phone = phone[0] if phone else ""
 
-            row = SgRecord(
-                locator_domain=locator_domain,
+            item = SgRecord(
+                locator_domain=domain,
                 page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=SgRecord.MISSING,
+                location_name="",
+                street_address=raw_address[0].replace(",", ""),
+                city=raw_address[1].split(",")[0],
+                state=" ".join(raw_address[1].split(",")[1].split()[:-1]),
+                zip_postal=raw_address[1].split(",")[1].split()[-1],
+                country_code="",
+                store_number="",
                 phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation="",
             )
 
-            sgw.write_row(row)
+            yield item
+
+
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
-        fetch_data(writer)
+    scrape()

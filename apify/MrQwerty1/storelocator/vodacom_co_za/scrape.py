@@ -10,7 +10,10 @@ def fetch_data(coords, sgw: SgWriter):
     lat, lng = coords
     api = f"https://www.vodacom.co.za//cloud/rest/v1/geographicSiteManagement/geographicSites?latitude={lat}&longitude={lng}&storeTypes=Chatz&storeTypes=Repair%20Centre&storeTypes=Vodacom%204U&storeTypes=Vodacom%20Approved%20Dealer&storeTypes=Vodacom%20Shop&storeTypes=Vodacom%20Express&clientType=CBU"
     r = session.get(api, headers=headers)
-    js = r.json()["result"]
+    try:
+        js = r.json()["result"]
+    except:
+        return
 
     for j in js:
         a = j.get("address") or {}
