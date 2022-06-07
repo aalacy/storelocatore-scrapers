@@ -307,7 +307,7 @@ def _d(loc, domain, country):
     return SgRecord(
         page_url=page_url,
         store_number=_["id"],
-        location_name=_["name"],
+        location_name=_["name"].split("-")[0],
         street_address=_["address"],
         city=city,
         state=state,
