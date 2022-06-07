@@ -1,4 +1,3 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -15,6 +14,7 @@ def fetch_data(sgw: SgWriter):
     api_urls = [
         "https://alberta.churchstexaschicken.com/Location",
         "https://ontario.churchstexaschicken.com/Location",
+        "https://lowermainland.churchstexaschicken.com/Location",
     ]
     for api_url in api_urls:
 
@@ -69,6 +69,16 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             hours_of_operation = " ".join(hours_of_operation.split())
+            text = "".join(d.xpath('.//a[contains(text(), " Get Directions")]/@href'))
+            try:
+                if text.find("ll=") != -1:
+                    latitude = text.split("ll=")[1].split(",")[0]
+                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                else:
+                    latitude = text.split("@")[1].split(",")[0]
+                    longitude = text.split("@")[1].split(",")[1]
+            except IndexError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -82,95 +92,13 @@ def fetch_data(sgw: SgWriter):
                 store_number=SgRecord.MISSING,
                 phone=phone,
                 location_type=SgRecord.MISSING,
-                latitude=SgRecord.MISSING,
-                longitude=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=ad,
             )
 
             sgw.write_row(row)
-
-    locator_domain = "https://www.churchschicken.ca/"
-    api_url = "https://www.churchschicken.ca/british-columbia/locations/"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    js_block = (
-        "".join(tree.xpath('//script[contains(text(), "var map2")]/text()'))
-        .split('"places":')[1]
-        .split(',"map_tabs"')[0]
-        .strip()
-    )
-    js = json.loads(js_block)
-    for j in js:
-        info = j.get("content")
-        b = html.fromstring(info)
-        a = j.get("location")
-        location_name = j.get("title") or "<MISSING>"
-        page_url = a.get("redirect_custom_link")
-        info_lst = b.xpath("//text()")
-        info_lst = list(filter(None, [c.strip() for c in info_lst]))
-        street_address = "".join(info_lst[0]).strip()
-        if street_address.find("Centre") != -1 or street_address.find("NOW OPEN") != -1:
-            street_address = "".join(info_lst[1]).strip()
-        state = a.get("state")
-        postal = a.get("postal_code")
-        country_code = a.get("country")
-        city = a.get("city")
-        store_number = j.get("id") or "<MISSING>"
-        latitude = a.get("lat")
-        longitude = a.get("lng")
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        phone = (
-            "".join(
-                tree.xpath(
-                    '//div[./i[contains(@class, "fa-phone")]]/following-sibling::p//text()'
-                )
-            )
-            or "<MISSING>"
-        )
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//div[./i[contains(@class, "fa-clock")]]/following-sibling::p//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = (
-            " ".join(hours_of_operation.split())
-            .replace("Drive thru 24 hours", "")
-            .replace("24 hour drive thru", "")
-            .replace("No drive thru / pick up window", "")
-            .replace("24 hour pick up window", "")
-            or "<MISSING>"
-        )
-        if hours_of_operation.find("Pick up") != -1:
-            hours_of_operation = hours_of_operation.split("Pick up")[0].strip()
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
-
-        sgw.write_row(row)
 
 
 if __name__ == "__main__":

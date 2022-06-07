@@ -26,7 +26,12 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
-
+        info = tree.xpath("//h1/following-sibling::div//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        phone = "<MISSING>"
+        for i in info:
+            if str(i).replace("-", "").strip().isdigit():
+                phone = str(i)
         street_address = "<MISSING>"
         state = "<MISSING>"
         postal = ad
@@ -68,7 +73,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
-            phone=SgRecord.MISSING,
+            phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,

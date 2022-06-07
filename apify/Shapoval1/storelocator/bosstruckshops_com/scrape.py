@@ -35,6 +35,8 @@ def get_data(url, sgw: SgWriter):
     ad = tree.xpath('//a[contains(text(), "DIRECTIONS")]/following::div[1]//text()')
     ad = list(filter(None, [a.strip() for a in ad]))
     adr = "".join(ad[0]).strip()
+    if page_url == "https://bosstruckshops.com/locations/hubbard-oh-boss-truck-shop/":
+        adr = "".join(ad[1]).strip() + " " + "".join(ad[2]).strip()
     a = parse_address(USA_Best_Parser(), adr)
     street_address = (
         f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
@@ -49,7 +51,6 @@ def get_data(url, sgw: SgWriter):
         city = adr.split(",")[0].split()[-1].strip()
         state = adr.split(",")[1].strip()
         postal = adr.split(",")[-1].strip()
-
     location_name = (
         " ".join(
             tree.xpath('//a[contains(text(), "DIRECTIONS")]/preceding::h3[1]//text()')

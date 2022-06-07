@@ -100,6 +100,8 @@ def fetch_data():
                     hours_of_operation = MISSING
                 elif "Temporarily Closed" in hours_of_operation:
                     hours_of_operation = "Temporarily Closed"
+                if "Welcome to Good Family Food" in hours_of_operation:
+                    continue
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,

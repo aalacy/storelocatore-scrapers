@@ -46,7 +46,9 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             if "australia" in api:
                 locator_domain = "https://decathlon.com.au/"
-                page_url = j.get("web") or ""
+                page_url = (
+                    j.get("web") or "https://decathlon.com.au/pages/store-locator"
+                )
                 page_url = page_url.replace("\\", "")
             else:
                 locator_domain = "https://decathlon.lk/"
@@ -56,6 +58,8 @@ def fetch_data(sgw: SgWriter):
             street_address = street_address.replace("\\", "").replace("/", "")
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            if street_address.split(", ")[-1].count(" ") == 0:
+                street_address = street_address.split(",")[0].strip()
             city = j.get("city")
             state = j.get("state")
             postal = j.get("postal")

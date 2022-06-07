@@ -106,9 +106,13 @@ def fetch_locations(lat, lng):
                     hours = hours + day + " " + loc[day] + " "
             except:
                 hours = "<MISSING>"
-        phone = phone.replace("t. ", "").replace("?", "").strip()
         if len(phone) < 3:
             phone = "<MISSING>"
+        phone = phone.replace("t. ", "").replace("?", "").strip()
+        try:
+            phone = phone.split(",", 1)[0]
+        except:
+            pass
         locations.append(
             SgRecord(
                 locator_domain="https://www.crocs.com/",
@@ -134,8 +138,8 @@ def fetch_data():
 
     mylist = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=10,
-        max_search_distance_miles=100,
+        expected_search_radius_miles=5,
+        max_search_distance_miles=1000,
     )
     search = list(mylist)
 

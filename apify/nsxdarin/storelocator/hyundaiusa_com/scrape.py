@@ -94,7 +94,6 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
-            return
 
 
 def scrape():

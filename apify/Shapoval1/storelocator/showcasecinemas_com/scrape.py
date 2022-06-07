@@ -21,6 +21,7 @@ def fetch_data(sgw: SgWriter):
         .split("pc.cinemas = ")[1]
         .split(";")[0]
         .replace("false", "False")
+        .replace("null", " None")
         .strip()
     )
     js = eval(js_block)

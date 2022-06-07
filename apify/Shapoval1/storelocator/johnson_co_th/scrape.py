@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./h4]")
+    div = tree.xpath("//div[./p/i[@class='icon-location']]")
     for d in div:
 
         page_url = "https://johnson.co.th/all-stores/"
@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "TH"
         city = a.city or "<MISSING>"
-        map_link = "".join(d.xpath(".//preceding::iframe[1]/@src"))
+        map_link = "".join(d.xpath(".//preceding::iframe[1]/@nitro-lazy-src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
