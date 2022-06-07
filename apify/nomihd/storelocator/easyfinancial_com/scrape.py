@@ -14,7 +14,6 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetch_data():
-
     options = uc.ChromeOptions()
     options.headless = True
     options.add_argument("--headless")
@@ -30,6 +29,7 @@ def fetch_data():
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
         )
+        session.set_script_timeout(300)
         session.get("https://easyfinancial.com")
 
         payload = {
