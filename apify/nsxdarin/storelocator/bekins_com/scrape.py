@@ -24,8 +24,7 @@ def fetch_data():
             and "<loc>https://www.bekins.com/find-a-local-agent/agents/<" not in line
         ):
             lurl = line.split("<loc>")[1].split("<")[0]
-            if "/bekins-moving-solutions" in lurl:
-                locs.append(lurl)
+            locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
         logger.info(("Pulling Location %s..." % loc))
