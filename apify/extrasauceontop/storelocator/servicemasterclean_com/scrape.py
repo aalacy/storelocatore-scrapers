@@ -22,8 +22,6 @@ def get_data():
     x = 0
     for search_code in search:
         x = x + 1
-        # if x == 10:
-        #     return
         params = {
             "zipcode": search_code,
             "distance": "5000",
