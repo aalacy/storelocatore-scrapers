@@ -29,7 +29,7 @@ def get_data(url, sgw: SgWriter):
 
     page_url = url.replace(".json", "")
     location_name = "J.Crew Factory"
-    a = j.get("address")
+    a = j.get("address") or {}
 
     street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
     city = a.get("city")
@@ -40,36 +40,30 @@ def get_data(url, sgw: SgWriter):
     phone = j.get("mainPhone").get("display")
     latitude = j["yextDisplayCoordinate"]["lat"]
     longitude = j["yextDisplayCoordinate"]["long"]
-    days = j["hours"]["normalHours"]
+    try:
+        days = j["hours"]["normalHours"]
+    except:
+        days = []
 
     _tmp = []
     for d in days:
-        day = d.get("day")[:3].capitalize()
+        day = d.get("day")
         try:
             interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            end = str(interval.get("end"))
+            start = str(interval.get("start")).zfill(4)
+            end = str(interval.get("end")).zfill(4)
 
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
-            if start == "0":
+            if start == "0000":
                 start = "1200"
 
-            line = f"{day}:  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+            line = f"{day}:  {start[:2]}:{start[2:]}-{end[:2]}:{end[2:]}"
         except IndexError:
             line = f"{day}:  Closed"
 
         _tmp.append(line)
 
     hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
-    if (
-        hours_of_operation.count("Closed") == 7
-        or location_name.lower().find("closed") != -1
-    ):
+    if hours_of_operation.count("Closed") == 7:
         hours_of_operation = "Closed"
 
     row = SgRecord(
@@ -95,7 +89,7 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = generate_links()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

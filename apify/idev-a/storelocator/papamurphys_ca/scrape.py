@@ -14,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "http://papamurphys.ca/"
-base_url = "https://papa-murphys-order-online-locations.securebrygid.com/zgrid/themes/13097/portal/index.jsp"
+base_url = "https://papamurphys.ca/locations-list/"
 
 
 def _p(val):
@@ -38,38 +38,37 @@ def _p(val):
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.restaurant")
+        links = soup.select("div.container div.grid div.row-span-2.p-8")
         logger.info(f"{len(links)} found")
         for link in links:
-            _addr = list(link.p.stripped_strings)
-            raw_address = " ".join(_addr[:2])
+            _addr = list(link.select_one("div.mt-6").stripped_strings)
+            raw_address = " ".join(_addr)
             addr = parse_address_intl(raw_address + ", Canada")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             phone = ""
-            if _p(_addr[2]):
-                phone = _addr[2]
+            if link.p.a and _p(link.p.a.text):
+                phone = link.p.a.text.strip()
             hours = []
-            if len(link.select("p")) > 1:
-                for hh in link.select("p")[1].stripped_strings:
-                    if "delivery" in hh.lower():
-                        break
-                    hours.append(hh)
+            for hh in link.select("h4.location_time"):
+                if "delivery" in hh.text.lower():
+                    break
+                hours.append(hh.text.strip())
 
-            page_url = base_url
-            if link.select_one("a.portalbtn"):
-                page_url = link.select_one("a.portalbtn")["href"]
-
+            coord = link.script.text.split("location_y+'/")[1].split('"')[0].split(",")
+            state = link.find_parent().find_previous_sibling().text.strip()
             yield SgRecord(
-                page_url=page_url,
-                location_name=link.h6.text.strip(),
+                page_url=base_url,
+                location_name=link.h2.text.strip(),
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
                 raw_address=raw_address,

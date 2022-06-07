@@ -57,7 +57,7 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         city = a.city or "<MISSING>"
-        if city == "<MISSING>":
+        if city == "<MISSING>" and location_name.find(",") != -1:
             city = location_name.split(",")[1].strip()
         if page_url == "https://www.delsol.com/stores/cozumel":
             street_address = (
@@ -97,6 +97,8 @@ def fetch_data(sgw: SgWriter):
         )
         if phone.find("or") != -1:
             phone = phone.split("or")[0].strip()
+        if phone.find("ext") != -1:
+            phone = phone.split("ext")[0].strip()
         hours_of_operation = (
             " ".join(tree.xpath('//tr[@class="hours-row"]/td/text()'))
             .replace("\n", "")

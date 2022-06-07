@@ -19,7 +19,6 @@ API_ENDPOINT_URL = "https://use1-prod-bk.rbictg.com/graphql"
 search_keywords = "Lagos Tavern, Rosina Road, Bellavista, Johannesburg, South Africa"
 logger.info(f"Search Keywords: {search_keywords}")
 
-
 latitude_za = -34.087223
 longitude_za = 18.360556
 
@@ -87,36 +86,49 @@ def fetch_data():
             if poi["physicalAddress"]["address2"]:
                 street_address += " " + poi["physicalAddress"]["address2"]
 
-            hoo = []
-            hoo_dict = {}
-            for k, time in poi["diningRoomHours"].items():
-                if "_" in k:
-                    continue
-                if "Close" in k:
-                    day = k.replace("Close", "")
-                    if hoo_dict.get(day):
-                        hoo_dict[day]["closes"] = time
-                    else:
-                        hoo_dict[day] = {}
-                        hoo_dict[day]["closes"] = time
-                else:
-                    day = k.replace("Open", "")
-                    if hoo_dict.get(day):
-                        hoo_dict[day]["opens"] = time
-                    else:
-                        hoo_dict[day] = {}
-                        hoo_dict[day]["opens"] = time
-            for day, time in hoo_dict.items():
-                hoo.append(f'{day} {time["opens"]} - {time["closes"]}')
-            hours_of_operation = " ".join(hoo)
+            hoo = ""
+
+            dining_hours = poi["diningRoomHours"]
+            if dining_hours:
+                sato = dining_hours.get("satOpen")
+                satc = dining_hours.get("satClose")
+                suno = dining_hours.get("sunOpen")
+                sunc = dining_hours.get("sunClose")
+                mono = dining_hours.get("monOpen")
+                monc = dining_hours.get("monClose")
+                tueo = dining_hours.get("tueOpen")
+                tuec = dining_hours.get("tueClose")
+                wedo = dining_hours.get("wedOpen")
+                wedc = dining_hours.get("wedClose")
+                thro = dining_hours.get("thrOpen")
+                thrc = dining_hours.get("thrClose")
+                frio = dining_hours.get("friOpen")
+                fric = dining_hours.get("friClose")
+
+                sat = f"Sat {sato} - {satc}"
+                sun = f"Sun {suno} - {sunc}"
+                mon = f"Mon {mono} - {monc}"
+                tue = f"Tue {tueo} - {tuec}"
+                wed = f"Wed {wedo} - {wedc}"
+                thu = f"Thu {thro} - {thrc}"
+                fri = f"Fri {frio} - {fric}"
+
+                hoo = f"{sat}; {sun}; {mon}; {tue}, {wed}, {thu}, {fri}"
+                hoo = hoo.replace("None - None", "Closed")
+                logger.info(f"HOO: {hoo}")
+
             phone = poi["phoneNumber"]
             if str(phone) == "0":
                 phone = SgRecord.MISSING
 
+            locname = poi["physicalAddress"]["address1"].replace(
+                ",Unit 07 & 08, Adderley Street", ""
+            )
+
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
-                location_name=poi["name"],
+                location_name=locname,
                 street_address=street_address,
                 city=poi["physicalAddress"]["city"],
                 state=poi["physicalAddress"]["stateProvince"],
@@ -127,7 +139,7 @@ def fetch_data():
                 location_type=SgRecord.MISSING,
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hoo,
             )
 
             yield item

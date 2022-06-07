@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://sysco.com/#dcs"
+    locator_domain = "https://www.sysco.com/"
     api_url = "https://www.sysco.com/Contact/Contact/Our-Locations.html"
     session = SgRequests()
     headers = {
@@ -46,12 +46,17 @@ def fetch_data(sgw: SgWriter):
             )
             street_address = i.get("street") or "<MISSING>"
             state = i.get("state") or "<MISSING>"
+            if state == "0":
+                state = "<MISSING>"
             postal = i.get("zip") or "<MISSING>"
             country_code = i.get("country") or "<MISSING>"
             city = i.get("city") or "<MISSING>"
             latitude = i.get("lat") or "<MISSING>"
             longitude = i.get("lng") or "<MISSING>"
             phone = i.get("mainPhone") or "<MISSING>"
+            if str(phone).find("or") != -1:
+                phone = str(phone).split("or")[0].strip()
+
             hours_of_operation = i.get("customerServiceHours") or "<MISSING>"
 
             row = SgRecord(

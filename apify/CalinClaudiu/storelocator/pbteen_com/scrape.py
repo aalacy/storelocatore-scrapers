@@ -22,7 +22,6 @@ def fix_record2(rec):
     rec = rec[0]
     k = {}
     k["host"] = "<MISSING>"
-
     try:
         k["name"] = rec["storeDisplayName"]
     except Exception:
@@ -52,6 +51,12 @@ def fix_record2(rec):
     k["country"] = country
     k["id"] = "<MISSING>"
     k["hours"] = "<MISSING>"
+    if k["hours"] == "<MISSING>":
+        try:
+            k["hours"] = str(rec["timings1"]) + ", " + str(rec["timings2"])
+        except Exception:
+            k["hours"] = "<MISSING>"
+
     return k
 
 
@@ -144,6 +149,11 @@ def fix_record(rec, host):
         k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
     except Exception:
         k["type"] = "<MISSING>"
+    try:
+        k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
+    except Exception:
+        k["type"] = "<MISSING>"
+
     return k
 
 
@@ -227,7 +237,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
-            mapping=["address"], part_of_record_identity=True
+            mapping=["address"], part_of_record_identity=True, is_required=False
         ),
         city=sp.MappingField(
             mapping=["city"], is_required=False, part_of_record_identity=True

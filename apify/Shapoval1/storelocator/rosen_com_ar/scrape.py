@@ -39,6 +39,13 @@ def fetch_data(sgw: SgWriter):
                 )
                 state = a.state or "<MISSING>"
                 postal = a.postcode or "<MISSING>"
+                postal = (
+                    str(postal)
+                    .replace("C", "")
+                    .replace(".", "")
+                    .replace("P", "")
+                    .strip()
+                )
                 city = a.city or "<MISSING>"
                 latitude = l.get("lat") or "<MISSING>"
                 longitude = l.get("lng") or "<MISSING>"

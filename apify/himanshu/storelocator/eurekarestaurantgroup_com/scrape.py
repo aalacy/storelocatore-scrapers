@@ -1,5 +1,5 @@
-import lxml.html
-import usaddress
+import json
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -11,7 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "eurekarestaurantgroup_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -25,79 +24,53 @@ def fetch_data():
     soup = BeautifulSoup(
         session.get("https://eurekarestaurantgroup.com/locations").text, "lxml"
     )
-    for url in soup.find("section", {"id": "content"}).find_all("a"):
-        page_url = url["href"]
+    for url in soup.find_all(class_="location-links"):
+        page_url = DOMAIN + url.a["href"]
         log.info(page_url)
         store_resp = session.get(page_url).text
-        store_sel = lxml.html.fromstring(store_resp)
         location_soup = BeautifulSoup(store_resp, "lxml")
+        js = location_soup.find(id="__NEXT_DATA__").contents[0]
+        store = json.loads(js)["props"]["pageProps"]["data"]["data"]
 
-        location_name = "".join(
-            store_sel.xpath('//h1[@data-yext-field="locationName"]/text()')
-        ).strip()
-        address = (
-            location_soup.find("div", {"class": "col-sm-3 padding-0"})
-            .find("p")
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-            .replace("Get Directions", "")
-        )
-        address = address.replace(",", " ")
-        address = usaddress.parse(address)
-        i = 0
-        street_address = ""
-        city = ""
-        state = ""
-        zip_postal = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street_address = street_address + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                zip_postal = zip_postal + " " + temp[0]
-            i += 1
-        country_code = "US"
-        phone = "".join(store_sel.xpath('//a[contains(@href,"tel:")]/text()')).strip()
-        if not phone:
-            phone = MISSING
+        location_name = store["name"]
+        if " soon" in location_name.lower():
+            continue
 
-        temp_hours = store_sel.xpath('//p[@class="hours-large"]')
-        hours_list = []
-        for hour in temp_hours:
-            hours_list.append(
-                "".join(hour.xpath("text()"))
-                .strip()
-                .replace("\n", ":")
-                .strip()
-                .replace("    ", "")
-                .strip()
-                .replace(" :", ": ")
-                .replace("to", " to")
-                .strip()
+        street_address = store["address_line_1"]
+        if store["address_line_2"]:
+            street_address = street_address + " " + store["address_line_2"]
+        if store["address_line_3"]:
+            street_address = (
+                street_address
+                + " "
+                + store["address_line_3"].replace("Cupertino", "").strip()
             )
 
-        hours_of_operation = " ".join(hours_list)
-        if "Opens" in hours_of_operation:
-            continue
-        latitude = MISSING
-        longitude = MISSING
-        if "maps/place" in store_resp:
-            map_link = store_resp.split("maps/place")[1].strip().split('"')[0].strip()
-            if "/@" in map_link:
-                latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
-                longitude = map_link.split("/@")[1].strip().split(",")[1]
+        if re.search(r"\d", street_address):
+            digit = str(re.search(r"\d", street_address))
+            start = int(digit.split("(")[1].split(",")[0])
+            street_address = street_address[start:]
+
+        street_address = (
+            street_address.replace("The Willows", "").replace("Main Street", "").strip()
+        )
+
+        city = store["city"]
+        state = store["state"]
+        zip_postal = store["zip"]
+        country_code = "US"
+        phone = store["phone"]
+        store_number = ""
+
+        hours_of_operation = ""
+        raw_hours = store["hours"]
+        for row in raw_hours:
+            day = row["day"]
+            hours = row["store_hours"]
+            hours_of_operation = (hours_of_operation + " " + day + " " + hours).strip()
+
+        latitude = store["latitude"]
+        longitude = store["longitude"]
 
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -108,7 +81,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,

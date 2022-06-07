@@ -1,4 +1,5 @@
 import datetime
+import re
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -59,6 +60,9 @@ def fetch_data(sgw: SgWriter):
         adr2 = j[10]
         street_address = f"{adr1} {adr2}".strip()
         city = j[12]
+        city = re.sub(r"[A-Z]{2} |[A-Z]{2}, ", "", city)
+        if "BackWerk" in city:
+            city = city.split()[1]
         postal = j[11]
         type_id = str(j[4])
         location_type = types.get(type_id)

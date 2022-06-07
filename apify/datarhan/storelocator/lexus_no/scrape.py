@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -21,44 +20,59 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@class="c-image-text__cta"]/a/@href')
-    for url in all_locations:
+    all_locations = dom.xpath('//div[@class="dealer-details"]')
+    for poi_html in all_locations:
+        url = poi_html.xpath(".//a[@data-gt-dealername]/@href")[-1]
         page_url = urljoin(start_url, url)
-        loc_response = session.get(page_url)
+        loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
-
-        data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
-        poi = json.loads(data)
-        raw_address = poi["address"]
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += ", " + addr.street_address_2
-        geo = loc_dom.xpath("//@data-pos")[0].split(",")
-        hoo = loc_dom.xpath(
-            '//div[@class="c-dealer-contact-card__opening-times"]//text()'
-        )
-        hoo = [e.replace("&nbsp", "").strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo).split("   Åpningstider")[0].replace("I dag: ", "").strip()
-        if hoo == "Åpningstider Mandag  Tirsdag  Onsdag  Torsdag  Fredag  lørdag":
-            hoo = ""
+        data = loc_dom.xpath('//script[contains(text(), "address")]/text()')
+        hoo = ""
+        if data:
+            poi = json.loads(data[0])
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            phone = poi["telephone"]
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+            hoo = loc_dom.xpath(
+                '//h3[label[contains(text(), "Showroom")]]/following-sibling::ul[1]//text()'
+            )
+            hoo = [e.replace("&nbsp", "").strip() for e in hoo if e.strip()]
+            hoo = (
+                " ".join(hoo).split("   Åpningstider")[0].replace("I dag: ", "").strip()
+            )
+            if hoo == "Åpningstider Mandag  Tirsdag  Onsdag  Torsdag  Fredag  lørdag":
+                hoo = ""
+        else:
+            location_name = poi_html.xpath(".//h2/text()")[0]
+            raw_address = poi_html.xpath('.//li[@class="address"]/text()')[0].strip()
+            street_address = raw_address.split("-")[0]
+            city = raw_address.split("-")[1]
+            zip_code = ""
+            phone = ""
+            location_type = ""
+            latitude = ""
+            longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
+            location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code="NO",
             store_number="",
-            phone=poi["contactPoint"]["telephone"],
-            location_type=poi["@type"],
-            latitude=geo[0],
-            longitude=geo[1],
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
-            raw_address=raw_address,
         )
 
         yield item

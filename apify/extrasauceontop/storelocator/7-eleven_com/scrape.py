@@ -7,7 +7,9 @@ from sglogging import sglog
 def get_data():
     log = sglog.SgLogSetup().get_logger(logger_name="7eleven")
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_4(),
+        max_search_distance_miles=10000,
     )
 
     session = SgRequests()

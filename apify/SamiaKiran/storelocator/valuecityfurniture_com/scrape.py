@@ -1,92 +1,85 @@
-from bs4 import BeautifulSoup
-import csv
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("valuecityfurniture_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "valuecityfurniture_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.valuecityfurniture.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    final_data = []
-    url = "https://www.valuecityfurniture.com/store-locator/show-all-locations"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.findAll("div", {"class": "store-locator-stores-result-list-item"})
-    for loc in loclist:
-        title = loc.find("strong", {"class": "sl-storename"}).text
-        phone = loc.find("span", {"class": "sl-phone"}).text
-        phone = phone.strip()
-        street = loc.find("span", {"itemprop": "streetAddress"}).text
-        city = loc.find("span", {"itemprop": "addressLocality"}).text
-        state = loc.find("span", {"itemprop": "addressRegion"}).text
-        pcode = loc.find("span", {"itemprop": "postalCode"}).text
-        hour_list = loc.find("div", {"class": "store-hours-table"})
-        hour_list = hour_list.findAll("ul")
-        hours = ""
-        for temp in hour_list:
-            day = temp.find("li").text
-            time = temp.find("time", {"itemprop": "openingHours"}).text
-            hours = hours + day + " " + time + " "
-        final_data.append(
-            [
-                "https://www.valuecityfurniture.com/",
-                "https://www.valuecityfurniture.com/store-locator/show-all-locations",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<INACCESSIBLE>",
-                "<INACCESSIBLE>",
-                hours,
-            ]
-        )
-    return final_data
+    if True:
+        url = "https://www.valuecityfurniture.com/api/environment/config"
+        log.info("Fetching the token for the API.....")
+        r = session.get(url, headers=headers)
+        token = r.text.split('"SearchServicesApiKey":"')[1].split('"')[0]
+        api_url = "https://api.blueport.com/v1/store?key=" + token
+        loclist = session.get(api_url, headers=headers).json()["stores"]
+        for loc in loclist:
+            try:
+                page_url = DOMAIN + loc["storeUrl"]
+            except:
+                continue
+            location_name = loc["storeName"]
+            store_number = loc["storeKey"]
+            address = loc["storeAddress"]
+            phone = address["telephone"]
+            street_address = address["thoroughfare"]
+            log.info(page_url)
+            city = address["locality"]
+            state = address["administrativeArea"]
+            zip_postal = address["postalCode"]
+            country_code = address["country"]
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            hour_list = loc["storeHours"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                day = hour["day"]
+                time = hour["storeHours"]
+                hours_of_operation = hours_of_operation + " " + day + " " + time
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
