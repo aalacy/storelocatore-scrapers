@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 logger = SgLogSetup().get_logger("aspencreekgrill_com")
 
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -40,6 +40,7 @@ def fetch_data():
                 locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
+        logger.info(loc)
         name = ""
         add = ""
         city = ""
@@ -105,6 +106,9 @@ def fetch_data():
         if (
             "/star" not in loc
             and city != "<MISSING>"
+            and city != ""
+            and "/dad" not in loc
+            and "/rewards" not in loc
             and "campfire-cocktails" not in loc
             and "harvest" not in loc
         ):
