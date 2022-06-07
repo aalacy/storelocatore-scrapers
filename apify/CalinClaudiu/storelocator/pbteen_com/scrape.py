@@ -44,9 +44,39 @@ def fix_record2(rec):
     k["zip"] = "<MISSING>"
 
     try:
+        k["state"] = rec["address"]["stateProvince"]
+    except Exception:
+        k["state"] = "<MISSING>"
+
+    try:
+        k["zip"] = rec["address"]["fullPostalCode"]
+    except Exception:
+        k["zip"] = "<MISSING>"
+
+    try:
         k["city"] = rec["address"]["city"]
     except Exception:
         k["city"] = "<MISSING>"
+
+    try:
+        k["phone"] = rec["formattedPhoneNumber"]
+        phone = []
+        for i in k["phone"]:
+            if i.isdigit():
+                phone.append(i)
+        k["phone"] = "".join(phone)
+    except Exception:
+        k["phone"] = "<MISSING>"
+
+    try:
+        k["page_url"] = rec["storeUrl"]
+    except Exception:
+        k["page_url"] = "<MISSING>"
+
+    try:
+        k["host"] = rec["storeUrl"].split("/")[2]
+    except Exception:
+        k["host"] = "<MISSING>"
 
     k["country"] = country
     k["id"] = "<MISSING>"
@@ -146,6 +176,30 @@ def fix_record(rec, host):
             k["hours"] = "<MISSING>"
 
     try:
+        temphr = []
+        for day in rec["storeHours"]:
+            try:
+                if "rue" in day["closed"]:
+                    temphr.append(str(day["rolledDays"] + ": Closed"))
+            except Exception:
+                pass
+
+            try:
+                temphr.append(str(day["rolledDays"] + ": " + day["rolledHours"]))
+            except Exception:
+                pass
+
+        k["hours"] = "; ".join(temphr)
+    except Exception:
+        try:
+            temphr = []
+            for day in list(rec["storeHoursMap"]):
+                temphr.append(str(str(day) + ": " + str(rec["storeHoursMap"][day])))
+            k["hours"] = "; ".join(temphr)
+        except Exception:
+            k["hours"] = "<MISSING>"
+
+    try:
         k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
     except Exception:
         k["type"] = "<MISSING>"
@@ -154,6 +208,16 @@ def fix_record(rec, host):
     except Exception:
         k["type"] = "<MISSING>"
 
+    try:
+        k["phone"] = rec["phone"]
+    except Exception:
+        try:
+            k["phone"] = rec["address"]["unFormattedDayPhone"]
+        except Exception:
+            try:
+                k["phone"] = rec["address"]["dayPhone"]
+            except Exception:
+                k["phone"] = "<MISSING>"
     return k
 
 
@@ -247,7 +311,9 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["country"], is_required=False, part_of_record_identity=True
         ),
-        phone=sp.MissingField(),
+        phone=sp.MappingField(
+            mapping=["phone"], part_of_record_identity=True, is_required=False
+        ),
         store_number=sp.MappingField(
             mapping=["id"],
             is_required=False,
