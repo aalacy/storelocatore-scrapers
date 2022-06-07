@@ -114,7 +114,9 @@ def fetch_data():
                     )
                 if not hours_of_operation:
                     hours_of_operation = []
-                    id_data = loc_dom.xpath('//script[contains(text(), "var id")]/text()')
+                    id_data = loc_dom.xpath(
+                        '//script[contains(text(), "var id")]/text()'
+                    )
                     if not id_data:
                         continue
                     store_id = re.findall(r"var id=\'(\d+)\'", id_data[0])[0]
