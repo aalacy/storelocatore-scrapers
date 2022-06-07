@@ -53,7 +53,7 @@ def fetch_data():
                         lat = item.split('"qsl_latitude\\":\\"')[1].split("\\")[0]
                         lng = item.split('"qsl_longitude\\":\\"')[1].split("\\")[0]
                         hours = "<MISSING>"
-                        loc = "<MISSING>"
+                        loc = "https://www.examone.com/locations/"
                         if "(" in add:
                             if add.count("(") == 1:
                                 typ = add.split("(")[1].split(")")[0]
@@ -97,7 +97,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

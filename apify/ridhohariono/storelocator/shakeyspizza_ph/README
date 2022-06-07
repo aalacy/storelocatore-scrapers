@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker (Not us/ca)
+
+--ignore CountryValidator (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+    state        phone        zip            REASON  rowNumber
+232    QC  09178417995  <MISSING>  INVALID_CA_PHONE        232

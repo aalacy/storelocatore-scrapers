@@ -9,20 +9,24 @@ base_url = "https://apiv2.megaplextheatres.com/api/cinema/cinemas"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         locations = session.get(base_url).json()
         for _ in locations:
             page_url = locator_domain + _["name"].lower().replace(" ", "")
             addr = _["address2"].strip().split(",")
             raw_address = _["address1"] + " " + _["address2"]
+            state = addr[1].strip().split()[0]
+            if state.isdigit():
+                state = ""
+            zip_postal = addr[1].strip().split()[-1]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
                 location_name=_["name"],
                 street_address=_["address1"],
                 city=addr[0].strip(),
-                state=addr[1].strip().split()[0],
-                zip_postal=addr[1].strip().split()[-1],
+                state=state,
+                zip_postal=zip_postal,
                 country_code="US",
                 latitude=_["latitude"],
                 longitude=_["longitude"],

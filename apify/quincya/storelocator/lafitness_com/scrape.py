@@ -21,7 +21,6 @@ def fetch_data(sgw: SgWriter):
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
-        "Content-Length": "0",
         "Content-Type": "application/json; charset=utf-8",
         "Host": "lafitness.com",
         "Origin": "https://lafitness.com",
@@ -49,6 +48,8 @@ def fetch_data(sgw: SgWriter):
     logger.info("Found " + str(len(stores)) + " stores ..")
     for store in stores:
         location_name = store["Description"]
+        if "esporta" in location_name.lower():
+            continue
         raw_address = store["Address"].split("<br />")
         street_address = raw_address[0].strip()
         city_line = raw_address[1].strip().split(",")

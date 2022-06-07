@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import json
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,50 +12,19 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
     url = "https://bluestonelane.com/cafe-and-coffee-shop-locations/?shop-sort=nearest&view-all=1&lat=&lng="
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("a", {"class": "homebox-address"})
     linklist = []
-    p = 0
     for div in divlist:
         link = div["href"]
+
         if link in linklist:
             continue
         linklist.append(link)
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         ccode = "US"
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h1").text.strip()
@@ -60,6 +32,7 @@ def fetch_data():
         try:
             store = street["data-yext-location-id"]
         except:
+
             store = "<MISSING>"
             continue
         url = (
@@ -67,7 +40,7 @@ def fetch_data():
             + store
         )
 
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         address = r.text.split('"address":{', 1)[1].split("},", 1)[0]
         address = "{" + address + "}"
         address = json.loads(address)
@@ -87,9 +60,17 @@ def fetch_data():
             hourslist = hourslist + "}]"
             hourslist = json.loads(hourslist)
             hours = ""
+
             for hr in hourslist:
-                day = hr["dayOfWeek"]
-                opens = hr["opens"]
+                try:
+                    day = hr["dayOfWeek"]
+                except:
+                    continue
+                try:
+                    opens = hr["opens"]
+                except:
+                    hours = hours + day + " " + "Closed"
+                    continue
                 closes = hr["closes"]
                 cltime = (int)(closes.split(":", 1)[0])
                 if cltime > 12:
@@ -106,43 +87,47 @@ def fetch_data():
                     + " PM "
                 )
         except:
+
             hours = "<MISSING>"
+        if len(hours.split("Closed")) > 4:
+            hours = "Temporarily Closed"
         phone = r.text.split('"telephone":"', 1)[1].split('"', 1)[0].replace("+1", "")
         phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
         ccode = "US"
-        if "-" in pcode:
-            continue
+
         if pcode.isdigit():
             pass
+        elif "-" in pcode:
+            ccode = "GB"
         else:
             ccode = "CA"
-        data.append(
-            [
-                "https://bluestonelane.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        yield SgRecord(
+            locator_domain="https://bluestonelane.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code=ccode,
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

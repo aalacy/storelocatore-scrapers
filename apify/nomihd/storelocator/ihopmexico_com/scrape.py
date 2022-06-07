@@ -87,10 +87,22 @@ def fetch_data():
                                     hd.xpath("following-sibling::p[1]//text()")
                                 ).strip()
                             if "Horas de operacin" == header:
-                                hours_of_operation = "".join(
-                                    hd.xpath("following-sibling::p[2]//text()")
-                                ).strip()
-
+                                hours = hd.xpath("following-sibling::*//text()")
+                                hours_list = []
+                                for index in range(1, len(hours)):
+                                    if "Direccin" in "".join(
+                                        hours[index]
+                                    ).strip().encode("ascii", "ignore").decode("utf-8"):
+                                        break
+                                    else:
+                                        if (
+                                            "Capacidad de aforo"
+                                            not in "".join(hours[index]).strip()
+                                        ):
+                                            hours_list.append(
+                                                "".join(hours[index]).strip()
+                                            )
+                                hours_of_operation = "; ".join(hours_list).strip()
                     except SgRequestError as e:
                         page_url = "<MISSING>"
                         log.error(e.message)

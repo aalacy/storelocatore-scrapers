@@ -1,0 +1,7 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+
+--ignore CountryValidator (Not US phone)
+Found 1 concerning rows. Examples:
+       state              phone    zip            REASON  rowNumber
+0  <MISSING>  002 - 01025241915  11666  INVALID_US_PHONE          0

@@ -1,87 +1,74 @@
-import usaddress
+import httpx
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.bohme.com"
     api_url = "https://www.bohme.com/pages/store-locator"
-    session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//table[@class="inches"]//tr[./td]')
-    for d in div:
+    with SgRequests() as http:
+        r = http.get(url=api_url)
+        assert isinstance(r, httpx.Response)
+        assert 200 == r.status_code
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//div[@class="store-location-info"]')
+        for d in div:
 
-        page_url = "https://www.bohme.com/pages/store-locator"
-        location_name = "".join(d.xpath("./td[1]//text()")).replace("\n", "").strip()
-        ad = " ".join(d.xpath("./td[2]//text()")).replace("\n", "").strip()
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = (
-            f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
-            or "<MISSING>"
-        )
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("postal") or "<MISSING>"
-        country_code = "US"
-        phone = "".join(d.xpath("./td[3]//text()")).replace("\n", "").strip()
-        if phone == "(Please email)":
-            phone = "<MISSING>"
+            page_url = "https://www.bohme.com/pages/store-locator"
+            location_name = (
+                " ".join(d.xpath(".//h3/text()")).replace("\n", "").strip()
+                or "<MISSING>"
+            )
+            ad = (
+                " ".join(d.xpath(".//h3/following-sibling::p[1]//text()"))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            a = parse_address(USA_Best_Parser(), ad)
+            street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "US"
+            city = a.city or "<MISSING>"
+            phone = (
+                "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+            )
+            hours_of_operation = (
+                " ".join(d.xpath('.//div[@class="info-align-bottom"]/p[last()]/text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
-            hours_of_operation=SgRecord.MISSING,
-        )
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=ad,
+            )
 
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":

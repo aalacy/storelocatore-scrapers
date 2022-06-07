@@ -1,0 +1,1 @@
+--ignore LatLngDuplicationValidator (Same lat/long with different location_name)

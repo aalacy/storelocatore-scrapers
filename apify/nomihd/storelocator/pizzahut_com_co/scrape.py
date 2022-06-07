@@ -57,7 +57,10 @@ def fetch_data():
                 locator_domain = website
                 log.info(page_url)
                 store_res = session.get(page_url, headers=headers)
+                if "Ups, parece que algo va mal" in store_res.text:
+                    continue
                 store_sel = lxml.html.fromstring(store_res.text)
+                location_name = " ".join(store_sel.xpath("//title//text()")).strip()
 
                 full_address = list(
                     filter(
@@ -85,8 +88,6 @@ def fetch_data():
 
                 country_code = "Colombia"
 
-                location_name = " ".join(store_sel.xpath("//title//text()")).strip()
-
                 phone = " ".join(store_sel.xpath('//*[@class="phone"]//text()')).strip()
                 store_number = store.split("-")[-1].strip()
 
@@ -96,6 +97,10 @@ def fetch_data():
                     '//div[@class="shopInfo col"]//div[contains(./h4/text(),"A domicilio")]//tr'
                 )
 
+                if len(hours) <= 0:
+                    hours = store_sel.xpath(
+                        '//div[@class="shopInfo col"]//div[contains(./h4/text(),"A recoger")]//tr'
+                    )
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath("td[1]/text()")).strip()

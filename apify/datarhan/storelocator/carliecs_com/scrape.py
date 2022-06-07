@@ -19,9 +19,13 @@ def fetch_data():
     data = session.get(start_url.format(token["token"])).json()
 
     for poi in data["items"]:
+        page_url = poi.get("url")
+        if not page_url:
+            page_url = "https://www.carliecs.com/my-store/store-locator"
+
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.carliecs.com/my-store/store-locator",
+            page_url=page_url,
             location_name=poi["name"],
             street_address=poi["address_1"],
             city=poi["city"],

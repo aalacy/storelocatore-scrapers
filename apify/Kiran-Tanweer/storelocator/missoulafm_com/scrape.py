@@ -26,7 +26,11 @@ def fetch_data():
         for loc in loclist:
             store_number = loc["store_id"]
             location_name = loc["store_name"]
-            log.info(location_name)
+            page_url = (
+                "https://missoulafm.com/"
+                + location_name.split("Market")[1].strip().lower()
+            )
+            log.info(page_url)
             phone = loc["store_phone"]
             street_address = loc["store_address"]
             city = loc["store_city"]
@@ -48,7 +52,7 @@ def fetch_data():
             )
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),

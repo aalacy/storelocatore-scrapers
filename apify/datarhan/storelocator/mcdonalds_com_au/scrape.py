@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://mcdonalds.com.au/data/store"
     domain = "mcdonalds.com.au"
@@ -25,6 +25,11 @@ def fetch_data():
                 closes = e[-1][:2] + ":" + e[-1][2:]
                 hoo.append(f"{e[0]} {opens} - {closes}")
         hours_of_operation = " ".join(hoo).replace("99:99 - 99:99", "closed")
+        latitude = ""
+        longitude = ""
+        if poi["lat_long"]:
+            latitude = poi["lat_long"]["lat"]
+            longitude = poi["lat_long"]["lon"]
 
         item = SgRecord(
             locator_domain=domain,
@@ -38,8 +43,8 @@ def fetch_data():
             store_number=poi["store_code"],
             phone=poi["store_phone"],
             location_type=SgRecord.MISSING,
-            latitude=poi["store_geocode"].split(",")[1],
-            longitude=poi["store_geocode"].split(",")[0],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
 

@@ -1,11 +1,14 @@
-import csv
 import time
 import datetime
 import re
 import threading
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -33,33 +36,11 @@ def get_or_default(obj, key):
 
 
 def write_output(data):
-    with open("data.csv", "w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "store_number",
-                "location_type",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "phone",
-                "hours_of_operation",
-            ]
-        )
-
-        for i in data:
-            if i:
-                writer.writerow(i)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        for rec in data:
+            writer.write_row(rec)
 
 
 def create_url(url):
@@ -72,14 +53,14 @@ def parse_location_urls(urls):
 
 def fetch_state_urls():
     states_url = "https://pauldavis.com/paul-davis-locations/"
-    r = get_session().get(states_url)
+    r = get_session().get(states_url, headers=headers)
     bs = BeautifulSoup(r.text, "html.parser")
     urls = bs.select(".content .cell a")
     return parse_location_urls(urls)
 
 
 def fetch_cities(url):
-    r = get_session().get(create_url(url))
+    r = get_session().get(create_url(url), headers=headers)
     bs = BeautifulSoup(r.text, "html.parser")
     urls = bs.select(".content a")
     return parse_location_urls(urls)
@@ -112,7 +93,7 @@ def create_location(component):
 
 @retry(stop=stop_after_attempt(3))
 def fetch_locations(url):
-    r = get_session().get(create_url(url))
+    r = get_session().get(create_url(url), headers=headers)
     bs = BeautifulSoup(r.text, "html.parser")
     links = bs.select(".main a")
 
@@ -128,6 +109,7 @@ def enqueue_locations(urls):
         for future in as_completed(futures):
             locations = future.result()
             for location in locations:
+
                 url = location.get("url")
                 if not location_map.get(url):
                     location_map[url] = True
@@ -172,7 +154,7 @@ def fetch_location_data(location):
     location_name = location.get("name")
 
     try:
-        r = get_session().get(page_url)
+        r = get_session().get(page_url, headers=headers)
         bs = BeautifulSoup(r.text, "html.parser")
 
         info = {}
@@ -206,28 +188,18 @@ def fetch_location_data(location):
         cleaned_phone = re.sub(r"\D", "", phone.getText())
         info["phone"] = cleaned_phone
 
-        store_number = MISSING
-        location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
-        hours_of_operation = MISSING
+        return SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=get_or_default(info, "street_address"),
+            city=get_or_default(info, "city"),
+            state=get_or_default(info, "state"),
+            zip_postal=get_or_default(info, "zipcode"),
+            country_code=get_or_default(info, "country_code"),
+            phone=get_or_default(info, "phone"),
+        )
 
-        return [
-            locator_domain,
-            page_url,
-            location_name,
-            store_number,
-            location_type,
-            get_or_default(info, "street_address"),
-            get_or_default(info, "city"),
-            get_or_default(info, "state"),
-            get_or_default(info, "zipcode"),
-            get_or_default(info, "country_code"),
-            latitude,
-            longitude,
-            get_or_default(info, "phone"),
-            hours_of_operation,
-        ]
     except Exception as ex:
         logger.error(str(ex), page_url)
 
@@ -240,7 +212,8 @@ def enqueue_locations_data(locations):
 
         for job in as_completed(futures):
             data = job.result()
-            yield data
+            if data:
+                yield data
 
 
 def fetch_data():

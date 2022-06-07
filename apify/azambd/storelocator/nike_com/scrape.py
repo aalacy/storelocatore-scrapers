@@ -9,10 +9,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-from sgzip.dynamic import SearchableCountries
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -48,7 +47,7 @@ def request_with_retries(driver, url, tried=1):
         return html.fromstring(driver.page_source, "lxml")
     except Exception as e:
         log.info(e)
-        if tried == 3:
+        if tried == 10:
             log.error(f"Can't access url = {url}")
             return None
         else:
@@ -88,11 +87,11 @@ def fetch_stores(driver):
                 if directory not in all_directories:
                     all_directories.append(directory)
                     new_directories.append(directory)
-            log.debug(
+            log.info(
                 f"{count}. From {directory_url} : stores = {len(stores)} and directories = {len(directories)} and total stores = {len(store_urls)}"
             )
 
-        log.debug(f"Total new directories = {len(new_directories)}")
+        log.info(f"Total new directories = {len(new_directories)}")
         if len(new_directories) == 0:
             break
         directory_urls = new_directories
@@ -140,7 +139,9 @@ def get_phone(main_section):
     if Source is None or Source == "":
         return phone
 
-    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
+    for match in re.findall(
+        r"[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9][\(]?[0-9][0-9 .\-\(\)]", Source
+    ):
         phone = match
         return phone
     return phone
@@ -204,15 +205,14 @@ def update_location_name(location_name):
 def fetch_data(driver):
     stores = fetch_stores(driver)
     log.info(f"Total stores = {len(stores)}")
-
-    State = CrawlStateSingleton.get_instance()
-
     count = 0
+    error_urls = []
     for page_url in stores:
         count = count + 1
-        log.debug(f"{count}. scrapping store {page_url} ...")
+        log.info(f"{count}. scrapping store {page_url} ...")
         body = request_with_retries(driver, page_url)
         if body is None:
+            error_urls.append(page_url)
             continue
 
         store_number = MISSING
@@ -220,23 +220,30 @@ def fetch_data(driver):
 
         location_name = body.xpath('//h1[contains(@class, "headline-1")]/text()')
         if len(location_name) == 0:
-            log.debug("Error not found name")
+            log.info("Error not found name")
+            error_urls.append(page_url)
             continue
         location_name = location_name[0].strip()
         main_section = get_main_section(body, location_name)
 
         raw_address, country_code = get_raw_country(main_section)
         if country_code == MISSING or main_section == MISSING:
-            log.debug("Error not found country")
+            log.info("Error not found country")
+            error_urls.append(page_url)
             continue
         phone = get_phone(main_section)
         latitude, longitude = get_lat_lng(main_section)
         hours_of_operation = get_hoo(main_section)
         street_address, city, state, zip_postal = get_address(raw_address)
-        location_name = update_location_name(location_name)
 
-        rec_count = State.get_misc_value(country_code, default_factory=lambda: 0)
-        State.set_misc_value(country_code.lower(), rec_count + 1)
+        if city == "-02":
+            city = "Toco"
+        if city == "598-8509":
+            city = "泉佐野市"
+        if "6Th Of October Cairo" in str(city):
+            city = "6Th Of October"
+
+        location_name = update_location_name(location_name)
 
         yield SgRecord(
             locator_domain=website,
@@ -255,27 +262,69 @@ def fetch_data(driver):
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+
+    log.info(f"Total error urls = {len(error_urls)}")
+
+    count = 0
+    for page_url in error_urls:
+        count = count + 1
+        log.info(f"{count}. scrapping error store {page_url} ...")
+
+        body = request_with_retries(driver, page_url)
+        if body is None:
+            yield SgRecord(locator_domain=website, page_url=page_url)
+            continue
+
+        store_number = MISSING
+        location_type = MISSING
+
+        location_name = body.xpath('//h1[contains(@class, "headline-1")]/text()')
+        if len(location_name) == 0:
+            log.info("Error not found name")
+            yield SgRecord(locator_domain=website, page_url=page_url)
+            continue
+        location_name = location_name[0].strip()
+        main_section = get_main_section(body, location_name)
+
+        raw_address, country_code = get_raw_country(main_section)
+
+        phone = get_phone(main_section)
+        latitude, longitude = get_lat_lng(main_section)
+        hours_of_operation = get_hoo(main_section)
+        street_address, city, state, zip_postal = get_address(raw_address)
+        location_name = update_location_name(location_name)
+
+        yield SgRecord(
+            locator_domain=website,
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
     return []
 
 
 def scrape():
+    CrawlStateSingleton.get_instance().save(override=True)
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgChrome() as driver:
         with SgWriter(
             deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
         ) as writer:
             for rec in fetch_data(driver):
                 writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
-    log.debug("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
-        log.debug(
-            f"{country_code}: {state.get_misc_value(country_code, default_factory=lambda: 0)}"
-        )
 
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")

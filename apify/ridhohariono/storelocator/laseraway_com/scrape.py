@@ -8,24 +8,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import json
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgSelenium
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "laseraway.com"
 BASE_URL = "https://www.laseraway.com/"
-SITEMAP_URL = "https://www.laseraway.com/sitemap/"
+SITEMAP_URL = "https://www.laseraway.com/location-sitemap.xml"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -47,7 +33,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -66,48 +51,32 @@ def getAddress(raw_address):
 def pull_content(url):
     log.info("Pull content => " + url)
     req = session.get(url, headers=HEADERS)
+    if req.status_code != 200:
+        return False
     soup = bs(req.content, "lxml")
     return soup
-
-
-def wait_load(driver, number=0):
-    number += 1
-    try:
-        WebDriverWait(driver, 3).until(
-            lambda driver: driver.execute_script("return jQuery.active == 0")
-        )
-        WebDriverWait(driver, 3).until(
-            EC.presence_of_element_located((By.ID, "wpsl-js-js-extra"))
-        )
-    except:
-        driver.refresh()
-        if number < 3:
-            log.info(f"Try to Refresh for ({number}) times")
-            return wait_load(driver, number)
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(SITEMAP_URL)
-    content = soup.find("h4", text="Locations").parent.find_all("li")
-    page_urls = list(set([row.find("a")["href"] for row in content]))
-    driver = SgSelenium().chrome()
+    content = soup.find_all("loc")
+    page_urls = list(set([row.text for row in content]))
     for page_url in page_urls:
         check_url = page_url.replace("https://www.laseraway.com/locations/", "").split(
             "/"
         )
-        if len(check_url) < 3:
+        if len(check_url) != 3:
             continue
-        log.info("Pull content => " + page_url)
-        driver.get(page_url)
-        wait_load(driver)
-        store = bs(driver.page_source, "lxml")
-        location_name = (
-            store.find("div", {"class": "location-map-hours"}).find("h4").text.strip()
-        )
+        store = pull_content(page_url)
+        if not store:
+            continue
         info = store.find("script", {"id": "wpsl-js-js-extra"})
-        info = re.search(r"var\s+wpslMap_0=(.*);", info.string).group(1)
+        if not info:
+            continue
+        info = re.search(r"var\s+wpslMap_0\s+=\s+(.*);", info.string).group(1)
         info = json.loads(info)
+        location_name = info["locations"][0]["store"].replace("&#8211;", " - ").strip()
         street_address = (
             info["locations"][0]["address"] + " " + info["locations"][0]["address2"]
         ).strip()
@@ -116,20 +85,24 @@ def fetch_data():
         zip_postal = info["locations"][0]["zip"]
         country_code = info["locations"][0]["country"]
         store_number = MISSING
-        phone = (
-            store.find("div", {"class": "location-map-hours"})
-            .find("address")
-            .find("a", {"href": re.compile(r"tel.*")})
-            .text.strip()
+        phone_content = (
+            store.find("div", {"class": "font-bold space-y-3 mx-auto"})
+            .get_text(strip=True, separator="@@")
+            .split("@@")
         )
+        if len(phone_content) > 3:
+            phone = phone_content[-1].strip()
+        else:
+            phone = MISSING
         location_type = MISSING
         latitude = info["locations"][0]["lat"]
         longitude = info["locations"][0]["lng"]
-        hours_of_operation = (
-            store.find("div", {"class": "location-map-hours"})
-            .find("table")
+        hours_of_operation = " ".join(
+            store.find("p", text="hours")
+            .find_next("ul")
             .get_text(strip=True, separator=",")
-        )
+            .split()
+        ).strip()
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -148,7 +121,6 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=f"{street_address}, {city}, {state}, {zip_postal}",
         )
-    driver.quit()
 
 
 def scrape():
@@ -158,7 +130,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.ZIP,
                 }
             )
         )
@@ -167,7 +140,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

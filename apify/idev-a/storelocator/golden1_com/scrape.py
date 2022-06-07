@@ -2,10 +2,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from typing import Iterable
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import ssl
@@ -35,29 +34,58 @@ _headers = {
 locator_domain = "https://www.golden1.com"
 base_link = "https://www.golden1.com/atm-branch-finder"
 base_url = "https://www.golden1.com/api/BranchLocator/GetLocations"
-data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbranches=true&sharedatm=false&swlat=&swlng=&nelat=&nelng=&centerlat={}&centerlng={}&userlat=&userlng="
+data = "golden1branches=true&golden1homecenters=false&golden1atm=true&sharedbranches=false&sharedatm=false&swlat={}&swlng={}&nelat={}&nelng={}&centerlat={}&centerlng={}&userlat=&userlng="
 
 
-def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
+def fetch_records(search):
     for lat, lng in search:
-        locations = http.post(
-            base_url, headers=_headers, data=data.format(lat, lng)
-        ).json()["locations"]
-        logger.info(f"[{lat}, {lng}] {len(locations)} found")
-        for _ in locations:
-            yield SgRecord(
-                page_url="https://www.golden1.com/atm-branch-finder#",
-                location_name=_["title"],
-                street_address=_["address"],
-                city=_["city"],
-                state=_["state"],
-                zip_postal=bs(_["zip"], "lxml").text.strip(),
-                latitude=_["lat"],
-                longitude=_["lng"],
-                country_code="US",
-                locator_domain=locator_domain,
-                hours_of_operation=_["hours"].replace("\\n", "; "),
-            )
+        with SgRequests(proxy_country="us") as http:
+            swlat = lat - 0.207706338
+            swlng = lng - 0.26463210582
+            nelat = lat + 0.207706338
+            netlng = lng + 0.26463210582
+            try:
+                locations = http.post(
+                    base_url,
+                    headers=_headers,
+                    data=data.format(swlat, swlng, nelat, netlng, lat, lng),
+                ).json()["locations"]
+            except:
+                locations = []
+                logger.info(f"[{lat}, {lng}] failed")
+            logger.info(f"[{lat}, {lng}] {len(locations)} found")
+            if locations:
+                search.found_location_at(lat, lng)
+            for _ in locations:
+                if not _["address"] and not _["title"]:
+                    continue
+                location_type = _["imageUrl"].split("/")[-1].split(".")[0]
+                if location_type not in ["golden-1-atm", "golden-1-branch"]:
+                    continue
+                hours = []
+                for hh in _["hours"].split("\\n"):
+                    if not hh.strip():
+                        continue
+                    if "Hour" in hh:
+                        continue
+                    hours.append(hh.strip())
+                hours_of_operation = "; ".join(hours)
+                if "Temporarily-Closed" in hours_of_operation:
+                    hours_of_operation = "Temporarily-Closed"
+                yield SgRecord(
+                    page_url="https://www.golden1.com/atm-branch-finder#",
+                    location_name=". ".join(_["title"].split(".")[1:]),
+                    street_address=_["address"],
+                    city=_["city"],
+                    state=_["state"],
+                    zip_postal=bs(_["zip"], "lxml").text.strip(),
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    country_code="US",
+                    location_type=location_type,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 if __name__ == "__main__":
@@ -68,13 +96,19 @@ if __name__ == "__main__":
             cookies.append(f'{cook["name"]}={cook["value"]}')
         _headers["cookie"] = ";".join(cookies)
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
         )
         with SgWriter(
             deduper=SgRecordDeduper(
-                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+                SgRecordID(
+                    {
+                        SgRecord.Headers.STREET_ADDRESS,
+                        SgRecord.Headers.CITY,
+                        SgRecord.Headers.STATE,
+                    }
+                ),
+                duplicate_streak_failure_factor=1000,
             )
         ) as writer:
-            with SgRequests(proxy_country="us") as http:
-                for rec in fetch_records(http, search):
-                    writer.write_row(rec)
+            for rec in fetch_records(search):
+                writer.write_row(rec)
