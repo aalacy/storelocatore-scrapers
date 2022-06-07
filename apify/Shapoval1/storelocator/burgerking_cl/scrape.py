@@ -7,67 +7,67 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.burgerking.cl"
+    locator_domain = "https://burgerking.cl/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "application/json",
-        "Accept-Language": "en",
-        "Content-Language": "en",
-        "Device-UUID": "6902c652-e717-4c56-8362-e8f334d6aca7",
-        "Application": "39f9815013db3577160bb7891c853294",
-        "Origin": "https://www.burgerking.cl",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://delivery.burgerking.cl/",
+        "X-ORION-DEVICEID": "MI9auMmu6xgCrE4mgx4mY4I3Zv9jQ1Y3E33nImlfERK6rR7mgz",
+        "X-ORION-FP": "68f5767032e606c379b950c6ff6abb86",
+        "X-ORION-DOMAIN": "delivery.burgerking.cl",
+        "X-ORION-TIMEZONE": "Europe/Zaporozhye",
+        "X-ORION-PATHNAME": "/locales",
+        "Origin": "https://delivery.burgerking.cl",
+        "Proxy-Authorization": "Basic ZG1pdHJpeTIyc2hhcGFAZ21haWwuY29tOnJxeFN6YzI0NnNzdnByVVZwdHJT",
         "Connection": "keep-alive",
-        "Referer": "https://www.burgerking.cl/",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "cross-site",
-        "Cache-Control": "max-age=0",
-        "TE": "trailers",
+    }
+
+    params = {
+        "operationName": "getStoresZones",
     }
 
     json_data = {
-        "latitude": -32.485813,
-        "longitude": -69.651575,
-        "radius": 500000,
-        "device_uuid": "rista@menu.app",
+        "operationName": "getStoresZones",
+        "variables": {
+            "websiteId": "pPFvY6qcd7boWbpys",
+        },
+        "query": "query getStoresZones($websiteId: ID) {\n  stores(websiteId: $websiteId) {\n    items {\n      _id\n      name\n      phone\n      supportOptions {\n        phone\n        __typename\n      }\n      humanSchedule {\n        days\n        schedule\n        __typename\n      }\n      acceptDelivery\n      acceptGo\n      zones {\n        _id\n        deliveryLimits\n        __typename\n      }\n      address {\n        placeId\n        location\n        address\n        addressSecondary\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}",
     }
 
     r = session.post(
-        "https://api-lac.menu.app/api/directory/search", headers=headers, json=json_data
+        "https://websites-api.getjusto.com/graphql",
+        params=params,
+        headers=headers,
+        json=json_data,
     )
-    js = r.json()["data"]["venues"]
+    js = r.json()["data"]["stores"]["items"]
     for j in js:
 
-        a = j.get("venue")
-        page_url = "https://www.burgerking.cl/locales/"
-        location_name = a.get("name") or "<MISSING>"
-        types = a.get("order_types")
-        tmp_type = []
-        for t in types:
-            typee = t.get("reference_type")
-            tmp_type.append(typee)
-        location_type = ", ".join(tmp_type)
+        a = j.get("address")
+        page_url = "https://delivery.burgerking.cl/locales"
+        location_name = j.get("name") or "<MISSING>"
+        ad = "".join(a.get("addressSecondary"))
         street_address = a.get("address") or "<MISSING>"
-        state = "<MISSING>"
-        postal = a.get("zip") or "<MISSING>"
         country_code = "CL"
-        city = a.get("city") or "<MISSING>"
-        store_number = a.get("id") or "<MISSING>"
-        latitude = a.get("latitude") or "<MISSING>"
-        longitude = a.get("longitude") or "<MISSING>"
-        phone = a.get("phone") or "<MISSING>"
-        hours = a.get("serving_times")
+        city = ad.split(",")[0].strip()
+        latitude = a.get("location").get("lat")
+        longitude = a.get("location").get("lng")
+        phone = j.get("phone") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        hours = j.get("humanSchedule")
         tmp = []
-        for h in hours:
-            days = h.get("days")
-            if len(days) == 7:
-                days = "Monday to Sunday"
-            opens = h.get("time_from")
-            closes = h.get("time_to")
-            line = f"{days} {opens} - {closes}"
-            tmp.append(line)
-        hours_of_operation = " ".join(tmp)
+        if hours:
+            for h in hours:
+                day = h.get("days")
+                times = h.get("schedule")
+                line = f"{day} {times}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -75,12 +75,12 @@ def fetch_data(sgw: SgWriter):
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
-            zip_postal=postal,
+            state=SgRecord.MISSING,
+            zip_postal=SgRecord.MISSING,
             country_code=country_code,
-            store_number=store_number,
+            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
@@ -92,6 +92,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

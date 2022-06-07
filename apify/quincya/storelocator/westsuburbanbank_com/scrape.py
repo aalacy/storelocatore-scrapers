@@ -1,41 +1,14 @@
-import csv
-
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://westsuburbanbank.com/locations.php"
 
@@ -46,28 +19,23 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     locator_domain = "westsuburbanbank.com"
 
     raw_hours = base.find(class_="table")
-    heads = raw_hours.find_all("th")
-    cols = raw_hours.find_all("tr")[1:]
-
+    rows = raw_hours.find_all("tr")[1:]
     lobby_hours = ""
-    for i in range(len(heads)):
-        day = cols[i].td.text.strip()
-        lobby = cols[i].find_all("td")[1].text.strip()
+    for row in rows:
+        day = row.find_all("td")[1].text.strip()
+        lobby = row.find_all("td")[2].text.strip()
         lobby_hours = (lobby_hours + " " + day + " " + lobby).strip()
-    lobby_hours = heads[1].text + " " + lobby_hours
 
+    raw_hours = base.find_all(class_="table")[1]
+    rows = raw_hours.find_all("tr")[1:]
     wsb_hours = ""
-    for i in range(len(heads)):
-        day = cols[i].td.text.strip()
-        lobby = cols[i].find_all("td")[2].text.strip()
+    for row in rows:
+        day = row.find_all("td")[1].text.strip()
+        lobby = row.find_all("td")[2].text.strip()
         wsb_hours = (wsb_hours + " " + day + " " + lobby).strip()
-    wsb_hours = heads[2].text + " " + wsb_hours
-
-    hours_of_operation = lobby_hours + " " + wsb_hours
 
     items = base.find(id="nav-tabContent").find_all(class_="tab-pane")
 
@@ -87,34 +55,31 @@ def fetch_data():
                 location_type = store.small.text.split(".")[0]
             except:
                 location_type = "<MISSING>"
+            hours_of_operation = lobby_hours
+            if "Xpress hour" in location_type:
+                hours_of_operation = wsb_hours
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            data.append(
-                [
-                    locator_domain,
-                    base_link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=base_link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

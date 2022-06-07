@@ -34,9 +34,19 @@ def fetch_data():
                         .split("<")[0]
                     )
                     zc = item.split('"pc":"')[1].split('"')[0]
-                    phone = item.split('"p":"')[1].split('"')[0]
                     try:
-                        loc = item.split('"w":"')[1].split('"')[0].replace("\\", "")
+                        phone = item.split('"p":"')[1].split('"')[0]
+                    except:
+                        phone = ""
+                    try:
+                        loc = (
+                            item.split('"w":"')[1]
+                            .split('"')[0]
+                            .replace("\\", "")
+                            .replace("#s:search.php,menu.php", "")
+                            .split("#s:")[0]
+                            .strip()
+                        )
                     except:
                         loc = "<MISSING>"
                     store = item.split('"bpid":')[1].split(",")[0]

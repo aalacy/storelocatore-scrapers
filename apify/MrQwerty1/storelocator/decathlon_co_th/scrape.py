@@ -16,7 +16,7 @@ def get_international(line):
     street = f"{adr1} {adr2}".strip()
     city = adr.city or SgRecord.MISSING
     state = adr.state or SgRecord.MISSING
-    postal = adr.state or SgRecord.MISSING
+    postal = adr.postcode or SgRecord.MISSING
 
     return street, city, state, postal
 

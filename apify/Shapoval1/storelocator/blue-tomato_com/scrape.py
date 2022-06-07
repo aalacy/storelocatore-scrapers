@@ -23,17 +23,21 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
         s_page_url = f"https://www.blue-tomato.com{slug}"
         country_code = s_page_url.split("/shops/")[1].split("/")[0].capitalize()
-        r = session.get(s_page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        try:
+            r = session.get(s_page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            continue
         div = (
             "".join(tree.xpath('//script[contains(text(), "var allPos =")]/text()'))
             .split("var allPos =")[1]
             .strip()
         )
         js = json.loads(div)
+
         for j in js:
-            slug = j.get("nameForUrl")
-            page_url = f"https://www.blue-tomato.com/en-US/shop/{slug}/"
+
+            page_url = f"https://www.blue-tomato.com/en-US/shop/{j.get('nameForUrl')}"
             street_address = f"{j.get('line1')} {j.get('line2')}".strip()
             state = "<MISSING>"
             postal = "".join(j.get("postalCode"))
@@ -43,31 +47,48 @@ def fetch_data(sgw: SgWriter):
                 postal = postal.split()[0].strip()
             latitude = j.get("latitude")
             longitude = j.get("longitude")
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-            location_name = "".join(tree.xpath('//span[@class="storename"]/text()'))
-            phone = (
-                "".join(
-                    tree.xpath(
-                        '//div[text()="Contact"]/following-sibling::div//a[contains(@href, "tel")]//text()'
+            try:
+                r = session.get(page_url)
+                tree = html.fromstring(r.text)
+                location_name = "".join(tree.xpath('//span[@class="storename"]/text()'))
+                phone = (
+                    "".join(
+                        tree.xpath(
+                            '//div[text()="Contact"]/following-sibling::div//a[contains(@href, "tel")]//text()'
+                        )
                     )
+                    or "<MISSING>"
                 )
-                or "<MISSING>"
-            )
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//div[text()="Opening hours"]/following-sibling::div//text()'
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//div[text()="Opening hours"]/following-sibling::div//text()'
+                        )
                     )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
                 )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-            hours_of_operation = " ".join(hours_of_operation.split())
-            cls = "".join(tree.xpath('//span[contains(text(), "closed")]/text()'))
-            if cls and hours_of_operation == "<MISSING>":
-                hours_of_operation = "Closed"
+                hours_of_operation = " ".join(hours_of_operation.split())
+                cls = "".join(tree.xpath('//span[contains(text(), "closed")]/text()'))
+                if cls and hours_of_operation == "<MISSING>":
+                    hours_of_operation = "Closed"
+                cms = "".join(tree.xpath('//img[contains(@src, "opening")]/@src'))
+                if cms:
+                    hours_of_operation = "Coming Soon"
+            except:
+
+                location_name = j.get("shopname")
+                phone = "<MISSING>"
+                hours = j.get("openingDays")
+                tmp = []
+                for h in hours:
+                    day = h.get("weekDay")
+                    opens = h.get("openingTime")
+                    closes = h.get("closingTime")
+                    line = f"{day} {opens} - {closes}"
+                    tmp.append(line)
+                hours_of_operation = "; ".join(tmp)
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -94,5 +115,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         fetch_data(writer)

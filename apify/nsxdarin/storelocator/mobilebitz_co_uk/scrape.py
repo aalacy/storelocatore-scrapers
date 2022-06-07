@@ -20,6 +20,37 @@ def fetch_data():
     website = "mobilebitz.co.uk"
     typ = "<MISSING>"
     country = "GB"
+    loc = "https://mobilebitz.co.uk/store-list/"
+    name = "MobileBitz Kiosk, Westfield"
+    add = "Westfield Shopping Centre, Shepherd's Bush"
+    city = "London"
+    state = "<MISSING>"
+    zc = "W12 7GF"
+    phone = "02039529027"
+    rawadd = (
+        "Westfield Shopping Centre, Shepherd's Bush, Shepherd's Bush London, W12 7GF"
+    )
+    lat = "51.5075725"
+    lng = "-0.2212054"
+    store = "2"
+    hours = "Mon: 10:00 - 21:00; Tue: 10:00 - 21:00; Wed: 10:00 - 21:00; Thu: 10:00 - 21:00; Fri: 10:00 - 21:00; Sat: 10:00 - 21:00; Sun: 12:00-18:00"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        raw_address=rawadd,
+        hours_of_operation=hours,
+    )
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         if "<item><location>" in line:
@@ -107,23 +138,24 @@ def fetch_data():
                         .replace("&amp", "&")
                         .replace("&Amp", "&")
                     )
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        raw_address=rawadd,
-                        hours_of_operation=hours,
-                    )
+                    if phone != "02039529027":
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            raw_address=rawadd,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():

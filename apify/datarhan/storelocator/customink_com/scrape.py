@@ -25,9 +25,16 @@ def fetch_data():
         state_url = f"https://www.customink.com/ink/api/yext-stores?state={state_id}&city={city}&radius={radius}"
         data = session.get(state_url).json()
         for poi in data["stores"]:
+            if (
+                poi.get("c_locatedIn")
+                and poi.get("c_locatedIn") == "New Location Opening Soon!"
+            ):
+                continue
             hoo = []
             for day, hours in poi["hours"].items():
                 if day == "holidayHours":
+                    continue
+                if day == "reopenDate":
                     continue
                 if hours and hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
@@ -39,6 +46,12 @@ def fetch_data():
             street_address = poi["address"]["line1"]
             if poi["address"].get("line2"):
                 street_address += ", " + poi["address"]["line2"]
+            if poi.get("geocodedCoordinate"):
+                latitude = poi["geocodedCoordinate"]["latitude"]
+                longitude = poi["geocodedCoordinate"]["longitude"]
+            else:
+                latitude = poi["yextDisplayCoordinate"]["latitude"]
+                longitude = poi["yextDisplayCoordinate"]["longitude"]
 
             item = SgRecord(
                 locator_domain=domain,
@@ -52,8 +65,8 @@ def fetch_data():
                 store_number="",
                 phone=poi["mainPhone"],
                 location_type="",
-                latitude=poi["geocodedCoordinate"]["latitude"],
-                longitude=poi["geocodedCoordinate"]["longitude"],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
             )
 

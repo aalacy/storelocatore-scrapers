@@ -2,5 +2,5 @@
 sglogging==0.0.4
 sgvalidator==0.0.70
 lxml==4.6.2
-sgselenium==0.1.4
+sgselenium==0.1.5
 sgscrape==0.2.6

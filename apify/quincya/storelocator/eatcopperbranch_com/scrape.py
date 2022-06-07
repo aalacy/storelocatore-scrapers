@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://eatcopperbranch.com"
 
     req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    base = BeautifulSoup(req.text, "html.parser")
 
     items = base.find_all("li", class_="fusion-layout-column")
 
@@ -56,7 +56,7 @@ def fetch_data(sgw: SgWriter):
 
         link = item.a["href"]
         req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        base = BeautifulSoup(req.text, "html.parser")
 
         store_number = base.main.section.div["id"].split("-")[-1]
         hours_of_operation = " ".join(
@@ -67,6 +67,12 @@ def fetch_data(sgw: SgWriter):
                 .stripped_strings
             )[1:]
         )
+        if hours_of_operation.find("Temporarily Closed") != -1:
+            hours_of_operation = "Temporarily Closed"
+        if hours_of_operation.find("COMING SOON") != -1:
+            hours_of_operation = "COMING SOON"
+        if hours_of_operation.find("Coming soon") != -1:
+            hours_of_operation = "Coming soon"
 
         sgw.write_row(
             SgRecord(

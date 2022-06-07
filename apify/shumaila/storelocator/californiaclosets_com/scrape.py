@@ -69,7 +69,15 @@ def fetch_data():
                     lat = r.text.split('latitude" content="', 1)[1].split('"', 1)[0]
                     longt = r.text.split('longitude" content="', 1)[1].split('"', 1)[0]
                 except:
-                    lat = longt = "<MISSING>"
+                    try:
+                        lat, longt = (
+                            r.text.split('data-coordinates="', 1)[1]
+                            .split('"', 1)[0]
+                            .split(",", 1)
+                        )
+                    except:
+
+                        lat = longt = "<MISSING>"
             soup = BeautifulSoup(r.text, "html.parser")
             try:
                 try:
@@ -162,8 +170,8 @@ def fetch_data():
             store_number=SgRecord.MISSING,
             phone=phone.strip(),
             location_type=ltype,
-            latitude=str(lat),
-            longitude=str(longt),
+            latitude=str(lat).replace('"', ""),
+            longitude=str(longt).replace('"', ""),
             hours_of_operation=hours,
         )
 

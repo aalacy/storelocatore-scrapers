@@ -45,9 +45,6 @@ def fetch_data():
             country_code = "US"
             store_number = str(store["id"])
             phone = store["phone"]
-            if "(" not in phone:
-                phone = "<MISSING>"
-
             location_type = store["description"]
             hours_list = []
             if len(store["monday"]) > 0:

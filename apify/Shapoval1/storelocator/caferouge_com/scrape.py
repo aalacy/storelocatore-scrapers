@@ -25,6 +25,7 @@ def fetch_data(sgw: SgWriter):
         if (
             page_url
             == "https://www.caferouge.com/restaurants/haywards-heath/the-broadway"
+            or page_url == "https://www.caferouge.com/restaurants/birmingham/bullring"
         ):
             r = session.get("https://www.rougebrasserie.com/find")
         tree = html.fromstring(r.text)
@@ -34,11 +35,7 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         ad = (
-            "".join(
-                tree.xpath(
-                    '//div[@class="address"]//text() | //div[@id="find-hayward-heath_overlay"]/div[2]/p[1]/text()[1]'
-                )
-            )
+            "".join(tree.xpath('//div[@class="address"]//text()'))
             .replace("\n", "")
             .strip()
         )
@@ -63,19 +60,10 @@ def fetch_data(sgw: SgWriter):
             longitude = text.split(",")[-1]
         except:
             latitude, longitude = "<MISSING>", "<MISSING>"
-        phone = (
-            "".join(
-                tree.xpath(
-                    '//a[@id="phonenumber"]/text() | //div[@id="find-hayward-heath_overlay"]//a[contains(@href, "tel")]/text()'
-                )
-            )
-            or "<MISSING>"
-        )
+        phone = "".join(tree.xpath('//a[@id="phonenumber"]/text()')) or "<MISSING>"
         hours_of_operation = (
             " ".join(
-                tree.xpath(
-                    '//h2[text()="Opening Hours"]/following-sibling::text() | //div[@id="find-hayward-heath_overlay"]//h5[./strong[text()="Facilities"]]/preceding-sibling::text()'
-                )
+                tree.xpath('//h2[text()="Opening Hours"]/following-sibling::text()')
             )
             .replace("\n", "")
             .strip()
@@ -84,15 +72,69 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.count("CLOSED") == 7:
             hours_of_operation = "CLOSED"
-        try:
-            store_number = (
-                "".join(tree.xpath('//script[contains(text(), "storeId")]/text()'))
-                .split("storeId:")[1]
-                .split(",")[0]
+
+        if page_url == "https://www.caferouge.com/restaurants/birmingham/bullring":
+            ad = (
+                "".join(
+                    tree.xpath(
+                        '//div[@id="find-birmingham-bullring_overlay"]//p/text()[1]'
+                    )
+                )
+                .replace("\n", "")
                 .strip()
             )
-        except:
-            store_number = "<MISSING>"
+            street_address = " ".join(ad.split(",")[:2])
+            city = ad.split(",")[2].split()[0].strip()
+            postal = " ".join(ad.split(",")[2].split()[1:])
+            phone = "".join(
+                tree.xpath(
+                    '//div[@id="find-birmingham-bullring_overlay"]//p/a[2]/text()'
+                )
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@id="find-birmingham-bullring_overlay"]//h5[./strong[text()="Opening Hours"]]/following-sibling::text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            location_name = "".join(
+                tree.xpath(
+                    '//div[@id="text-birmingham-bullring_overlay"]/div[1]//text()'
+                )
+            )
+
+        if (
+            page_url
+            == "https://www.caferouge.com/restaurants/haywards-heath/the-broadway"
+        ):
+            ad = (
+                "".join(
+                    tree.xpath('//div[@id="find-hayward-heath_overlay"]//p/text()[1]')
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            street_address = ad.split(",")[0].strip()
+            city = ad.split(",")[1].strip()
+            postal = ad.split(",")[2].strip()
+            phone = "".join(
+                tree.xpath('//div[@id="find-hayward-heath_overlay"]//p/a[2]/text()')
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@id="find-hayward-heath_overlay"]//h5[./strong[text()="Opening Hours"]]/following-sibling::text()[position() < 3]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            location_name = "".join(
+                tree.xpath('//div[@id="text-haywards-heath_overlay"]/div[1]//text()')
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -103,7 +145,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=store_number,
+            store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,

@@ -21,6 +21,7 @@ store_pages = [
         "url": "/qa/en/stores",
     },
     {"id": 30, "url": "/om/en/stores"},
+    {"id": 111, "url": "/bh/en/stores"},
 ]
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -71,7 +72,7 @@ def get_phone(Source):
     return phone
 
 
-def get_js_object(response, varName, noVal=MISSING):
+def get_js_object(response, varName):
     parts = response.split(f"var {varName} = ")[1].split(";")[0]
     return parts
 
@@ -114,9 +115,9 @@ def fetch_stores():
         )
 
         for url in urls:
-            id = id_from_url(url)
-            ids.append(id)
-            s_url = f"{website}{store_page['url']}/index/view/id/{id}"
+            _id = id_from_url(url)
+            ids.append(_id)
+            s_url = f"{website}{store_page['url']}/index/view/id/{_id}"
             if s_url not in store_urls:
                 store_urls.append(s_url)
 
@@ -134,12 +135,12 @@ def fetch_stores():
                 log.info(f"Data Err: {e}")
                 data = []
             for sData in data:
-                id = sData["storesid"]
-                if id in ids:
+                _id = sData["storesid"]
+                if _id in ids:
                     continue
                 found_new = True
-                ids.append(id)
-                s_url = f"{website}{store_page['url']}/index/view/id/{id}"
+                ids.append(_id)
+                s_url = f"{website}{store_page['url']}/index/view/id/{_id}"
                 if s_url not in store_urls:
                     store_urls.append(s_url)
             if not found_new:
@@ -161,9 +162,7 @@ def fetch_data():
         store_number = id_from_url(page_url)
 
         body = html.fromstring(response.text, "lxml")
-        location_name = stringify_children(
-            body, '//div[contains(@class, "store-name")]'
-        )
+        location_name = stringify_children(body, '//h1[contains(@class, "store-name")]')
         raw_address = stringify_children(
             body, '//div[contains(@class, "store-address")]/p'
         )

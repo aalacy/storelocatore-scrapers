@@ -2,6 +2,6 @@
 sgscrape==0.2.6
 sgrequests==0.2.10
 lxml==4.6.2
-sgselenium == 0.1.4
-selenium==3.141.0
+sgselenium == 0.1.5
 usaddress==0.5.10
+selenium==3.141.0

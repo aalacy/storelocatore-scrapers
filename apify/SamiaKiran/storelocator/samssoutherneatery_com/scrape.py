@@ -24,6 +24,9 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "col-12 col-sm-6 col-lg-4 col-xxl-3"})
         for loc in loclist:
+            coords = loc.findAll("div")[-1]
+            latitude = coords["data-lat"]
+            longitude = coords["data-lng"]
             location_name = loc.find("h3").text
             log.info(location_name)
             address = loc.find("a").get_text(separator="|", strip=True).split("|")
@@ -47,8 +50,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=MISSING,
             )
 

@@ -6,7 +6,10 @@ from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
-import json
+from sgselenium import SgChrome
+import json  # noqa
+
+import time
 
 logger = SgLogSetup().get_logger("walmart_com")
 
@@ -62,48 +65,57 @@ def grab_json(soup):
             return json.loads(data)["store"]
 
 
-def other_source(session, state):
+def other_source(state):
     url = "https://www.walmart.com/store/directory"
-    main = SgRequests.raise_on_err(session.get(url, headers=headers))
-    soup = b4(main.text, "lxml")
-    allstates = (
-        soup.find("div", {"class": "store-directory-container"})
-        .find("ul")
-        .find_all("a")
-    )
-    for county in allstates:
-        sec = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + county["href"], headers=headers)
-        )
-        sec = b4(sec.text, "lxml")
-        allcities = (
-            sec.find("div", {"class": "store-directory-container"})
+    main = None
+    with SgChrome() as driver:
+        driver.get(url)
+        time.sleep(5)
+        main = driver.page_source
+        # main = SgRequests.raise_on_err(session.get(url, headers=headers)).text # noqa
+        try:
+            toprint = str(main.split("store-directory-container")[1])
+            logger.info(f"store-directory-container: {toprint}")  # noqa
+        except Exception:
+            pass
+        logger.info(f"{str(main)}")  # noqa
+        soup = b4(main, "lxml")
+        allstates = (
+            soup.find("div", {"class": "store-directory-container"})
             .find("ul")
             .find_all("a")
         )
-        for city in allcities:
-            if city["href"].count("/") > 2:
-                if (
-                    str("https://www.walmart.com" + city["href"])
-                    == "https://www.walmart.com/store/directory/mo/st.-peters"
-                ):
-                    state.push_request(SerializableRequest(url="/store/5421"))
-                    state.push_request(SerializableRequest(url="/store/5427"))
-                    continue
-                tri = SgRequests.raise_on_err(
-                    session.get(
-                        "https://www.walmart.com" + city["href"], headers=headers
+        for county in allstates:
+            driver.get(str("https://www.walmart.com" + county["href"]))
+            sec = driver.page_source
+            time.sleep(5)
+            sec = b4(sec, "lxml")
+            allcities = (
+                sec.find("div", {"class": "store-directory-container"})
+                .find("ul")
+                .find_all("a")
+            )
+            for city in allcities:
+                if city["href"].count("/") > 2:
+                    if (
+                        str("https://www.walmart.com" + city["href"])
+                        == "https://www.walmart.com/store/directory/mo/st.-peters"
+                    ):
+                        state.push_request(SerializableRequest(url="/store/5421"))
+                        state.push_request(SerializableRequest(url="/store/5427"))
+                        continue
+                    driver.get(str("https://www.walmart.com" + city["href"]))
+
+                    tri = driver.page_source
+                    tri = b4(tri, "lxml")
+                    recs = tri.find("ul", {"class": "store-list-ul"}).find_all(
+                        "a", {"class": "storeBanner"}
                     )
-                )
-                tri = b4(tri.text, "lxml")
-                recs = tri.find("ul", {"class": "store-list-ul"}).find_all(
-                    "a", {"class": "storeBanner"}
-                )
-                for rec in recs:
-                    state.push_request(SerializableRequest(url=rec["href"]))
-            else:
-                state.push_request(SerializableRequest(url=city["href"]))
-    return True
+                    for rec in recs:
+                        state.push_request(SerializableRequest(url=rec["href"]))
+                else:
+                    state.push_request(SerializableRequest(url=city["href"]))
+        return True
 
 
 def fetch_other(session, state):
@@ -127,6 +139,12 @@ def fetch_other(session, state):
             else:
                 raise Exception
         yield grab_json(b4(res.text, "lxml"))
+
+
+def vision(x):
+    if any(i in x for i in ["ISION", "ision"]):
+        return "VISION"
+    return ""
 
 
 def test_other(session):
@@ -179,7 +197,7 @@ def gen_hours(rec):
                 str("General" + " - " + str(human_hours(rec["operationalHours"])))
             )
         except Exception:
-            pass
+            raise
         for i in rec["primaryServices"]:
             try:
                 newrec["horas"].append(
@@ -205,14 +223,14 @@ def gen_hours(rec):
                         pass
         except Exception:
             pass
-        if len(newrec["horas"]) > 0:
-            newrec["horas"] = "\n".join(newrec["horas"])
-        else:
-            raise
-        return newrec
-    except Exception as mf:
-        newrec["horas"] = str(mf)
-        return newrec
+        for recz in newrec["horas"]:
+            copyrec = newrec
+            copyrec["horas"] = recz
+            copyrec["rawadd"] = recz.split(" - ", 1)[0]
+            yield copyrec
+
+    except Exception:
+        pass
 
 
 def transform_types(rec):
@@ -245,15 +263,12 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    test = gen_hours(transform_types(test_other(session)))
-    please_write(test)
-    state.get_misc_value("init", default_factory=lambda: other_source(session, state))
+    state.get_misc_value("init", default_factory=lambda: other_source(state))
     for item in fetch_other(session, state):
-        yield gen_hours(transform_types(item))
+        for reccz in gen_hours(transform_types(item)):
+            yield reccz
     maxZ = search.items_remaining()
     total = 0
-    for item in fetch_other(session, state):
-        yield gen_hours(transform_types(item))
     for code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
@@ -278,9 +293,8 @@ def fetch_data():
                                     store["geoPoint"]["latitude"],
                                     store["geoPoint"]["longitude"],
                                 )
-                    reczz = gen_hours(transform_types(store))
-                    please_write(reczz)
-                    yield reczz
+                    for recc in gen_hours(transform_types(store)):
+                        yield recc
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
@@ -288,12 +302,6 @@ def fetch_data():
 
 def add_walmart(x):
     return x if "Walmart" in x else "Walmart " + x
-
-
-def vision(x):
-    if any(i in x for i in ["ISION", "ision"]):
-        return "VISION"
-    return ""
 
 
 def scrape():
@@ -306,9 +314,11 @@ def scrape():
         ),
         location_name=sp.MappingField(
             mapping=["storeType", "name"],
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["geoPoint", "longitude"],
@@ -324,6 +334,7 @@ def scrape():
         ),
         zipcode=sp.MappingField(
             mapping=["address", "postalCode"],
+            value_transform=lambda x: x.replace(" ", "-"),
         ),
         country_code=sp.MappingField(
             mapping=["address", "country"],
@@ -334,7 +345,11 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["id"],
         ),
-        hours_of_operation=sp.MappingField(mapping=["horas"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["horas"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         location_type=sp.MappingField(mapping=["rawadd"], value_transform=vision),
         raw_address=sp.MissingField(),
     )

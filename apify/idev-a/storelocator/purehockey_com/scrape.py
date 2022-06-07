@@ -48,6 +48,12 @@ def fetch_data():
                             f"{days[x+y+1].text.strip()}: {times[x+y+1].text.strip()}"
                         )
                     break
+                else:
+                    for y in range(len(days)):
+                        hours.append(
+                            f"{days[x+y].text.strip()}: {times[x+y].text.strip()}"
+                        )
+                    break
 
             yield SgRecord(
                 page_url=page_url,

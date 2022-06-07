@@ -70,6 +70,10 @@ def fetch_data():
             hours = "<MISSING>"
         if loc == "":
             loc = "<MISSING>"
+        if "outlet/puerto-rico" in loc:
+            lat = "18.438676"
+            lng = "-66.540878"
+            hours = "Monday - Thursday: 9:00AM - 8:00PM; Friday - Saturday: 9:00AM - 9:00PM; Sunday: 11:00AM - 6:00PM"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
@@ -90,7 +94,9 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup as bs
 from tenacity import retry, stop_after_attempt, wait_fixed
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -67,13 +68,26 @@ def fetch_data():
             logger.info(page_url)
             get_url(driver, page_url)
             sp1 = bs(driver.page_source, "lxml")
-            hours = []
-            days = list(
-                sp1.select_one("div#section-hours table thead tr").stripped_strings
-            )
-            times = sp1.select("div#section-hours table tbody tr")[0].select("td")[1:]
-            for x in range(len(days)):
-                hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
+            if sp1.select("div.d-sm-none table"):
+                hours = [
+                    " ".join(hh.stripped_strings)
+                    for hh in sp1.select("div.d-sm-none table")[0].select("tr")
+                ]
+            elif sp1.select("div.d-md-none table"):
+                hours = [
+                    " ".join(hh.stripped_strings)
+                    for hh in sp1.select("div.d-md-none table")[0].select("tr")
+                ]
+            else:
+                hours = []
+                days = list(
+                    sp1.select_one("div#section-hours table thead tr").stripped_strings
+                )
+                times = sp1.select("div#section-hours table tbody tr")[0].select("td")[
+                    1:
+                ]
+                for x in range(len(days)):
+                    hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
 
             street_address = _["address"]
             if _["address2"]:
@@ -82,6 +96,9 @@ def fetch_data():
             country_code = "US"
             if _["state"] in ca_provinces_codes:
                 country_code = "CA"
+            phone = _["phone"]
+            if not phone and sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
@@ -89,11 +106,11 @@ def fetch_data():
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
-                zip_postal=_["postal"],
+                zip_postal=_["postal"].replace("Canada", "").strip(),
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=country_code,
-                phone=_["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )

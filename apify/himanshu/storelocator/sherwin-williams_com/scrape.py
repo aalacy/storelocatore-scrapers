@@ -1,54 +1,21 @@
-import csv
 import json
-
 from bs4 import BeautifulSoup
-
 from sglogging import SgLogSetup
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
 
 logger = SgLogSetup().get_logger("sherwin-williams_com")
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def clean(x):
-    return x.replace("&#039;", "'").replace("amp;", "")
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
@@ -70,9 +37,8 @@ def fetch_data():
                 .replace('"', "")
                 .replace(":", "")
             )
-    addresses = []
     max_results = 25
-    max_distance = 75
+    max_distance = 50
     r_headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
@@ -83,7 +49,7 @@ def fetch_data():
 
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-            max_radius_miles=max_distance,
+            max_search_distance_miles=max_distance,
             max_search_results=max_results,
         )
         logger.info("Sgzips for loc_type: %s" % loc_type)
@@ -112,28 +78,21 @@ def fetch_data():
                 soup.find("script", {"id": "storeResultsJSON"}).contents[0]
             )["stores"]
             for store_data in data:
+
                 lat = store_data["latitude"]
                 lng = store_data["longitude"]
-                search.found_location_at(lat, lng)
-                store = []
-                store.append("https://www.sherwin-williams.com")
-                store.append(clean(store_data["name"]))
-                store.append(clean(store_data["address"]))
-                if store[-1] in addresses:
-                    continue
-                addresses.append(store[-1])
-                store.append(clean(store_data["city"]))
-                store.append(store_data["state"])
-                store_data["zipcode"] = store_data["zipcode"].replace(
-                    "                                   ", ""
-                )
-                if store_data["zipcode"].replace(" ", "").replace("-", "").isdigit():
-                    store.append(store_data["zipcode"].replace(" ", ""))
-                    store.append("US")
-                else:
-                    ca_zip = store_data["zipcode"].replace(" ", "")
-                    store.append(ca_zip[:3] + " " + ca_zip[3:])
-                    store.append("CA")
+                locator_domain = "https://www.sherwin-williams.com"
+                location_name = store_data["name"] or "<MISSING>"
+                location_name = str(location_name).replace("&#039;", "`").strip()
+                street_address = store_data["address"] or "<MISSING>"
+                street_address = str(street_address).replace("&amp;", "&").strip()
+                city = store_data["city"] or "<MISSING>"
+                state = store_data["state"] or "<MISSING>"
+                postal = store_data["zipcode"] or "<MISSING>"
+                country_code = "CA"
+                if str(postal).replace("-", "").strip().isdigit():
+                    country_code = "US"
+
                 store_num = store_data["url"].split("storeNumber=")[1].split("&")[0]
                 if store_num in [
                     "190520",
@@ -144,50 +103,59 @@ def fetch_data():
                     "621001",
                 ]:
                     continue
-                store.append(store_num)
-                store.append(
-                    store_data["phone"].replace("  ", "")
-                    if "phone" in store_data
-                    and store_data["phone"] != ""
-                    and store_data["phone"] is not None
-                    else "<MISSING>"
-                )
-                store.append(loc_type)
-                store.append(lat)
-                store.append(lng)
-                link = "https://www.sherwin-williams.com" + store_data["url"]
-                location_request = session.get(
-                    link,
-                    headers=headers,
-                )
-                location_soup = BeautifulSoup(location_request.text, "lxml")
+                phone = store_data["phone"] or "<MISSING>"
 
-                hours = ""
+                link = "https://www.sherwin-williams.com" + store_data["url"]
                 try:
+                    r = session.get(link, headers=headers)
+                    tree = html.fromstring(r.text)
                     hours = (
                         " ".join(
-                            list(
-                                location_soup.find(
-                                    "div",
-                                    {
-                                        "class": "cmp-storedetailhero__store-hours-container"
-                                    },
-                                ).stripped_strings
+                            tree.xpath(
+                                '//div[@class="cmp-storedetailhero__store-hours-container"]//time//text()'
                             )
                         )
-                        .replace("Store Hours", "")
+                        .replace("\n", "")
                         .strip()
                     )
+                    hours = " ".join(hours.split()) or "<MISSING>"
+                    raw_address = (
+                        " ".join(tree.xpath("//address//text()"))
+                        .replace("\n", "")
+                        .strip()
+                    )
+                    raw_address = " ".join(raw_address.split())
                 except:
-                    pass
-                store.append(hours if hours != "" else "<MISSING>")
-                store.append(link)
-                yield store
+                    hours = "<MISSING>"
+                    raw_address = "<MISSING>"
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=loc_type,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                    raw_address=raw_address,
+                )
+
+                sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

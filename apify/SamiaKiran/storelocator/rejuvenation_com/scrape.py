@@ -34,11 +34,14 @@ def fetch_data():
             if "PERMANENTLY CLOSED" in loc.text:
                 continue
             temp = loc.findAll("p")
-            page_url = (
-                loc.findAll("button")[1]["onclick"]
-                .replace("window.location.href = '", "")
-                .replace("';", "")
-            )
+            try:
+                page_url = (
+                    loc.findAll("button")[1]["onclick"]
+                    .replace("window.location.href = '", "")
+                    .replace("';", "")
+                )
+            except:
+                continue
             if DOMAIN not in page_url:
                 page_url = DOMAIN + page_url
             r = session.get(page_url, headers=headers)

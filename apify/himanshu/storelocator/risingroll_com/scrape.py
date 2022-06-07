@@ -1,116 +1,116 @@
-import re
-import usaddress
-from sglogging import sglog
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
+import json
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
-session = SgRequests()
-website = "risingroll_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+ssl._create_default_https_context = ssl._create_unverified_context
 
+from sgselenium.sgselenium import SgChrome
 
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
-}
-
-
-DOMAIN = "https://risingroll.com"
-MISSING = SgRecord.MISSING
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
-    if True:
-        url = "https://risingroll.com/locations/"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "pm-location"})
-        for loc in loclist:
-            if "coming soon" in loc.text.lower():
-                continue
-            page_url = loc.find("a", string=re.compile("View Location & Menu"))
-            if not page_url:
-                page_url = url
-            else:
-                page_url = DOMAIN + page_url["href"]
-            location_name = loc.find("h4").text
-            log.info(page_url)
-            address = (
-                loc.find("a", {"class": "address-link"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
-            try:
-                hours_of_operation = (
-                    loc.find("div", {"class": "hours"})
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
-            except:
-                hours_of_operation = MISSING
-            try:
-                phone = loc.select_one("a[href*=tel]").text
-            except:
-                phone = MISSING
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
-            i = 0
-            street_address = ""
-            city = ""
-            state = ""
-            zip_postal = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street_address = street_address + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    zip_postal = zip_postal + " " + temp[0]
-                i += 1
+    with SgChrome(user_agent=user_agent) as driver:
+        url = "https://www.risingroll.com/locations"
+        driver.get(url)
+        divlist = driver.page_source.split('<script type="application/ld+json">')[1:]
+        divlist = driver.page_source.split(',"RestaurantLocation:')[1:]
+        for div in divlist:
 
+            div = div.split(":", 1)[1]
+            try:
+                div = json.loads(div)
+            except:
+                try:
+                    div = div.split('},"CustomPage:', 1)[0] + "}"
+                    div = json.loads(div)
+                except:
+                    div = div.split('},"Dish:', 1)[0] + "}"
+                    div = json.loads(div)
+            store = div["id"]
+            city = div["city"]
+            title = div["name"]
+
+            state = div["state"]
+            try:
+                phone = div["displayPhone"].strip()
+            except:
+                phone = "<MISSING>"
+            lat = div["lat"]
+            longt = div["lng"]
+            pcode = div["postalCode"]
+            try:
+                link = "https://www.risingroll.com/menu-" + div["slug"].strip()
+            except:
+                link = "<MISSING>"
+            state = div["stateName"]
+            street = div["streetAddress"].replace("\n", " ").strip()
+
+            try:
+                hourslist = div["schemaHours"]
+
+                timestr = hourslist[0].split(" ", 1)[1]
+
+                start, endstr = timestr.split("-")
+                close = int(endstr.split(":", 1)[0])
+                if close > 12:
+                    close = close - 12
+                hours = (
+                    hourslist[0].split(" ", 1)[0]
+                    + " - "
+                    + hourslist[-1].split(" ", 1)[0]
+                    + " : "
+                    + start
+                    + " am - "
+                    + str(close)
+                    + ":"
+                    + endstr.split(":", 1)[1]
+                    + " pm "
+                )
+                if "Sa " not in hours:
+                    hours = hours + "Sat - Sun : Closed"
+                else:
+                    hours = hours + "Sun : Closed"
+            except:
+                hours = "<MISSING>"
+            ltype = "<MISSING>"
+            try:
+                if "Coming Soon" in div["customLocationContent"]:
+                    ltype = "Coming Soon"
+            except:
+                pass
             yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name.strip(),
-                street_address=street_address.strip(),
+                locator_domain="https://www.risingroll.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
                 city=city.strip(),
                 state=state.strip(),
-                zip_postal=zip_postal.strip(),
+                zip_postal=pcode.strip(),
                 country_code="US",
-                store_number=MISSING,
+                store_number=str(store),
                 phone=phone.strip(),
-                location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
-                hours_of_operation=hours_of_operation.strip(),
+                location_type=ltype,
+                latitude=lat,
+                longitude=longt,
+                hours_of_operation=hours,
             )
 
 
 def scrape():
+
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

@@ -26,7 +26,7 @@ def get_data(store_number, sgw: SgWriter):
 
     j = js.get("dealer") or {}
     try:
-        s = js["seo"]["quickLaneInfo"]
+        s = js["seo"]["quickLaneInfo"] or {}
     except:
         s = {}
 

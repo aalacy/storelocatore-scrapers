@@ -71,7 +71,11 @@ def fetch_data():
             .split(",")[1:]
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = store.find("a", {"href": re.compile(r"tel:.*")}, text=True).text.strip()
+        phone_content = store.find("a", {"href": re.compile(r"tel:.*")}, text=True)
+        if not phone_content.text.strip():
+            phone = phone_content.next_sibling
+        else:
+            phone = phone_content.text.strip()
         country_code = "US"
         hours_of_operation = re.search(r".*(weekdays.*)", info.text.strip()).group(1)
         location_type = MISSING

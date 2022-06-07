@@ -1,173 +1,90 @@
-import csv
-import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.thelinehotel.com/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//div[@class='holder']/a/@href")
-
-
-def get_data(url):
-    locator_domain = "https://www.thelinehotel.com"
-    page_url = f"{locator_domain}{url}"
-    if page_url.find("sf") != -1:
-        return
-    session = SgRequests()
-    r = session.get(page_url)
-
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
+    locator_domain = "https://www.thelinehotel.com/"
+    api_url = "https://www.thelinehotel.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
+    div = tree.xpath('//a[@class="location-popup__item--link"]')
+    for d in div:
 
-    hours_of_operation = "<MISSING>"
+        page_url = "".join(d.xpath(".//@href"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-    country_code = "<MISSING>"
-    aa = tree.xpath('//address[@class="address-global"]/a//text()') or tree.xpath(
-        '//address[@class="address-global"]//text()'
-    )
-    aa = list(filter(None, [a.strip() for a in aa]))
-    aa = " ".join(aa) or "<MISSING>"
-    if aa.find("111") != -1:
-        aa = aa.split("TEL")[0].strip()
-    if aa.find("3515") != -1:
-        aa = aa.split("213")[0].strip()
-    if aa.find("1770") != -1:
-        aa = aa.split("0525")[1].strip()
-    a = usaddress.tag(aa, tag_mapping=tag)[0]
-    street_address = (
-        f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
-        or "<MISSING>"
-    )
-    postal = a.get("postal") or "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    store_number = "<MISSING>"
-    location_name = "".join(tree.xpath("//h1/text()")) or "".join(
-        tree.xpath('//div[@class="inner"]/h2/text()')
-    )
-    phone = (
-        " ".join(
-            tree.xpath(
-                '//section/following-sibling::address/a[contains(@href, "tel")]/text()'
-            )
+        location_name = (
+            "".join(tree.xpath('//div[@class="header-locations"]/span/text()'))
+            .replace("\n", "")
+            .strip()
+            .upper()
         )
-        or "".join(tree.xpath('//p[contains(text(), "TEL")]/text()'))
-        .replace("TEL:", "")
-        .strip()
-        or "".join(
-            tree.xpath(
-                '//section/following-sibling::address/p/a[contains(@href, "tel")]/text()'
-            )
-        ).replace("\n", "")
-        or "<MISSING>"
-    )
-    ll = "".join(tree.xpath("//section/following-sibling::address/p/a[1]/@href"))
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    if page_url.find("austin") != -1:
-        latitude = ll.split("/@")[1].split(",")[0]
-        longitude = ll.split("/@")[1].split(",")[1]
-    location_type = "<MISSING>"
+        street_address = (
+            "".join(tree.xpath('//li[@class="footer-col_location "]/p/a[1]/text()[1]'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//li[@class="footer-col_location "]/p/a[1]/text()[2]'))
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
+        text = "".join(tree.xpath('//li[@class="footer-col_location "]/p/a[1]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = (
+            "".join(tree.xpath('//li[@class="footer-col_location "]/p/a[2]/text()'))
+            .replace("\n", "")
+            .replace("Tel:", "")
+            .strip()
+        )
+        hours_of_operation = "<MISSING>"
+        cms = "".join(tree.xpath('//h2[contains(text(), "Opening")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {ad}",
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

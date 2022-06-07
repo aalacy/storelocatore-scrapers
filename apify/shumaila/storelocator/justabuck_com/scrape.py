@@ -45,11 +45,16 @@ def fetch_data():
 
         headers1["referer"] = link
         r = session.post(plink, headers=headers1)
+
         soup = BeautifulSoup(r.text, "html.parser")
         coord = soup.find("iframe")["src"]
         soup = re.sub(cleanr, "\n", str(soup)).strip()
         soup = re.sub(pattern, "\n", str(soup)).strip()
         title = soup.split("\n")[0]
+        try:
+            ltype = soup.split("\n")[1]
+        except:
+            ltype = "<MISSING>"
         street = soup.split("\n")[2]
         city, state = soup.split("\n")[3].split(", ", 1)
         state, pcode = state.split(" ", 1)
@@ -66,10 +71,12 @@ def fetch_data():
                 r.text.split('",null,[null,null,', 1)[1].split("]", 1)[0].split(",")
             )
         except:
-
-            lat, longt = (
-                r.text.split(",[[[")[2].split(",", 1)[1].split("]", 1)[0].split(",")
-            )
+            try:
+                longt, lat = (
+                    r.text.split(",[[[")[2].split(",", 1)[1].split("]", 1)[0].split(",")
+                )
+            except:
+                lat = longt = "<MISSING>"
         yield SgRecord(
             locator_domain="https://www.justabuck.com/",
             page_url=link,
@@ -81,7 +88,7 @@ def fetch_data():
             country_code="US",
             store_number=store,
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours.replace("\r", " ").replace("\x96", "").strip(),

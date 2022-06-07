@@ -14,14 +14,14 @@ _headers = {
 
 locator_domain = "https://shell.co.uk/#shell-select"
 json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&with_all%5Bamenities%5D%5B%5D=selectshop&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=50&driving_distances=false&format=json"
-base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&with_all%5Bamenities%5D%5B%5D=selectshop&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json"
+base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-180&sw%5B%5D=-180&ne%5B%5D=180&ne%5B%5D=180&with_all%5Bamenities%5D%5B%5D=selectshop&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json"
 detail_url = "https://shellgsllocator.geoapp.me/api/v1/locations/{}?origin%5Blat%5D={}&origin%5Blng%5D={}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&unit_system=1&driving_distances=false&format=json"
 locator = "https://www.shell.co.uk/motorist/shell-station-locator.html#iframe=Lz9sb2NhbGU9ZW5fR0IjL0A1NC41MzYsLTguNDc0NzQsNno"
 
 
-@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+@retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
 def get_json(url):
-    with SgRequests(proxy_country="us") as session:
+    with SgRequests(proxy_country="gb") as session:
         return session.get(url, headers=_headers).json()
 
 

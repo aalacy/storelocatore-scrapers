@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import json
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,42 +12,10 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
-    data = []
+
     url = "https://www.cmxcinemas.com/Location/GetCinemaLocations"
-    webdata = session.get(url, headers=headers, verify=False)
+    webdata = session.get(url, headers=headers)
     webdata = BeautifulSoup(webdata.text, "html.parser")
     statelist = webdata.find("select", {"id": "drpStateloc"}).findAll("option")
     for state in statelist:
@@ -76,7 +46,7 @@ def fetch_data():
                         "https://www.cmxcinemas.com/Locationdetail/" + city["slugname"]
                     )
 
-                    r = session.get(link, headers=headers, verify=False)
+                    r = session.get(link, headers=headers)
                     try:
                         longt, lat = (
                             r.text.split("!2d", 1)[1].split("!2m", 1)[0].split("!3d")
@@ -87,31 +57,41 @@ def fetch_data():
                     try:
                         phone = r.text.split("Contact Us: ")[1].split("</p>")[0]
                     except:
-                        phone = "<MISSING>"
-                    data.append(
-                        [
-                            "https://www.cmxcinemas.com",
-                            link,
-                            title,
-                            street,
-                            cityn.rstrip(" " + state),
-                            state,
-                            pcode,
-                            "US",
-                            "<MISSING>",
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            "<MISSING>",
-                        ]
+                        try:
+                            phone = r.text.split("Contact us: ", 1)[1].split("\n", 1)[0]
+                        except:
+                            phone = "<MISSING>"
+                    try:
+                        phone = phone.split("\n", 1)[0].replace('"', "")
+                    except:
+                        pass
+                    yield SgRecord(
+                        locator_domain="https://www.cmxcinemas.com",
+                        page_url=link,
+                        location_name=title,
+                        street_address=street.strip(),
+                        city=cityn.rstrip(" " + state),
+                        state=state.strip(),
+                        zip_postal=pcode.strip(),
+                        country_code="US",
+                        store_number=SgRecord.MISSING,
+                        phone=phone.strip(),
+                        location_type=SgRecord.MISSING,
+                        latitude=str(lat),
+                        longitude=str(longt),
+                        hours_of_operation=SgRecord.MISSING,
                     )
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

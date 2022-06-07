@@ -56,7 +56,7 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(stores_resp.text)
         stores = stores_sel.xpath('//tr[@class="listdata"]')
         for store in stores:
-            page_url = "<MISSING>"
+            page_url = "https://royalfarms.com/locations"
             temp_address = store.xpath("td[1]/text()")
             address_mobile = [
                 "".join(add).strip()
@@ -110,6 +110,14 @@ def fetch_data():
                 phone = "<MISSING>"
 
             hours_of_operation = "".join(store.xpath("td[2]/em/text()")).strip()
+            if "Closed" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
+                location_type = "Temporarily Closed"
+
+            if "Coming Soon" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
+                location_type = "Coming Soon"
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

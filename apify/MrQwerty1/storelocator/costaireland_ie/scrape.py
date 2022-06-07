@@ -18,7 +18,7 @@ def get_international(line):
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.costaireland.ie/api/cf/?locale=en-IE&include=2&content_type=storeV2&limit=500"
+    api = "https://www.costaireland.ie/api/cf/?locale=en-IE&include=2&content_type=storeLocatorStore&limit=500"
     page_url = "https://www.costaireland.ie/locations/store-locator/map"
     r = session.get(api, headers=headers)
     js = r.json()["items"]
@@ -35,11 +35,22 @@ def fetch_data(sgw: SgWriter):
         longitude = loc.get("lon")
 
         _tmp = []
-        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
         for day in days:
-            start = j.get(f"open{day}")
-            end = j.get(f"close{day}")
-            _tmp.append(f"{day}: {start}-{end}")
+            start = j.get(f"{day}Opening")
+            end = j.get(f"{day}Closing")
+            if start == end or not start:
+                _tmp.append(f"{day.title()}: Closed")
+                continue
+            _tmp.append(f"{day.title()}: {start}-{end}")
         hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(

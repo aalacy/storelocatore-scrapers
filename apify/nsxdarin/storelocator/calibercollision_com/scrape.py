@@ -74,9 +74,9 @@ def fetch_data():
             try:
                 hours = (
                     "Sun: "
-                    + item["sundayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["sundayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["sundayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = "Sun: Closed"
@@ -87,9 +87,9 @@ def fetch_data():
                 hours = (
                     hours
                     + "; Mon: "
-                    + item["mondayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["mondayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["mondayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = hours + "; Mon: Closed"
@@ -100,9 +100,9 @@ def fetch_data():
                 hours = (
                     hours
                     + "; Tue: "
-                    + item["tuesdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["tuesdayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["tuesdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = hours + "; Tue: Closed"
@@ -113,9 +113,9 @@ def fetch_data():
                 hours = (
                     hours
                     + "; Wed: "
-                    + item["wednesdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["wednesdayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["wednesdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = hours + "; Wed: Closed"
@@ -126,9 +126,9 @@ def fetch_data():
                 hours = (
                     hours
                     + "; Thu: "
-                    + item["thursdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["thursdayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["thursdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = hours + "; Thu: Closed"
@@ -139,9 +139,9 @@ def fetch_data():
                 hours = (
                     hours
                     + "; Fri: "
-                    + item["fridayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["fridayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["fridayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = hours + "; Fri: Closed"
@@ -152,9 +152,9 @@ def fetch_data():
                 hours = (
                     hours
                     + "; Sat: "
-                    + item["saturdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
-                    + "-"
                     + item["saturdayHoursClose"].split(" ")[1].rsplit(":", 1)[0]
+                    + "-"
+                    + item["saturdayHoursOpen"].split(" ")[1].rsplit(":", 1)[0]
                 )
             except:
                 hours = hours + "; Sat: Closed"
