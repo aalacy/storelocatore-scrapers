@@ -13,13 +13,15 @@ locator_domain = "https://www.davidjones.com/"
 logger = sglog.SgLogSetup().get_logger(logger_name="davidjones.com")
 session = SgRequests()
 
+
 def get_urls():
     r = session.get("https://www.davidjones.com/sitemaps/stores-sitemap.xml")
     tree = html.fromstring(r.content)
 
     return tree.xpath("//loc/text()")
 
-def fetch_location(page_url, fox, sgw, retry = 0):
+
+def fetch_location(page_url, fox, sgw, retry=0):
     try:
         logger.info(f"Starting {page_url}")
         fox.get(page_url)
@@ -31,9 +33,7 @@ def fetch_location(page_url, fox, sgw, retry = 0):
         ).strip()
         city = "".join(tree.xpath("//span[@class='store-city']/text()")).strip()
         state = "".join(tree.xpath("//span[@class='store-state']/text()")).strip()
-        postal = "".join(
-            tree.xpath("//span[@class='store-postcode']/text()")
-        ).strip()
+        postal = "".join(tree.xpath("//span[@class='store-postcode']/text()")).strip()
         country_code = "".join(
             tree.xpath("//span[@class='store-country']/text()")
         ).strip()
@@ -55,7 +55,7 @@ def fetch_location(page_url, fox, sgw, retry = 0):
 
             _tmp.append(f"{day}: {inter}")
 
-        hours_of_operation = re.sub('\n', '', ";".join(_tmp))
+        hours_of_operation = re.sub("\n", "", ";".join(_tmp))
 
         row = SgRecord(
             page_url=page_url,
@@ -77,6 +77,7 @@ def fetch_location(page_url, fox, sgw, retry = 0):
 
     except:
         return fetch_location(page_url, fox, sgw, retry + 1)
+
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
