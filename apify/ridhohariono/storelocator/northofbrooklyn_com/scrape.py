@@ -57,22 +57,40 @@ def fetch_data():
     contents = soup.select(
         "div.sqs-layout.sqs-grid-12.columns-12 div.col.sqs-col-6.span-6 div.sqs-block.html-block.sqs-block-html"
     )
+    skip = False
     for i in range(len(contents)):
+        if skip:
+            i = i + 2
         if i % 2 == 0:
-            location_name = contents[i].find("h1").text.strip()
+            try:
+                location_name = contents[i].find("h1").text.strip()
+            except:
+                continue
             store_info = contents[i + 1].find_all("p")
             addr = store_info[0].get_text(strip=True, separator=",").split(",")
             raw_address = ", ".join(addr[:-1]).strip()
             street_address, city, state, zip_postal = getAddress(raw_address)
             phone = addr[-1].strip()
             country_code = "CA"
-            hours_of_operation = (
-                store_info[1]
-                .get_text(strip=True, separator=",")
-                .replace("Hours:,", "")
-                .replace("*", "")
-                .strip()
-            )
+            try:
+                hours_of_operation = (
+                    store_info[1]
+                    .get_text(strip=True, separator=",")
+                    .replace("Hours:,", "")
+                    .replace("*", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = (
+                    store_info[0]
+                    .find_next("p")
+                    .find_next("p")
+                    .get_text(strip=True, separator=",")
+                    .replace("Dine-In Hours:,", "")
+                    .replace("*", "")
+                    .strip()
+                )
+                skip = True
             location_type = MISSING
             if (
                 "Temporarily Closed" in hours_of_operation

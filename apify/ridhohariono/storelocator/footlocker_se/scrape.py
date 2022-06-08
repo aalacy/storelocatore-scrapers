@@ -109,7 +109,11 @@ def fetch_data():
             .strip()
         )
         street_address = address.find("meta", {"itemprop": "streetAddress"})["content"]
-        city = address.find("span", {"class": "c-address-city"}).text.strip()
+        city = re.sub(
+            r"\(.*\)",
+            "",
+            address.find("span", {"class": "c-address-city"}).text.strip(),
+        )
         get_state = address.find(re.compile("span|abbr"), {"class": "c-address-state"})
         if not get_state:
             state = "<MISSING>"

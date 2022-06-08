@@ -77,6 +77,8 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if not city:
+            city = raw_address.split(" ")[-1].strip()
         state = formatted_addr.state
         zip = formatted_addr.postcode
         country_code = "LU"

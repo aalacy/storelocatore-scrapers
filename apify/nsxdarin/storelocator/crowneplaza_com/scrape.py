@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -21,14 +22,13 @@ def fetch_data():
     r = session.get(url_home, headers=headers)
     Found = False
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '-hotels"><span>' in line:
             if (
                 'href="https://www.ihg.com/destinations/us/en/mexico/' in line
                 or 'href="https://www.ihg.com/destinations/us/en/canada/' in line
                 or 'href="https://www.ihg.com/destinations/us/en/united-states/' in line
             ):
-                lurl = line.split('href="')[1].split('"')[0]
+                lurl = line.split('href="')[1].split('"')[0].replace("é", "e")
                 if lurl not in states:
                     states.append(lurl)
         if 'algeria-hotels">' in line:
@@ -49,10 +49,8 @@ def fetch_data():
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '<li class="listingItem"><a' in line:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     if 'href="' not in g:
                         g = next(lines)
                         g = str(g.decode("utf-8"))
@@ -76,7 +74,6 @@ def fetch_data():
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '"@type":"Hotel","' in line:
                     curl = (
                         line.split('"@type":"Hotel","')[1]
@@ -88,6 +85,7 @@ def fetch_data():
                             locs.append(curl)
         except:
             pass
+
     logger.info(len(locs))
     for loc in locs:
         logger.info(loc)
@@ -106,50 +104,37 @@ def fetch_data():
         lng = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'property="og:title" content="' in line2 and name == "":
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
             if '"name" : "' in line2 and name == "":
                 name = line2.split('"name" : "')[1].split('"')[0]
-            if "|</a>" in line2:
-                rawadd = (
-                    line2.split("|</a>")[0]
-                    .strip()
-                    .replace("\t", "")
-                    .replace(" |", "|")
-                    .replace("| ", "|")
-                )
-                rawadd = rawadd.replace("  ", " ")
-            if 'place:location:latitude"' in line2:
-                lat = (
-                    line2.split('place:location:latitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if 'place:location:longitude"' in line2:
-                lng = (
-                    line2.split('place:location:longitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
+        if 'place:location:latitude"' in line2:
+            lat = (
+                line2.split('place:location:latitude"')[1]
+                .split('content="')[1]
+                .split('"')[0]
+            )
+        if 'place:location:longitude"' in line2:
+            lng = (
+                line2.split('place:location:longitude"')[1]
+                .split('content="')[1]
+                .split('"')[0]
+            )
+        if '<a href="tel:' in line2:
+            phone = line2.split('<a href="tel:')[1].split('"')[0]
         if "null" in phone:
             phone = "<MISSING>"
         if state == "":
             state = "<MISSING>"
-        if rawadd.count("|") == 2:
-            add = rawadd.split("|")[0].split(",")[0].strip()
-            city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
-            state = "<MISSING>"
-            zc = rawadd.split("|")[1].strip()
-            country = rawadd.split("|")[2].strip()
-        if rawadd.count("|") == 3:
-            add = rawadd.split("|")[0].split(",")[0].strip()
-            city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
-            state = rawadd.split("|")[1].strip()
-            zc = rawadd.split("|")[2].strip()
-            country = rawadd.split("|")[3].strip()
+        phone = phone.replace("++", "+")
         state = state.replace("&nbsp;", "")
         city = city.replace("&nbsp;", "")
         if zc == "":
@@ -158,7 +143,7 @@ def fetch_data():
             add = add + " " + city
             add = add.strip()
             city = "<MISSING>"
-        if " Hotels" not in name and name != "":
+        if name != "":
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

@@ -4,7 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "maytheatres.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -31,16 +32,20 @@ def fetch_data():
         location_type = "<MISSING>"
         locator_domain = website
 
-        raw_info = store.xpath("table/tbody/tr/td/p[2]/text()")
+        raw_info = store.xpath("table/tbody/tr/td/p[2]//text()")
         raw_address = raw_info[0].strip()
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zipp = formatted_addr.postcode
-        phone = raw_info[1].strip().replace(":", "").strip()
+        street_address = raw_address.split(",")[0].strip()
+        city = raw_address.split(",")[1].strip()
+        state = raw_address.split(",")[2].strip()
+        zipp = raw_address.split(",")[-1].strip()
+        phone = (
+            raw_info[-1]
+            .strip()
+            .replace(":", "")
+            .strip()
+            .replace("Theatre Number", "")
+            .strip()
+        )
 
         hours_of_operation = "<MISSING>"
 
@@ -72,7 +77,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

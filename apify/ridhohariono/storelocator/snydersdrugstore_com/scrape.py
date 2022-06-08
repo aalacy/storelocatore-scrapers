@@ -51,10 +51,22 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+def get_latlong(store):
+    map_link = store.find("p", {"class": "location-address"}).find(
+        "a", text="Get Directions"
+    )["href"]
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", map_link)
     if not latlong:
-        return MISSING, MISSING
+        try:
+            latlong = store.find(
+                "script", string=re.compile(r"new google\.maps\.LatLng")
+            )
+            latlong = re.search(
+                r"new google\.maps\.LatLng\((-?[\d]*\.[\d]*),\s?(-?[\d]*\.[\d]*)\)",
+                latlong.string,
+            )
+        except:
+            return MISSING, MISSING
     return latlong.group(1), latlong.group(2)
 
 
@@ -77,10 +89,7 @@ def fetch_data():
             .parent.get_text(strip=True, separator=",")
             .replace(":,", ": ")
         )
-        map_link = store.find("p", {"class": "location-address"}).find(
-            "a", text="Get Directions"
-        )["href"]
-        latitude, longitude = get_latlong(map_link)
+        latitude, longitude = get_latlong(store)
         store_number = row["id"]
         location_type = "PHARMACY"
         log.info("Append {} => {}, {}".format(location_name, street_address, city))

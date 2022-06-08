@@ -32,22 +32,24 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
-        '//ul[@class="card-listing row"]/li/a[@class="card__btn"]/@href'
+        '//article[contains(@id,"post-")]//div[@class="elementor-widget-container"]/h2/a/@href'
     )
     for store_url in stores:
-        page_url = "https://www.salonikigreek.com" + store_url
+        page_url = store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
 
         locator_domain = website
 
-        location_name = (
-            "".join(store_sel.xpath("//title/text()")).strip().split("|")[0].strip()
-        )
+        location_name = "".join(
+            store_sel.xpath(
+                "//div[@class='elementor-element elementor-element-aee801e card-title elementor-widget elementor-widget-heading']//h2//text()"
+            )
+        ).strip()
 
         add_list = store_sel.xpath(
-            '//section[@id="intro"]/p/a[contains(@href,"google.com")]/text()'
+            '//li[@class="elementor-icon-list-item"]/a[contains(@href,"google.com")]//span[@class="elementor-icon-list-text"]/text()'
         )
 
         street_address = ", ".join(add_list[0:-1]).strip()
@@ -60,20 +62,17 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         phone = "".join(
-            store_sel.xpath('//section[@id="intro"]/p/a[contains(@href,"tel")]//text()')
+            store_sel.xpath(
+                '//li[@class="elementor-icon-list-item"]/a[contains(@href,"tel")]//span[@class="elementor-icon-list-text"]/text()'
+            )
         ).strip()
 
         location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(
-                store_sel.xpath(
-                    '//section[@id="intro"]/p[./strong[contains(text(),"HOURS")]]/strong/text()'
-                )
+        hours_of_operation = "".join(
+            store_sel.xpath(
+                '//li[@class="elementor-icon-list-item"][.//i[@class="fas fa-clock"]]//span[@class="elementor-icon-list-text"]/text()'
             )
-            .strip()
-            .split(":")[-1]
-            .strip()
-        )
+        ).strip()
 
         latitude = "".join(
             store_sel.xpath("//div[@class='gmaps']/@data-gmaps-lat")

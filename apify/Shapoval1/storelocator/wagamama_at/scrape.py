@@ -24,10 +24,18 @@ def fetch_data(sgw: SgWriter):
         sitemap_url = f"{sub_page_url}sitemap.xml"
         if country_code == "northern ireland":
             sitemap_url = "https://www.wagamamani.com/sitemap.xml"
-        if sitemap_url.find("us") != -1 or sitemap_url == "https://www.wagamama.com/":
+        if (
+            sitemap_url.find("us") != -1
+            or sitemap_url == "https://www.wagamama.com/"
+            or sitemap_url == "https://www.wagamama.fr/sitemap.xml"
+            or sitemap_url == "https://www.wagamama.es/sitemap.xml"
+        ):
             continue
-        r = session.get(sitemap_url, headers=headers)
-        tree = html.fromstring(r.content)
+        try:
+            r = session.get(sitemap_url, headers=headers)
+            tree = html.fromstring(r.content)
+        except:
+            continue
         div = tree.xpath(
             '//url/loc[contains(text(), "restaurants/")] | //url/loc[contains(text(), "restauranter/")] | //url/loc[contains(text(), "ristoranti/")] | //url/loc[contains(text(), "restauracie/")] | //url/loc[contains(text(), "restauranger/")]'
         )

@@ -78,11 +78,11 @@ def fetch_data():
                     if phone:
                         phone = phone[0]
 
-                    log.info(page_url)
                     hours_of_operation = "<MISSING>"
 
                     try:
                         if page_url:
+                            log.info(page_url)
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
@@ -100,6 +100,18 @@ def fetch_data():
                                         ],
                                     )
                                 )
+                                if len(hours) <= 0:
+                                    hours = list(
+                                        filter(
+                                            str,
+                                            [
+                                                x.strip()
+                                                for x in store_sel.xpath(
+                                                    '//div[./strong[contains(text(),"Horario de Ventas")]]/text()'
+                                                )
+                                            ],
+                                        )
+                                    )
                                 hours_of_operation = (
                                     "; ".join(hours).replace(".;", ":").strip()
                                 )
@@ -165,11 +177,11 @@ def fetch_data():
                     if phone:
                         phone = phone[0]
 
-                    log.info(page_url)
                     hours_of_operation = "<MISSING>"
 
                     try:
                         if page_url:
+                            log.info(page_url)
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
@@ -186,6 +198,19 @@ def fetch_data():
                                     ],
                                 )
                             )
+                            if len(hours) <= 0:
+                                hours = list(
+                                    filter(
+                                        str,
+                                        [
+                                            x.strip()
+                                            for x in store_sel.xpath(
+                                                '//div[./strong[contains(text(),"Horario de Ventas")]]/text()'
+                                            )
+                                        ],
+                                    )
+                                )
+
                             hours_of_operation = (
                                 "; ".join(hours).replace(".;", ":").strip()
                             )

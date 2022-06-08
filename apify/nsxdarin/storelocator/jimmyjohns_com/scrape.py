@@ -18,15 +18,13 @@ def fetch_data():
     locs = []
     while len(locs) < 2700:
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
         for line in r.iter_lines():
             if ".html</loc>" in line and "/sandwiches-" in line:
                 lurl = line.split("<loc>")[1].split("<")[0]
-                locs.append(lurl)
+                if lurl not in locs:
+                    locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
-        url = loc
         add = ""
         city = ""
         state = ""
@@ -39,8 +37,6 @@ def fetch_data():
         website = "jimmyjohns.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
         for line2 in r2.iter_lines():
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
@@ -66,7 +62,7 @@ def fetch_data():
             phone = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
-            page_url=url,
+            page_url=loc,
             location_name=name,
             street_address=add,
             city=city,
@@ -84,7 +80,9 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

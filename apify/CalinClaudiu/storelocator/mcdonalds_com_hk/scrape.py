@@ -21,6 +21,7 @@ def OneLink():
 
     def record_cleaner(record):
         parsed = parse_address_intl(record["address"])
+        record["raw_address"] = record["address"]
         record["country"] = parsed.country if parsed.country else "<MISSING>"
         record["state"] = parsed.state if parsed.state else "<MISSING>"
         record["city"] = parsed.city if parsed.city else "<MISSING>"
@@ -60,7 +61,7 @@ def fix_comma(x):
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField("mcdonalds.com.hk"),
-        page_url=sp.MissingField(),
+        page_url=sp.ConstantField("https://www.mcdonalds.com.hk/find-a-restaurant/"),
         location_name=sp.MappingField(
             mapping=["title"],
             is_required=False,
@@ -90,7 +91,7 @@ def scrape():
         store_number=sp.MissingField(),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(mapping=["tooltips"], is_required=False),
-        raw_address=sp.MissingField(),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(

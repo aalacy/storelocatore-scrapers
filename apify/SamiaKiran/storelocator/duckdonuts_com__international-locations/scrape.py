@@ -37,31 +37,23 @@ def fetch_data():
         url = "https://www.duckdonuts.com/international-locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("ul", {"class": "flex items-3"}).findAll("li")
+        loclist = soup.find("div", {"id": "LocationsCont"}).findAll("li")
         for loc in loclist:
-            hours_of_operation = MISSING
             location_name = loc.find("h2").text
+            if "COMING SOON" in location_name:
+                continue
             raw_address = (
                 loc.find("address")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
             log.info(location_name)
-            page_url = loc.find("a")["href"]
-            page_url = "https://www.duckdonuts.com" + page_url
+            page_url = loc.findAll("a")[-1]["href"]
+            if "duckdonuts" not in page_url:
+                page_url = DOMAIN + page_url
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            if "View All Hours" in r.text:
-                payload = (
-                    "_m_=HoursPopup&HoursPopup%24_edit_=16580&HoursPopup%24_command_="
-                )
-                r2 = session.post(page_url, headers=headers_2, data=payload)
-                hours_of_operation = (
-                    BeautifulSoup(r2.text, "html.parser")
-                    .find("table")
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
+            hours_of_operation = "<INACCESSIBLE>"
             try:
                 longitude, latitude = (
                     soup.select_one("iframe[src*=maps]")["src"]
@@ -72,6 +64,8 @@ def fetch_data():
             except:
                 longitude = MISSING
                 latitude = MISSING
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
             try:
                 phone = loc.find("div", {"class": "phone"}).text
             except:
@@ -91,8 +85,14 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = pa.country
-            country_code = country_code.strip() if country_code else MISSING
+            if "Dubai" in location_name:
+                country_code = "Dubai"
+            elif "Saudi Arabia" in location_name:
+                country_code = "Saudi Arabia"
+            elif "Bayamon" in location_name:
+                country_code = "Bayamon"
+            else:
+                country_code = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

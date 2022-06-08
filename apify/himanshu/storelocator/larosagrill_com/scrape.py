@@ -55,12 +55,17 @@ def fetch_data(sgw: SgWriter):
             if len(address) > 1:
                 street_address = address[0].strip()
                 city = address[1].strip()
-                state = re.sub(r"\d+", "", address[2]).strip()
-                zip_code = re.sub(r"\D+", "", address[2]).strip()
-                if len(address) < 4 and "United States" in address[2]:
-                    city = "<MISSING>"
-                    state = address[1]
-                    zip_code = "<MISSING>"
+                try:
+                    state = re.sub(r"\d+", "", address[2]).strip()
+                    zip_code = re.sub(r"\D+", "", address[2]).strip()
+                    if len(address) < 4 and "United States" in address[2]:
+                        city = "<MISSING>"
+                        state = address[1]
+                        zip_code = "<MISSING>"
+                except:
+                    city = address[1].split()[0]
+                    state = address[1].split()[1]
+                    zip_code = address[1].split()[2]
             country_code = "US"
             store_number = "<MISSING>"
             phone = row.find("div", {"class": "locationheader1"})
