@@ -30,7 +30,7 @@ def get_coords_from_embed(text):
 
 
 def fetch_data(sgw: SgWriter):
-    page_url = f"https://ufcgym.mx/sucursales/"
+    page_url = "https://ufcgym.mx/sucursales/"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[contains(@data-vc-content, '.vc_tta-panel-body')]")
