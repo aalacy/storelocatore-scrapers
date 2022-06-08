@@ -30,9 +30,10 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
+            location_name = ""
             temp = soup.find("div", {"class": "executivesdiv"}).findAll("p")
             address = temp[0].text
+            raw_address = address
             phone = temp[1].text
             hours_of_operation = (
                 soup.find("div", {"class": "centered-block"})
@@ -40,6 +41,7 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Hours of Operation", "")
                 .replace("Open daily", "")
+                .replace("NOW OPEN", "")
             )
             address = address.replace(",", " ")
             address = usaddress.parse(address)
@@ -69,7 +71,16 @@ def fetch_data():
                 i += 1
             country_code = "US"
             if not city:
-                city = location_name.lower()
+                if "sandiego" in page_url:
+                    city = "San Diego"
+                    state = "CA"
+                elif "vegas" in page_url:
+                    city = "Las Vegas"
+                    state = "NV"
+                elif "/sm" in page_url:
+                    city = "Santa Monica"
+                    state = "CA"
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -85,6 +96,7 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
