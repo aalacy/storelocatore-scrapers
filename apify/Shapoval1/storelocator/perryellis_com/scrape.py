@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
             phone = j.get("contacts").get("con_vakq85z8").get("text")
         except:
             phone = "<MISSING>"
-        hours = j.get("hours") or "<MISSING>"
+        hours = j.get("hours")
         hours_of_operation = "<MISSING>"
         days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
         tmp = []
