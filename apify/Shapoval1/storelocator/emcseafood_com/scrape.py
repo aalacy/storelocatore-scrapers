@@ -55,14 +55,22 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
 
         location_name = " ".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
-        adr = " ".join(tree.xpath("//a[contains(@href, 'google')]/text()"))
         phone = (
             "".join(tree.xpath('//a[contains(@href, "tel")]/text()'))
             .replace("tel:", "")
             .strip()
         )
 
-        ad = adr.split("tel:")[0].strip()
+        ad = (
+            "".join(
+                tree.xpath('//p[contains(text(), "tel")]/preceding-sibling::p/text()')
+            )
+            or "<MISSING>"
+        )
+        if ad == "<MISSING>":
+            ad = tree.xpath('//p[@class="is-style-default"]/text()[1]')
+            ad = "".join(ad[0])
+
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         location_type = "Seafood Restaurant"
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
@@ -76,14 +84,20 @@ def fetch_data(sgw: SgWriter):
         latitude = ll.split('"lat":')[1].split(",")[0].strip()
         longitude = ll.split('"lng":')[1].split("}")[0].strip()
         hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//table[@class="open_overview_widget-schedule"]//tr/td//text()'
-                )
+            " ".join(tree.xpath("//p/text()")).replace("\n", " ").strip()
+        )
+        if hours_of_operation.find("Monday") != -1:
+            hours_of_operation = (
+                "Monday" + " " + hours_of_operation.split("Monday")[1].strip()
             )
-            .replace("\n", "")
+        hours_of_operation = (
+            " ".join(hours_of_operation.split())
+            .replace(" : ", " ")
+            .replace("2013-2021", "")
             .strip()
         )
+        if hours_of_operation.find("©") != -1:
+            hours_of_operation = hours_of_operation.split("©")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -100,6 +114,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -108,6 +123,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)

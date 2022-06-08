@@ -1,183 +1,189 @@
-import csv
-
-import json
 import re
-
-from bs4 import BeautifulSoup
-
-from sglogging import SgLogSetup
-
+import usaddress
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-logger = SgLogSetup().get_logger("pokeworks_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+
     locator_domain = "https://www.pokeworks.com/"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
+    api_url = "https://www.pokeworks.com/all-locations"
     session = SgRequests()
-    req = session.get(locator_domain, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath(
+        '//b[text()="NOW OPEN"]/following::a[contains(@href, "www.pokeworks.com/")]'
+    )
+    for d in div:
 
-    link_list = []
+        page_url = "".join(d.xpath(".//@href"))
+        if page_url.find("http") != -1 and page_url.find("https") == -1:
+            page_url = page_url.replace("http", "https")
+        location_name = "".join(d.xpath(".//text()"))
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-    a_tags = base.find(id="preFooter").find_all(class_="row sqs-row")[1].find_all("a")
-    for a in a_tags:
+        info = (
+            " ".join(tree.xpath('//div[@id="content"]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        info = " ".join(info.split())
         try:
-            link_list.append(a["href"])
-        except:
-            continue
-
-    all_store_data = []
-    for link in link_list:
-        logger.info(link)
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        try:
-            map_json_string = base.find(class_="sqs-block map-block sqs-block-map")[
-                "data-block-json"
-            ]
+            ad = info.split("PICKUP & DELIVERY")[1].split("Store")[0].strip()
         except:
             try:
-                map_json_string = base.find(class_="col sqs-col-6 span-6").div[
-                    "data-block-json"
-                ]
+                ad = info.split("STORE INFO")[1].split("Store")[0].strip()
             except:
-                continue
-        map_json = json.loads(map_json_string)["location"]
-
-        location_name = map_json["addressTitle"]
-        lat = map_json["markerLat"]
-        longit = map_json["markerLng"]
-        street_address = map_json["addressLine1"]
-        city_line = map_json["addressLine2"].replace(".", ",").split(",")
-        city = city_line[0].title()
-        if "8041 Walnut Hill" in street_address:
-            state = "TX"
-            zip_code = "75231"
-        else:
-            state = city_line[1].replace("\xa0", " ").upper().strip()
-            if state.isdigit():
-                zip_code = state
-                state = "<MISSING>"
-            elif " " in state:
-                zip_code = state.split()[1].strip()
-                state = state.split()[0].strip()
-            else:
-                zip_code = city_line[2].strip()
-        if city == "Laguna Niguel":
-            state = "CA"
-        if zip_code == "V6E":
-            zip_code = "V6E 2E9"
-
-        country_code = map_json["addressCountry"]
-        if "MEX" in country_code.upper():
-            continue
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
-        content = base.find(class_="main-content")
+                ad = info.split("PICKUP")[1].split("Store")[0].strip()
+        if ad.find("(") != -1:
+            ad = " ".join(ad.split("(")[:-1]).strip()
+        ad = ad.replace("TEL:", "").strip()
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("postal")
+        country_code = "US"
+        if page_url == "https://www.pokeworks.com/san-luis":
+            street_address = "Av. Venustiano Carranza 2065 Cuauhtemoc"
+            postal = "78270"
+            state = location_name.split(",")[1].strip()
+            city = location_name.split(",")[0].strip()
+        if page_url == "https://www.pokeworks.com/san-luis-2":
+            street_address = "C. Palmira 1070"
+            postal = "78295"
+            state = location_name.split(",")[1].strip()
+            city = location_name.split(",")[0].replace("2", "").strip()
+        if page_url == "https://www.pokeworks.com/leon":
+            street_address = "Eugenio Garza Sada 1109-local 8 Cumbres del Campestre"
+            postal = "37128"
+            state = location_name.split(",")[1].strip()
+            city = location_name.split(",")[0].replace("2", "").strip()
 
         try:
-            phone = re.findall(r"[(\d)]{5}.[\d]{3}-[\d]{4}", str(content))[0]
+            latitude = (
+                "".join(tree.xpath("//div/@data-block-json"))
+                .split('"mapLat":')[1]
+                .split(",")[0]
+                .strip()
+            )
+            longitude = (
+                "".join(tree.xpath("//div/@data-block-json"))
+                .split('"mapLng":')[1]
+                .split(",")[0]
+                .strip()
+            )
         except:
-            phone = "<MISSING>"
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        try:
+            ph = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(info))
+        except:
+            ph = list("<MISSING>")
+        phone = "".join(ph).strip() or "<MISSING>"
+        if phone == "<MISSING>" and state != "MX":
+            phone = (
+                "".join(tree.xpath('//p[./strong[text()="STORE INFO"]]/text()[last()]'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
 
-        if "temporarily closed" in str(content).lower():
+        try:
+            hours_of_operation = info.split("Hours")[1].strip()
+        except:
+            try:
+                hours_of_operation = info.split("HOURS")[1].strip()
+            except:
+                hours_of_operation = "<MISSING>"
+
+        if hours_of_operation.find("order") != -1:
+            hours_of_operation = hours_of_operation.split("order")[0].strip()
+        if hours_of_operation.find("ORDER") != -1:
+            hours_of_operation = hours_of_operation.split("ORDER")[0].strip()
+        if hours_of_operation.find("Order") != -1:
+            hours_of_operation = hours_of_operation.split("Order")[0].strip()
+        if hours_of_operation.find("CATERING") != -1:
+            hours_of_operation = hours_of_operation.split("CATERING")[0].strip()
+        if hours_of_operation.find("Catering") != -1:
+            hours_of_operation = hours_of_operation.split("Catering")[0].strip()
+        if hours_of_operation.find("catering") != -1:
+            hours_of_operation = hours_of_operation.split("catering")[0].strip()
+        hours_of_operation = (
+            hours_of_operation.replace("-Pickup & Delivery only-", "")
+            .replace("-Takeout & Delivery only-", "")
+            .strip()
+        )
+        if hours_of_operation[0] == ":":
+            hours_of_operation = " ".join(hours_of_operation.split(":")[1:]).strip()
+        if (
+            info.find("TEMPORARILY CLOSED") != -1
+            or info.find("Temporarily Closed") != -1
+        ):
             hours_of_operation = "Temporarily Closed"
-        else:
-            ps = content.find_all("p")
-            hours_of_operation = "<MISSING>"
-            for p in ps:
-                if "pm" in str(p).lower():
-                    hours_of_operation = (
-                        " ".join(list(p.stripped_strings))
-                        .replace("Store Hours:", "")
-                        .replace("Store Hours", "")
-                        .replace("-Takeout & Delivery only-", "")
-                        .replace("- Takeout & Delivery only- ", "")
-                        .replace("-Pickup & Delivery only-", "")
-                        .replace("STORE HOURS", "")
-                        .replace("Temporary Hours:", "")
-                        .strip()
-                    )
-                    break
-            if "pm" not in str(p).lower():
-                if "0pm" in content.span.text:
-                    hours_of_operation = (
-                        " ".join(list(content.span.stripped_strings))
-                        .replace("Store Hours:", "")
-                        .replace("Store Hours", "")
-                        .replace("-Takeout & Delivery only-", "")
-                        .replace("- Takeout & Delivery only- ", "")
-                        .replace("-Pickup & Delivery only-", "")
-                        .replace("STORE HOURS", "")
-                        .replace("Temporary Hours:", "")
-                        .strip()
-                    )
 
-        if "STORE INFO" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("  ")[-1].strip()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-        hours_of_operation = hours_of_operation.split("Limited")[0].strip()
-        store_data = [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            lat,
-            longit,
-            hours_of_operation,
-        ]
-        all_store_data.append(store_data)
-
-    return all_store_data
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

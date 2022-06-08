@@ -1,1 +1,1 @@
---ignore CentroidValidator --ignore StreetAddressHasNumber (Confirmed on website)
+--ignore CentroidValidator --ignore StreetAddressHasNumber --ignore CountValidator --ignore StateLevelCountValidator (Confirmed on website)

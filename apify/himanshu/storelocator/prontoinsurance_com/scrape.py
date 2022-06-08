@@ -1,76 +1,96 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
 
+from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="prontoinsurance.com")
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://www.prontoinsurance.com"
-    r = session.get("https://products.prontoinsurance.com/agency-locator",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    addresses = []
-    for location in soup.find_all("div",{'class':"location-tab"}):
-        page_url = "https://products.prontoinsurance.com" + location.find("a",{"class":'details-link'})["href"]
-        location_request = session.get(page_url,headers=headers)
-        location_soup = BeautifulSoup(location_request.text,"lxml")
-        hours = ""
-        for hour in location_soup.find_all("h5",text=re.compile("Hours")):
-            hours = hours + " " + " ".join(list(hour.parent.stripped_strings))
-        name = location.find('h5').text
-        address_1 = location.find('span',{'class':"address1"}).text
-        address_2 = location.find('span',{'class':"address2"}).text
-        if address_1 in addresses:
+    session = SgRequests()
+    locator_domain = "prontoinsurance.com"
+
+    found_poi = []
+
+    max_distance = 50
+
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=max_distance,
+    )
+
+    log.info("Running sgzip ..")
+    for postcode in search:
+        payload = {"Zip_code": postcode}
+        base_link = "https://www.prontoinsurance.com:3010/cmspages/agentsearch"
+        try:
+            stores = session.post(
+                base_link, headers=headers, data=payload, timeout=5
+            ).json()["agents"]
+        except:
             continue
-        addresses.append(address_1)
-        for state in address_2.split(" "):
-            if len(state) == 2:
-                store_state = state
-        if address_1 == "":
-            continue
-        phone = location.find('a',{'href':"#"})["data-phone"].strip().replace("Ph:","").replace("PH:","")
-        store = []
-        store.append("https://www.prontoinsurance.com")
-        store.append(name)
-        store.append(address_1)
-        store.append(address_2.split(",")[0])
-        store.append(store_state)
-        store.append(address_2.split(",")[-1].split(" ")[-1])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone if phone != "" else "<MISSING>")
-        store.append("<MISSING>")
-        if "-"  not in location["data-lat"]:
-            store.append(location["data-lat"])
-            store.append(location["data-lng"])
-        else:
-            store.append(location["data-lng"])
-            store.append(location["data-lat"])
-        store.append(hours if hours else "<MISSING>")
-        store.append(page_url)
-        for i in range(len(store)):
-            if store[i] == "":
-                store[i] = "<MISSING>"
-        yield store
+        for store in stores:
+            location_name = store["name"]
+            link = "https://www.prontoinsurance.com/agentdetail/" + store["slug"]
+            street_address = store["Address"].split("(In")[0].split(", CA")[0]
+            city = store["City"].replace(",", "")
+            state = store["State"]
+            zip_code = store["Zip_code"]
+            country_code = "US"
+            store_number = store["id"]
+            location_type = "<MISSING>"
+            phone = store["phone"]
+            latitude = store["Latitude"]
+            longitude = store["Longitude"]
+            search.found_location_at(float(latitude), float(longitude))
+            if link in found_poi:
+                continue
+            log.info(link)
+            found_poi.append(link)
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            try:
+                hours_of_operation = (
+                    base.find(class_="agent_bx_widget mt ng-star-inserted")
+                    .ul.get_text(" ")
+                    .strip()
+                )
+            except:
+                hours_of_operation = ""
 
-scrape()
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

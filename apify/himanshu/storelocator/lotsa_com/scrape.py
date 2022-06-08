@@ -1,115 +1,86 @@
-import csv
-
+from sglogging import sglog
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "lotsa_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://lotsa.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    return_main_object = []
-
-    headers = {
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-        "accept": "application/json, text/javascript, */*; q=0.01",
-    }
-
-    # it will used in store data.
-    base_url = "https://lotsa.com"
-    locator_domain = "https://lotsa.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
-    r = session.get("https://lotsa.com/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-
-    for a in soup.find_all("a", class_="et_pb_custom_button_icon"):
-        page_url = base_url + a["href"]
-        r_loc = session.get(base_url + a["href"], headers=headers)
-        soup_loc = BeautifulSoup(r_loc.text, "lxml")
-
-        div = soup_loc.find("div", class_="et_pb_row et_pb_row_13").find(
-            class_="et_pb_text_inner"
+    if True:
+        url = "https://lotsa.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll(
+            "a",
+            {"class": "et_pb_button et_pb_button_0 et_pb_module et_pb_bg_layout_dark"},
         )
-
-        list_div = list(div.stripped_strings)
-        phone = list_div[0]
-        street_address = list_div[1]
-        city = list_div[2].split(",")[0]
-        state = list_div[2].split(",")[-1].split()[0]
-        zipp = list_div[2].split(",")[-1].split()[-1]
-        location_name = city + ", " + state
-        hours_of_operation = " ".join(list_div[5:]).split("Outside")[0].strip()
-
-        latitude = soup_loc.find(class_="et_pb_map")["data-center-lat"]
-        longitude = soup_loc.find(class_="et_pb_map")["data-center-lng"]
-        store = [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zipp,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-            page_url,
-        ]
-        store = ["<MISSING>" if x == "" else x for x in store]
-        return_main_object.append(store)
-
-    return return_main_object
+        for loc in loclist:
+            page_url = DOMAIN + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp = soup.findAll("div", {"class": "et_pb_text_inner"})[4]
+            phone = temp.find("h2").text
+            address = temp.find("p").get_text(separator="|", strip=True).split("|")
+            street_address = address[0]
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            hours_of_operation = temp.findAll("p")
+            hours_of_operation = (
+                hours_of_operation[-2].text + " " + hours_of_operation[-1].text
+            )
+            coords = soup.find("div", {"class": "et_pb_map"})
+            latitude = coords["data-center-lat"]
+            longitude = coords["data-center-lng"]
+            location_name = city + ", " + state
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

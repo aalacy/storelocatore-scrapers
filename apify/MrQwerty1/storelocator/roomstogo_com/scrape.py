@@ -1,73 +1,44 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+def get_name(api):
+    r = session.get(api, headers=headers)
+    return r.json()["result"]["data"]["strapiStore"]["SEO"]["SEO"]["PageTitle"]
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.roomstogo.com/"
-    api_url = "https://www.roomstogo.com/page-data/stores/page-data.json"
-
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["result"]["pageContext"]["stores"]
-    abbr = js["abbrevStates"]
-    sts = js["states"]
-    states = {k: v.lower().replace(" ", "-") for k, v in zip(abbr, sts)}
-    js = js["stores"]
+def fetch_data(sgw: SgWriter):
+    api = "https://www.roomstogo.com/page-data/stores/page-data.json"
+    r = session.get(api, headers=headers)
+    js = r.json()["result"]["pageContext"]["stores"]["stores"]
 
     for j in js:
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = "US"
-        store_number = j.get("storeNumber") or "<MISSING>"
-        location_type = j.get("storeType") or "<MISSING>"
-        city_url = city.lower().replace(" ", "-", 1)
-        state_url = states.get(state)
-        name = j.get("storeName") or ""
-        if name:
-            location_name = f"Rooms To Go {location_type}"
-            name = name.lower().replace(" ", "-")
-            page_url = f"https://www.roomstogo.com/stores/{state_url}/{city_url}-{name}-{location_type.lower()}-{store_number}"
-        else:
-            location_name = f"Rooms To Go {location_type}"
-            page_url = f"https://www.roomstogo.com/stores/{state_url}/{city_url}-{location_type.lower()}-{store_number}"
-        phone = j.get("phoneNumber") or "<MISSING>"
-        loc = j.get("location")
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("lon") or "<MISSING>"
+        slug = j.get("slug")
+        app = f"https://www.roomstogo.com/page-data{slug}/page-data.json"
+        location_name = get_name(app) or ""
+        if " - We" in location_name:
+            location_name = location_name.split("- We")[0]
+        page_url = f"https://www.roomstogo.com{slug}"
+        city = j.get("City")
+        state = j.get("State")
+        postal = j.get("Zip")
+        adr1 = j.get("Address1") or ""
+        if f", {city}," in adr1:
+            adr1 = adr1.split(f", {city}")[0].strip()
+        adr2 = j.get("Address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        phone = j.get("PhoneNumber")
+        try:
+            loc = j["Location"]["latLng"]
+        except:
+            loc = dict()
+        latitude = loc.get("lat")
+        longitude = loc.get("lng")
+        location_type = j.get("StoreType")
+        store_number = j.get("StoreNumber")
 
         _tmp = []
         days = [
@@ -79,45 +50,43 @@ def fetch_data():
             "saturday",
             "sunday",
         ]
-        h = j.get("storeHours", {}) or {}
-
+        hours = j.get("StoreHours") or {}
         for d in days:
-            start = h.get(f"{d}Open")
-            close = h.get(f"{d}Closed")
-            if start:
-                _tmp.append(f"{d.capitalize()}: {start}-{close}")
-            else:
-                _tmp.append(f"{d.capitalize()}: Closed")
+            start = hours.get(f"{d}Open")
+            if not start:
+                _tmp.append(f"{d}: Closed")
+                continue
+            end = hours.get(f"{d}Closed")
+            _tmp.append(f"{d}: {start}-{end}")
+        hours_of_operation = ";".join(_tmp)
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            location_type=location_type,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.roomstogo.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

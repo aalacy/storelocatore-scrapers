@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -19,14 +19,13 @@ def fetch_data():
     website = "kfchk.com"
     typ = "<MISSING>"
     country = "HK"
-    loc = "<MISSING>"
+    loc = "https://corp.kfchk.com/filemanager/system/en/js/restaurant.js"
     store = "<MISSING>"
     lat = "<MISSING>"
     lng = "<MISSING>"
     locs = {}
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if ".name='" in line and "//" not in line:
             name = line.split(".name='")[1].split("';")[0]
             rid = line.split(".name")[0].strip().replace("\t", "")
@@ -36,7 +35,7 @@ def fetch_data():
             state = ""
         if ".address='" in line and "//" not in line:
             add = line.split(".address='")[1].split("';")[0]
-        if ".openingtime.push('" in line and "//" not in line:
+        if ".openingtime.push('" in line:
             hrs = line.split(".openingtime.push('")[1].split("');")[0]
         if ".tel.push('" in line and "//" not in line:
             phone = line.split(".tel.push('")[1].split("');")[0]
@@ -75,6 +74,15 @@ def fetch_data():
                 country = "MO"
             if hours == "":
                 hours = "<MISSING>"
+            if "0" not in hours:
+                hours = "<MISSING>"
+            hours = hours.strip()
+            if add[-1:] == ",":
+                add = add[:-1]
+            if hours[-1:] == ",":
+                hours = hours[:-1]
+            lat = lat.replace(",", "")
+            lng = lng.replace(",", "")
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
