@@ -1,125 +1,52 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_coords_from_embed(text):
-    try:
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.fnbfs.com/locations/")
+def fetch_data(sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-
-    return tree.xpath(
-        "//li[@class='currentpage']/following-sibling::li/a[contains(text(), 'Branch')]/@href"
+    divs = tree.xpath(
+        "//div[@class='account_box' and .//h1[contains(text(), 'Branch')]]"
     )
 
+    for d in divs:
+        location_name = "".join(d.xpath(".//h1/text()"))
+        line = d.xpath(".//p/span/text()")
+        line = list(filter(None, [li.strip() for li in line]))
+        raw_address = ", ".join(line)
+        csz = line.pop()
+        street_address = ", ".join(line)
+        city, sz = csz.split(", ")
+        state, postal = sz.split()
 
-def get_data(page_url):
-    locator_domain = "https://www.fnbfs.com/"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            location_type="Branch",
+            raw_address=raw_address,
+            locator_domain=locator_domain,
+        )
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//div[@id='title']/h1/text()")).strip()
-    line = tree.xpath("//table/tbody//td[2]//text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = ", ".join(line[:-1])
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//table//h3/text()")).strip() or "<MISSING>"
-
-    text = "".join(tree.xpath("//iframe/@src"))
-    latitude, longitude = get_coords_from_embed(text)
-    location_type = "Branch"
-    hours_of_operation = (
-        ";".join(tree.xpath("//table/tbody//td[4]/p/text()")).strip() or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=13) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://fnbfs.com/"
+    page_url = "https://fnbfs.com/contact-us/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

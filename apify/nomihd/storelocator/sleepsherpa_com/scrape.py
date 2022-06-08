@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "sleepsherpa.com"
@@ -45,14 +47,12 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://sleepsherpa.com/home-page/showrooms/"
+    search_url = "https://sleepsherpa.com/about/"
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list((search_sel.xpath('//a[contains(@href,"showrooms/") ]/@href')))[
-        :-1
-    ]
+    store_list = search_sel.xpath('//a[contains(@href,".com/showroom/") ]/@href')
 
     for store in store_list:
 
@@ -60,6 +60,8 @@ def fetch_data():
         locator_domain = website
         log.info(page_url)
         store_res = session.get(page_url, headers=headers)
+        if "We are now permanently closed" in store_res.text:
+            continue
         store_sel = lxml.html.fromstring(store_res.text)
 
         location_name = (
@@ -80,38 +82,61 @@ def fetch_data():
                 ],
             )
         )
-
         raw_address = " ".join(full_address[1:])
+        if len(raw_address) <= 0:
+            home_req = session.get(
+                "https://sleepsherpa.com/home-page/showrooms/", headers=headers
+            )
+            home_sel = lxml.html.fromstring(home_req.text)
 
-        formatted_addr = parser.parse_address_usa(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            full_address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in home_sel.xpath(
+                            '//div[@class="page-content lazyload"]/p/text()'
+                        )
+                    ],
+                )
+            )
+            street_address = full_address[-3]
+            city = full_address[-2].strip().split(",")[0].strip()
+            state = (
+                full_address[-2].strip().split(",")[-1].strip().split(" ")[0].strip()
+            )
+            zip = full_address[-2].strip().split(",")[-1].strip().split(" ")[-1].strip()
+        else:
+            formatted_addr = parser.parse_address_usa(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            city = formatted_addr.city
+            state = formatted_addr.state
+            if not state:
+                state = "CA"
+            zip = formatted_addr.postcode
 
         country_code = "US"
         store_number = "<MISSING>"
-        phone = (
-            "".join(
-                list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//*[(self::h2 or self::h4 or self::h3) and contains(text(),"Call us")]//text()'
-                            )
-                        ],
-                    )
+        phone = "".join(
+            list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//*[(self::h2 or self::h4 or self::h3) and contains(text(),"Call ")]//text()'
+                        )
+                    ],
                 )
             )
-            .split("at")[1]
-            .strip()
-        )
-
+        ).strip()
+        try:
+            phone = phone.split(":")[1].strip().split("email")[0].strip()
+        except:
+            pass
         location_type = "<MISSING>"
 
         hours = list(
@@ -119,9 +144,7 @@ def fetch_data():
                 str,
                 [
                     x.strip()
-                    for x in store_sel.xpath(
-                        '//*[(self::h2 or self::h4 or self::h3) and contains(text(),"day")]//text()'
-                    )
+                    for x in store_sel.xpath('//p[contains(text(),"day")]//text()')
                 ],
             )
         )
@@ -154,7 +177,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

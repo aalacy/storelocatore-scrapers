@@ -2,19 +2,20 @@ import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "thedynamicfitness_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://thedynamicfitness.com/"
-MISSING = "<MISSING>"
+DOMAIN = "https://thedynamicfitness.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -28,16 +29,17 @@ def fetch_data():
                 page_url = loc["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                temp = soup.findAll(
-                    "div",
-                    {"class": "elementor-column-wrap elementor-element-populated"},
-                )[8]
-                temp = temp.get_text(separator="|", strip=True).split("|")[:-2]
+                temp = "<h1" + r.text.split("<h1")[2].split("</section>")[0]
+                temp = BeautifulSoup(temp, "html.parser")
+                hours_of_operation = (
+                    temp.get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .split("Staff Hours")[1]
+                )
+                temp = temp.get_text(separator="|", strip=True).split("|")
                 location_name = temp[0]
-                hours_of_operation = " ".join(x for x in temp[3:])
-                address = temp[2]
                 phone = temp[1]
+                address = temp[2]
                 address = address.replace(",", " ")
                 address = usaddress.parse(address)
                 i = 0
@@ -76,7 +78,7 @@ def fetch_data():
                     zip_postal=zip_postal.strip(),
                     country_code=country_code,
                     store_number=MISSING,
-                    phone=phone.strip(),
+                    phone=phone,
                     location_type=MISSING,
                     latitude=MISSING,
                     longitude=MISSING,
@@ -87,7 +89,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

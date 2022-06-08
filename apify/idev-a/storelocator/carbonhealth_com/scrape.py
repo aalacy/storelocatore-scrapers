@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -21,7 +23,7 @@ def fetch_data():
             .string
         )
         for _ in locations["props"]["initialState"]["config"]["locations"]:
-            if _["typ"] == "Vaccination":
+            if _.get("typ", "") == "Vaccination":
                 continue
             page_url = locator_domain + _["slug"]
             hours = []
@@ -73,14 +75,14 @@ def fetch_data():
                 longitude=_["address"]["longitude"],
                 country_code="US",
                 phone=_.get("phoneNumber"),
-                location_type=_["typ"],
+                location_type=_.get("typ", ""),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

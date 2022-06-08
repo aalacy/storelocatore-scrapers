@@ -7,16 +7,29 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 
 
-def get_urls():
+def get_params():
+    params = []
     r = session.get("https://dutyfreeamericas.com/locations/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//div[@id='locations-list-holder']//a[not(contains(@href, '/index'))]/@href"
+    lines = tree.xpath(
+        "//div[@id='locations-list-holder']//a[not(contains(@href, '/index'))]"
     )
+    for line in lines:
+        _id = SgRecord.MISSING
+        url = "".join(line.xpath("./@href"))
+        text = "".join(line.xpath("./text()"))
+        if "(" in text:
+            _id = text.split("(")[-1].split(")")[0]
+
+        params.append({"url": url, "_id": _id})
+
+    return params
 
 
-def get_data(page_url, sgw: SgWriter):
+def get_data(param, sgw: SgWriter):
+    page_url = param.get("url")
+    store_number = param.get("_id")
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -35,6 +48,7 @@ def get_data(page_url, sgw: SgWriter):
             tree.xpath("//span[contains(text(), 'Zip')]/following-sibling::span/text()")
         )
         .replace("00000", "")
+        .replace("0000", "")
         .strip()
     )
     country_code = "".join(
@@ -43,11 +57,11 @@ def get_data(page_url, sgw: SgWriter):
     phone = "".join(
         tree.xpath("//span[@class='amlocator-icon -phone']/following-sibling::a/text()")
     ).strip()
-    store_number = "".join(
-        tree.xpath(
-            "//span[./strong[contains(text(), 'Number')]]/following-sibling::div//text()"
-        )
-    ).strip()
+    if "," in phone:
+        phone = phone.split(",")[0].strip()
+
+    if "ext" in phone:
+        phone = phone.split("ext")[0].strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationData')]/text()"))
     try:
@@ -77,7 +91,6 @@ def get_data(page_url, sgw: SgWriter):
         country_code=country_code,
         store_number=store_number,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
@@ -88,10 +101,12 @@ def get_data(page_url, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = get_urls()
+    params = get_params()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+        future_to_url = {
+            executor.submit(get_data, param, sgw): param for param in params
+        }
         for future in futures.as_completed(future_to_url):
             future.result()
 

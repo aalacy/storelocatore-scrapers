@@ -1,53 +1,21 @@
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "postnet.com"
+    session = SgRequests()
+    domain = "postnet.com"
     start_url = "https://locations.postnet.com/search?q={}"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
     for code in all_codes:
         response = session.get(start_url.format(code))
@@ -89,7 +57,11 @@ def fetch_data():
             for elem in hours:
                 if elem["intervals"]:
                     end = str(elem["intervals"][0]["end"])[:2] + ":00"
-                    start = str(elem["intervals"][0]["start"])[:2] + ":00"
+                    s_time = str(elem["intervals"][0]["start"])
+                    if len(s_time) == 4:
+                        start = s_time[:2] + ":00"
+                    else:
+                        start = s_time[:1] + ":00"
                     hours_of_operation.append(
                         "{} {} - {}".format(elem["day"], start, end)
                     )
@@ -99,32 +71,36 @@ def fetch_data():
                 ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
             )
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            if street_address not in scraped_items:
-                scraped_items.append(street_address)
-                items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

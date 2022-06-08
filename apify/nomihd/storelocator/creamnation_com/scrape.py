@@ -1,15 +1,25 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgFirefox
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "creamnation.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -18,79 +28,85 @@ headers = {
 
 def fetch_data():
     # Your scraper here
+
     api_url = "https://creamnation.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.712891&max_results=1000&search_radius=5000&autoload=1"
-    api_res = session.get(api_url, headers=headers)
+    with SgFirefox(block_third_parties=True) as driver:
+        driver.get(api_url)
+        stores_sel = lxml.html.fromstring(driver.page_source)
+        json_data = "".join(stores_sel.xpath('//div[@id="json"]/text()')).strip()
+        stores_list = json.loads(json_data)
 
-    json_res = json.loads(api_res.text)
+        for store in stores_list:
 
-    stores_list = json_res
+            page_url = store["permalink"].strip()
+            locator_domain = website
 
-    for store in stores_list:
+            location_name = store["store"].strip()
 
-        page_url = store["permalink"].strip()
-        locator_domain = website
+            street_address = store["address"].strip()
+            if "address2" in store and store["address2"].strip():
+                street_address = street_address + " " + store["address2"].strip()
 
-        location_name = store["store"].strip()
+            city = store["city"].strip()
+            state = store["state"].strip()
+            zip = store["zip"].strip()
 
-        street_address = store["address"].strip()
-        if "address2" in store and store["address2"].strip():
-            street_address = street_address + " " + store["address2"].strip()
+            country_code = "US"
+            store_number = store["id"].strip()
 
-        city = store["city"].strip()
-        state = store["state"].strip()
-        zip = store["zip"].strip()
+            phone = store["phone"].strip()
 
-        country_code = "US"
-        store_number = store["id"].strip()
+            location_type = "<MISSING>"
 
-        phone = store["phone"].strip()
+            if store["hours"]:
+                hours = store["hours"]
 
-        location_type = "<MISSING>"
+                hours_list = []
+                hours_sel = lxml.html.fromstring(hours).xpath("//tr")
+                for hour in hours_sel:
+                    hour_info = list(filter(str, hour.xpath(".//text()")))
+                    day = hour_info[0].strip()
+                    hrs = (
+                        "".join(hour_info[1:])
+                        .replace("\n", " ")
+                        .replace("  ", " ")
+                        .strip()
+                    )
+                    hours_list.append(f"{day}: {hrs}")
 
-        if store["hours"]:
-            hours = store["hours"]
+                hours_of_operation = "; ".join(hours_list)
+            else:
+                hours_of_operation = "<MISSING>"
+            latitude = store["lat"].strip()
+            longitude = store["lng"].strip()
 
-            hours_list = []
-            hours_sel = lxml.html.fromstring(hours).xpath("//tr")
-            for hour in hours_sel:
-                hour_info = list(filter(str, hour.xpath(".//text()")))
-                day = hour_info[0].strip()
-                hrs = (
-                    "".join(hour_info[1:]).replace("\n", " ").replace("  ", " ").strip()
-                )
-                hours_list.append(f"{day}: {hrs}")
+            raw_address = "<MISSING>"
 
-            hours_of_operation = "; ".join(hours_list)
-        else:
-            hours_of_operation = "<MISSING>"
-        latitude = store["lat"].strip()
-        longitude = store["lng"].strip()
-
-        raw_address = "<MISSING>"
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,80 +1,67 @@
-from sgcrawler.sgcrawler_fun import SgCrawlerUsingHttpFun
-from sgcrawler.helper_definitions import (
-    DeclarativeTransformerAndFilter,
-    DeclarativePipeline,
-)
+import datetime
+import json
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.simple_scraper_pipeline import (
-    SSPFieldDefinitions,
-    ConstantField,
-    MappingField,
-    MissingField,
-)
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data(_, http: SgRequests):
+def fetch_data(sgw: SgWriter):
+    session = SgRequests()
 
-    res = http.request(
-        url="https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token=384d27726e184470f9e11be758b172f4",
-        headers={
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
-        },
-    ).json()["items"]
-    for x in res:
-        yield x
+    locator_domain = "https://www.riesbeckfoods.com"
+    api_url = "https://api.freshop.com/1/stores?app_key=riesbeck&has_address=true&is_selectable=true&limit=100&token={}"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "riesbeck",
+        "referrer": "https://www.riesbeckfoods.com/",
+        "utc": str(unixtime).split(".")[0],
+    }
+    r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    token = r["token"]
 
+    r = session.get(api_url.format(token))
+    js = json.loads(r.text)
 
-def strip_extension(phone: str):
-    return phone.split("\n")[0]
+    for j in js["items"]:
+        page_url = j.get("url")
+        location_name = j.get("name")
+        street_address = j.get("address_1")
+        phone = "".join(j.get("phone")).split("\n")[0]
+
+        state = j.get("state")
+        postal = j.get("postal_code")
+        country_code = "US"
+        city = j.get("city")
+        store_number = j.get("store_number")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        hours_of_operation = "".join(j.get("hours_md")).replace("\n", " ").strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    crawler_domain = "riesbeckfoods.com"
+    session = SgRequests()
+    locator_domain = "https://www.thelooprestaurant.com"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        SgCrawlerUsingHttpFun(
-            crawler_domain=crawler_domain,
-            transformer=DeclarativeTransformerAndFilter(
-                pipeline=DeclarativePipeline(
-                    crawler_domain=crawler_domain,
-                    field_definitions=SSPFieldDefinitions(
-                        locator_domain=ConstantField("https://www.riesbeckfoods.com"),
-                        page_url=MappingField(
-                            mapping=["url"]
-                            or "https://www.riesbeckfoods.com/my-store/store-locator"
-                        ),
-                        location_name=MappingField(mapping=["name"], is_required=False),
-                        street_address=MappingField(mapping=["address_1"]),
-                        city=MappingField(mapping=["city"]),
-                        state=MappingField(mapping=["state"]),
-                        zipcode=MappingField(
-                            mapping=["postal_code"], is_required=False
-                        ),
-                        country_code=ConstantField("USA"),
-                        store_number=MappingField(
-                            mapping=["store_number"], part_of_record_identity=True
-                        ),
-                        phone=MappingField(
-                            mapping=["phone_md"],
-                            value_transform=strip_extension,
-                            is_required=False,
-                        ),
-                        location_type=MissingField(),
-                        latitude=MappingField(mapping=["latitude"], is_required=False),
-                        longitude=MappingField(
-                            mapping=["longitude"], is_required=False
-                        ),
-                        hours_of_operation=MappingField(
-                            mapping=["hours_md"], is_required=False
-                        ),
-                        raw_address=MissingField(),
-                    ),
-                    fail_on_outlier=False,
-                )
-            ),
-            fetch_raw_using=fetch_data,
-            make_http=lambda _: SgRequests(),
-            data_writer=SgWriter(),
-        ).run()
+        fetch_data(writer)

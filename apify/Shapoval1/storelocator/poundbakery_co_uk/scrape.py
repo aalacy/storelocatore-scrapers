@@ -33,18 +33,13 @@ def fetch_data(sgw: SgWriter):
         )
         location_name = " ".join(location_name.split())
         ad = tree.xpath('//p[@class="address"]/text()')
+        ad = list(filter(None, [a.strip() for a in ad]))
 
-        street_address = "".join(ad[0]).strip()
-        state = "".join(ad[2]).strip()
-        postal = "".join(ad[3]).strip()
+        street_address = " ".join(ad[:-3])
+        state = "".join(ad[-2]) or "<MISSING>"
+        postal = "".join(ad[-1]) or "<MISSING>"
         country_code = "UK"
-        city = "".join(ad[1]).strip()
-        if len(ad) == 5:
-            street_address = "".join(ad[0]).strip()
-            state = "".join(ad[3]).strip()
-            postal = "".join(ad[4]).strip()
-            country_code = "UK"
-            city = "".join(ad[2]).strip()
+        city = "".join(ad[-3]) or "<MISSING>"
         try:
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))

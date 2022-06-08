@@ -67,6 +67,10 @@ def fetch_data():
             .strip()
             .replace(",,", ",")
             .strip()
+            .replace("The Source Mall,", "")
+            .strip()
+            .replace(", Store 11-12", "")
+            .strip()
         )
         country_code = "US"
 

@@ -1,76 +1,45 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_cats():
-    session = SgRequests()
-    r = session.get("https://www.aspirus.org/find-a-location")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//div[@class='view-all1']/a/@href")
-
-
-def get_params(cat_url):
+def get_params():
     params = []
-    data = {}
-    cat_url = f"https://www.aspirus.org{cat_url}".replace("/ahc", "")
-    session = SgRequests()
+    data = dict()
 
     _next = "random"
     while _next:
         cnt = 0
         coords = []
-        r = session.post(cat_url, data=data)
+        r = session.post("https://www.aspirus.org/find-a-location", data=data)
         tree = html.fromstring(r.text)
 
-        script = "".join(tree.xpath("//script[contains(text(),'var marker;')]/text()"))
-        script = (
-            script.split("var marker;")[1]
-            .split("infowindow = null;")[0]
-            .split(".LatLng")[1:]
-        )
+        try:
+            script = "".join(
+                tree.xpath("//script[contains(text(),'var marker;')]/text()")
+            )
+            script = (
+                script.split("var marker;")[1]
+                .split("infowindow = null;")[0]
+                .split(".LatLng")[1:]
+            )
 
-        for s in script:
-            coords.append(eval(s.split(";")[0]))
+            for s in script:
+                coords.append(eval(s.split(";")[0]))
+        except:
+            pass
 
-        cat = "".join(
-            tree.xpath("//div[@class='breadcrumb']/span[last()]/span/text()")
-        ).strip()
-        links = tree.xpath("//li[@data-loc]/ul/a/@href")
+        links = tree.xpath("//li[@data-loc]/a/@href")
         for link in links:
-            params.append((f"https://www.aspirus.org{link}", cat, coords[cnt]))
+            try:
+                coord = coords[cnt]
+            except IndexError:
+                coord = (SgRecord.MISSING, SgRecord.MISSING)
+            params.append((f"https://www.aspirus.org{link}", coord))
             cnt += 1
 
         _next = "".join(
@@ -139,37 +108,41 @@ def clean_hours(text_list):
     return line
 
 
-def get_data(param):
-    locator_domain = "https://www.aspirus.org/"
+def get_data(param, sgw: SgWriter):
     page_url = param[0]
-    location_type = param[1]
-    latitude, longitude = param[2]
+    latitude, longitude = param[1]
 
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
+    if " - " in location_name:
+        location_name = location_name.split(" - ")[0].strip()
     line = tree.xpath("//section[@class='rel-loc']//li/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
-    street_address = ", ".join(line[:-1]).strip()
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
+    if line:
+        street_address = ", ".join(line[:-1]).strip()
+        line = line[-1]
+        city = line.split(",")[0].strip()
+        line = line.split(",")[1].strip()
+        state = line.split()[0]
+        postal = line.split()[1]
+    else:
+        street_address = SgRecord.MISSING
+        city = SgRecord.MISSING
+        state = SgRecord.MISSING
+        postal = SgRecord.MISSING
+
+    if street_address == SgRecord.MISSING and city == SgRecord.MISSING:
+        return
     store_number = page_url.split("-")[-1]
-    phone = (
-        "".join(
-            tree.xpath(
-                "//strong[contains(text(), 'Phone')]/following-sibling::a[contains(@href, 'tel')][1]/text()"
-            )
-        ).strip()
-        or "<MISSING>"
-    )
-    if phone != "<MISSING>":
+    phone = "".join(
+        tree.xpath(
+            "//strong[contains(text(), 'Phone')]/following-sibling::a[contains(@href, 'tel')][1]/text()"
+        )
+    ).strip()
+    if phone:
         phone = clean_phone(phone)
 
     hours = tree.xpath(
@@ -177,56 +150,42 @@ def get_data(param):
     )
     hours = list(filter(None, [h.strip() for h in hours]))
     if not hours:
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = SgRecord.MISSING
     else:
         hours_of_operation = clean_hours(hours).replace("closed on holidays", "")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        store_number=store_number,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    params = []
-    cats = get_cats()
+def fetch_data(sgw: SgWriter):
+    params = get_params()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_params, cat): cat for cat in cats}
+        future_to_url = {
+            executor.submit(get_data, param, sgw): param for param in params
+        }
         for future in futures.as_completed(future_to_url):
-            tmp = future.result()
-            for param in tmp:
-                params.append(param)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, param): param for param in params}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.aspirus.org/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

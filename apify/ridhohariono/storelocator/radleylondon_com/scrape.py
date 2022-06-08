@@ -1,142 +1,95 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-from sglogging import sglog
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
-import re
-
-DOMAIN = "radleylondon.com"
-BASE_URL = "https://www.radleylondon.com"
-LOCATION_URL = "https://www.radleylondon.com/stores/"
-HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-}
-MISSING = "<MISSING>"
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
+def fetch_data(sgw: SgWriter):
 
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
+    locator_domain = "https://www.radleylondon.com/"
+    api_url = "https://www.radleylondon.com/stores"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//h3[.//span[@class="cmp-accordion__title"]]')
+    for d in div:
+        location_type = "".join(d.xpath(".//span//text()"))
+        page_urls = d.xpath("./following-sibling::div//a")
+        for p in page_urls:
+            slug = "".join(p.xpath(".//@href"))
+            page_url = f"https://www.radleylondon.com{slug}"
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
 
-
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
-
-
-def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
-        return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
-
-
-def fetch_data():
-    log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    page_urls = soup.find_all("div", {"align": "center"})[1].find_all("a")
-    for row in page_urls:
-        page_url = row["href"]
-        content = pull_content(page_url)
-        info = content.find("div", {"class": "inner"}).find("div", {"class": "inner"})
-        location_name = (
-            content.find("h4", {"class": "homepage-heading"}).text.split(":")[0].strip()
-        )
-        addr_phone = (
-            info.find("p", {"class": "homepage-text"})
-            .get_text(strip=True, separator="@")
-            .replace("Address: ", "")
-            .replace("Phone: ", "")
-            .split("@")
-        )
-        raw_address = addr_phone[0]
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        try:
-            phone = addr_phone[1]
-        except:
-            phone = MISSING
-        hours_of_operation = (
-            info.find("table", {"class": "delivery-table"})
-            .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
-        )
-        country_code = "us"
-        store_number = MISSING
-        location_type = "radleylondon"
-        try:
-            map_link = info.find("iframe")["src"]
-            latitude, longitude = get_latlong(map_link)
-        except:
-            latitude = MISSING
-            longitude = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-
-
-def scrape():
-    log.info("start {} Scraper".format(DOMAIN))
-    count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
+            location_name = "".join(tree.xpath("//h1//text()"))
+            ad = tree.xpath(
+                '//div[@class="cmp-googlemaps__information--text"]/p//text()'
             )
-        )
-    ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+            ad = list(filter(None, [a.strip() for a in ad]))
+            adr = " ".join(ad)
+            a = parse_address(International_Parser(), adr)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
+            )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "CA"
+            if postal.isdigit():
+                country_code = "US"
+            city = a.city or "<MISSING>"
+            if country_code == "CA":
+                postal = "".join(ad[-1]).strip()
+                city = "".join(ad[-2]).strip()
+                street_address = " ".join(ad[:-2]).strip()
+            latitude = "".join(tree.xpath("//script/@latitude")) or "<MISSING>"
+            longitude = "".join(tree.xpath("//script/@longitude")) or "<MISSING>"
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//div[./div/h2[text()="CONTACT"]]/following-sibling::div[1]//i[@class="icon icon-phone cmp-iconlink__icon--left"]/following-sibling::span//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = (
+                " ".join(tree.xpath('//ul[@class="cmp-openinghours__week"]/li//text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=adr,
+            )
+
+            sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

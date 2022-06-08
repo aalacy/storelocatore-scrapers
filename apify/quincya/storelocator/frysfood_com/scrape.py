@@ -1,6 +1,9 @@
 import json
+import time
 
 from bs4 import BeautifulSoup
+
+from sglogging import sglog
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -9,12 +12,17 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+log = sglog.SgLogSetup().get_logger("frysfood.com")
+
 
 def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.frysfood.com/storelocator-sitemap.xml"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -28,13 +36,36 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         link = item.text
-        if "stores/details" in link:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+        if "stores/search" not in link:
+            log.info(link)
+            try:
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+            except:
+                try:
+                    time.sleep(5)
+                    log.info("Retrying ..")
+                    session = SgRequests()
+                    time.sleep(4)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                    script = base.find(
+                        "script", attrs={"type": "application/ld+json"}
+                    ).contents[0]
+                except:
+                    log.info("Retrying ..")
+                    time.sleep(10)
+                    session = SgRequests()
+                    time.sleep(10)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                    script = base.find(
+                        "script", attrs={"type": "application/ld+json"}
+                    ).contents[0]
 
-            script = base.find(
-                "script", attrs={"type": "application/ld+json"}
-            ).contents[0]
             store = json.loads(script)
 
             location_name = base.find(

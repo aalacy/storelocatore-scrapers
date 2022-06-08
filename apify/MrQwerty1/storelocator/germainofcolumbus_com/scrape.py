@@ -36,36 +36,30 @@ def fetch_data(sgw: SgWriter):
     for d in divs:
         location_name = "".join(d.xpath(".//a[@class='url']/span/text()")).strip()
         page_url = "".join(d.xpath(".//a[@class='url']/@href")).replace("#", "") or api
-        street_address = (
-            "".join(d.xpath(".//span[@class='street-address']/text()")).strip()
-            or "<MISSING>"
-        )
-        city = (
-            "".join(d.xpath(".//span[@class='locality']/text()")).strip() or "<MISSING>"
-        )
-        state = (
-            "".join(d.xpath(".//span[@class='region']/text()")).strip() or "<MISSING>"
-        )
-        postal = (
-            "".join(d.xpath(".//span[@class='postal-code']/text()")).strip()
-            or "<MISSING>"
-        )
+        street_address = "".join(
+            d.xpath(".//span[@class='street-address']/text()")
+        ).strip()
+        city = "".join(d.xpath(".//span[@class='locality']/text()")).strip()
+        state = "".join(d.xpath(".//span[@class='region']/text()")).strip()
+        postal = "".join(d.xpath(".//span[@class='postal-code']/text()")).strip()
+
         country_code = "US"
         try:
             phone = d.xpath(
                 ".//li[@data-click-to-call-phone]/@data-click-to-call-phone"
             )[0].split("?")[0]
         except IndexError:
-            phone = "<MISSING>"
-        latitude = "".join(d.xpath(".//span[@class='latitude']/text()")) or "<MISSING>"
-        longitude = (
-            "".join(d.xpath(".//span[@class='longitude']/text()")) or "<MISSING>"
-        )
+            phone = SgRecord.MISSING
+        latitude = "".join(d.xpath(".//span[@class='latitude']/text()"))
+        longitude = "".join(d.xpath(".//span[@class='longitude']/text()"))
 
         if page_url == api:
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = SgRecord.MISSING
         else:
-            hours_of_operation = get_hours(page_url)
+            try:
+                hours_of_operation = get_hours(page_url)
+            except:
+                hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
