@@ -37,8 +37,8 @@ def fetch_data():
         hours = ""
         store = "<MISSING>"
         for line in r.iter_lines():
-            if '<h2 class="nurseryName pb-1">' in line:
-                name = line.split('<h2 class="nurseryName pb-1">')[1].split("<")[0]
+            if '<h1 class="nurseryName pb-1">' in line:
+                name = line.split('<h1 class="nurseryName pb-1">')[1].split("<")[0]
                 days = ""
             if '"latitude":' in line:
                 lat = line.split('"latitude":')[1].split(",")[0]

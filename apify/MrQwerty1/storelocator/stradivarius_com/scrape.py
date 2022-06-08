@@ -3,6 +3,88 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import DynamicGeoSearch
+
+
+def parse_js(js, cc, sgw: SgWriter):
+    locator_domain = f"https://www.stradivarius.com/{cc.lower()}"
+
+    for j in js:
+        street_address = ", ".join(j.get("addressLines") or [])
+        city = j.get("city") or ""
+        state = j.get("state")
+        postal = j.get("zipCode") or ""
+        if str(postal) == "0":
+            postal = SgRecord.MISSING
+        store_number = j.get("id")
+        location_name = j.get("name")
+        page_url = f"https://www.stradivarius.com/{cc.lower()}/store-locator/{city.lower()}/-s{store_number}.html"
+        try:
+            phone = j["phones"][0]
+            if "/" in phone:
+                phone = phone.split("/")[0].strip()
+        except:
+            phone = SgRecord.MISSING
+        if phone.strip() == "-":
+            phone = SgRecord.MISSING
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+
+        _tmp = []
+        days = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        ]
+        try:
+            hours = j["openingHours"]["schedule"]
+        except:
+            hours = []
+
+        for h in hours:
+            weekdays = h.get("weekdays") or []
+            inters = h.get("timeStripList") or []
+            _inters = []
+            for i in inters:
+                start = i.get("initHour")
+                end = i.get("endHour")
+                _inters.append(f"{start}-{end}")
+
+            inter = "|".join(_inters)
+            for w in weekdays:
+                day = days[int(w) - 1]
+                _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=cc,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def get_js(api):
+    r = session.get(api, headers=headers)
+    js = r.json()["closerStores"]
+
+    return js
 
 
 def fetch_data(sgw: SgWriter):
@@ -73,79 +155,19 @@ def fetch_data(sgw: SgWriter):
 
     for api in apis:
         cc = api.split("Code=")[1].split("&")[0]
-        locator_domain = f"https://www.stradivarius.com/{cc.lower()}"
-        r = session.get(api, headers=headers)
-        js = r.json()["closerStores"]
-
-        for j in js:
-            street_address = ", ".join(j.get("addressLines") or [])
-            city = j.get("city") or ""
-            state = j.get("state")
-            postal = j.get("zipCode") or ""
-            if str(postal) == "0":
-                postal = SgRecord.MISSING
-            store_number = j.get("id")
-            location_name = j.get("name")
-            page_url = f"https://www.stradivarius.com/{cc.lower()}/store-locator/{city.lower()}/-s{store_number}.html"
-            try:
-                phone = j["phones"][0]
-                if "/" in phone:
-                    phone = phone.split("/")[0].strip()
-            except:
-                phone = SgRecord.MISSING
-            if phone.strip() == "-":
-                phone = SgRecord.MISSING
-            latitude = j.get("latitude")
-            longitude = j.get("longitude")
-
-            _tmp = []
-            days = [
-                "Sunday",
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-            ]
-            try:
-                hours = j["openingHours"]["schedule"]
-            except:
-                hours = []
-
-            for h in hours:
-                weekdays = h.get("weekdays") or []
-                inters = h.get("timeStripList") or []
-                _inters = []
-                for i in inters:
-                    start = i.get("initHour")
-                    end = i.get("endHour")
-                    _inters.append(f"{start}-{end}")
-
-                inter = "|".join(_inters)
-                for w in weekdays:
-                    day = days[int(w) - 1]
-                    _tmp.append(f"{day}: {inter}")
-
-            hours_of_operation = ";".join(_tmp)
-
-            row = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=cc,
-                latitude=latitude,
-                longitude=longitude,
-                phone=phone,
-                store_number=store_number,
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+        js = get_js(api)
+        if len(js) == 50:
+            search = DynamicGeoSearch(
+                country_codes=[cc.lower()], expected_search_radius_miles=100
             )
-
-            sgw.write_row(row)
+            for lat, lng in search:
+                start = api.split("&latitude")[0]
+                end = f"&receiveEcommerce=false&countryCode={cc}&languageId=-5&radioMax=5000&appId=1"
+                new_api = f"{start}&latitude={lat}&longitude={lng}{end}"
+                js = get_js(new_api)
+                parse_js(js, cc, sgw)
+        else:
+            parse_js(js, cc, sgw)
 
 
 if __name__ == "__main__":
@@ -153,5 +175,9 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)

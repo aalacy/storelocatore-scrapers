@@ -33,19 +33,24 @@ headers_c = {
 }
 
 
-def get_hours(page_url_):
+def get_hours(page_url_, xpath_hours):
     with SgRequests() as s1:
         rpg = s1.get(page_url_, headers=headers_c)
         data_app_json = html.fromstring(rpg.text, "lxml")
-        hours_popup = data_app_json.xpath(
-            '//*[@id="OfficeInfo_ExtendedHours"]/div[@class="popup"]/ul/li'
-        )
+        hours_popup = data_app_json.xpath(xpath_hours)
         hours_ = []
-        for hpop in hours_popup:
-            dtime = hpop.xpath(".//text()")
-            dtime1 = [" ".join(i.split()) for i in dtime]
-            dtime2 = " ".join([i for i in dtime1 if i])
-            hours_.append(dtime2)
+        if len(hours_popup) == 14:
+            for hpop in hours_popup[0:7]:
+                dtime = hpop.xpath(".//text()")
+                dtime1 = [" ".join(i.split()) for i in dtime]
+                dtime2 = " ".join([i for i in dtime1 if i])
+                hours_.append(dtime2)
+        if len(hours_popup) == 7:
+            for hpop in hours_popup:
+                dtime = hpop.xpath(".//text()")
+                dtime1 = [" ".join(i.split()) for i in dtime]
+                dtime2 = " ".join([i for i in dtime1 if i])
+                hours_.append(dtime2)
         hoo = "; ".join(hours_)
         return hoo
 
@@ -53,7 +58,8 @@ def get_hours(page_url_):
 def fetch_records(storenum, _, sgw: SgWriter):
     purl = _["page_url"]
     logger.info(f"[{storenum}] Pulling the hours from {purl}")
-    hours_of_operation = get_hours(purl)
+    xpath_extended_hours = '//ul[li[*[contains(text(), "Monday")]]]/li'
+    hours_of_operation = get_hours(purl, xpath_extended_hours)
     if "Coming Soon" in _["hours_of_operation"]:
         hours_of_operation = "Coming Soon"
     item = SgRecord(
@@ -105,6 +111,8 @@ def get_data():
             hoo_comingsoon_status = ""
             if cs == 1:
                 hoo_comingsoon_status = "Coming Soon"
+            if "0000 Fastsigns Ave" in sta:
+                sta = ""
 
             item = SgRecord(
                 locator_domain=DOMAIN,

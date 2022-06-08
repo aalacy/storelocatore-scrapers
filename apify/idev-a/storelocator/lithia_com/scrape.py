@@ -6,7 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sglogging import SgLogSetup
-from webdriver_manager.chrome import ChromeDriverManager
 import re
 from urllib.parse import urljoin, urlparse
 import ssl
@@ -21,6 +20,20 @@ base_url = "https://www.lithia.com/service-locations/index.htm"
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+
+
+def get_sp(url, http, driver):
+    res = http.get(url, headers=_headers)
+    res_txt = None
+    if res.status_code != 200:
+        try:
+            driver.get(url)
+            res_txt = driver.page_source
+        except:
+            pass
+    else:
+        res_txt = res.text
+    return res_txt
 
 
 def record_initial_requests(http, driver):
@@ -76,7 +89,10 @@ def record_initial_requests(http, driver):
         if page_url == "#":
             yield _d(store, phone, hours, base_url)
             continue
-        page_url = "https://" + urlparse(page_url).netloc
+        _url = urlparse(page_url).netloc
+        if not _url:
+            continue
+        page_url = "https://" + _url
         logger.info(page_url)
         is_chrome_try = False
         try:
@@ -84,8 +100,8 @@ def record_initial_requests(http, driver):
         except:
             try:
                 if "www" not in page_url:
-                    page_url = "https://www." + urlparse(page_url).netloc
-                    sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                    url = "https://www." + urlparse(page_url).netloc
+                    sp1 = bs(http.get(url, headers=_headers).text, "lxml")
                 else:
                     is_chrome_try = True
                     driver.get(page_url)
@@ -139,14 +155,9 @@ def record_initial_requests(http, driver):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                res2 = http.get(
-                    contact_url,
-                    headers=_headers,
-                )
-                if res2.status_code != 200:
-                    continue
+                res2 = get_sp(contact_url, http, driver)
                 sp2 = bs(
-                    res2.text,
+                    res2,
                     "lxml",
                 )
                 if sp2.select_one("li.phone-main a"):
@@ -174,7 +185,8 @@ def record_initial_requests(http, driver):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                res2 = get_sp(contact_url, http, driver)
+                sp2 = bs(res2, "lxml")
                 if sp2.select_one("li.phone1 span.value"):
                     phone, hours = _ddc_hr(sp2)
             elif sp1.select_one('a[data-action="maplinkout"]'):
@@ -182,7 +194,8 @@ def record_initial_requests(http, driver):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                res2 = get_sp(contact_url, http, driver)
+                sp2 = bs(res2, "lxml")
                 if sp2.select_one("li.phone1 span.value"):
                     phone, hours = _ddc_hr(sp2)
                 elif sp2.select_one('span[itemprop="telephone"]'):
@@ -195,7 +208,8 @@ def record_initial_requests(http, driver):
             elif sp1.find("a", href=re.compile(r"^/hours")):
                 url = page_url + sp1.find("a", href=re.compile(r"^/hours"))["href"]
                 logger.info(url)
-                sp2 = bs(http.get(url, headers=_headers).text, "lxml")
+                res2 = get_sp(url, http, driver)
+                sp2 = bs(res2, "lxml")
                 if sp2.select_one("a.callNowClass span"):
                     phone = sp2.select_one("a.callNowClass span").text.strip()
                 if sp2.select_one("a.callNowClass"):
@@ -226,7 +240,8 @@ def record_initial_requests(http, driver):
                     if url.endswith("/"):
                         url = url[:-1]
                     logger.info(url)
-                    sp2 = bs(http.get(url, headers=_headers).text, "lxml")
+                    res2 = get_sp(url, http, driver)
+                    sp2 = bs(res2, "lxml")
                     if sp2.select_one("p.adr a"):
                         contact_url = sp2.select_one("p.adr a")["href"]
                         if not contact_url.startswith("http"):
@@ -251,7 +266,8 @@ def record_initial_requests(http, driver):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                res2 = get_sp(contact_url, http, driver)
+                sp2 = bs(res2, "lxml")
                 if sp2.select_one("li.phone1 span.value"):
                     phone, hours = _ddc_hr(sp2)
             elif sp1.find("a", href=re.compile(r"/schedule", re.I)):
@@ -259,7 +275,8 @@ def record_initial_requests(http, driver):
                 if not contact_url.startswith("http"):
                     contact_url = page_url + contact_url
                 logger.info(contact_url)
-                sp2 = bs(http.get(contact_url, headers=_headers).text, "lxml")
+                res2 = get_sp(contact_url, http, driver)
+                sp2 = bs(res2, "lxml")
                 phone = sp2.select_one(
                     "div.widget-hours div#panel1 div.row a"
                 ).text.strip()
@@ -315,7 +332,11 @@ if __name__ == "__main__":
             )
         )
     ) as writer:
-        with SgRequests(proxy_country="us") as http:
-            with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
+        with SgRequests(
+            proxy_country="us",
+            retries_with_fresh_proxy_ip=1,
+            dont_retry_status_codes=set([500, 501, 503]),
+        ) as http:
+            with SgChrome() as driver:
                 for rec in record_initial_requests(http, driver):
                     writer.write_row(rec)

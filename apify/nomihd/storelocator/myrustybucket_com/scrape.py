@@ -52,7 +52,7 @@ def fetch_data():
             zip = store_json["address"]["post_code"]
             country_code = store_json["address"]["country_short"]
 
-            phone = store.get("phone_number", "<MISSING>")
+            phone = store_json.get("phone_number", "<MISSING>")
             location_type = "<MISSING>"
 
             hour_list = []

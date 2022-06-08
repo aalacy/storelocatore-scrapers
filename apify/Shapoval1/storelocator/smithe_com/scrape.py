@@ -87,7 +87,7 @@ def get_data(url, sgw: SgWriter):
     if phone.find("Merrillville") != -1 or phone.find("Oak") != -1:
         phone = "<MISSING>"
     country_code = "US"
-    location_name = "".join(tree.xpath("//h1/text()"))
+    location_name = "".join(tree.xpath('//div[@class="location-info"]/h1/text()'))
     hours_of_operation = (
         " ".join(tree.xpath('//div[@class="location-info"]/p[4]//text()'))
         .replace("\n", "")
