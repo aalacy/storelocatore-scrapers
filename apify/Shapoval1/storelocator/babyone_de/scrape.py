@@ -1,5 +1,4 @@
 import json
-import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -29,11 +28,13 @@ def get_data(zipps, sgw: SgWriter):
     params = {
         "search": f"{str(zipps)}",
     }
-
-    r = session.get(
-        "https://www.babyone.de/place/suggest", params=params, headers=headers
-    )
-    tree = html.fromstring(r.text)
+    try:
+        r = session.get(
+            "https://www.babyone.de/place/suggest", params=params, headers=headers
+        )
+        tree = html.fromstring(r.text)
+    except:
+        return
     div = tree.xpath("//div[@data-place-id]")
     for d in div:
         search = "".join(d.xpath("./@data-text-search"))
@@ -84,12 +85,7 @@ def get_data(zipps, sgw: SgWriter):
                 r = session.get(page_url, headers=headers)
                 tree = html.fromstring(r.text)
             except:
-                try:
-                    time.sleep(40)
-                    r = session.get(page_url, headers=headers)
-                    tree = html.fromstring(r.text)
-                except:
-                    continue
+                continue
 
             js_block = "".join(tree.xpath("//div/@data-google-map-options"))
             js = json.loads(js_block)
@@ -134,17 +130,13 @@ def get_data(zipps, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     coords = DynamicZipSearch(
-        country_codes=[
-            SearchableCountries.GERMANY,
-            SearchableCountries.AUSTRIA,
-            SearchableCountries.SWITZERLAND,
-        ],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=50,
+        country_codes=[SearchableCountries.GERMANY],
+        max_search_distance_miles=250,
+        expected_search_radius_miles=70,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
