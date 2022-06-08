@@ -24,14 +24,13 @@ def fetch_data():
     res = session.get(url, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
     div = soup.find("div", {"id": "pl-30"})
-    locs = str(div).split("<h2>")[1:]
+    locs = str(div).split("<img")[1:]
     for loc in locs:
-        loc = "<h2>" + loc
         loc = BeautifulSoup(loc, "html.parser")
-        location_name = loc.find("h2").text
         loc = loc.findAll("p")
+        address = loc[0].get_text(separator="|", strip=True).split("|")
+        location_name = address[0].replace(":", "")
         log.info(location_name)
-        address = loc[1].get_text(separator="|", strip=True).split("|")
         address = " ".join(address[1:])
         address = address.replace(",", " ")
         address = usaddress.parse(address)
@@ -62,13 +61,13 @@ def fetch_data():
         city = city.replace("Highland Bluff Building", "")
         country_code = "US"
         phone = (
-            loc[2]
+            loc[1]
             .get_text(separator="|", strip=True)
             .split("|")[0]
             .replace("Phone:", "")
         )
         hours_of_operation = (
-            loc[3]
+            loc[2]
             .get_text(separator="|", strip=True)
             .replace("|", " ")
             .replace("Business Hours", "")
