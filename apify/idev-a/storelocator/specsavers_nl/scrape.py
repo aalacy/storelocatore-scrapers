@@ -7,17 +7,17 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import dirtyjson as json
-import ssl
 from sgpostal.sgpostal import parse_address_intl
+from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+import os
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 logger = SgLogSetup().get_logger("specsavers")
 
@@ -33,31 +33,58 @@ base_url = "https://www.specsavers.nl/winkelzoeker/winkeloverzicht"
 
 def fetch_data():
     with SgChrome(
-        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
     ) as driver:
-        with SgRequests() as session:
-            driver.get(base_url)
-            cookies = []
-            for cookie in driver.get_cookies():
-                cookies.append(f"{cookie['name']}={cookie['value']}")
-            _headers["cookie"] = "; ".join(cookies)
-            soup = bs(driver.page_source, "lxml")
-            locations = soup.select("div.item-list ul a")
-            for link in locations:
+        driver.get(base_url)
+        cookies = []
+        for cookie in driver.get_cookies():
+            cookies.append(f"{cookie['name']}={cookie['value']}")
+        _headers["cookie"] = "; ".join(cookies)
+        soup = bs(driver.page_source, "lxml")
+        locations = soup.select("div.item-list ul a")
+        for link in locations:
+            with SgRequests(proxy_country="us") as session:
                 page_url = "https://www.specsavers.nl/winkelzoeker/" + link["href"]
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers).text
-                coord = json.loads(res.split("var position =")[1].split(";")[0].strip())
                 sp1 = bs(res, "lxml")
-                _addr = list(sp1.select_one("div.store p").stripped_strings)
+                if (
+                    sp1.select_one("h1#page-title")
+                    and "Zoek een winkel" in sp1.select_one("h1#page-title").text
+                ):
+                    continue
+                if sp1.select_one("div.store p"):
+                    _addr = list(sp1.select_one("div.store p").stripped_strings)
+                else:
+                    _addr = list(
+                        sp1.select_one(
+                            "div.field-name-field-store-address"
+                        ).stripped_strings
+                    )
+                try:
+                    coord = json.loads(
+                        res.split("var position =")[1].split(";")[0].strip()
+                    )
+                except:
+                    coord = {"lat": "", "lng": ""}
+
                 raw_address = (
                     " ".join(_addr).replace("\n", "").replace("Z.O.", "").strip()
                 )
                 addr = parse_address_intl(raw_address + ", Netherlands")
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in sp1.select("table.opening--day-and-time tr")
-                ]
+                if sp1.select("div.field-name-field-opening-times span.oh-display"):
+                    hours = [
+                        " ".join(hh.stripped_strings)
+                        for hh in sp1.select(
+                            "div.field-name-field-opening-times span.oh-display"
+                        )
+                    ]
+                else:
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in sp1.select("table.opening--day-and-time tr")
+                    ]
                 phone = ""
                 if sp1.select_one("a.contact--store-telephone"):
                     phone = sp1.select_one("a.contact--store-telephone").text.strip()
@@ -65,7 +92,7 @@ def fetch_data():
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
                     street_address=_addr[0].replace("\n", "").replace(",", " ").strip(),
-                    city=addr.city,
+                    city=addr.city or sp1.h1.text.strip(),
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="Netherlands",

@@ -3,6 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import Grain_2
 from typing import Iterable, Tuple, Callable
 from sgrequests.sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -11,7 +12,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("lornajane")
 locator_domain = "https://www.lornajane.com"
-base_url = "https://www.lornajane.co.uk/on/demandware.store/Sites-LJUK-Site/en_GB/Stores-FindStores?country={}&latitude={}&longitude={}"
+base_url = "https://www.lornajane.co.uk/on/demandware.store/Sites-LJ{}-Site/en_GB/Stores-FindStores?country={}&latitude={}&longitude={}"
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -26,6 +27,8 @@ cc_map = {
     "sg": "Singapore",
 }
 
+url_map = {"gb": "UK", "sg": "SG", "us": "UK", "au": "UK", "nz": "UK"}
+
 
 class ExampleSearchIteration(SearchIteration):
     def do(
@@ -38,9 +41,11 @@ class ExampleSearchIteration(SearchIteration):
     ) -> Iterable[SgRecord]:
         lat = coord[0]
         lng = coord[1]
-        with SgRequests() as session:
-            url = base_url.format(current_country.upper(), lat, lng)
-            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
+        with SgRequests(proxy_country=current_country.lower()) as session:
+            url = base_url.format(
+                url_map[current_country], current_country.upper(), lat, lng
+            )
+            locations = bs(session.get(url).text, "lxml").select(
                 "div.results div.store-item"
             )
             logger.info(f"[{current_country}] [{lat, lng}] {len(locations)}")
@@ -63,22 +68,29 @@ class ExampleSearchIteration(SearchIteration):
                 except:
                     _coord = ["", ""]
                 page_url = _.select_one("div.store-name a")["href"]
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                sp1 = bs(session.get(page_url).text, "lxml")
                 hours = []
                 if sp1.select_one("div.store-hours"):
                     hours = list(sp1.select_one("div.store-hours").stripped_strings)
                 if hours:
                     hours = hours[1:]
+                city = addr.city
+                if not city:
+                    city = _["data-store-name"].replace("Uniquely", "").strip()
+
+                state = addr.state
+                if not state and "Auckland" in raw_address:
+                    state = "Auckland"
                 yield SgRecord(
                     page_url=page_url,
-                    locator_domain=locator_domain,
-                    street_address=" ".join(_addr[:-1]).replace("\n", ""),
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code=addr.country,
                     store_number=_["data-store-id"],
                     location_name=_["data-store-name"],
+                    locator_domain=locator_domain,
+                    street_address=" ".join(_addr[:-1]).replace("\n", ""),
+                    city=city,
+                    state=state,
+                    zip_postal=addr.postcode,
+                    country_code=addr.country,
                     phone=phone,
                     latitude=_coord[0],
                     longitude=_coord[1],
@@ -88,7 +100,9 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_2()
+    )
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
@@ -98,8 +112,7 @@ if __name__ == "__main__":
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
             search_iteration=search_iter,
-            country_codes=["us", "gb", "au", "nz", "my", "sg", "fr", "ae"],
+            country_codes=["au", "nz", "sg"],
         )
-
         for rec in par_search.run():
             writer.write_row(rec)

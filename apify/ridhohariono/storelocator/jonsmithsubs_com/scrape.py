@@ -13,14 +13,18 @@ DOMAIN = "jonsmithsubs.com"
 BASE_URL = "https://www.jonsmithsubs.com/"
 LOCATION_URL = "https://www.jonsmithsubs.com/locations"
 HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests(verify_ssl=False)
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def getAddress(raw_address):
@@ -50,7 +54,8 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
     return soup
 
 
@@ -58,15 +63,21 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     data = json.loads(
-        soup.find("script", id="popmenu-apollo-state")
-        .string.replace("window.POPMENU_APOLLO_STATE = ", "")
-        .replace("};", "}")
-        .replace('" + "', "")
-        .strip()
+        re.sub(
+            r"window\.POPMENU_SERVER_SIDE_MEMO.*",
+            "",
+            soup.find("script", id="popmenu-apollo-state")
+            .string.replace("window.POPMENU_APOLLO_STATE = ", "")
+            .replace("};", "}")
+            .replace('" + "', ""),
+        ).strip()
     )
     for key, value in data.items():
         if key.startswith("RestaurantLocation:"):
-            if "Coming Soon!" in value["customLocationContent"]:
+            if (
+                "COMING SOON" in value["name"]
+                or "Coming Soon!" in value["customLocationContent"]
+            ):
                 continue
             if "Acworth" in value["name"]:
                 page_url = BASE_URL + value["slug"]
@@ -88,6 +99,8 @@ def fetch_data():
             country_code = value["country"]
             phone = value["displayPhone"]
             location_type = MISSING
+            if value["isLocationClosed"]:
+                location_type = "temporary_closed"
             store_number = MISSING
             latitude = value["lat"]
             longitude = value["lng"]

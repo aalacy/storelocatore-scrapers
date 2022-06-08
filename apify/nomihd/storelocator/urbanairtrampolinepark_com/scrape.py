@@ -81,6 +81,39 @@ def fetch_data():
                     hours_list.append(day + ":" + time)
 
                 hours_of_operation = "; ".join(hours_list).strip()
+                if not hours_of_operation:
+                    store_req = session.get(page_url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_req.text)
+                    if "COMING SOON" in store_req.text:
+                        location_type = "COMING SOON"
+
+                    elif "TEMPORARILY CLOSED" in store_req.text:
+                        location_type = "TEMPORARILY CLOSED"
+                    else:
+                        hours = store_sel.xpath(
+                            '//div[@class="et_pb_module dsm_business_hours dsm_business_hours_0"]'
+                        )
+                        if len(hours) > 0:
+                            hours = hours[0].xpath(
+                                './/div[@class="dsm-business-hours-header"]'
+                            )
+                            hours_list = []
+                            for hour in hours:
+                                day = "".join(
+                                    hour.xpath(
+                                        "div[@class='dsm-business-hours-day']/text()"
+                                    )
+                                ).strip()
+                                time = "".join(
+                                    hour.xpath(
+                                        "div[@class='dsm-business-hours-time']//text()"
+                                    )
+                                ).strip()
+                                hours_list.append(day + ":" + time)
+
+                            hours_of_operation = "; ".join(hours_list).strip()
+                            if hours_of_operation.count("Closed") == 7:
+                                location_type = "Closed"
 
                 yield SgRecord(
                     locator_domain=locator_domain,

@@ -52,11 +52,13 @@ def fetch_data():
     )[0]["data"]["settings"]["markers"]
     for row in data:
         location_name = row["infoTitle"]
+        if "Blunts Shoes" not in location_name:
+            continue
         raw_address = row["infoAddress"]
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "UK"
         phone = row["infoPhone"]
-        location_type = MISSING
+        location_type = "BLUNTS SHOES STORE"
         hours_of_operation = row["infoWorkingHours"]
         store_number = MISSING
         latlong = row["coordinates"].split(",")

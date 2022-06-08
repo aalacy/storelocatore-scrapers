@@ -70,9 +70,11 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
                         log.info(loc_link)
                         state.push_request(SerializableRequest(url=loc_link))
             except:
-                linklist = loc.findAll("a", {"data-ya-track": "businessname"})
+                linklist = soup.find(
+                    "ul", {"class": "Directory-listTeasers Directory-row"}
+                ).findAll("li")
                 for link in linklist:
-                    loc_link = link["href"].replace(
+                    loc_link = link.find("a")["href"].replace(
                         "../..", "https://stores.champssports.com"
                     )
                     store_url_list.append(loc_link)
@@ -88,18 +90,12 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
+        store_number = r.text.split('"storeId": "')[1].split('"')[0]
         log.info(f"Pulling the data from: {next_r.url}")
         soup = BeautifulSoup(r.text, "html.parser")
-        try:
-            street_address = strip_accents(
-                soup.find("span", {"class": "c-address-street-1"}).text
-                + " "
-                + soup.find("span", {"class": "c-address-street-2"}).text
-            )
-        except:
-            street_address = strip_accents(
-                soup.find("span", {"class": "c-address-street-1"}).text
-            )
+        street_address = strip_accents(
+            soup.find("span", {"class": "c-address-street-1"}).text
+        )
         city = soup.find("span", {"class": "c-address-city"}).text
         try:
             state = strip_accents(soup.find("abbr", {"itemprop": "addressRegion"}).text)
@@ -143,7 +139,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,

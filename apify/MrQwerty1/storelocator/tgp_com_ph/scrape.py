@@ -18,8 +18,8 @@ def get_international(line):
         "None", ""
     ).strip()
     city = adr.city or ""
-    state = adr.state
-    postal = adr.postcode
+    state = adr.state or ""
+    postal = adr.postcode or ""
 
     return street_address, city, state, postal
 
@@ -39,7 +39,59 @@ def fetch_data(sgw: SgWriter):
         raw_address = "".join(
             d.xpath(".//p[@class='info-window-address']//text()")
         ).strip()
-        street_address, city, state, postal = get_international(raw_address)
+
+        # Clean spaces from raw address.
+        raw_address = " ".join(raw_address.split())
+
+        street_address = ""
+        sta, city, state, postal = get_international(raw_address)
+
+        # Postal address found in street address after parsing
+        # using our parser, therefore, cleaning street address
+        # and making it INACCESSIBLE if it is found to be empty.
+        if postal in sta:
+            street_address = sta.replace(postal, "").strip().rstrip()
+        else:
+            street_address = sta
+        street_address = street_address if street_address else "<INACCESSIBLE>"
+        city = city if city else "<INACCESSIBLE>"
+        state = state if state else "<INACCESSIBLE>"
+        postal = postal if postal else "<INACCESSIBLE>"
+
+        # Custom Street Address and City.
+        if raw_address == "34 Bayanihan Village Lalud Calapan City Or Mindoro 5200":
+            street_address = "34 Bayanihan Village"
+        if raw_address == "1116 Parada Santa Maria Bulacan 3023":
+            street_address = "1116 Parada Santa Maria"
+        if raw_address == "277 Brgy, Muzon City Of San Jose Del Monte, Bulacan 3023":
+            street_address = "277 Brgy"
+        if raw_address == "04 Maria Aurora Aurora 3202":
+            street_address = "04 Maria Aurora"
+        if raw_address == "0952 Sta. Rosa I, Marilao Bulacan 3019":
+            street_address = "0952 Sta. Rosa I"
+        if raw_address == "229 Francisco Tagaytay City Cavite 4120":
+            street_address = "229 Francisco"
+        if raw_address == "18 Kaytitinga 1 Alfonso Cavite 4123":
+            street_address = "18 Kaytitinga 1"
+        if (
+            raw_address
+            == "154 Libis Espina St Dagat Dagatan Brgy 016 Dist 2 Caloocan City"
+        ):
+            street_address = "154 Libis Espina St Dagat Dagatan Brgy 016 Dist 2"
+        if (
+            raw_address
+            == "Blk 1 Lot 10 Marcos Alvarez Ave Veraville Townhomes Classic Talon V Las Pinas City 1740"
+        ):
+            city = "Las Pinas"
+            street_address = "Blk 1 Lot 10 Marcos Alvarez Ave"
+            city == ""
+        if (
+            raw_address
+            == "No. 8 Centro St., Brgy. Lawang Bato, Dist. 1, Valenzuela City 1447"
+        ):
+            city = "Valenzuela City"
+            street_address = "No. 8 Centro St."
+
         phone = "".join(d.xpath(".//p[./i[contains(@class, 'phone')]]/text()")).strip()
         if ";" in phone:
             phone = phone.split(";")[0].strip()

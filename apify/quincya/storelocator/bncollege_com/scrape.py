@@ -1,42 +1,17 @@
-import csv
 import json
+import re
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.bncollege.com/campus-stores/"
 
@@ -47,11 +22,9 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     script = (
-        base.find(id="bnc-map-js-extra")
-        .text.split("bncLocationsByState = ")[1]
+        str(base.find(id="bnc-map-js-extra"))
+        .split("bncLocationsByState = ")[1]
         .split("]};")[0]
         + "]}"
     )
@@ -66,8 +39,6 @@ def fetch_data():
             country_code = "US"
             raw_address = store["address"].replace(",", "\n").split("\n")
             city = raw_address[-2].strip()
-            if "Bahamas" in city:
-                continue
             street_address = (
                 (
                     store["address"][: store["address"].rfind(city)]
@@ -115,11 +86,32 @@ def fetch_data():
             if "versity of St Francis Fort" in street_address:
                 street_address = street_address.split("Fort")[0].strip()
 
+            if street_address == "ollege Dr":
+                street_address = "One College Drive"
+
+            if street_address == "versity Dr":
+                street_address = "One University Drive"
+
+            if street_address == "versity Pl":
+                street_address = "One University Place"
+
+            if street_address == "ollege Ave":
+                street_address = "College Ave"
+
+            if street_address == "versity Cir":
+                street_address = "University Cir"
+
             if not street_address:
                 street_address = "<MISSING>"
 
+            if re.search(r"\d", street_address):
+                digit = str(re.search(r"\d", street_address))
+                start = int(digit.split("(")[1].split(",")[0])
+                street_address = street_address[start:]
+
             state = store["state_code"].upper()
             zip_code = store["address"][store["address"].rfind(state) + 2 :].strip()
+            zip_code = zip_code.replace("240132222", "24013")
             if not zip_code.isdigit() and country_code == "US":
                 zip_code = "<MISSING>"
             store_number = store["id"]
@@ -134,31 +126,35 @@ def fetch_data():
             longitude = store["lng"]
             page_url = store["url"]
 
-            data.append(
-                [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.STREET_ADDRESS,
+                SgRecord.Headers.CITY,
+                SgRecord.Headers.LOCATION_TYPE,
+            }
+        )
+    )
+) as writer:
+    fetch_data(writer)

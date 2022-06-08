@@ -1,10 +1,11 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 import re
+from sgselenium import SgSelenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgSelenium
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -99,7 +100,7 @@ def wait_load(driver, wait, number=0):
             WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.ID, "sf-stores-list"))
             )
-        except:
+        except TimeoutException:
             driver.refresh()
             if number < 3:
                 log.info(f"Try to Refresh for ({number}) times")
@@ -111,7 +112,7 @@ def wait_load(driver, wait, number=0):
                     (By.XPATH, '//*[@id="sf-location-search"]')
                 )
             )
-        except:
+        except TimeoutException:
             driver.delete_all_cookies()
             driver.refresh()
             if number < 3:
@@ -143,9 +144,16 @@ def fetch_data():
         except:
             input.clear()
             continue
-        driver.find_element_by_css_selector(
-            "div.autocomplete-suggestions > div"
-        ).click()
+
+        # Click autocomplete locations
+        try:
+            driver.find_element_by_css_selector(
+                "div.autocomplete-suggestions > div"
+            ).click()
+        except TimeoutException as ex:
+            log.info("Exception has been thrown. " + str(ex))
+            continue
+
         driver = wait_load(driver, "STORE")
         data = (
             bs(driver.page_source, "lxml")
@@ -183,7 +191,9 @@ def fetch_data():
                 )
             latitude = row["data-latitude"]
             longitude = row["data-longitude"]
-            search.found_location_at(latitude, longitude)
+            if str(latitude) == "0":
+                latitude = MISSING
+                longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

@@ -4,7 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bankofmarin.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -106,8 +107,6 @@ def fetch_data():
             store_sel.xpath('//div[contains(@class,"marker")]/@data-lng')
         )
 
-        raw_address = "<MISSING>"
-
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -123,14 +122,15 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

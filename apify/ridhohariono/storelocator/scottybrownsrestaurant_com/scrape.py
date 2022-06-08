@@ -93,9 +93,10 @@ def fetch_data():
             .replace(
                 "We are serving brunch on Saturdays & Sundays from 10am - 2pm!", ""
             )
+            .replace("Flexible daily based on flight schedules", "")
             .replace("HOURS OF OPERATION", "")
             .lstrip(",")
-        )
+        ).strip()
         store_number = MISSING
         country_code = "US"
         if "TEMPORARILY CLOSED" in hours_of_operation:

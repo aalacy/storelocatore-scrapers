@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://kalemecrazy.net/"
-    api_url = "https://kalemecrazy.net/locations-2/"
+    api_url = "https://kalemecrazy.net/locations/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -47,7 +47,7 @@ def fetch_data(sgw: SgWriter):
             city = city.split("/")[0].strip()
         urls = d.xpath(".//following-sibling::div//a[1]/@href") or "<MISSING>"
         page_url = (
-            urls[0].replace("<", "").strip() or "https://kalemecrazy.net/locations-2/"
+            urls[0].replace("<", "").strip() or "https://kalemecrazy.net/locations/"
         )
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -57,10 +57,7 @@ def fetch_data(sgw: SgWriter):
         longitude = (
             "".join(tree.xpath('//meta[@itemprop="longitude"]/@content')) or "<MISSING>"
         )
-        if (
-            page_url != "https://kalemecrazy.net/locations-2/"
-            and latitude != "<MISSING>"
-        ):
+        if page_url != "https://kalemecrazy.net/locations/" and latitude != "<MISSING>":
             city = (
                 "".join(tree.xpath('//span[@itemprop="addressLocality"]//text()'))
                 .replace(".", "")

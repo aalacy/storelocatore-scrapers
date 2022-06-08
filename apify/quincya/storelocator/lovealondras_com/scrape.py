@@ -14,8 +14,11 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.lovealondras.com/locations"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+        "upgrade-insecure-requests": "1",
+    }
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
@@ -40,7 +43,10 @@ def fetch_data(sgw: SgWriter):
             location_type = "<MISSING>"
             phone = store["displayPhone"]
             hours_of_operation = " ".join(store["schemaHours"])
-            link = "https://www.lovealondras.com/" + store["slug"]
+            link = (
+                "https://www.lovealondras.com/"
+                + store["slug"].replace("alondras-", "").strip()
+            )
             store_number = store["id"]
             latitude = store["lat"]
             longitude = store["lng"]

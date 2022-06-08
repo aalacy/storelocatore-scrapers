@@ -20,9 +20,7 @@ def fetch_data(sgw: SgWriter):
     location_name = "".join(tree.xpath('//meta[@property="og:site_name"]/@content'))
 
     ad = (
-        "".join(
-            tree.xpath('//div[@class="rte rte-setting appear-delay-1"]/p[1]/text()')
-        )
+        "".join(tree.xpath('//div[@class="rte appear-delay-2"]/p[1]/text()'))
         .replace("\n", "")
         .strip()
     )
@@ -38,9 +36,7 @@ def fetch_data(sgw: SgWriter):
         .strip()
     )
     hours_of_operation = (
-        " ".join(
-            tree.xpath('//div[@class="rte rte-setting appear-delay-1"]/p[2]/text()')
-        )
+        " ".join(tree.xpath('//div[@class="rte appear-delay-2"]/p[2]/text()'))
         .replace("\n", "")
         .strip()
     )

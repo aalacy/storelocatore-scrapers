@@ -1,4 +1,4 @@
-import json
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -18,6 +18,7 @@ def fetch_data():
 
     for loc in loclist:
 
+        ltype = "<MISSING>"
         link = "https://www.campbowwow.com" + loc["Path"]
         store = loc["FranchiseLocationID"]
         title = loc["FranchiseLocationName"]
@@ -29,47 +30,31 @@ def fetch_data():
         lat = loc["Latitude"]
         longt = loc["Longitude"]
         phone = loc["Phone"]
-        if len(str(phone)) < 3:
-            phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+
+        if loc["ComingSoon"] == 0:
+            pass
+        else:
+            ltype = "Coming Soon"
+        if len(str(phone)) > 3:
+            if "-" not in phone:
+                phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
         else:
             phone = "<MISSING>"
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         try:
-            hourslist = loc["LocationHours"]
-            hourslist = (
-                hourslist.replace("]", "}").replace("[", "{").replace("}{", "},{")
+            hours = (
+                soup.find("ul", {"class": "hours-block"})
+                .text.replace("\n", " ")
+                .strip()
             )
-            hourslist = "[" + hourslist + "]"
-            hourslist = json.loads(hourslist)
-
-            hours = ""
-            for hr in hourslist:
-                day = hr["Interval"]
-                if "Holiday" in day:
-                    break
-                start = hr["OpenTime"]
-                end = hr["CloseTime"]
-                st = (int)(start.split(":", 1)[0])
-                if st > 12:
-                    st = st - 12
-                endst = (int)(end.split(":", 1)[0])
-                if endst > 12:
-                    endst = endst - 12
-                hours = (
-                    hours
-                    + day
-                    + " "
-                    + str(st)
-                    + ":"
-                    + start.split(":")[1]
-                    + " AM - "
-                    + str(endst)
-                    + ":"
-                    + end.split(":")[1]
-                    + " PM "
-                )
+            try:
+                hours = hours.split(" See", 1)[0]
+            except:
+                pass
         except:
-
             hours = "<MISSING>"
+            ltype = "Coming Soon"
         yield SgRecord(
             locator_domain="https://www.campbowwow.com/",
             page_url=link,
@@ -81,7 +66,7 @@ def fetch_data():
             country_code=ccode,
             store_number=str(store),
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,

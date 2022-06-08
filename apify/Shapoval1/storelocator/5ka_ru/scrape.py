@@ -42,6 +42,9 @@ def get_data(url, sgw: SgWriter):
         hours_of_operation = (
             f"{j.get('work_start_time')} - {j.get('work_end_time')}" or "<MISSING>"
         )
+        hours_of_operation = hours_of_operation.replace(
+            "None - None", "<MISSING>"
+        ).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

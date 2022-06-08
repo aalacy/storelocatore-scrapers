@@ -120,7 +120,25 @@ def fetch_data():
                 )
             ).strip()
 
-            latitude, longitude = "<MISSING>", "<MISSING>"
+            try:
+                latitude = (
+                    store_res.text.split('"map_start_lat":"')[1]
+                    .strip()
+                    .split('"')[0]
+                    .strip()
+                )
+            except:
+                latitude = "<MISSING>"
+
+            try:
+                longitude = (
+                    store_res.text.split('"map_start_lng":"')[1]
+                    .strip()
+                    .split('"')[0]
+                    .strip()
+                )
+            except:
+                longitude = "<MISSING>"
 
             raw_address = "<MISSING>"
 

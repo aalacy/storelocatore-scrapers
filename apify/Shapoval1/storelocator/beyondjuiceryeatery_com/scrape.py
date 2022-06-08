@@ -24,16 +24,15 @@ def fetch_data(sgw: SgWriter):
         .strip()
     )
     js = json.loads(div)
+
     for j in js:
 
         a = j.get("position_on_the_map")
+        block = j.get("html")
+        b = html.fromstring(block)
+        location_name = " ".join(b.xpath("//h4//text()")).replace("\n", "").strip()
         str_number = a.get("street_number")
         page_url = "https://beyondjuiceryeatery.com/locations/"
-        location_name = "".join(
-            tree.xpath(
-                f'//p[contains(text(), "{str_number}")]/preceding-sibling::p[1]/text()'
-            )
-        )
         street_address = f"{a.get('street_number')} {a.get('street_name')}".strip()
         state = a.get("state") or "<MISSING>"
         postal = a.get("post_code") or "<MISSING>"
@@ -70,6 +69,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 hours_of_operation.capitalize().replace(":", "").strip()
             )
+        cms = "".join(b.xpath('//*[contains(text(), "COMING SOON")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

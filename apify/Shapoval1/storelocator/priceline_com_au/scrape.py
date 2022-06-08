@@ -52,8 +52,9 @@ def fetch_data(sgw: SgWriter):
 
         for j in js:
 
-            page_url = "https://www.priceline.com.au/store-locator"
-            location_name = j.get("title") or "<MISSING>"
+            location_name = "".join(j.get("title")) or "<MISSING>"
+            slug = location_name.lower().strip().replace(" ", "-")
+            page_url = f"https://www.priceline.com.au/store-locator/{slug}"
             ad = "".join(j.get("address"))
             location_type = j.get("product_types")
             a = parse_address(International_Parser(), ad)

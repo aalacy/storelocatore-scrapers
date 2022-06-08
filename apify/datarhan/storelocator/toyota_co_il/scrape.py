@@ -36,7 +36,11 @@ def fetch_data():
         if page_url == "https://www.toyota.co.il/":
             continue
         loc_response = session.get(page_url, headers=hdr)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
+        if not loc_dom.xpath('//div[@id="map"]/a/@href'):
+            continue
 
         location_name = poi_html.xpath(".//h2/text()")[0]
         raw_address = (

@@ -68,9 +68,9 @@ def fetch_data():
             store_number = store["id"]
 
             phone = store["acf"]["phone_number"]
-            if "Coming Soon" in phone:
+            location_type = store["acf"]["alert_text"]
+            if "Coming Soon" in phone or "Coming Soon" in location_type:
                 continue
-            location_type = "<MISSING>"
             hours_of_operation = store["acf"]["hours"]
 
             latitude, longitude = store["acf"]["latitude"], store["acf"]["longitude"]
