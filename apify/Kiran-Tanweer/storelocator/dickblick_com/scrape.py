@@ -1,4 +1,3 @@
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -55,11 +54,11 @@ def fetch_data():
             state=state,
             zip_postal=zip_postal,
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=MISSING,
-            latitude=MISSING,
-            longitude=MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
 
