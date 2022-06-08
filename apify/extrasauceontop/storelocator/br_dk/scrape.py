@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from datetime import datetime
-import unidecode
 
 
 def get_data():
