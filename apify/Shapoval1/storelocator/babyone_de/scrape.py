@@ -58,7 +58,10 @@ def get_data(zipps, sgw: SgWriter):
         r = session.get(
             "https://www.babyone.de/store-finder/search", params=params, headers=headers
         )
-        js = r.json()["html"]
+        try:
+            js = r.json()["html"]
+        except:
+            continue
         tree = html.fromstring(js)
         div = tree.xpath('//a[@class="retail-market-result-item-link "]')
         for d in div:
@@ -141,7 +144,7 @@ def fetch_data(sgw: SgWriter):
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()

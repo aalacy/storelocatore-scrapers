@@ -27,7 +27,6 @@ def fetch_data():
         search_sel = lxml.html.fromstring(search_res.text)
 
         stores = search_sel.xpath('//table[@id="tablaDirecciones" and not(@class)]//tr')
-
         for no, store in enumerate(stores[1:], 1):
 
             locator_domain = website
@@ -68,9 +67,7 @@ def fetch_data():
 
             country_code = "MX"
 
-            phone = " ".join(
-                store.xpath('.//a[contains(@href,"tel:")]//text()')
-            ).strip()
+            phone = "".join(store.xpath('.//a[contains(@href,"tel:")]//text()')).strip()
 
             hours_of_operation = "<MISSING>"
 
