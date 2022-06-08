@@ -44,7 +44,7 @@ def fetch_data():
                 address = temp[-1]
             else:
                 address = temp[-2]
-            raw_address = address.find("p").text
+            raw_address = address.findAll("p")[-1].text
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

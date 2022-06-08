@@ -34,9 +34,7 @@ def fetch_data():
     search_url = "https://www.beaconlighting.com.au/customer/section/load/"
     with SgRequests() as session:
         stores_req = session.get(search_url, headers=headers, params=params)
-        stores = json.loads(stores_req.text)["amasty-storepickup-data"]["stores"][
-            "items"
-        ]
+        stores = json.loads(stores_req.text)["amasty-storepickup-data"]["stores"]
 
         for store in stores:
             store_number = store["branch_code"]

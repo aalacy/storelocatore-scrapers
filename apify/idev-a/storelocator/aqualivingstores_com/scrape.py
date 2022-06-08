@@ -41,7 +41,7 @@ def _addr(_aa):
     addr = list(_aa.find_parent("p").stripped_strings)[1:]
     if not addr:
         addr = []
-        for cc in _aa.find_parent("p").find_next_siblings("p"):
+        for cc in _aa.find_parent("p").find_next_siblings():
             if "Hours:" in cc.text:
                 break
 
@@ -86,16 +86,26 @@ def _d(page_url, location_name, raw_address, lat, lng, phone, hours):
 
 
 def _latlng(sp1, x):
+    lat = lng = ""
     try:
-        lng, lat = (
-            sp1.select("div.fusion-no-small-visibility p iframe")[x]["src"]
-            .split("!2d")[1]
-            .split("!2m")[0]
-            .split("!3m")[0]
-            .split("!3d")
-        )
+        if sp1.select("div p iframe")[x].get("src"):
+            lng, lat = (
+                sp1.select("div p iframe")[x]["src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3m")[0]
+                .split("!3d")
+            )
+        elif sp1.select("div p iframe")[x].get("nitro-lazy-src"):
+            lng, lat = (
+                sp1.select("div p iframe")[x]["nitro-lazy-src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3m")[0]
+                .split("!3d")
+            )
     except:
-        lat = lng = ""
+        pass
 
     return lat, lng
 
@@ -234,8 +244,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.ZIP,
-                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

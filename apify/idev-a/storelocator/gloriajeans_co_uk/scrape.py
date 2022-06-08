@@ -30,17 +30,20 @@ def fetch_data():
                 hours = block[-1].replace("Hours:", "")
                 addr = block[:-1]
 
-            zip_postal = addr[-1].strip()
+            zip_postal = addr[-1].split(",")[-1].strip()
             raw_address = " ".join(addr)
             addr = parse_address_intl(raw_address + ", United Kingdom")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            if "Glasgow" in raw_address:
+                city = "Glasgow"
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.h3.text.strip(),
+                location_name=_.h3.text.split(".")[-1].strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=zip_postal,
                 country_code="UK",

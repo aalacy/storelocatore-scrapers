@@ -46,6 +46,8 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         if loc_dom.xpath('//div[contains(text(), "Coming Soon")]'):
             continue
+        if loc_dom.xpath('//div[contains(text(), "STORE PERMANENTLY CLOSED")]'):
+            continue
         location_name = loc_dom.xpath(
             '//h1[@id="location-name"]/span[@class="LocationName"]/span/text()'
         )
@@ -61,6 +63,9 @@ def fetch_data():
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
         hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[3:]
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        store_number = loc_dom.xpath('//li[contains(text(), "Store #")]/text()')[
+            0
+        ].split("#")[-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -71,7 +76,7 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number="",
+            store_number=store_number,
             phone=phone,
             location_type="",
             latitude=latitude,

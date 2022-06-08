@@ -36,12 +36,17 @@ def fetch_data():
         if not loc_type:
             continue
         url = loc.xpath(".//a/@href")[0]
-        if "concessionari-suzuk" in url:
+        if "concessionari-suzuk" in url and "sedi" not in url:
+            url = url.replace("http:", "https:")
+            if "https://" not in url:
+                url = "https://" + url
             response = session.get(url + "/sedi/")
             dom = etree.HTML(response.text)
             all_poi = dom.xpath('//a[@class="card-dealership__link"]/@href')
             for page_url in all_poi:
-                loc_response = session.get(page_url)
+                loc_response = session.get(page_url, headers=hdr)
+                if loc_response.status_code != 200:
+                    continue
                 loc_dom = etree.HTML(loc_response.text)
 
                 location_name = loc_dom.xpath("//h1/text()")[0].strip()

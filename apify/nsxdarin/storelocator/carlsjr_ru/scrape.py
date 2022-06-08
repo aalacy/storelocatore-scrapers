@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -15,72 +16,93 @@ logger = SgLogSetup().get_logger("carlsjr_ru")
 
 def fetch_data():
     urls = [
-        "http://carlsjr.ru/adresa/spb/",
-        "http://carlsjr.ru/adresa/msk/",
-        "http://carlsjr.ru/adresa/novosibirsk/",
-        "http://carlsjr.ru/adresa/norilsk/",
-        "http://carlsjr.ru/adresa/chita/",
+        "http://carlsjr-russia.ru/contacts-piter",
+        "http://carlsjr-russia.ru/contacts-moscow",
+        "http://carlsjr-russia.ru/contacts-novosib",
+        "http://carlsjr-russia.ru/contacts-norilsk",
+        "http://carlsjr-russia.ru/contacts-chita",
     ]
     for url in urls:
         logger.info(url)
         coords = []
         r = session.get(url, headers=headers)
         website = "carlsjr.ru"
+        loc = url
         typ = "<MISSING>"
         country = "RU"
         phone = "<MISSING>"
         lines = r.iter_lines()
+        locinfo = []
         for line in lines:
-            if "myGeoObjects.add(new ymaps.Placemark([" in line:
-                clat = line.split("myGeoObjects.add(new ymaps.Placemark([")[1].split(
-                    ","
-                )[0]
-                clng = (
-                    line.split("myGeoObjects.add(new ymaps.Placemark([")[1]
-                    .split(",")[1]
-                    .split("]")[0]
+            if '"coordinates": [' in line or 'coordinates":[' in line:
+                clat = line.split("[")[1].split(",")[0]
+                clng = line.split("[")[1].split(",")[1].split("]")[0].strip()
+                coords.append(clat + "|" + clng)
+            if 'field="li_descr__' in line:
+                name = (
+                    line.split('field="li_title__')[1]
+                    .split(">")[1]
+                    .split("<")[0]
+                    .strip()
                 )
-            if 'balloonContentFooter: "' in line:
-                cid = line.split("href='")[1].split("/'")[0].rsplit("/", 1)[1]
-                coords.append(cid + "|" + clat + "|" + clng)
-            if '<div class="adressDiv"' in line:
-                city = line.split('data-metro="')[1].split('"')[0]
-                state = line.split('data-region="')[1].split('"')[0]
-                g = next(lines)
-                store = g.split('href="')[1].split('/"')[0].rsplit("/", 1)[1]
-                loc = "http://carlsjr.ru" + g.split('href="')[1].split('"')[0]
-                name = g.split('">')[1].split("<")[0].strip()
-                g = next(lines)
-                zc = "<MISSING>"
-                add = g.split("<br/>")[1].split("<")[0].strip()
-                hours = g.rsplit("<br/>", 1)[1].split("<")[0].strip().replace("\t", "")
-                lat = "<MISSING>"
-                lng = "<MISSING>"
-                for coord in coords:
-                    if store == coord.split("|")[0]:
-                        lat = coord.split("|")[1]
-                        lng = coord.split("|")[2]
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
+                add = (
+                    line.split('field="li_descr__')[1]
+                    .split(">")[1]
+                    .split("<")[0]
+                    .strip()
                 )
+                try:
+                    city = line.split("Метро:")[1].split("<")[0].strip()
+                except:
+                    try:
+                        city = line.split("м.")[1].split("<")[0].strip()
+                    except:
+                        city = "<MISSING>"
+                try:
+                    state = line.split("Район:")[1].split("<")[0].strip()
+                except:
+                    state = "<MISSING>"
+                if "<br />П" in line:
+                    hours = "П" + line.split("<br />П")[1].split("</div>")[0].replace(
+                        "<br /><br />", "; "
+                    ).replace("<br />", ": ")
+                else:
+                    hours = "<MISSING>"
+                locinfo.append(
+                    name + "|" + add + "|" + city + "|" + state + "|" + hours
+                )
+            if "</html>" in line:
+                for x in range(0, len(coords)):
+                    store = "<MISSING>"
+                    name = locinfo[x].split("|")[0]
+                    add = locinfo[x].split("|")[1]
+                    city = locinfo[x].split("|")[2]
+                    state = locinfo[x].split("|")[3]
+                    hours = locinfo[x].split("|")[4]
+                    lat = coords[x].split("|")[0]
+                    lng = coords[x].split("|")[1]
+                    zc = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
 

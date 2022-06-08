@@ -49,7 +49,11 @@ def fetch_data():
 
                         city_state_zip = raw_info[index]
                         address_found = True
-                    if "Mondays" in raw_info[index] or "Open" in raw_info[index]:
+                    if (
+                        "Mondays" in raw_info[index]
+                        or "Open" in raw_info[index]
+                        or "Sundays-" in raw_info[index]
+                    ):
                         hours_of_operation = (
                             "; ".join(raw_info[index:-1])
                             .strip()
@@ -100,7 +104,10 @@ def fetch_data():
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
-                    hours_of_operation=hours_of_operation.split("; (")[0].strip(),
+                    hours_of_operation=hours_of_operation.split("; (")[0]
+                    .strip()
+                    .split("; *")[0]
+                    .strip(),
                 )
                 if location_name == "Petro's Nashville":
                     yield SgRecord(
@@ -127,7 +134,10 @@ def fetch_data():
                         location_type=location_type,
                         latitude=latitude,
                         longitude=longitude,
-                        hours_of_operation=hours_of_operation.split("; (")[0].strip(),
+                        hours_of_operation=hours_of_operation.split("; (")[0]
+                        .strip()
+                        .split("; *")[0]
+                        .strip(),
                     )
 
     loc_list = []
@@ -162,7 +172,11 @@ def fetch_data():
 
                 city_state_zip = raw_info[index]
                 address_found = True
-            if "Mondays" in raw_info[index] or "Open" in raw_info[index]:
+            if (
+                "Mondays" in raw_info[index]
+                or "Open" in raw_info[index]
+                or "Sundays" in raw_info[index]
+            ):
                 hours_of_operation = (
                     "; ".join(raw_info[index:-1])
                     .strip()
@@ -210,7 +224,10 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation.split("; (")[0].strip(),
+            hours_of_operation=hours_of_operation.split("; (")[0]
+            .strip()
+            .split("; *")[0]
+            .strip(),
         )
 
 

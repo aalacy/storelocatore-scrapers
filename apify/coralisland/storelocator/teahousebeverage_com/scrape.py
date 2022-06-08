@@ -61,11 +61,14 @@ def fetch_data():
         except:
             pass
         hours = hours.replace("\n", " ").strip()
+
         if "USA" in pcode:
             pcode = "<MISSING>"
         if "Suite" in pcode:
             pcode, temp = pcode.split(", ", 1)
             street = street + " " + temp
+        if " " + pcode + " " in hours:
+            hours = hours.split(pcode + " ", 1)[1]
         yield SgRecord(
             locator_domain="http://teahousebeverage.com/",
             page_url=url,

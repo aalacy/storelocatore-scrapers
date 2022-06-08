@@ -67,11 +67,20 @@ def fetch_data():
             strip=True, separator=","
         )
         street_address, city, state, zip_postal, country_code = getAddress(raw_address)
-        phone = (
-            store.find("a", {"class": "find-us__button--phone"})
-            .text.replace(" ", "")
-            .strip()
-        )
+        if street_address == "2 Sector":
+            street_address = "Strada Aurel Vlaicu nr. 158, Sector 2"
+            city = "Bucharest"
+        city = city.replace("Samlesbury Myerscough Smithy", "").strip()
+        if "Coming Soon" in store.text.strip():
+            location_type = "COMING_SOON"
+        try:
+            phone = (
+                store.find("a", {"class": "find-us__button--phone"})
+                .text.replace(" ", "")
+                .strip()
+            )
+        except:
+            phone = MISSING
         hours_of_operation = MISSING
         location_type = MISSING
         info = store.find("script", id="hotpod-yoga-js-extra").string.split(

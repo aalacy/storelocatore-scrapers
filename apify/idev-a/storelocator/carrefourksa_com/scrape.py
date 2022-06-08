@@ -55,7 +55,8 @@ def _d(_, found_location_at, current_country):
     else:
         location_name = _["town"]
 
-    found_location_at(_["latitude"], _["longitude"])
+    if found_location_at:
+        found_location_at(_["latitude"], _["longitude"])
     return SgRecord(
         location_name=location_name,
         street_address=street_address,
@@ -110,11 +111,13 @@ def fetch_kw():
     with SgRequests() as http:
         locations = http.get(kw_url, headers=_headers).json()["data"]
         for _ in locations:
-            yield _d(_, "kw")
+            yield _d(_, None, "kw")
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", expected_search_radius_miles=100
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             SgRecordID(

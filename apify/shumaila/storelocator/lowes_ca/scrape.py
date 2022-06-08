@@ -3,8 +3,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+from sgzip.static import static_coordinate_list
+from sgzip.dynamic import SearchableCountries
 
-
+session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
 }
@@ -12,44 +14,10 @@ headers = {
 
 def fetch_data():
 
-    states = [
-        "Alberta",
-        "British Columbia",
-        "Manitoba",
-        "New Brunswick",
-        "Newfoundland and Labrador",
-        "Northwest Territories",
-        "Nova Scotia",
-        "Nunavut",
-        "Ontario",
-        "Prince Edward Island",
-        "Quebec",
-        "Saskatchewan",
-        "Yukon",
-        "N7S%206M8",
-        "K2S%200P5",
-        "P3B%204K6",
-        "M1V%205P7",
-        "M8Z%201V1",
-        "T2J 0P7",
-        "L7M 0W4",
-        "L2H 0G5",
-    ]
-    for statenow in states:
-        session = SgRequests()
+    mylist = static_coordinate_list(70, SearchableCountries.CANADA)
 
-        gurl = (
-            "https://maps.googleapis.com/maps/api/geocode/json?address="
-            + statenow
-            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3ACA"
-        )
-        r = session.get(gurl, headers=headers).json()
-        if r["status"] == "REQUEST_DENIED":
-            pass
-        else:
-            coord = r["results"][0]["geometry"]["location"]
-            latnow = coord["lat"]
-            lngnow = coord["lng"]
+    for latnow, lngnow in mylist:
+
         url = "https://www.lowes.ca/stores/fetch/gcpToken"
         mauth = session.get(url, headers=headers).json()["access_token"]
         url = (
