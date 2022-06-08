@@ -1,14 +1,12 @@
+import us
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
-from tenacity import stop_after_attempt, wait_fixed, retry
 from sglogging import sglog
 
 
-@retry(stop=stop_after_attempt(10), wait=wait_fixed(5))
 def get_json(api):
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r}")
@@ -18,13 +16,11 @@ def get_json(api):
 
 
 def fetch_data(sgw: SgWriter):
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
-    )
-    for _zip in search:
-        for i in range(777):
-            api = f"https://www.zales.com/store-finder?q={_zip}&page={i}"
+    states = [x.abbr.lower() for x in us.states.STATES]
 
+    for s in states:
+        for i in range(777):
+            api = f"https://www.zales.com/store-finder?q={s}&page={i}"
             try:
                 js = get_json(api)
             except:
@@ -35,10 +31,11 @@ def fetch_data(sgw: SgWriter):
                 _type = j.get("baseStore") or ""
                 location_name = "Zales"
                 location_type = "Zales"
-                slug = j.get("url")
-                page_url = f"https://www.zales.com{slug}?baseStore={_type}"
-                if page_url.endswith("/null"):
+                slug = j.get("url") or ""
+                if slug.endswith("/null"):
                     page_url = SgRecord.MISSING
+                else:
+                    page_url = f"https://www.zales.com{slug}?baseStore={_type}"
 
                 street_address = f'{j.get("line1")} {j.get("line2") or ""}'.strip()
                 city = j.get("town")

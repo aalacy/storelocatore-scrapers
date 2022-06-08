@@ -49,7 +49,8 @@ def fetch_data():
                 page_url = "https://www.bestandless.com.au/" + store["url"]
                 locator_domain = website
                 location_name = store["name"]
-
+                if "Fulham Gardens" in location_name:
+                    continue
                 street_address = store["address"]["line1"]
                 add_2 = store["address"]["line2"]
                 if add_2 is not None and len(add_2) > 0:

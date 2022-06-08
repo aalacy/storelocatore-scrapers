@@ -70,6 +70,8 @@ def fetch_data():
         city = data["city"]
         state = data["stateOrProvinceName"]
         zip_postal = data["postalCode"]
+        if zip_postal == "-":
+            zip_postal = MISSING
         country_code = data["country"]
         store_number = data["storeNumber"]
         phone = data["telephone"]

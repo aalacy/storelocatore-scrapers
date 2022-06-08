@@ -81,7 +81,9 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=50,
         )
     ) as writer:
-        search = DynamicGeoSearch(country_codes=["gb"], expected_search_radius_miles=50)
+        search = DynamicGeoSearch(
+            country_codes=["gb"], expected_search_radius_miles=100
+        )
         results = fetch_data(search)
         for rec in results:
             writer.write_row(rec)

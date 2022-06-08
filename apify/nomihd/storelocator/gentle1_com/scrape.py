@@ -45,6 +45,8 @@ def fetch_data():
         store_sel = lxml.html.fromstring(store_req.text)
 
         location_name = store["title"]
+        if location_name == "Tiny House Dental Office":
+            continue
         location_type = "<MISSING>"
         locator_domain = website
 

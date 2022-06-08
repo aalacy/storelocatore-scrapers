@@ -27,6 +27,8 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "col sqs-col-4 span-4"})
         for loc in loclist:
+            if "Opening" in loc.text:
+                continue
             location_name = loc.find("h3").text
             temp = json.loads(
                 loc.find("div", {"class": "sqs-block map-block sqs-block-map"})[

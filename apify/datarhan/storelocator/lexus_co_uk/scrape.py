@@ -46,7 +46,9 @@ def fetch_data():
                     for h in e["slots"]:
                         hours.append(f'{h["openFrom"]} - {h["openTo"]}')
                     hoo.append(f'{e["day"]}: {", ".join(hours)}')
-            hoo = " ".join(hoo)
+            hoo = " ".join(hoo).strip()
+            if hoo.endswith("Sunday:"):
+                hoo += " closed"
 
             item = SgRecord(
                 locator_domain=start_url.split("/")[2].replace("www.", ""),

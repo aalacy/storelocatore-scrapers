@@ -33,6 +33,7 @@ def fetch_data():
             )
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
             schema = r.text.split("<script type='application/ld+json'>")[1].split(
                 "</script>", 1
             )[0]
@@ -42,7 +43,7 @@ def fetch_data():
             location_name = loc["name"]
             address = loc["address"]
             phone = loc["contactPoint"]["telephone"].replace("\n", " ")
-            street_address = address["streetAddress"]
+            street_address = address["streetAddress"].replace("\n", " ")
             city = address["addressLocality"]
             state = MISSING
             zip_postal = address["postalCode"]
@@ -53,6 +54,16 @@ def fetch_data():
                 .replace("|", " ")
                 .replace(">/br>", " ")
             )
+            try:
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+            except:
+                longitude = MISSING
+                latitude = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -65,8 +76,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 

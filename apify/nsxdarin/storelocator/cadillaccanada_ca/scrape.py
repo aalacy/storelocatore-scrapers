@@ -19,7 +19,7 @@ headers = {
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.CANADA],
     max_search_distance_miles=None,
-    max_search_results=10,
+    max_search_results=None,
 )
 
 
@@ -141,7 +141,7 @@ def fetch_data():
                                 except:
                                     hours = hours + "; Sat: Closed"
                             except:
-                                hours = "<MISSING>"
+                                hours = "Sun-Sat: Closed"
                             logger.info("Pulling Store ID #%s..." % store)
                             yield SgRecord(
                                 locator_domain=website,
