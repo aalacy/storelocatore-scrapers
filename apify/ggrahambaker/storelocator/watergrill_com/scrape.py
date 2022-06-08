@@ -31,9 +31,7 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1").text
-            temp = soup.find("div", {"class": "info-container w-container"}).findAll(
-                "p", {"class": "wg-body-copy"}
-            )
+            temp = soup.find("div", {"class": "executivesdiv"}).findAll("p")
             address = temp[0].text
             phone = temp[1].text
             hours_of_operation = (
