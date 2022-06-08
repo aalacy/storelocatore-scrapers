@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
-session = SgRequests(proxy_country="lk")
+session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "api_key": "X24EZOH3IL",
@@ -60,6 +60,16 @@ def fetch_data():
                 add = add.split(" Hotline")[0].strip()
             if " Sri Lanka" in add:
                 add = add.split(" Sri Lanka")[0].strip()
+            if "ph no" in rawadd:
+                rawadd = rawadd.split("ph no")[0].strip()
+            if "PH.N" in rawadd:
+                rawadd = rawadd.split("PH.N")[0].strip()
+            if "PH-" in rawadd:
+                rawadd = rawadd.split("PH-")[0].strip()
+            if "Ph.N" in rawadd:
+                rawadd = rawadd.split("Ph.N")[0].strip()
+            if " Hotline" in rawadd:
+                rawadd = rawadd.split(" Hotline")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
