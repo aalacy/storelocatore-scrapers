@@ -29,6 +29,8 @@ def get_data(page_url, sgw: SgWriter):
     for j in js:
         location_name = j.get("LocationName")
         adr1 = j.get("AddressLine1") or ""
+        if "Mall" in adr1 or ":" in adr1:
+            adr1 = ""
         adr2 = j.get("AddressLine2") or ""
         street_address = " ".join(f"{adr1} {adr2}".split())
         city = j.get("City")
@@ -48,10 +50,23 @@ def get_data(page_url, sgw: SgWriter):
         for h in hours:
             day = h.get("Title")
             inter = h.get("Hours") or ""
-            if not day or not inter or "ment" in inter:
+            if not day or not inter or "n/a" in inter:
                 continue
+
+            inter = inter.lower()
             if "(" in inter:
                 inter = inter.split("(")[0].strip()
+            if "showroom closed" in inter:
+                inter = "Closed"
+            if "/" in inter:
+                inter = inter.split("/")[0].strip()
+            if "ment" in inter and "pm " not in inter:
+                continue
+            if ". please" in inter:
+                inter = inter.split(". please")[0].strip()
+            if "or by" in inter:
+                inter = inter.split("or by")[0].strip()
+
             _tmp.append(f"{day}: {inter}")
 
         hours_of_operation = ";".join(_tmp)

@@ -58,7 +58,10 @@ def get_data(zipps, sgw: SgWriter):
         r = session.get(
             "https://www.babyone.de/store-finder/search", params=params, headers=headers
         )
-        js = r.json()["html"]
+        try:
+            js = r.json()["html"]
+        except:
+            continue
         tree = html.fromstring(js)
         div = tree.xpath('//a[@class="retail-market-result-item-link "]')
         for d in div:
