@@ -22,7 +22,7 @@ def fetch_data():
     for poi in data["entries"].values():
         if type(poi) == bool:
             continue
-        
+
         item = SgRecord(
             locator_domain=domain,
             page_url="https://burgerking.com.br/restaurantes",
