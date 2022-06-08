@@ -53,7 +53,7 @@ def fetch_data():
                         lat = item.split('"qsl_latitude\\":\\"')[1].split("\\")[0]
                         lng = item.split('"qsl_longitude\\":\\"')[1].split("\\")[0]
                         hours = "<MISSING>"
-                        loc = "<MISSING>"
+                        loc = "https://www.examone.com/locations/"
                         if "(" in add:
                             if add.count("(") == 1:
                                 typ = add.split("(")[1].split(")")[0]

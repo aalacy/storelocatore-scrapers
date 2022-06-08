@@ -21,14 +21,14 @@ else:
 
 
 session = SgRequests()
-website = "newcomerfamily_com"
+website = "mex_sunglasshut_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://www.newcomerfamily.com/"
+DOMAIN = "https://mex.sunglasshut.com"
 MISSING = SgRecord.MISSING
 
 
@@ -81,13 +81,16 @@ def fetch_data():
             with SgChrome() as driver:
                 url = "https://mex.sunglasshut.com/Encuentra-tu-tienda"
                 driver.get(url)
-                state_name = driver.find_element_by_xpath(
-                    "//input[contains(@class, 'pac-target-input')]"
-                )
+                try:
+                    state_name = driver.find_element_by_xpath(
+                        "//input[contains(@class, 'pac-target-input')]"
+                    )
+                except:
+                    continue
                 state_name.send_keys(temp_state)
                 log.info(f"Fetching locations from {temp_state}")
                 state_name.send_keys(Keys.ENTER)
-                time.sleep(10)
+                time.sleep(30)
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 loclist = soup.findAll(
                     "li", {"class": "sunglasshutmx-store-locator-0-x-listMarker"}
@@ -121,7 +124,8 @@ def fetch_data():
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                     )
-                    pa = parse_address_intl(raw_address.split("Instrucciones")[0])
+                    raw_address = raw_address.split("Instrucciones")[0]
+                    pa = parse_address_intl(raw_address)
 
                     street_address = pa.street_address_1
                     street_address = street_address if street_address else MISSING

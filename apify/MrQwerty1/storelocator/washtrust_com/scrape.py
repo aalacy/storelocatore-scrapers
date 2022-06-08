@@ -1,4 +1,4 @@
-import json
+import json5
 import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -88,22 +88,48 @@ def get_hours(page_url):
     return ";".join(_tmp)
 
 
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+    return latitude, longitude
+
+
+def get_coords(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//iframe/@src"))
+
+    return get_coords_from_embed(text)
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.washtrust.com/about/locations"
     r = session.get(api)
     tree = html.fromstring(r.text)
     li = tree.xpath("//div[@class='location-results']/ul/li")
-    coords = dict()
 
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'googleMaps._listInfoWindows')]/text()")
+    )
+    text = text.split("] =")[1].split("};")[0].strip()[:-1] + "}"
+    sources = json5.loads(text)
+
+    coords = dict()
     text = "".join(tree.xpath("//div[@data-dna]/@data-dna"))
-    js = json.loads(text)[1:]
+    js = json5.loads(text)[1:]
     for j in js:
         try:
             lat = j["locations"][0]["lat"]
             lng = j["locations"][0]["lng"]
+            _id = j["locations"][0]["id"]
         except:
             continue
-        source = j["options"]["infoWindowOptions"]["content"]
+
+        source = sources[_id]["content"]
         root = html.fromstring(source)
         name = "".join(root.xpath("./h3/text()")).strip()
         coords[name] = (lat, lng)
@@ -115,7 +141,10 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "".join(l.xpath(".//a[@class='arrow-link']/@href")) or api
         phone = "".join(l.xpath("./span[@class='phone']/text()")).strip()
-        latitude, longitude = coords.get(location_name) or ["<MISSING>", "<MISSING>"]
+        latitude, longitude = coords.get(location_name) or [
+            SgRecord.MISSING,
+            SgRecord.MISSING,
+        ]
         if "ATM" in location_name:
             location_type = "ATM"
         else:
@@ -127,6 +156,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = SgRecord.MISSING
         if "Opening" in location_name:
             hours_of_operation = "Coming Soon"
+
+        if latitude == SgRecord.MISSING and location_type == "Branch":
+            latitude, longitude = get_coords(page_url)
 
         row = SgRecord(
             page_url=page_url,

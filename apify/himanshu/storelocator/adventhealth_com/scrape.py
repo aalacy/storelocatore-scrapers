@@ -1,159 +1,125 @@
-import re
-import csv
-from lxml import etree
-from urllib.parse import urljoin
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    # Your scraper here
+    locator_domain = "https://www.adventhealth.com/"
+    api_url = "https://www.adventhealth.com/find-a-location"
     session = SgRequests()
-
-    items = []
-
-    start_url = "https://www.adventhealth.com/find-a-location"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//li[@class="facility-search-block__item"]')
-    next_page = dom.xpath('//a[@rel="next"]/@href')
-    while next_page:
-        response = session.get(urljoin(start_url, next_page[0]))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//li[@class="facility-search-block__item"]')
-        next_page = dom.xpath('//a[@rel="next"]/@href')
-
-    for poi_html in all_locations:
-        store_url = poi_html.xpath(".//h3/a/@href")
-        if not store_url:
-            store_url = poi_html.xpath('.//a[contains(text(), "View Website")]/@href')
-        store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
-        if "adventhealth.com" in store_url:
-            loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-
-            location_name = loc_dom.xpath(
-                '//span[@class="location-bar__name-text notranslate"]/text()'
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//li[@class="pager__item pager__item--last"]/a')
+    for d in div:
+        last_page = "".join(d.xpath(".//@href")).split("=")[-1].strip()
+        for i in range(0, int(last_page) + 1):
+            r = session.get(
+                f"https://www.adventhealth.com/find-a-location?facility=&name=&geolocation_geocoder_google_geocoding_api=&geolocation_geocoder_google_geocoding_api_state=1&latlng%5Bdistance%5D%5Bfrom%5D=-&latlng%5Bvalue%5D=&latlng%5Bcity%5D=&latlng%5Bstate%5D=&latlng%5Bprecision%5D=&service=&page={i}"
             )
-            if not location_name:
-                location_name = loc_dom.xpath(
-                    '//h1[@class="image-hero__title"]//text()'
+            tree = html.fromstring(r.text)
+            div = tree.xpath('//li[@class="facility-search-block__item"]')
+            for d in div:
+
+                slug = "".join(d.xpath(".//h3/a/@href"))
+                page_url = f"https://www.adventhealth.com{slug}".strip()
+                if page_url.find("?") != -1:
+                    page_url = page_url.split("?")[0].strip()
+                if page_url == "https://www.adventhealth.com":
+                    page_url = "https://www.adventhealth.com/find-a-location"
+                location_name = (
+                    "".join(
+                        d.xpath('.//div[@class="location-block__headline"]/h3/a/text()')
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
                 )
-            location_name = [e.strip() for e in location_name if e.strip()]
-            location_name = " ".join(location_name) if location_name else "<MISSING>"
-            if location_name.endswith(","):
-                location_name = location_name[:-1]
-            street_address = loc_dom.xpath('//span[@property="streetAddress"]/text()')
-            street_address = (
-                street_address[0].strip() if street_address else "<MISSING>"
-            )
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
-            city = loc_dom.xpath('//span[@property="addressLocality"]/text()')
-            city = city[0] if city else "<MISSING>"
-            state = loc_dom.xpath('//span[@property="addressRegion"]/text()')
-            state = state[0] if state else "<MISSING>"
-            zip_code = loc_dom.xpath('//span[@property="postalCode"]/text()')
-            zip_code = zip_code[0] if zip_code else "<MISSING>"
-            country_code = re.findall('country":"(.+?)",', loc_response.text)
-            country_code = country_code[0] if country_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath('//a[@class="telephone"]/text()')
-            phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = loc_dom.xpath("//@data-lat")
-            latitude = latitude[0] if latitude else "<MISSING>"
-            longitude = loc_dom.xpath("//@data-lng")
-            longitude = longitude[0] if longitude else "<MISSING>"
-            hoo = loc_dom.xpath(
-                '//div[@class="location-block__office-hours-hours"]/text()'
-            )
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-        else:
-            location_name = poi_html.xpath(".//h3/a/text()")
-            if not location_name:
-                location_name = poi_html.xpath(".//h3/text()")
-            location_name = location_name[0].strip() if location_name else "<MISSING>"
-            street_address = poi_html.xpath('.//span[@property="streetAddress"]/text()')
-            street_address = (
-                street_address[0].strip() if street_address else "<MISSING>"
-            )
-            city = poi_html.xpath('.//span[@property="addressLocality"]/text()')
-            city = city[0] if city else "<MISSING>"
-            state = poi_html.xpath('.//span[@property="addressRegion"]/text()')
-            state = state[0] if state else "<MISSING>"
-            zip_code = poi_html.xpath('.//span[@property="postalCode"]/text()')
-            zip_code = zip_code[0] if zip_code else "<MISSING>"
-            country_code = re.findall('country":"(.+?)",', loc_response.text)
-            country_code = country_code[0] if country_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = poi_html.xpath('.//a[@class="telephone"]/text()')
-            phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
-            location_type = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+                if location_name == "<MISSING>":
+                    location_name = (
+                        "".join(
+                            d.xpath(
+                                './/div[@class="location-block__headline"]/h3/text()'
+                            )
+                        )
+                        .replace("\n", "")
+                        .strip()
+                        or "<MISSING>"
+                    )
+                street_address = (
+                    "".join(d.xpath('.//span[@property="streetAddress"]/text()'))
+                    .replace("\n", "")
+                    .replace("\r", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                state = (
+                    "".join(d.xpath('.//span[@property="addressRegion"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                postal = (
+                    "".join(d.xpath('.//span[@property="postalCode"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                country_code = "US"
+                city = (
+                    "".join(d.xpath('.//span[@property="addressLocality"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                latitude = "".join(d.xpath(".//*/@data-lat")) or "<MISSING>"
+                longitude = "".join(d.xpath(".//*/@data-lng")) or "<MISSING>"
+                phone = (
+                    "".join(d.xpath('.//a[@class="telephone"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=SgRecord.MISSING,
+                )
 
-        items.append(item)
-
-    return items
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

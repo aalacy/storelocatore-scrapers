@@ -41,48 +41,22 @@ def fetch_data():
 
         locator_domain = website
 
-        location_name = "".join(
-            store_sel.xpath("//div[@itemprop='text']/h2[1]/text()")
-        ).strip()
-        add_list = []
-        if len(location_name) <= 0:
-            location_name = "".join(
-                store_sel.xpath(
-                    '//div[@class="elementor-column-wrap elementor-element-populated"][./div/div/div/h2[contains(text(),"IDAHO FALLS")]]/div[1]/div[1]/div[1]/h2/text()'
-                )
-            ).strip()
-            add_list = (
-                "".join(
-                    store_sel.xpath(
-                        '//div[@class="elementor-column-wrap elementor-element-populated"][./div/div/div/h2[contains(text(),"IDAHO FALLS")]]/div[1]/div[2]/div[1]/h2/text()'
-                    )
-                )
-                .strip()
-                .split(",")
-            )
-        else:
-            add_list = (
-                "".join(store_sel.xpath("//div[@itemprop='text']/h2[2]/text()"))
-                .strip()
-                .split(",")
-            )
+        raw_info = store_sel.xpath(
+            '//div[@class="elementor-column-wrap elementor-element-populated"]'
+        )
+        raw_info = list(
+            filter(str, [x.strip() for x in raw_info[0].xpath(".//text()")])
+        )
+        location_name = raw_info[0].strip()
 
+        add_list = raw_info[1].split(",")
         street_address = ", ".join(add_list[0:-2]).strip()
         if street_address[-1] == ",":
             street_address = "".join(street_address[:-1]).strip()
         city = add_list[-2].strip()
         state = add_list[-1].strip().split(" ")[0].strip()
         zip = add_list[-1].strip().split(" ")[-1].strip()
-        phone = "".join(
-            store_sel.xpath(
-                '//div[@itemprop="text"]/p/a[contains(@href,"tel")]//text()'
-            )
-        ).strip()
-
-        if len(phone) <= 0:
-            phone = "".join(
-                store_sel.xpath('.//a[contains(@href,"tel")]//text()')
-            ).strip()
+        phone = raw_info[-1]
         country_code = "US"
         store_number = "<MISSING>"
 

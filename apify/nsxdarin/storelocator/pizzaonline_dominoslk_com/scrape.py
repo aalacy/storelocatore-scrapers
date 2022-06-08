@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
-session = SgRequests()
+session = SgRequests(proxy_country="lk")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "api_key": "X24EZOH3IL",
@@ -22,7 +22,6 @@ def fetch_data():
     website = "pizzaonline.dominoslk.com"
     typ = "<MISSING>"
     country = "LK"
-    loc = "<MISSING>"
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["data"]:
         if item != "TEST":
@@ -44,10 +43,23 @@ def fetch_data():
             add = locitem["address"]
             state = locitem["region"]
             hours = "<MISSING>"
-            loc = "<MISSING>"
+            loc = "https://m.dominoslk.com/changeAddress?redirectUrl=landing&deliveryType=D"
+            rawadd = add
             add = add.replace("\r", "").replace("\n", "").replace("\t", "")
             if "ph no" in add:
                 add = add.split("ph no")[0].strip()
+            if "PH." in add:
+                add = add.split("PH.")[0].strip()
+            if "PH-" in add:
+                add = add.split("PH-")[0].strip()
+            if ", Sri Lanka" in add:
+                add = add.split(", Sri Lanka")[0].strip()
+            if ", SRI LANKA" in add:
+                add = add.split(", SRI LANKA")[0].strip()
+            if " Hotline" in add:
+                add = add.split(" Hotline")[0].strip()
+            if " Sri Lanka" in add:
+                add = add.split(" Sri Lanka")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -62,6 +74,7 @@ def fetch_data():
                 store_number=store,
                 latitude=lat,
                 longitude=lng,
+                raw_address=rawadd,
                 hours_of_operation=hours,
             )
 

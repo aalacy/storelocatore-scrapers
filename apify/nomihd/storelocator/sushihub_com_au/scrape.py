@@ -12,35 +12,26 @@ website = "sushihub.com.au"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "authority": "www.sushihub.com.au",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
     "accept": "application/xml, text/xml, */*; q=0.01",
     "x-requested-with": "XMLHttpRequest",
     "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
     "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-site": "same-origin",
     "sec-fetch-mode": "cors",
     "sec-fetch-dest": "empty",
-    "referer": "https://www.sushihub.com.au/find-a-hub.html",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "referer": "https://www.sushihub.com.au/find-a-hub/",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
-params = (
-    ("option", "com_storelocator"),
-    ("view", "map"),
-    ("format", "raw"),
-    ("searchall", "1"),
-    ("Itemid", "517"),
-    ("catid", "-1"),
-    ("tagid", "-1"),
-    ("featstate", "0"),
-)
+params = (("wpml_lang", ""),)
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.sushihub.com.au/find-a-hub.html"
-    api_url = "https://www.sushihub.com.au/index.php"
+    search_url = "https://www.sushihub.com.au/find-a-hub/"
+    api_url = "https://www.sushihub.com.au/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
 
     with SgRequests() as session:
         api_res = session.get(api_url, headers=headers, params=params)
@@ -51,7 +42,7 @@ def fetch_data():
             .replace("<![CDATA[", "")
             .replace("]]>", "")
         )
-        stores = api_sel.xpath("//marker")
+        stores = api_sel.xpath("//item")
 
         for no, store in enumerate(stores, 1):
 
@@ -59,7 +50,14 @@ def fetch_data():
 
             page_url = search_url
 
-            location_name = "".join(store.xpath("./name//text()")).strip()
+            location_name = (
+                "".join(store.xpath("./location//text()"))
+                .strip()
+                .replace("&#44;", ",")
+                .strip()
+                .replace("&#39;", "'")
+                .strip()
+            )
             location_type = "<MISSING>"
 
             store_info = list(
@@ -68,7 +66,16 @@ def fetch_data():
                     [x.strip() for x in store.xpath("./address//text()")],
                 )
             )
-            raw_address = " ".join(store_info)
+            raw_address = (
+                ", ".join(store_info)
+                .strip()
+                .replace("&#44;", ",")
+                .strip()
+                .replace("&#39;", "'")
+                .strip()
+                .replace("&amp;", "&")
+                .strip()
+            )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -78,6 +85,12 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
+            if street_address:
+                if (
+                    street_address.split(",")[-1].strip().split(" ")[0].strip().lower()
+                    == "shop"
+                ):
+                    street_address = ", ".join(street_address.split(",")[:-1]).strip()
             city = formatted_addr.city
 
             state = formatted_addr.state
@@ -85,20 +98,35 @@ def fetch_data():
 
             country_code = "AU"
 
-            phone = "".join(store.xpath("./phone//text()")).replace("Call", "").strip()
-
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store.xpath("./*[@name]//text()")],
-                )
+            phone = (
+                "".join(store.xpath("./telephone//text()")).replace("Call", "").strip()
             )
-            hours_of_operation = "; ".join(hours)
 
-            store_number = "<MISSING>"
+            desc = "".join(store.xpath("./description//text()")).strip()
+            if len(desc) > 0:
+                hours_sel = lxml.html.fromstring(desc)
 
-            latitude, longitude = "".join(store.xpath("./lat//text()")), "".join(
-                store.xpath("./lng//text()")
+                hours = list(
+                    filter(
+                        str,
+                        [x.strip() for x in hours_sel.xpath(".//text()")],
+                    )
+                )
+                hours_of_operation = (
+                    "; ".join(hours)
+                    .strip()
+                    .split("; Sushi Go Round")[0]
+                    .strip()
+                    .replace("Take Away;", "")
+                    .strip()
+                )
+            else:
+                hours_of_operation = "<MISSING>"
+
+            store_number = "".join(store.xpath("./storeId//text()")).strip()
+
+            latitude, longitude = "".join(store.xpath("./latitude//text()")), "".join(
+                store.xpath("./longitude//text()")
             )
 
             yield SgRecord(

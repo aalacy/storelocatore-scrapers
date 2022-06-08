@@ -26,27 +26,36 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
     json_block = soup.findAll("script", {"type": "text/javascript"})
-    data = str(json_block[78])
+    data = str(json_block[len(json_block) - 1])
     data = data.split(";jQuery.extend")[0]
     data = data.split("var mapsvg_options =")[1]
     data = json.loads(data)
     data = data["data_db"]["objects"]
     for loc in data:
         title = loc["ville"]
+        city = title
         lat = loc["location"]["lat"]
         lng = loc["location"]["lng"]
-        street = loc["adresse1"]
-        try:
-            city = loc["regions"][0]["title"]
-        except KeyError:
-            city = MISSING
-        state = loc["location"]["address"]["locality"]
-        pcode = loc["location"]["address"]["postal_code"]
+        phone = loc["telephone"].strip()
+        if phone == "":
+            phone = MISSING
+        store_num = loc["id"]
         country = loc["location"]["address"]["country_short"]
-        phone = loc["telephone"]
-        hoo = loc["horaires"]
-        storeid = loc["id"]
-
+        street = loc["adresse1"]
+        if street == "":
+            street = loc["location"]["address"]["formatted"].split(",")[0]
+        else:
+            street = MISSING
+        if str(loc).find("administrative_area_level_1") != -1:
+            state = loc["location"]["address"]["administrative_area_level_1"]
+        else:
+            state = MISSING
+        if str(loc).find("postal_code") != -1:
+            pcode = loc["location"]["address"]["postal_code"]
+        else:
+            pcode = loc["adresse2"].split(" ")[0]
+        hours = loc["horaires"]
+        hours = hours.replace("\n", " ").strip()
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=search_url,
@@ -56,12 +65,12 @@ def fetch_data():
             state=state.strip(),
             zip_postal=pcode,
             country_code=country,
-            store_number=storeid,
+            store_number=store_num,
             phone=phone,
             location_type=MISSING,
             latitude=lat,
             longitude=lng,
-            hours_of_operation=hoo.strip(),
+            hours_of_operation=hours.strip(),
         )
 
 

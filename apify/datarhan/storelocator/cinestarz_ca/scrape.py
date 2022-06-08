@@ -46,6 +46,8 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
+        if street_address == "#300 Ab":
+            street_address = raw_address.split(", ")[0]
         geo = (
             loc_dom.xpath("//iframe/@src")[0].split("sll=")[-1].split("&")[0].split(",")
         )

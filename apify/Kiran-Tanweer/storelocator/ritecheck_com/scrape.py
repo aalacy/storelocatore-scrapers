@@ -21,40 +21,48 @@ MISSING = "<MISSING>"
 
 def fetch_data():
     if True:
+        all_hour = []
         pattern = re.compile(r"\s\s+")
         cleanr = re.compile(r"<[^>]+>")
-        search_url = "https://ritecheck.com/locations.html"
+        search_url = "https://www.ritecheck.com/locations/"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
-        locations = soup.find("ul", {"class": "locations-list"}).findAll("li")
-        for loc in locations:
-            addresses = loc.find("p", {"class": "locations-list-title"}).findAll("a")
-            hours = loc.findAll("p")[1].text
-            for addr in addresses:
-                address = addr.text
-                hours = hours
-                hours = hours.replace("â", "-")
-                address = re.sub(pattern, " ", address)
-                address = re.sub(cleanr, " ", address)
-                hours = hours.replace(",", "")
-                hours = hours.strip()
+        locations = soup.findAll(
+            "h4", {"class": "elementor-heading-title elementor-size-default"}
+        )
+        hours = soup.findAll("ul", {"class": "elementor-icon-list-items"})
+        i = 0
+        for hr in hours:
+            if i in range(5, 19):
+                hour = hr.text
+                hour = re.sub(pattern, " ", hour)
+                hour = re.sub(cleanr, " ", hour)
+                hour = hour.replace("\n", " ")
+                all_hour.append(hour)
+            i = i + 1
 
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=DOMAIN,
-                    location_name=SgRecord.MISSING,
-                    street_address=address.strip(),
-                    city=SgRecord.MISSING,
-                    state=SgRecord.MISSING,
-                    zip_postal=SgRecord.MISSING,
-                    country_code=SgRecord.MISSING,
-                    store_number=SgRecord.MISSING,
-                    phone=SgRecord.MISSING,
-                    location_type=SgRecord.MISSING,
-                    latitude=SgRecord.MISSING,
-                    longitude=SgRecord.MISSING,
-                    hours_of_operation=hours.strip(),
-                )
+        for loc, hr in zip(locations, all_hour):
+            address = loc.find("a").text
+            address = re.sub(pattern, " ", address)
+            address = re.sub(cleanr, " ", address)
+            hour = hr.strip()
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=DOMAIN,
+                location_name=SgRecord.MISSING,
+                street_address=address.strip(),
+                city=SgRecord.MISSING,
+                state=SgRecord.MISSING,
+                zip_postal=SgRecord.MISSING,
+                country_code=SgRecord.MISSING,
+                store_number=SgRecord.MISSING,
+                phone=SgRecord.MISSING,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hour.strip(),
+            )
 
 
 def scrape():

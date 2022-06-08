@@ -16,11 +16,11 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://drafthouse.com/markets"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    HEADERS = {"User-Agent": user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    req = session.get(base_link, headers=HEADERS)
+    req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
     main_links = []
@@ -30,12 +30,12 @@ def fetch_data(sgw: SgWriter):
         main_links.append(main_link)
 
     for main_link in main_links:
-        final_req = session.get(main_link, headers=HEADERS)
+        final_req = session.get(main_link, headers=headers)
         base = BeautifulSoup(final_req.text, "lxml")
 
         locator_domain = "drafthouse.com"
 
-        items = base.find(class_="medium-3 columns").find_all("li")
+        items = base.find_all(class_="Footer-links no-bullet")[1].find_all("li")
 
         for item in items:
             location_name = item.a.text.strip()
@@ -53,6 +53,8 @@ def fetch_data(sgw: SgWriter):
                 map_link = item.find_all("a")[-1]["href"]
                 if "28 Liberty Street" in raw_address[0]:
                     phone = "332-216-3200"
+            if "3201 Farnam" in phone:
+                phone = "402-884-8999"
 
             street_address = raw_address[0].strip()
             city = raw_address[1].strip().split(",")[0].strip()
@@ -62,7 +64,7 @@ def fetch_data(sgw: SgWriter):
             store_number = "<MISSING>"
             location_type = "<MISSING>"
 
-            req = session.get(map_link, headers=HEADERS)
+            req = session.get(map_link, headers=headers)
             maps = BeautifulSoup(req.text, "lxml")
 
             try:

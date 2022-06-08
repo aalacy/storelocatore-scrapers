@@ -1,10 +1,11 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
+from sgscrape.sgrecord import SgRecord
 from lxml import html
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-
+from sgscrape import sgpostal as parser
 import json5
 
 
@@ -13,7 +14,7 @@ def get_locations(url):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    source = session.get(url, headers=headers).text
+    source = SgRequests.raise_on_err(session.get(url, headers=headers)).text
     tree = html.fromstring(source)
     soup = b4(source, "lxml")
     theScript = "".join(
@@ -24,7 +25,6 @@ def get_locations(url):
         + str(theScript.split("var locations = [ ")[1].split(",  ];")[0])
         + ",  ]}"
     )
-    # length 44
     theScript = theScript["data"]
 
     stores = soup.find("div", {"class": "locations"}).find_all(
@@ -49,18 +49,40 @@ def get_locations(url):
             for i in nice:
                 addressData.append(i.strip())
 
-            k["address"] = addressData[0]
+            try:
+                k["address"] = addressData[0]
 
-            k["city"] = addressData[1]
-            k["state"] = addressData[2].split(" ")[0]
-            k["zip"] = addressData[2].split(" ")[1]
-            k["country"] = "US"
+                k["city"] = addressData[1]
+                k["state"] = addressData[2].split(" ")[0]
+                k["zip"] = addressData[2].split(" ")[1]
+                k["country"] = "US"
+            except Exception:
+                MISSING = SgRecord.MISSING
+                parsed = parser.parse_address_intl(" ".join(addressData))
+                country_code = parsed.country if parsed.country else MISSING
+                street_address = (
+                    parsed.street_address_1 if parsed.street_address_1 else MISSING
+                )
+                street_address = (
+                    (street_address + ", " + parsed.street_address_2)
+                    if parsed.street_address_2
+                    else street_address
+                )
+                city = parsed.city if parsed.city else MISSING
+                state = parsed.state if parsed.state else MISSING
+                zip_postal = parsed.postcode if parsed.postcode else MISSING
+                k["address"] = street_address
+                k["city"] = city
+                k["state"] = state
+                k["zip"] = zip_postal
+                k["country"] = country_code
         else:
             k["name"] = bs_data[0]
             k["lat"] = js_data["lat"] if js_data["lat"] else ""
             k["lon"] = js_data["lng"] if js_data["lng"] else ""
             k["storeno"] = bs_data[0].split("#")[-1].strip()
-
+            if "," not in bs_data[2]:
+                bs_data.pop(2)
             nice = bs_data[2].split(",")
             addressData = []
             for i in nice:
@@ -107,9 +129,11 @@ def scrape():
         ),
         latitude=sp.MappingField(
             mapping=["lat"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["lon"],
+            part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
             mapping=["address"],
@@ -124,9 +148,14 @@ def scrape():
             mapping=["zip"],
         ),
         country_code=sp.MappingField(mapping=["country"], is_required=False),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        phone=sp.MappingField(
+            mapping=["phone"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         store_number=sp.MappingField(
             mapping=["storeno"],
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(mapping=["type"], is_required=False),

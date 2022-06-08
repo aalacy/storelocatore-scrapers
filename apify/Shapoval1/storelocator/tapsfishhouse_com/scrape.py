@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import USA_Best_Parser, parse_address
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -16,12 +16,10 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[@class="av-screen-reader-only"]')
+    div = tree.xpath('//span[text()="Locations"]/following::ul[1]/li/a')
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -62,7 +60,17 @@ def fetch_data(sgw: SgWriter):
         )
         if location_name.find("Opening Soon") != -1:
             hours_of_operation = "Coming Soon"
-            location_name = location_name.replace("Opening Soon", "").strip()
+            location_name = (
+                location_name.replace("– Opening Soon", "")
+                .replace("Opening Soon", "")
+                .strip()
+            )
+        if (
+            page_url == "https://tapsfishhouse.com/taps-fish-house-brewery-scottsdale/"
+            and hours_of_operation == "Coming Soon"
+        ):
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

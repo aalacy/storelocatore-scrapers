@@ -23,6 +23,8 @@ def fetch_data():
     )
     for code in all_codes:
         response = session.get(start_url.format(code.replace(" ", "+")), headers=hdr)
+        if response.status_code != 200:
+            continue
         dom = etree.HTML(response.text)
 
         all_locations = dom.xpath(
@@ -46,7 +48,7 @@ def fetch_data():
             latitude = loc_dom.xpath("//@data-lat")[0]
             longitude = loc_dom.xpath("//@data-lng")[0]
             hoo = loc_dom.xpath(
-                '//div[contains(text(), "Opening hours")]/following-sibling::div[1]//text()'
+                '//h2[contains(text(), "Opening hours")]/following-sibling::ul[1]//text()'
             )
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
