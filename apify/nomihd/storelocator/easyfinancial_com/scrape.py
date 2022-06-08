@@ -1,50 +1,65 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
-from sglogging import sglog
 import json
+import undetected_chromedriver.v2 as uc
+from sglogging import sglog
+from selenium_stealth import stealth
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
 
 website = "easyfinancial.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "authority": "be.easyfinancial.com",
-    "accept": "*/*",
-    "accept-language": "en-US,en;q=0.9",
-    "content-type": "application/json",
-    "origin": "https://www.easyfinancial.com",
-    "referer": "https://www.easyfinancial.com/",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
-}
-
-json_data = {
-    "operationName": "getAllBranches",
-    "variables": {
-        "lat": 43.65413,
-        "lng": -79.39242,
-        "radius": 50,
-    },
-    "query": "query getAllBranches($lat: Float, $lng: Float, $radius: Float) {\n  getAllBranches(lat: $lat, lng: $lng, radius: $radius)\n}\n",
-}
 
 
 def fetch_data():
-    # Your scraper here
-    with SgRequests(dont_retry_status_codes=([404]), proxy_country="ca") as session:
-        stores_req = session.post(
-            "https://be.easyfinancial.com/api/src?code=WLcdq2dRebMBytNYRbk7l/FOdQ8zAMXsKacLZV3vSqOJzknemwL9PQ==",
-            headers=headers,
-            json=json_data,
+    options = uc.ChromeOptions()
+    options.headless = True
+    options.add_argument("--headless")
+    with uc.Chrome(
+        options=options, driver_executable_path=ChromeDriverManager().install()
+    ) as session:
+        stealth(
+            session,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
         )
-        stores = json.loads(stores_req.text)["data"]["getAllBranches"]
+        session.set_script_timeout(300)
+        session.get("https://easyfinancial.com")
+
+        payload = {
+            "operationName": "getAllBranches",
+            "variables": {"lat": 43.65413, "lng": -79.39242, "radius": 50000},
+            "query": "query getAllBranches($lat: Float, $lng: Float, $radius: Float) { getAllBranches(lat: $lat, lng: $lng, radius: $radius) }",
+        }
+
+        result = session.execute_async_script(
+            f"""
+        fetch("https://be.easyfinancial.com/api/src?code=WLcdq2dRebMBytNYRbk7l/FOdQ8zAMXsKacLZV3vSqOJzknemwL9PQ==", {{
+            "headers": {{
+                "accept": "*/*",
+                "accept-language": "en-US,en;q=0.9",
+                "content-type": "application/json",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-site"
+            }},
+            "referrer": "https://www.easyfinancial.com/",
+            "referrerPolicy": "origin-when-cross-origin",
+            "body": '{json.dumps(payload)}',
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "omit"
+            }}).then(res => res.json()).then(arguments[0]);
+        """
+        )
+
+        stores = result["data"]["getAllBranches"]
 
         for store in stores:
             page_url = "https://www.easyfinancial.com/find-branch"
@@ -65,6 +80,8 @@ def fetch_data():
 
             store_number = store["storeCodeC"]
             phone = store["storePhoneC"]
+            if phone and phone == "TBD":
+                phone = "<MISSING>"
 
             location_type = store["typeC"]
 

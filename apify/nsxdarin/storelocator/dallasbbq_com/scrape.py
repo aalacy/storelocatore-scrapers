@@ -79,7 +79,15 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
-        hours = hours.replace(" • ", "; ").replace("&amp;", "&")
+        lng = lng.replace(",", "")
+        hours = (
+            hours.replace(" • ", "; ")
+            .replace("&amp;", "&")
+            .replace("DINE IN & TAKE OUT", "")
+            .replace("DINE IN", "")
+            .replace("TAKE OUT", "")
+            .strip()
+        )
         if "FOR TAKE" in hours:
             hours = hours.split("FOR TAKE")[0].strip()
         cleanr = re.compile("<.*?>")

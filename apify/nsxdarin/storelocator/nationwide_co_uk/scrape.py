@@ -66,6 +66,13 @@ def fetch_data():
                 name = line2.split("details_name']= \"")[1].split('"')[0]
             if add == "" and 'class="c-address-street-1">' in line2:
                 add = line2.split('class="c-address-street-1">')[1].split("<")[0]
+                if 'class="c-address-street-2">' in line2:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('class="c-address-street-2">')[1].split("<")[0]
+                    )
+                    add = add.strip()
                 city = line2.split('class="c-address-city">')[1].split("<")[0]
                 state = "<MISSING>"
                 try:
@@ -102,6 +109,8 @@ def fetch_data():
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
+        city = city.replace("&#39;", "'")
+        name = name.replace("&#39;", "'")
         if Closed is False:
             yield SgRecord(
                 locator_domain=website,
