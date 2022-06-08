@@ -47,7 +47,14 @@ def parse_store(k, session):
             if "day" in div.text:
                 if any(
                     i in div.text
-                    for i in ["open to our new", "car park", "We are proud"]
+                    for i in [
+                        "open to our new",
+                        "car park",
+                        "We are proud",
+                        "prosecco",
+                        "T&C",
+                        "eal",
+                    ]
                 ):
                     continue
                 hours.append(div.text)
@@ -68,7 +75,7 @@ def fetch_data():
     }
 
     with SgRequests() as session:
-        url = "https://www.heals.com/stores"
+        url = "https://www.heals.com/stores/"
         page = session.get(url, headers=headers)
         soup = b4(page.text, "lxml")
         results = []
@@ -138,8 +145,7 @@ def scrape():
             mapping=["lon"], is_required=False, part_of_record_identity=True
         ),
         street_address=sp.MappingField(
-            mapping=["address"],
-            is_required=False,
+            mapping=["address"], is_required=False, part_of_record_identity=True
         ),
         city=sp.MappingField(
             mapping=["city"],
