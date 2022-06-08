@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import lxml.html
 
 logger = SgLogSetup().get_logger("eddiev_com")
 
@@ -33,15 +33,10 @@ headers = {
 
 
 def fetch_data():
-    linklist = []
     url = "https://www.eddiev.com/locations/all-locations"
     r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    more_link = soup.findAll("div", {"class", "more_links"})
-    for link_div in more_link:
-        link = link_div.find("a", {"id": "locDetailsId"})["href"]
-        linklist.append(link)
-    linklist.append("/locations/fl/fort-lauderdale/fort-lauderdale/8528")
+    stores_sel = lxml.html.fromstring(r.text)
+    linklist = stores_sel.xpath('//input[@id="redirectLocationUrl"]/@value')
     for link in linklist:
         link = "https://www.eddiev.com" + link
         logger.info(link)
