@@ -32,7 +32,7 @@ def fetch_data():
         stores_req = session.get(search_url, headers=headers)
         stores = json.loads(stores_req.text)
         for store_json in stores:
-            page_url = "<MISSING>"
+            page_url = "https://www.mintvelvet.co.uk/pages/store-locator"
             latitude = store_json["latitude"]
             longitude = store_json["longitude"]
 

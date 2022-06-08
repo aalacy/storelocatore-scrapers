@@ -12,9 +12,11 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["locations"]
 
     for j in js:
-        location_name = j.get("name")
+        location_name = j.get("name") or ""
         page_url = j.get("url")
         _types = j.get("type") or []
+        if "Drive" in location_name:
+            _types.append("Drive-Thru")
         location_type = ", ".join(_types)
         street_address = j.get("address")
         city = j.get("city")
@@ -31,6 +33,8 @@ def fetch_data(sgw: SgWriter):
         for t in tr:
             day = "".join(t.xpath("./td[1]//text()")).strip()
             inter = "".join(t.xpath("./td[2]//text()")).strip()
+            if "Drive-Thru" in _types:
+                inter = "".join(t.xpath("./td[3]//text()")).strip()
             if inter == "N/A":
                 continue
             _tmp.append(f"{day}: {inter}")

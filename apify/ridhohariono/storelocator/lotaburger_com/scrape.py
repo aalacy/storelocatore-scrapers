@@ -27,7 +27,7 @@ def fetch_data():
         location_name = "Store #" + row["store_number"]
         street_address = row["business_address"]
         city = row["business_city"]
-        state = row["business_sate"]
+        state = row["business_state"]
         zip_postal = row["business_zipcode"]
         country_code = "US"
         phone = row["business_phone"]

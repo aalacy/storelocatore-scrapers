@@ -48,6 +48,7 @@ def get_data(param, sgw: SgWriter):
             tree.xpath("//span[contains(text(), 'Zip')]/following-sibling::span/text()")
         )
         .replace("00000", "")
+        .replace("0000", "")
         .strip()
     )
     country_code = "".join(
@@ -56,6 +57,11 @@ def get_data(param, sgw: SgWriter):
     phone = "".join(
         tree.xpath("//span[@class='amlocator-icon -phone']/following-sibling::a/text()")
     ).strip()
+    if "," in phone:
+        phone = phone.split(",")[0].strip()
+
+    if "ext" in phone:
+        phone = phone.split("ext")[0].strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationData')]/text()"))
     try:
@@ -85,7 +91,6 @@ def get_data(param, sgw: SgWriter):
         country_code=country_code,
         store_number=store_number,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,

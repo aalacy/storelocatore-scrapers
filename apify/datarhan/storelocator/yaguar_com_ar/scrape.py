@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 from time import sleep
 
@@ -43,6 +42,8 @@ def fetch_data():
         city = addr.city
         if city and city.endswith("."):
             city = city[:-1]
+        if not city:
+            city = location_name
         if street_address.endswith("."):
             street_address = street_address[:-1]
         phone = (
@@ -63,7 +64,8 @@ def fetch_data():
             phone = phone[:-1]
         hoo = loc_dom.xpath(
             '//i[@class="fas fa-clock"]/following-sibling::div[1]/text()'
-        )[0]
+        )
+        hoo = [e.strip() for e in hoo if e.strip()][0]
         with SgFirefox() as driver:
             driver.get(page_url)
             sleep(15)
@@ -79,7 +81,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

@@ -106,9 +106,9 @@ def fetch_data():
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
-                location_name=name,
+                location_name=name.replace("\\u0027", "'"),
                 street_address=add,
-                city=city,
+                city=city.replace("\\u0027", "'"),
                 state=state,
                 zip_postal=zc,
                 country_code=country,

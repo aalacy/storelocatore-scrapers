@@ -62,7 +62,9 @@ def fetch_data():
                     .replace("\n", " ")
                     .strip()
                 )
-
+                hours = hours.replace(
+                    "(by appointment 9:00am-10:00am; 3:00pm-5:30pm)", ""
+                ).strip()
                 yield SgRecord(
                     locator_domain="https://snbconnect.com/",
                     page_url=link,
@@ -82,24 +84,32 @@ def fetch_data():
         except:
 
             loclist = soup.text.split("LOCATIONS AND HOURS", 1)[1]
-            loclist = re.sub(pattern, "\n", loclist).strip().split("EMAIL DYLAN'")
+            loclist = re.sub(pattern, "\n", loclist).strip().split("Meet your bankers")
+
             for loc in loclist:
 
+                try:
+                    loc = loc.split("COUNCIL BLUFFS", 1)[1]
+                    loc = "COUNCIL BLUFFS" + loc
+                except:
+                    pass
                 loc = loc.strip().splitlines()
 
                 title = loc[0]
                 address = loc[1].split(", ")
 
-                hours = (
-                    loc[2]
-                    .replace("\n", " ")
-                    .lower()
-                    .split("lobby", 1)[1]
-                    .split("drive", 1)[0]
-                    .replace("\n", " ")
-                    .strip()
-                )
-
+                try:
+                    hours = (
+                        loc[2]
+                        .replace("\n", " ")
+                        .lower()
+                        .split("lobby", 1)[1]
+                        .split("drive", 1)[0]
+                        .replace("\n", " ")
+                        .strip()
+                    )
+                except:
+                    continue
                 state = address[-1]
                 city = address[-2]
                 street = " ".join(address[0 : len(address) - 2])
@@ -109,6 +119,10 @@ def fetch_data():
                 except:
                     phone = pcode[5:]
                     pcode = pcode[0:5]
+                try:
+                    hours = hours.split(":", 1)[1]
+                except:
+                    pass
                 yield SgRecord(
                     locator_domain="https://snbconnect.com/",
                     page_url=link,
@@ -126,25 +140,32 @@ def fetch_data():
                     hours_of_operation=hours,
                 )
         if len(loclist) == 0:
-            loclist = soup.text.split("Location and Hours", 1)[1]
-            loc = (
-                re.sub(pattern, "\n", loclist)
-                .strip()
-                .split("24 HOUR ATM", 1)[0]
-                .splitlines()
-            )
 
-            m = 0
-
+            title = "SECURITY NATIONAL BANK OF TEXAS"
             try:
-                phone = loc[m].split(" at ", 1)[1]
+                phone = (
+                    soup.text.split("LOCATED AT THE UNION:", 1)[1]
+                    .split("Phone:", 1)[1]
+                    .split("|", 1)[0]
+                    .strip()
+                    .replace("\n", "")
+                )
             except:
-                m = m + 1
-                phone = loc[m].split(" at ", 1)[1]
-            m = m + 1
-            hours = loc[1]
-            m = m + 1
-            address = loc[m].split(", ")
+
+                phone = "<MISSING>"
+            try:
+                hours = (
+                    soup.text.split("Hours: ", 1)[1]
+                    .split("DRIVE-THRU", 1)[0]
+                    .strip()
+                    .replace("\n", "")
+                )
+            except:
+                hours = "<MISSING>"
+            address = soup.text.split("LOCATED AT THE UNION:", 1)[1].split(
+                "Security", 1
+            )[0]
+            address = address.split(", ")
 
             state = address[-1]
             city = address[-2]

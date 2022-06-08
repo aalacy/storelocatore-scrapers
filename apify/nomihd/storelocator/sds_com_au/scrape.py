@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import lxml.html
+from sgpostal import sgpostal as parser
 
 website = "sds.com.au"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -43,22 +44,42 @@ def fetch_data():
 
             locator_domain = website
             location_name = "".join(store.xpath("@data-storename")).strip()
-            street_address = "".join(store.xpath("@data-addressa")).strip()
+            raw_address = "".join(store.xpath("@data-addressa")).strip()
             add_2 = "".join(store.xpath("@data-addressb")).strip()
             if add_2 != "null":
-                street_address = street_address + ", " + add_2
+                raw_address = raw_address + ", " + add_2
 
-            if "," == street_address[-1]:
-                street_address = "".join(street_address[:-1]).strip()
+            if "," == raw_address[-1]:
+                raw_address = "".join(raw_address[:-1]).strip()
 
             city = "".join(store.xpath("@data-city")).strip()
+            if len(city) > 0:
+                raw_address = raw_address + ", " + city
+
             state = "".join(store.xpath("@data-statecode")).strip()
+            if len(state) > 0:
+                raw_address = raw_address + ", " + state
+
             zip = (
                 "".join(store.xpath("@data-postalcode"))
                 .strip()
                 .replace("null", "")
                 .strip()
             )
+            if len(zip) > 0:
+                raw_address = raw_address + ", " + zip
+
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
+
             phone = (
                 "".join(store.xpath("@data-storephone"))
                 .strip()
@@ -125,6 +146,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

@@ -62,7 +62,23 @@ def fetch_data():
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
+            if street_address:
+                if "Mall " in street_address:
+                    street_address = street_address.split("Mall ")[1].strip()
+                if "Center " in street_address:
+                    street_address = street_address.split("Center ")[1].strip()
+                if "Court " in street_address:
+                    street_address = street_address.split("Court ")[1].strip()
+
             city = formatted_addr.city
+            if city:
+                city = (
+                    city.replace("Space C, Dorchester", "Dorchester")
+                    .replace("Logan Plaza Edison", "Edison")
+                    .replace("Suite Montclair", "Montclair")
+                    .strip()
+                )
+
             state = formatted_addr.state
             zip = formatted_addr.postcode
             country_code = "US"
@@ -81,6 +97,17 @@ def fetch_data():
                     .replace("\n", "")
                     .strip()
                 )
+                if len(hours_of_operation) <= 0:
+                    hours_of_operation = (
+                        "; ".join(
+                            store_sel.xpath(
+                                '//div[./p[contains(text(),"Monday-")]]/p/text()'
+                            )
+                        )
+                        .strip()
+                        .replace("\n", "")
+                        .strip()
+                    )
 
             else:
                 hours_of_operation = "<MISSING>"

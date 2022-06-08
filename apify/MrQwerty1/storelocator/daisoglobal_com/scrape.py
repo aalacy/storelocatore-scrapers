@@ -39,6 +39,8 @@ def get_address(line):
     adr1 = a.get("address1") or ""
     adr2 = a.get("address2") or ""
     street_address = f"{adr1} {adr2}".strip()
+    if not street_address:
+        street_address = line.split(",")[0]
     city = a.get("city")
     state = a.get("state")
     postal = a.get("postal")
@@ -57,6 +59,9 @@ def fetch_data(sgw: SgWriter):
         d = j.get("data") or {}
         raw_address = d.get("address") or ""
         country = "US"
+        if "Sample" in raw_address:
+            continue
+
         if "Canada" in raw_address:
             country = "CA"
             street_address = raw_address.split(", ")[0]

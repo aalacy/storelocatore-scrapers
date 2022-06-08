@@ -37,8 +37,10 @@ def get_data(zips, sgw: SgWriter):
         headers=headers,
         data=data,
     )
-
-    js = r.json()["data"] or []
+    try:
+        js = r.json()["data"] or []
+    except:
+        return
     if not js:
         return
 
@@ -46,7 +48,7 @@ def get_data(zips, sgw: SgWriter):
 
         page_url = "https://stopandshop.com/pharmacy"
         location_name = "".join(j.get("nvcStoreName"))
-        street_address = f"{j.get('nvcAddress1')} {j.get('nvcAddress2')}"
+        street_address = f"{j.get('nvcAddress1')} {j.get('nvcAddress2')}".strip()
         city = j.get("nvcCity")
         state = j.get("nvcState")
         postal = j.get("vcZip")
@@ -89,12 +91,12 @@ def get_data(zips, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=70,
-        expected_search_radius_miles=70,
+        max_search_distance_miles=20,
+        expected_search_radius_miles=20,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
         for future in futures.as_completed(future_to_url):
             future.result()

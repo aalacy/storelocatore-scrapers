@@ -24,7 +24,11 @@ def fetch_data():
         url = "https://www.cardsgalore.co.uk/pages/our-stores"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "rte"}).findAll("li")
+        loclist = soup.find("div", {"class": "rte"})
+        hours_of_operation = (
+            loclist.findAll("p")[2].get_text(separator="|", strip=True).split("|")[-2]
+        )
+        loclist = loclist.findAll("li")
         for loc in loclist:
             loc = loc.get_text(separator="|", strip=True).split("|")
             raw_address = loc[0]
@@ -64,7 +68,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
 

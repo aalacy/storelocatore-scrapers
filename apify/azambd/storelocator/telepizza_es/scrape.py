@@ -16,6 +16,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "https://www.telepizza.es"
@@ -28,6 +29,8 @@ headers = {
 
 session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+class_name = "heading-xl"
 
 
 def request_with_retries(url):
@@ -66,6 +69,31 @@ def fetch_store(driver, page_url):
         log.error(f"Error msg={e}")
         pass
     return None, None
+
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome().driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return html.fromstring(driver.page_source, "lxml"), driver.page_source
 
 
 def stringify_nodes(body, xpath):
@@ -137,13 +165,13 @@ def fetch_data(driver):
     count = 0
     for page_url in page_urls:
         count = count + 1
-        log.debug(f"{count}. scrapping {page_url}...")
+        log.info(f"{count}. scrapping {page_url}...")
         store_number = page_url.split("-")
         store_number = store_number[len(store_number) - 1]
         body, response = fetch_store(driver, page_url)
         if body is None or response is None:
-            log.error("Can't scrape")
-            continue
+            body, response = get_driver(page_url, class_name, driver)
+
         location_name = stringify_nodes(body, '//h1[contains(@class, "heading-xl")]')
         raw_address = stringify_nodes(
             body, '//div[contains(@class, "mod_generic_promotion shopTitle")]/address'
@@ -152,11 +180,18 @@ def fetch_data(driver):
             log.error("Can't scrape")
             continue
         street_address, city, state, zip_postal = get_address(raw_address)
-        phone = get_phone(stringify_nodes(body, '//a[contains(@href, "tel")]'))
-        hours_of_operation = stringify_nodes(
+        phone = get_phone(
+            stringify_nodes(
+                body,
+                '//span[contains(@itemprop, "telephone")]/a[contains(@href, "tel")]',
+            )
+        )
+        hoo = stringify_nodes(
             body,
             '//div[contains(@class, "hours")]/div[contains(@class, "columns")][2]/table',
         )
+        hours_of_operation = hoo.split("festivo")[0]
+
         latitude = get_txt(response, "lat")
         longitude = get_txt(response, "lng")
 

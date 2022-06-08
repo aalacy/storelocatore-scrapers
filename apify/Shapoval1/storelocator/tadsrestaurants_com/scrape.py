@@ -44,12 +44,18 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             "".join(
                 d.xpath(
-                    './/following::p[contains(text(), "Katy, Tomball, and College Station:")]/text()'
+                    './/following::p[contains(text(), "Katy and College Station")]/text()'
                 )
             )
-            .replace("Katy, Tomball, and College Station:", "")
+            .replace("Katy and College Station:", "")
             .strip()
         )
+        if location_name.find("Tomball") != -1:
+            hours_of_operation = (
+                "".join(d.xpath('.//following::p[contains(text(), "Tomball:")]/text()'))
+                .replace("Tomball:", "")
+                .strip()
+            )
         if location_name.find("Lake Charles") != -1:
             hours_of_operation = (
                 "".join(

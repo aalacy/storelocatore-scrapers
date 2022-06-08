@@ -34,7 +34,10 @@ def fetch_data():
             locator_domain = website
 
             location_name = store["name"]
-            if location_name == "Peninsula Pop-Up":
+            if (
+                location_name == "Peninsula Pop-Up"
+                or location_name == "Pop Up Rainbow Harbor Long Beach"
+            ):
                 continue
             street_address = store["address1"]
 

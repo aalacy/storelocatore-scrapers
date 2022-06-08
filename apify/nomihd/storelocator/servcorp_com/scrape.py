@@ -91,7 +91,7 @@ def fetch_data():
             zip = formatted_addr.postcode
 
             store_number = "<MISSING>"
-            phone = "".join(store.xpath('.//span[@class="phone-btn"]//text()')).strip()
+            phone = "".join(store.xpath('.//*[@class="phone-btn"]//text()')).strip()
 
             location_type = "<MISSING>"
             hours_of_operation = "<MISSING>"

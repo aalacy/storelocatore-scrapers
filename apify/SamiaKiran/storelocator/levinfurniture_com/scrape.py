@@ -42,17 +42,17 @@ def fetch_data():
             state = address["administrativeArea"]
             zip_postal = address["postalCode"]
             country_code = address["country"]
-            hour_list = loc["storeHours"]
             try:
                 page_url = "https://www.levinfurniture.com/store" + loc["storeUrl"]
             except:
                 page_url = MISSING
-            log.info(page_url)
+            hour_list = loc["storeHours"]
             hours_of_operation = ""
             for hour in hour_list:
                 hours_of_operation = (
-                    hours_of_operation + " " + hour["day"] + " " + hour["pickupHours"]
+                    hours_of_operation + " " + hour["day"] + " " + hour["storeHours"]
                 )
+            log.info(page_url)
             latitude = loc["latitude"]
             longitude = loc["longitude"]
             yield SgRecord(

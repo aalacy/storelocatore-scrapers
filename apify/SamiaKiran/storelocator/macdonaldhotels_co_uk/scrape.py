@@ -48,7 +48,10 @@ def fetch_data():
                     .replace("|", " ")
                 )
             except:
-                location_name = soup.find("h1").text
+                try:
+                    location_name = soup.find("h1").text
+                except:
+                    location_name = loc.find("h4").text
             raw_address = (
                 soup.find("div", {"class": "infoPanel__address"})
                 .find("p")
@@ -83,6 +86,7 @@ def fetch_data():
             if zip_postal == MISSING:
                 zip_postal = raw_address.split()
                 zip_postal = zip_postal[-2] + " " + zip_postal[-1]
+            street_address = street_address.lower().replace(zip_postal.lower(), "")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

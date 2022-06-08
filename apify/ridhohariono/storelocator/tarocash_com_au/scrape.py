@@ -7,10 +7,11 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "tarocash.com.au"
 BASE_URL = "https://www.tarocash.com.au/au/store/"
-API_URL = "https://mcprod2.tarocash.com.au/graphql?query=query+storeLocations%28%24location%3ALocationRequest%24pageSize%3AInt%3D20%24currentPage%3AInt%3D1%29%7Bstockists%28location%3A%24location+pageSize%3A%24pageSize+currentPage%3A%24currentPage%29%7Bcanonical_url+locations%7Baddress%7Bcity+country_code+phone+postcode+region+street+suburb+__typename%7Didentifier+location%7Blat+lng+__typename%7Dname+trading_hours%7Bsunday+monday+tuesday+wednesday+thursday+friday+saturday+public_holidays+__typename%7Durl_key+__typename%7Dmw_hreflangs%7Bitems%7Burl+code+__typename%7D__typename%7D__typename%7D%7D&operationName=storeLocations&variables=%7B%22pageSize%22%3A20%2C%22currentPage%22%3A1%2C%22location%22%3A%7B%22lat%22%3A-21.7732804%2C%22lng%22%3A132.1878186%2C%22radius%22%3A500000000%7D%7D"
+API_URL = "https://mcprod2.tarocash.com.au/graphql?query=query+storeLocations%28%24location%3ALocationRequest%24pageSize%3AInt%3D2000%24currentPage%3AInt%3D1%29%7Bstockists%28location%3A%24location+pageSize%3A%24pageSize+currentPage%3A%24currentPage%29%7Bcanonical_url+locations%7Baddress%7Bcity+country_code+phone+postcode+region+street+suburb+__typename%7Didentifier+location%7Blat+lng+__typename%7Dname+trading_hours%7Bsunday+monday+tuesday+wednesday+thursday+friday+saturday+public_holidays+__typename%7Durl_key+__typename%7Dmw_hreflangs%7Bitems%7Burl+code+__typename%7D__typename%7D__typename%7D%7D&operationName=storeLocations&variables=%7B%22pageSize%22%3A20%2C%22currentPage%22%3A1%2C%22location%22%3A%7B%22lat%22%3A-21.7732804%2C%22lng%22%3A132.1878186%2C%22radius%22%3A500000000%7D%7D"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "store": "tc_au",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -50,7 +51,7 @@ def fetch_data():
         location_type = MISSING
         if "TEMPORARILY CLOSED" in hours_of_operation:
             location_type = "TEMPORARILY CLOSED"
-            hours_of_operation = MISSING
+            hours_of_operation = "TEMPORARILY CLOSED"
         store_number = row["identifier"].replace("TC-", "").strip()
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(

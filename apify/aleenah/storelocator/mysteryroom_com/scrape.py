@@ -49,7 +49,7 @@ def fetch_data():
             )
         except:
             address = location_name.replace("– TBD", "")
-        address = address.replace(",", " ")
+        address = address.replace(",", " ").replace("\n", " ")
         address = usaddress.parse(address)
         i = 0
         street_address = ""
@@ -77,7 +77,7 @@ def fetch_data():
             i += 1
         try:
             hours_of_operation = (
-                soup.findAll("div", {"class": "block wysiwyg prose"})[1]
+                soup.findAll("div", {"class": "col-inner"})[1]
                 .find("ul")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")

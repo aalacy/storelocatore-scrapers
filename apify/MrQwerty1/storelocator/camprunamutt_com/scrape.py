@@ -12,7 +12,7 @@ def get_urls():
     tree = html.fromstring(r.text)
 
     return tree.xpath(
-        "//div[@class='et_pb_row et_pb_row_10']//a[contains(text(), 'web site')]/@href"
+        "//a[contains(text(), 'web site') and contains(@href, 'http')]/@href"
     )
 
 

@@ -64,7 +64,12 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                 )
             except:
-                phone = "<MISSING>"
+                try:
+                    phone = re.findall(r"[0-9]{3}-[0-9]{3}-[0-9]{4}", base.text)[0]
+                except:
+                    phone = "<MISSING>"
+                    if "401 W Dundee" in street_address:
+                        location_type = "Temporarily Closed"
             try:
                 lat_pos = map_link.rfind("!3d")
                 latitude = map_link[

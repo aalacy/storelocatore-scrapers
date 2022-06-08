@@ -46,7 +46,7 @@ def fetch_data():
                 phone = _["phone"]
                 if not phone:
                     driver.get(_.get("permalink"))
-                    time.sleep(3)
+                    time.sleep(5)
                     sp1 = bs(driver.page_source, "lxml")
                     bb = list(
                         sp1.select("div.elementor-widget-container p")[
