@@ -38,7 +38,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     for temp_state in state_list:
         count = temp_state.find("span").text
         count = int(count.replace(")", "").replace("(", ""))
-        state_url = "https://cicis.com/locations/"+temp_state.find("a")["href"]
+        state_url = "https://cicis.com/locations/" + temp_state.find("a")["href"]
         if count > 1:
             log.info(f"Fetching locations from State {temp_state.find('a').text}")
             r = session.get(state_url, headers=headers)
@@ -47,13 +47,13 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             for city in city_list:
                 count = temp_state.find("span").text
                 count = int(count.replace(")", "").replace("(", ""))
-                city_url = "https://cicis.com/locations/"+city.find("a")["href"]
+                city_url = "https://cicis.com/locations/" + city.find("a")["href"]
                 if count > 1:
                     r = session.get(city_url, headers=headers)
                     soup = BeautifulSoup(r.text, "html.parser")
                     loclist = soup.findAll("a", {"class": "location-title-link"})
                     for loc in loclist:
-                        loc_link ="https://cicis.com/locations/"+loc["href"]
+                        loc_link = "https://cicis.com/locations/" + loc["href"]
                         store_url_list.append(loc_link)
                         log.info(loc_link)
                         state.push_request(SerializableRequest(url=loc_link))
@@ -72,15 +72,19 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
         log.info(f"Pulling the data from: {next_r.url}")
-        page_url =next_r.url
+        page_url = next_r.url
         soup = BeautifulSoup(r.text, "html.parser")
-        if 'Closed' in soup.find("h1").text:
+        if "Closed" in soup.find("h1").text:
             continue
-        location_name  = soup.find("span", {"class": "c-location-title-rowtry"})
+        location_name = soup.find("span", {"class": "c-location-title-rowtry"})
         try:
-            street_address = soup.find("span", {"class": "c-address-street-1"}).text + " " + soup.find("span", {"class": "c-address-street-2"}).text
+            street_address = (
+                soup.find("span", {"class": "c-address-street-1"}).text
+                + " "
+                + soup.find("span", {"class": "c-address-street-2"}).text
+            )
         except:
-            street_address =soup.find("span", {"class": "c-address-street-1"}).text
+            street_address = soup.find("span", {"class": "c-address-street-1"}).text
         city = soup.find("span", {"class": "c-address-city"}).text
         state = soup.find("span", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
@@ -88,15 +92,17 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
         phone = soup.find("span", {"itemprop": "telephone"}).text
-        hour_list = soup.find("div", {"class": "c-location-hours-details-wrapper"})['data-days']
+        hour_list = soup.find("div", {"class": "c-location-hours-details-wrapper"})[
+            "data-days"
+        ]
         hour_list = json.loads(hour_list)
-        hours_of_operation =""
+        hours_of_operation = ""
         for hour in hour_list:
-            time = hour['intervals'][0]
-            start = time['start']
-            end = time['end']
-            time = str(start)+"-"+str(end)
-            hours_of_operation= hours_of_operation+" "+hour['day']+" "+time
+            time = hour["intervals"][0]
+            start = time["start"]
+            end = time["end"]
+            time = str(start) + "-" + str(end)
+            hours_of_operation = hours_of_operation + " " + hour["day"] + " " + time
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
