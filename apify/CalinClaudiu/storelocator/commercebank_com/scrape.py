@@ -20,6 +20,12 @@ def fetch_data(sgw: SgWriter):
         for j in js:
 
             page_url = j.get("location_url") or "<MISSING>"
+            if page_url == "<MISSING>" or not page_url:
+                try:
+                    page_url = j["location_url"]
+                except Exception as e:
+                    logzilla.error(f"page_url\n\n\n{str(j)}", exc_info=e)
+
             location_name = j.get("location_name") or "<MISSING>"
             ad = j.get("formatted_address")
             location_type = "<MISSING>"
