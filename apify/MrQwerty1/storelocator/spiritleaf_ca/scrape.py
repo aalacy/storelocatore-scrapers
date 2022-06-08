@@ -41,6 +41,9 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(f"{day}: {time}")
 
             hours_of_operation = ";".join(_tmp)
+            status = j.get("terms") or ""
+            if "coming" in status.lower():
+                hours_of_operation = "Coming Soon"
 
             row = SgRecord(
                 page_url=page_url,

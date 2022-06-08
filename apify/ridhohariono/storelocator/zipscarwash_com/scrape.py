@@ -86,11 +86,8 @@ def fetch_data():
         if not soup:
             log.info(f"Skipping invalid url => {page_url}")
             continue
-        store_content = soup.find_all(
-            "div",
-            {
-                "class": "locations__results-unit flex align-items-center justify-between"
-            },
+        store_content = soup.select(
+            "div.locations__results div.locations__results-unit"
         )
         latlong_content = soup.find(
             "script", string=re.compile(r"initializeMap.*")
@@ -103,12 +100,17 @@ def fetch_data():
         for row in store_content:
             location_name = row.find(
                 "div", {"class": "locations__results-name"}
-            ).text.strip()
+            ).get_text(strip=True, separator=" ")
             search.found_location_at(lat, long)
-            raw_address = row.find(
-                "div", {"class": "locations__results-address"}
-            ).get_text(strip=True, separator=",")
+            raw_address = (
+                location_name
+                + ", "
+                + row.find("div", {"class": "locations__results-address"}).get_text(
+                    strip=True, separator=","
+                )
+            )
             street_address, city, state, zip_postal = getAddress(raw_address)
+            street_address = street_address.strip().rstrip(".").rstrip(",")
             country_code = "US"
             phone = MISSING
             store_number = MISSING

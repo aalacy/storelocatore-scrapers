@@ -119,15 +119,18 @@ def fetch_data(sgw: SgWriter):
         store_number = node_id
         hours_of_operation = (
             " ".join(tree.xpath('//div[1][@class="group-clock-view"]/div/text()'))
-            .replace("\n", "")
+            .replace("\n", " ")
             .strip()
             or "<MISSING>"
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
         if (
             hours_of_operation.count("24/7") == 7
             or hours_of_operation.count("24/7") > 7
         ):
             hours_of_operation = "24/7"
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
         phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
         if phone.find("|") != -1:
             phone = phone.split("|")[0].strip()

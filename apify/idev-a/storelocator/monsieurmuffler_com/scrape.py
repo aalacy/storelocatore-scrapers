@@ -24,24 +24,27 @@ def fetch_data():
             if addr["address2"]["en"]:
                 street_address += " " + addr["address2"]["en"]
             hours = []
-            for day, hh in _.get("schedules", {}).items():
-                times = []
-                for hr in hh:
-                    if hr["start"]:
-                        if times:
-                            if datetime.strptime(
-                                times[-1].split("-")[-1].strip(), "%H:%M"
-                            ) + timedelta(hours=1) == datetime.strptime(
-                                hr["start"], "%H:%M"
-                            ):
-                                _hh = f"{times[-1].split('-')[0]} - {hr['end']}"
-                                del times[-1]
-                                times.append(_hh)
-                        else:
-                            times.append(f"{hr['start']} - {hr['end']}")
-                if not times:
-                    times = ["closed"]
-                hours.append(f"{day}: {','.join(times)}")
+            try:
+                for day, hh in _.get("schedules", {}).items():
+                    times = []
+                    for hr in hh:
+                        if hr["start"]:
+                            if times:
+                                if datetime.strptime(
+                                    times[-1].split("-")[-1].strip(), "%H:%M"
+                                ) + timedelta(hours=1) == datetime.strptime(
+                                    hr["start"], "%H:%M"
+                                ):
+                                    _hh = f"{times[-1].split('-')[0]} - {hr['end']}"
+                                    del times[-1]
+                                    times.append(_hh)
+                            else:
+                                times.append(f"{hr['start']} - {hr['end']}")
+                    if not times:
+                        times = ["closed"]
+                    hours.append(f"{day}: {','.join(times)}")
+            except:
+                pass
             yield SgRecord(
                 page_url=page_url,
                 store_number=loc["id"],

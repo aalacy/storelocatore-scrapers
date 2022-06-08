@@ -42,8 +42,8 @@ def fetch_data():
             all_locations.append(elem["PageURL"])
 
     for url in list(set(all_locations)):
-        store_url = "https://www.wafdbank.com" + url
-        store_response = session.get(store_url)
+        page_url = "https://www.wafdbank.com" + url
+        store_response = session.get(page_url)
         store_dom = etree.HTML(store_response.text)
         store_data = store_dom.xpath('//script[@data-react-helmet="true"]/text()')
         if store_data:
@@ -72,7 +72,7 @@ def fetch_data():
             if poi["geo"]:
                 latitude = poi["geo"]["latitude"]
                 longitude = poi["geo"]["longitude"]
-            if "locations/washington" in store_url:
+            if "locations/washington" in page_url:
                 latitude = "48.646755"
                 longitude = "-118.737804"
             else:
@@ -99,7 +99,10 @@ def fetch_data():
                 if e.strip() and e != ","
             ]
             raw_data = [e for e in raw_data if e.strip()]
-            location_name = store_dom.xpath('//h1[@class="mb-3"]/text()')[-1].strip()
+            location_name = store_dom.xpath('//h1[@class="mb-3"]/text()')
+            if not location_name:
+                continue
+            location_name = location_name[-1].strip()
             street_address = raw_data[0]
             city = raw_data[1]
             state = raw_data[2]
@@ -112,7 +115,7 @@ def fetch_data():
             phone = phone[0] if phone else SgRecord.MISSING
             location_type = SgRecord.MISSING
             with SgChrome() as driver:
-                driver.get(store_url)
+                driver.get(page_url)
                 sleep(10)
                 store_dom = etree.HTML(driver.page_source)
                 geo = (
@@ -130,7 +133,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

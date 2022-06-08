@@ -51,6 +51,8 @@ def getAddress(raw_address):
 def pull_content(url):
     log.info("Pull content => " + url)
     req = session.get(url, headers=HEADERS)
+    if req.status_code != 200:
+        return False
     soup = bs(req.content, "lxml")
     return soup
 
@@ -67,6 +69,8 @@ def fetch_data():
         if len(check_url) != 3:
             continue
         store = pull_content(page_url)
+        if not store:
+            continue
         info = store.find("script", {"id": "wpsl-js-js-extra"})
         if not info:
             continue
@@ -81,11 +85,15 @@ def fetch_data():
         zip_postal = info["locations"][0]["zip"]
         country_code = info["locations"][0]["country"]
         store_number = MISSING
-        phone = (
+        phone_content = (
             store.find("div", {"class": "font-bold space-y-3 mx-auto"})
             .get_text(strip=True, separator="@@")
-            .split("@@")[-1]
-        ).strip()
+            .split("@@")
+        )
+        if len(phone_content) > 3:
+            phone = phone_content[-1].strip()
+        else:
+            phone = MISSING
         location_type = MISSING
         latitude = info["locations"][0]["lat"]
         longitude = info["locations"][0]["lng"]

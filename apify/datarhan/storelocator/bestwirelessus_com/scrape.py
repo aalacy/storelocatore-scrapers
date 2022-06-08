@@ -5,13 +5,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    start_url = "http://www.bestwirelessus.com/location/"
+    session = SgRequests()
+    start_url = "https://www.bestwirelessus.com/locations/"
     domain = "bestwirelessus.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -19,44 +17,37 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath("//div[address]")[2:]
+    all_locations = dom.xpath('//div[contains(@class, "gbcols_col") and h3]')
     for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h4/text()")[0]
-        raw_address = poi_html.xpath(".//p/text()")
-        raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        if len(street_address) == 2:
-            street_address = poi_html.xpath(".//p/text()")[0].strip()
-        phone = (
-            poi_html.xpath('.//strong[contains(text(), "Tel")]/text()')[0]
-            .split(":")[-1]
-            .strip()
-        )
-        geo = (
-            poi_html.xpath(".//following-sibling::div[1]//iframe/@src")[0]
-            .split("!2d")[-1]
-            .split("!2m")[0]
-            .split("!3d")
-        )
-        city = poi_html.xpath(".//p/text()")[1].split(",")[0].strip()
+        location_name = poi_html.xpath(".//h3/text()")[0].strip()
+        raw_data = poi_html.xpath('.//p[@class="gbcols_p"]/text()')
+        raw_data = [e.strip() for e in raw_data if e.strip() and e != "&nbsp"]
+        if not raw_data:
+            continue
+        phone = [e.split(":")[1] for e in raw_data if "Tel" in e]
+        phone = phone[0].split(",")[0] if phone else ""
+        if len(raw_data[1].split(", ")) == 3:
+            zip_code = raw_data[1].split(", ")[2]
+        else:
+            zip_code = raw_data[1].split(", ")[1].split()[1]
+        street_address = raw_data[0]
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
-            state=addr.state,
-            zip_postal=addr.postcode,
-            country_code=addr.country,
+            city=raw_data[1].split(", ")[0],
+            state=raw_data[1].split(", ")[1].split()[0],
+            zip_postal=zip_code,
+            country_code="",
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo[-1],
-            longitude=geo[0],
+            latitude="",
+            longitude="",
             hours_of_operation="",
         )
 

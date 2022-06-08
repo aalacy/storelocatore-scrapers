@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
 
             hours = tree.xpath(".//div[@class='dmGeoSVMoreInfo']/text()")
             hours = list(filter(None, [h.strip() for h in hours]))
-            hours_of_operation = ";".join(hours)
+            hours_of_operation = ";".join(hours).replace(" // ", ";")
             fox.find_element_by_class_name("dmGeoSVSeeAll").click()
             time.sleep(1)
 

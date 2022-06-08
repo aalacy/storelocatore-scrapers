@@ -37,8 +37,8 @@ def fetch_data():
         hours = ""
         store = "<MISSING>"
         for line in r.iter_lines():
-            if '<h2 class="nurseryName pb-1">' in line:
-                name = line.split('<h2 class="nurseryName pb-1">')[1].split("<")[0]
+            if '<h1 class="nurseryName pb-1">' in line:
+                name = line.split('<h1 class="nurseryName pb-1">')[1].split("<")[0]
                 days = ""
             if '"latitude":' in line:
                 lat = line.split('"latitude":')[1].split(",")[0]
@@ -68,6 +68,14 @@ def fetch_data():
                     hours = hours + "; " + hrs
             if '"telephone":"' in line:
                 phone = line.split('"telephone":"')[1].split('"')[0]
+        if "0" not in hours:
+            hours = "<MISSING>"
+        if "ReviewBody,Monday" in hours:
+            hours = hours.split("ReviewBody,")[1].strip()
+        if "Friday: -" in hours:
+            hours = "<MISSING>"
+        if ",Monday" in hours:
+            hours = "Monday" + hours.split(",Monday")[1]
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

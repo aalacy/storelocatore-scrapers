@@ -1,29 +1,17 @@
 from sgrequests import SgRequests
 import json
-import pandas as pd
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgscrape import simple_scraper_pipeline as sp
 
 session = SgRequests()
-
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
-
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    granularity=Grain_8(),
+    expected_search_radius_miles=45,
+)
 
 
-def getdata():
+def get_data():
     x = 0
     for search_lat, search_lon in search:
 
@@ -41,34 +29,24 @@ def getdata():
 
         for location in response:
             locator_domain = "key.com"
-            page_url = url
+            page_url = "https://www.key.com/locations/search"
 
-            location_properties = location["location"]["entity"]["properties"]
-            for loc_property in location_properties:
-                if loc_property["name"] == "LocationName":
-                    location_name = loc_property["value"]
+            location_properties = location["properties"]
+            location_name = location_properties["LocationName"]
+            address = location_properties["AddressLine"]
+            city = location_properties["Address"]["city"]
+            state = location_properties["Address"]["state"]
+            zipp = location_properties["Address"]["zipCode"]
+            country_code = location_properties["CountryRegion"]
+            store_number = location_properties["LocationID"]
+            phone = location_properties["Phone1"]
+            latitude = location_properties["Latitude"]
+            longitude = location_properties["Longitude"]
+            search.found_location_at(latitude, longitude)
+            hours = location_properties["HoursOfOperation"]
 
-                if loc_property["name"] == "AddressLine":
-                    address = loc_property["value"]
-
-                if loc_property["name"] == "Locality":
-                    city = loc_property["value"]
-
-                if loc_property["name"] == "Subdivision":
-                    state = loc_property["value"]
-
-                if loc_property["name"] == "PostalCode":
-                    zipp = loc_property["value"]
-
-                if loc_property["name"] == "CountryRegion":
-                    country_code = loc_property["value"]
-
-                if loc_property["name"] == "LocationID":
-                    store_number = loc_property["value"]
-
-                if loc_property["name"] == "Phone1":
-                    phone = loc_property["value"]
-
+            loc_props = location["location"]["entity"]["properties"]
+            for loc_property in loc_props:
                 if loc_property["name"] == "LocationType":
                     location_type = loc_property["value"]
                     if location_type == "BRCH":
@@ -92,92 +70,60 @@ def getdata():
                     ):
                         location_type = "Partner ATM"
 
-                if loc_property["name"] == "Latitude":
-                    latitude = loc_property["value"]
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
-                if loc_property["name"] == "Longitude":
-                    longitude = loc_property["value"]
 
-                if loc_property["name"] == "HoursOfOperation":
-                    hours_list = loc_property["value"].replace(" - ", "-").split(" ")
-                    x = 0
-                    hour_values = []
-                    days = []
-                    for item in hours_list:
-                        if x % 2 == 0:
-                            hour_values.append(item)
-                        else:
-                            days.append(item)
-
-                        x = x + 1
-
-                    hours = ""
-                    for index in range(len(days)):
-                        hours = hours + days[index] + " " + hour_values[index] + ", "
-
-            if zipp == "99999":
-                zipp = "<MISSING>"
-
-            if address == "Tbd":
-                continue
-
-            locator_domains.append(locator_domain)
-            page_urls.append(page_url)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            store_numbers.append(store_number)
-            phones.append(phone)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            hours_of_operations.append(hours)
-
-            search.found_location_at(latitude, longitude)
-
-    df = pd.DataFrame(
-        {
-            "locator_domain": locator_domains,
-            "page_url": page_urls,
-            "location_name": location_names,
-            "street_address": street_addresses,
-            "city": citys,
-            "state": states,
-            "zip": zips,
-            "store_number": store_numbers,
-            "phone": phones,
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "hours_of_operation": hours_of_operations,
-            "country_code": country_codes,
-            "location_type": location_types,
-        }
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"]),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(
+            mapping=["location_type"], part_of_record_identity=True
+        ),
     )
 
-    writedata(df)
-
-
-def writedata(df):
-    df = df.fillna("<MISSING>")
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-
-    df["dupecheck"] = (
-        df["location_name"]
-        + df["street_address"]
-        + df["city"]
-        + df["state"]
-        + df["location_type"]
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+        duplicate_streak_failure_factor=-1,
     )
-
-    df = df.drop_duplicates(subset=["dupecheck"])
-    df = df.drop(columns=["dupecheck"])
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-    df = df.fillna("<MISSING>")
-
-    df.to_csv("data.csv", index=False)
+    pipeline.run()
 
 
-getdata()
+scrape()

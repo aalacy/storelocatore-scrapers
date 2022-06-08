@@ -69,6 +69,10 @@ def fetch_data():
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
             zip = formatted_addr.postcode
+            if zip:
+                zip = zip.replace("B-1011 34742", "34742").strip()
+                zip = zip.replace("D-73431", "73431").strip()
+
             if state == "<MISSING>":
                 state = formatted_addr.state
 

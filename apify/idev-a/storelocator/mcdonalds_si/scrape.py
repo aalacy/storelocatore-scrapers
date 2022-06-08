@@ -53,6 +53,9 @@ def fetch_data():
                     f"{hr_obj[str(hh['day'])]}: {hh['time_from']} - {hh['time_to']}"
                 )
 
+            if hours and "Sunday" not in " ".join(hours):
+                hours.append("Sunday: Closed")
+
             city = _["city"]
             if not city:
                 city = " ".join(addr[-1].strip().split()[1:])

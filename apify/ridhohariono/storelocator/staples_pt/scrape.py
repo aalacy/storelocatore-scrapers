@@ -74,6 +74,14 @@ def fetch_data():
             .replace("/", " ")
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING:
+            try:
+                zip_postal = re.search(r"(\d{4}-\d{3})", raw_address).group(1)
+                street_address = (
+                    street_address.replace(zip_postal, "").strip().rstrip(",")
+                )
+            except:
+                zip_postal = MISSING
         if city == MISSING:
             city = row["city_name"]
         if state == MISSING:
@@ -110,6 +118,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

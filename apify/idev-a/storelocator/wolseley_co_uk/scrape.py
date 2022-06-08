@@ -58,7 +58,7 @@ def fetch_data():
                 page_url=page_url,
                 location_name=_["name"],
                 street_address=street_address,
-                city=addr["addressLocality"],
+                city=addr["addressLocality"] if addr["addressLocality"] else _["name"],
                 state=addr["addressRegion"],
                 zip_postal=ss["postalCode"],
                 country_code=addr["addressCountry"],

@@ -24,7 +24,7 @@ def fetch_data():
             locator_domain=domain,
             page_url="https://ru.converse.com/converse-inc/map-stores",
             location_name=poi["_source"]["name"],
-            street_address=poi["_source"]["address"],
+            street_address=" ".join(poi["_source"]["address"].split()),
             city=poi["_source"]["city"],
             state=poi["_source"]["region"],
             zip_postal=poi["_source"]["postcode"],

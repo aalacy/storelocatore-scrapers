@@ -23,14 +23,35 @@ headers = {
 }
 
 
+def stores_number(hid):
+    hnumber_api = (
+        f"https://www.banfield.com/api/HospitalApi/GetHospitalInfobyId?hospitalId={hid}"
+    )
+    session = SgRequests(proxy_country="ca")
+    try:
+        store = session.get(hnumber_api, headers=headers).json()["HospitalNumber"]
+        logger.info(f"from API - Store Number: {store}")
+        return store
+    except:
+        return "<MISSING>"
+
+
 def fetch_data():
     with SgRequests(dont_retry_status_codes=([404])) as session:
-        stores_req = session.get(
-            "https://www.banfield.com/locations/hospitals-by-state", headers=headers
-        )
-        stores_sel = lxml.html.fromstring(stores_req.text)
-        locs = stores_sel.xpath('//div[@class="state-hospital-name"]/h4/a/@href')
-        logger.info(len(locs))
+        while True:
+            stores_req = session.get(
+                "https://www.banfield.com/locations/hospitals-by-state", headers=headers
+            )
+            stores_sel = lxml.html.fromstring(stores_req.text)
+            locs = list(
+                set(stores_sel.xpath('//div[@class="state-hospital-name"]/h4/a/@href'))
+            )
+            logger.info(len(locs))
+            if len(locs) > 1010:
+                break
+            else:
+                logger.info("retrying to fetch all urls")
+
         for loc in locs:
             page_url = "https://www.banfield.com" + loc
             logger.info(("Pulling Location %s..." % page_url))
@@ -89,16 +110,20 @@ def fetch_data():
                         else:
                             hours = hours + "; " + hrs
 
-            store = (
-                "".join(store_sel.xpath('//div[@class="hospital-id"]/text()'))
-                .strip()
-                .replace("(#", "")
-                .strip()
-                .replace(")", "")
-                .strip()
-            )
-            if len(store) <= 0:
+                if "hospitalId=" in line2:
+                    hospital_id = line2.split("hospitalId=")[1].split('"')[0]
+
+            try:
+                store = store_sel.xpath('//div[@class="hospital-id"]/text()')[0]
+                store = store.strip().replace("(#", "").strip().replace(")", "").strip()
+                logger.info(f"Store Number: {store}")
+            except:
                 logger.error(page_url)
+                store = "<MISSING>"
+
+            if store == "<MISSING>":
+                store = stores_number(hospital_id)
+
             add = add.replace("&amp;", "&").replace("amp;", "&")
 
             yield SgRecord(

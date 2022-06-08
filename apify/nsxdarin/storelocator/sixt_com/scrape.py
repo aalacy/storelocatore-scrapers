@@ -1,72 +1,49 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import cloudscraper
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-scraper = cloudscraper.create_scraper(sess=session)
 
 logger = SgLogSetup().get_logger("sixt_com")
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
     locs = []
     states = []
     url = "https://www.sixt.com/car-rental/#/"
-    r = scraper.get(url)
+    r = session.get(url, headers=headers)
     website = "sixt.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
+    Found = False
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'States</span> </div> <div class="content"> <ul class="list">' in line:
-            info = line.split(
-                'States</span> </div> <div class="content"> <ul class="list">'
-            )[1].split("<span>Europe")[0]
-            items = info.split('<a href="/car-rental/usa/')
-            for item in items:
-                if 'target="_self">' in item:
-                    states.append(
-                        "https://www.sixt.com/car-rental/usa/" + item.split('"')[0]
-                    )
+        if "States</span>" in line:
+            Found = True
+        if Found and "Europe</span>" in line:
+            Found = False
+        if Found and '<a href="/car-rental/usa/' in line:
+            surl = (
+                "https://www.sixt.com/car-rental/usa/"
+                + line.split('<a href="/car-rental/usa/')[1].split('"')[0]
+            )
+            states.append(surl)
     for state in states:
         logger.info(state)
-        r2 = scraper.get(state)
+        r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'locationLink: "' in line2:
-                items = line2.split('locationLink: "')
-                for item in items:
-                    if "coordinates:" in item:
-                        locs.append("https://www.sixt.com" + item.split('"')[0])
+            if 'locationLink:  "' in line2:
+                locs.append(
+                    "https://www.sixt.com"
+                    + line2.split('locationLink:  "')[1].split('"')[0]
+                )
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -79,9 +56,8 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = scraper.get(loc)
+        r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if "<h1>" in line2:
                 name = line2.split("<h1>")[1].split("<")[0].strip()
             if "orlando-lake-buena-vista" in loc:
@@ -92,99 +68,72 @@ def fetch_data():
                 lat = "28.386945724487"
                 lng = "-81.504974365234"
                 hours = "MO - FR: 07:00 - 18:00; SA - SU: 09:00 - 17:00"
-            if '"@id": "' in line2:
-                state = "<MISSING>"
-                try:
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    zc = line2.split('"postalCode":"')[1].split('"')[0]
-                    city = line2.split('"addressLocality":"')[1].split('"')[0]
-                    lat = line2.split(',"latitude":')[1].split(",")[0]
-                    lng = line2.split('"longitude":')[1].split("}")[0]
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    hours = (
-                        line2.split('"openingHours":["')[1]
-                        .split('"]')[0]
-                        .replace('","', "; ")
-                    )
-                except:
-                    pass
-            if "address</h3>" in line2 and add == "":
-                addinfo = (
-                    line2.split("<p>")[1].split("<")[0].replace(", Suite", " Suite")
-                )
-                add = addinfo.split(",")[0]
-                zc = addinfo.split(",")[1].strip().split(" ")[0]
-                try:
-                    city = addinfo.split(",")[1].strip().split(" ")[1]
-                except:
-                    city = "<MISSING>"
-            if "coordinates: { lat:" in line2:
-                lat = line2.split("coordinates: { lat:")[1].split(",")[0].strip()
-                lng = (
-                    line2.split("coordinates: { lat:")[1]
-                    .split("lng:")[1]
-                    .split(",")[0]
-                    .strip()
-                )
-            if 'openhours-scheduler_week">' in line2:
-                hours = (
-                    line2.split('openhours-scheduler_week">')[1]
-                    .split("</p> </div>")[0]
-                    .replace('<div data-component="text">', "")
-                    .replace("<p>", "")
-                    .replace("</div>", "")
-                    .replace("<div>", "")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                )
-        hours = hours.replace("24 HRS RETURN;", "").strip()
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+            if '"streetAddress":"' in line2:
+                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                city = line2.split('"addressLocality":"')[1].split('"')[0]
+                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                lat = line2.split('"latitude":')[1].split(",")[0]
+                lng = line2.split('"longitude":')[1].split("}")[0]
+            if "<h2>Sixt Services" in line2:
+                htext = line2.split("<h2>Sixt Services")[1].split("<")[0]
+                if "," in htext:
+                    state = htext.split(",")[1].strip()
+                else:
+                    state = "<MISSING>"
+            if '"openingHours":[' in line2:
+                hours = line2.split('"openingHours":[')[1].split('"]')[0]
+                hours = hours.replace('"24-hour return","', "")
+                if '","HOLIDAYS' in hours:
+                    hours = hours.split('","HOLIDAYS')[0]
+                hours = hours.replace('","', "; ")
+                hours = hours.replace('"', "")
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
+
     locs = []
     states = []
     url = "https://www.sixt.com/car-rental/united-kingdom/#/"
-    r = scraper.get(url)
+    r = session.get(url, headers=headers)
     website = "sixt.com"
     typ = "<MISSING>"
     country = "GB"
+    Found = False
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '<div class="swiper-wrapper"> <a href="/car-rental/united-kingdom/' in line:
-            info = line.split('<div class="swiper-wrapper">')[1]
-            items = info.split('<a href="/car-rental/united-kingdom/')
-            for item in items:
-                if 'target="_self"' in item:
-                    states.append(
-                        "https://www.sixt.com/car-rental/united-kingdom/"
-                        + item.split('"')[0]
-                    )
+        if "<h3>SIXT IN United Kingdom</h3>" in line:
+            Found = True
+        if Found and '<a href="/car-rental/united-kingdom/' in line:
+            surl = (
+                "https://www.sixt.com/car-rental/united-kingdom/"
+                + line.split('<a href="/car-rental/united-kingdom/')[1].split('"')[0]
+            )
+            states.append(surl)
+        if Found and "<span>search</span>" in line:
+            Found = False
     for state in states:
         logger.info(state)
-        r2 = scraper.get(state)
+        r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'locationLink: "' in line2:
-                items = line2.split('locationLink: "')
-                for item in items:
-                    if "coordinates:" in item:
-                        locs.append("https://www.sixt.com" + item.split('"')[0])
+            if 'locationLink:  "' in line2:
+                locs.append(
+                    "https://www.sixt.com"
+                    + line2.split('locationLink:  "')[1].split('"')[0]
+                )
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -197,24 +146,16 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        r2 = scraper.get(loc)
+        r2 = session.get(loc, headers=headers)
         try:
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
-                if '"@id": "' in line2:
-                    name = line2.split("<h1>")[1].split("<")[0].strip()
+                if '"streetAddress":"' in line2:
                     add = line2.split('"streetAddress":"')[1].split('"')[0]
                     zc = line2.split('"postalCode":"')[1].split('"')[0]
                     city = line2.split('"addressLocality":"')[1].split('"')[0]
-                    lat = line2.split(',"latitude":')[1].split(",")[0]
+                    add = line2.split('"streetAddress":"')[1].split('"')[0]
+                    lat = line2.split('"latitude":')[1].split(",")[0]
                     lng = line2.split('"longitude":')[1].split("}")[0]
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    hours = (
-                        line2.split('"openingHours":["')[1]
-                        .split('"]')[0]
-                        .replace('","', "; ")
-                    )
         except:
             pass
         if "hilton-park-lane" in loc:
@@ -235,28 +176,36 @@ def fetch_data():
             lat = "51.155784606934"
             lng = "-0.15942700207233"
             hours = "24 HRS RETURN; MO - FR: 08:00 - 18:00; SA - SU: 08:00 - 13:00; BANK HOLIDAY: 08:00 - 13:00"
-        hours = hours.replace("24 HRS RETURN;", "").strip()
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if '"openingHours":[' in line2:
+            hours = line2.split('"openingHours":[')[1].split('"]')[0]
+            hours = hours.replace('"24-hour return","', "")
+            if '","HOLIDAYS' in hours:
+                hours = hours.split('","HOLIDAYS')[0]
+            hours = hours.replace('","', "; ")
+            hours = hours.replace('"', "")
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
