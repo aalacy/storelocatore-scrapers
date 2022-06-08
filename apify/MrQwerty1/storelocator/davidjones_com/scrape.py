@@ -6,7 +6,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgChrome, SgFirefox
+from sgselenium import SgFirefox
 from sglogging import sglog
 
 locator_domain = "https://www.davidjones.com/"
