@@ -42,6 +42,10 @@ def fetch_data():
                 .strip()
                 .split("/")[-1]
                 .strip()
+                .replace('tiendas_','')
+                .strip()
+                .split('-')[0]
+                .strip()
             )
 
             raw_address = (
@@ -64,6 +68,8 @@ def fetch_data():
             state = formatted_addr.state
 
             zip = formatted_addr.postcode
+            if zip:
+                zip = zip.replace('CP.','').strip()
 
             country_code = "MX"
 
