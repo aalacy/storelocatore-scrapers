@@ -4,6 +4,9 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def fetch_data(sgw: SgWriter):
