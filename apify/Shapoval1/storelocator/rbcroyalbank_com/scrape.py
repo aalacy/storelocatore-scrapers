@@ -66,7 +66,7 @@ def get_data(zips, sgw: SgWriter):
                     .replace("4", "Thursday")
                     .replace("5", "Friday")
                     .replace("6", "Saturday")
-                    .replace("7", "Sunday")
+                    .replace("0", "Sunday")
                 )
                 opens = hours[h][0]
                 closes = hours[h][1]

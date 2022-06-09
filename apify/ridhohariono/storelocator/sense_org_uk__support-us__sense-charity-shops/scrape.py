@@ -26,8 +26,11 @@ def getAddress(raw_address):
         if raw_address is not None and raw_address != MISSING:
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
+            if not street_address:
+                street_address = raw_address.split(",")[0].strip()
+            else:
+                if data.street_address_2 is not None:
+                    street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
@@ -57,9 +60,8 @@ def fetch_data():
     page = 1
     while True:
         soup = pull_content(LOCATION_URL + str(page))
-        try:
-            contents = soup.select("ul.list--block li")
-        except:
+        contents = soup.select("ul.list--block li")
+        if not contents:
             break
         for row in contents:
             page_url = row.find("a")["href"]
@@ -68,7 +70,13 @@ def fetch_data():
             info = store.find("div", {"class": "banner__content"})
             raw_address = info.find("p").get_text(strip=True, separator=",")
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "SA43 1JG" in raw_address:
+                zip_postal = "SA43 1JG"
+            if len(street_address) < 4:
+                street_address = raw_address.split(",")[0].strip()
             phone = info.find("dl").find("dd").text.strip()
+            if "tba" in phone or "email" in phone:
+                phone = MISSING
             country_code = "UK"
             store_number = MISSING
             hours_of_operation = (
