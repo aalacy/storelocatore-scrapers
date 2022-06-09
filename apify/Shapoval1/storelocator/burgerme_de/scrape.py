@@ -51,14 +51,9 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//h2[contains(text(), "Öffnungszeiten:")]/following::p[1]//text()'
-                )
-            )
+            " ".join(tree.xpath('//*[contains(text(), "Montag")]//text()'))
             .replace("\n", "")
             .strip()
-            or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
 
