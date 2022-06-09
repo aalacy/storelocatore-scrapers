@@ -148,7 +148,6 @@ def fetch_data():
                     phone = soup.find("div", {"id": "phone-main"}).text
                 except:
                     phone = "<MISSING>"
-                print(branch)
                 try:
                     hours = soup.find(
                         "table", {"class": "c-hours-details"}
