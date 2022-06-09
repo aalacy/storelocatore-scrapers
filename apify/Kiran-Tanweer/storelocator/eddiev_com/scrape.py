@@ -42,6 +42,11 @@ def fetch_data():
         logger.info(link)
         p = session.get(link, headers=headers)
         bs = BeautifulSoup(p.text, "html.parser")
+        comingsoon = bs.find("div", {"class": "loc_span opendt"})
+        if comingsoon:
+            if "OPENING" in comingsoon.text.strip().upper():
+                continue
+
         left_bar = bs.find("div", {"class": "left-bar"})
         title = left_bar.find("h1", {"class": "style_h1"}).text.strip()
         addr_div = left_bar.find("p")
