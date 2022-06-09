@@ -4,8 +4,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgselenium import SgChrome
 
+
 def get_locations(session, offset):
-    return session.execute_async_script(f"""
+    return session.execute_async_script(
+        f"""
         fetch("https://local.directauto.com/search?offset={offset}&l=en", {{
             "credentials": "include",
             "headers": {{
@@ -26,7 +28,9 @@ def get_locations(session, offset):
             .then(res => res.json())
             .then(arguments[0])
             .catch(err => arguments[0](JSON.stringify(err.error)))
-    """)
+    """
+    )
+
 
 def fetch_data(sgw: SgWriter):
     with SgChrome(is_headless=True) as session:
