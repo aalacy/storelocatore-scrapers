@@ -78,7 +78,9 @@ def fetch_data():
                 hours = "<MISSING>"
             hours = hours.strip()
             if add[-1:] == ",":
-                add = hours[:-1]
+                add = add[:-1]
+            if hours[-1:] == ",":
+                hours = hours[:-1]
             lat = lat.replace(",", "")
             lng = lng.replace(",", "")
             yield SgRecord(
