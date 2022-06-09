@@ -19,6 +19,7 @@ def fetch_data():
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         expected_search_radius_miles=30,
+        max_search_results=100,
         granularity=Grain_2(),
     )
     with SgRequests() as http:
@@ -29,7 +30,7 @@ def fetch_data():
                 % (zip_code, zip_codes.items_remaining())
             )
             link = (
-                "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.reasonId=29&filter.freeFormAddress=%s&filter.maxResults=50&page.size=50"
+                "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.freeFormAddress=%s&filter.maxResults=100&page.size=100"
                 % zip_code
             )
 
