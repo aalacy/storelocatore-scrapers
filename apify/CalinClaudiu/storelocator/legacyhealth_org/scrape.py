@@ -70,11 +70,14 @@ def fix_comma(x):
 
 
 def fix_phone(x):
+    x = str(x).replace("None", "<MISSING>").replace("Phone:", "").strip()
     try:
         x = x.split("or")[0]
     except Exception:
         pass
-    return (x.replace("None", "<MISSING>").replace("Phone:", "").strip(),)
+    if not x or len(x) <= 4:
+        x = "<MISSING>"
+    return x
 
 
 def scrape():
@@ -105,7 +108,6 @@ def scrape():
         street_address=sp.MappingField(
             mapping=["Address1"],
             part_of_record_identity=True,
-            raw_value_transform=fix_comma,
             is_required=False,
         ),
         city=sp.MappingField(
