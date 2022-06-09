@@ -1,101 +1,68 @@
-import csv
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import sgzip
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-logger = SgLogSetup().get_logger('esso_ca')
+logger = SgLogSetup().get_logger("esso_ca")
 
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes= ["CA"])
-    MAX_RESULTS = 250
-    MAX_DISTANCE = 25
-    current_result_len = 0
-    coords = search.next_coord()
+    session = SgRequests()
+    start_url = "https://www.esso.ca/en-CA/api/locator/Locations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=CA"
+    domain = "esso.ca"
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=25
+    )
+    for lat, lng in all_coords:
+        all_locations = session.get(start_url.format(lat, lat + 1, lng, lng + 1)).json()
+        for poi in all_locations:
+            city = poi["City"]
+            store_number = poi["LocationID"]
+            page_url = f"https://www.esso.ca/en-ca/find-station/esso-{city.replace(' ', '-').lower()}-on-esso-{store_number}"
+            street_address = poi["AddressLine1"]
+            if poi["AddressLine2"]:
+                street_address += " " + poi["AddressLine2"]
+            hoo = poi["WeeklyOperatingHours"]
+            if hoo:
+                hoo = etree.HTML(hoo).xpath("//text()")
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-    addresses = []
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["DisplayName"],
+                street_address=street_address,
+                city=city,
+                state=poi["StateProvince"],
+                zip_postal=poi["PostalCode"],
+                country_code=poi["Country"],
+                store_number=store_number,
+                phone=poi["Telephone"],
+                location_type=poi["EntityType"],
+                latitude=poi["Latitude"],
+                longitude=poi["Longitude"],
+                hours_of_operation=hoo,
+            )
 
-    while coords:
-        result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info(coords[0],coords[1])
-        base_url = "https://www.esso.ca/en-CA/api/locator/Locations?Latitude1="+str(coords[0])+"&Latitude2="+str(coords[0]+1)+"&Longitude1="+str(coords[1])+"&Longitude2="+str(coords[1]+1)+"&DataSource=RetailGasStations&Country=CA"
-        # base_url = "https://www.esso.ca/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1=16.698659791445607&Latitude2=36.22597707315531&Longitude1=-76.07080544996313&Longitude2=-119.57666482496313"
-        r = session.get(base_url).json()
-        current_result_len = len(r)
-        for esso in r:
-            store = []
-            result_coords.append((esso['Latitude'],esso['Longitude']))
-            store.append("https://www.esso.ca")
-            store.append(esso['DisplayName'])
-            if "AddressLine2" not in esso:
-                store.append(esso['AddressLine1'])
-            else:
-                store.append(esso['AddressLine1'] + " "+esso['AddressLine2'])
-            try:
-                store.append(esso['City'])
-            except:
-                store.append("MISSING")
-            try:
-                store.append(esso['StateProvince'])
-            except:
-                store.append("<MISSING>")
-            try:
-                store.append(esso['PostalCode'])
-            except:
-                store.append("<MISSING>")
-            if esso['Country']=="Canada":
-                store.append("CA")
-            else:
-                store.append(esso['Country'])
-            store.append(esso["LocationID"])
-            if esso['Telephone']:
-                store.append(esso['Telephone'])
-            else:
-                store.append("<MISSING>")
-            store.append(esso["EntityType"])
-            store.append(esso['Latitude'])
-            store.append(esso['Longitude'])
-            try:
-                store.append(esso['WeeklyOperatingHours'].replace('<br/>',','))
-            except:
-                store.append("<MISSING>")
-            page_url = "https://www.esso.ca/en-ca/find-station/"+esso['City'].lower().strip()+"-"+esso['StateProvince'].lower().strip()+"-esso-"+esso["LocationID"]
-            store.append(page_url)
-            if (str(store[2])+str(store[-1])) in addresses:
-                continue
-            addresses.append(str(store[2])+str(store[-1]))
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
-            #logger.info(store)
-        if current_result_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_result_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coords = search.next_coord()
+            yield item
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

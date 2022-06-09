@@ -1,179 +1,254 @@
 from sgrequests import SgRequests
 import pandas as pd
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
 import us
-import re
-import html
 
-locator_domains = []
-websites = []
-locations = []
-names = []
-addresses = []
-citys = []
-states = []
-zips = []
-countrys = []
-stores = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_op = []
 
-session = SgRequests()
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+def get_data():
+    country_list = [
+        "USA",
+        "kuwait",
+        "korea",
+        "singapore",
+        "malaysia",
+        "indonesia",
+        "georgia",
+        "japan",
+        "brunei",
+        "philippines",
+    ]
+    session = SgRequests()
 
-base_url = "https://www.coffeebean.com/store-locator"
+    base_url = "https://www.coffeebean.com/store-locator"
 
-# Country search
-locs = []
-for x in range(101):
-    params = {"field_country_value": "USA", "page": x}
-    r = session.get(base_url, params=params).text
-    soup = bs(r, "html.parser")
-    view_store = soup.find_all("a", attrs={"class": "view-store"})
-    for item in view_store:
-        locs.append(item["href"])
+    # Country search
+    locs = []
+    for search_country in country_list:
+        for x in range(101):
+            params = {"field_country_value": search_country, "page": x}
+            r = session.get(base_url, params=params).text
+            soup = bs(r, "html.parser")
+            view_store = soup.find_all("a", attrs={"class": "view-store"})
+            for item in view_store:
+                locs.append(item["href"])
 
-# Lat Lng Boundary search
-base_url = "https://www.coffeebean.com/store-locator?field_geo_location_boundary%5Blat_north_east%5D=47.56&field_geo_location_boundary%5Blng_north_east%5D=69.44&field_geo_location_boundary%5Blat_south_west%5D=16.11&field_geo_location_boundary%5Blng_south_west%5D=-178.85"
-for x in range(101):
-    params = {"page": x}
+    # Lat Lng Boundary search
+    base_url = "https://www.coffeebean.com/store-locator?field_geo_location_boundary%5Blat_north_east%5D=89.99&field_geo_location_boundary%5Blng_north_east%5D=179.99&field_geo_location_boundary%5Blat_south_west%5D=-89.99&field_geo_location_boundary%5Blng_south_west%5D=-179.99"
+    for x in range(101):
+        params = {"page": x}
 
-    r = session.get(base_url, params=params).text
+        r = session.get(base_url, params=params).text
 
-    soup = bs(r, "html.parser")
-    view_store = soup.find_all("a", attrs={"class": "view-store"})
-    for item in view_store:
-        locs.append(item["href"])
+        soup = bs(r, "html.parser")
+        view_store = soup.find_all("a", attrs={"class": "view-store"})
+        for item in view_store:
+            locs.append(item["href"])
 
-# All search
-for x in range(101):
-    url = "https://www.coffeebean.com/store-locator?&page=" + str(x)
-    r = session.get(url).text
-    soup = bs(r, "html.parser")
-    view_store = soup.find_all("a", attrs={"class": "view-store"})
-    for item in view_store:
-        locs.append(item["href"])
+    # All search
+    for x in range(101):
+        url = "https://www.coffeebean.com/store-locator?&page=" + str(x)
+        r = session.get(url).text
+        soup = bs(r, "html.parser")
+        view_store = soup.find_all("a", attrs={"class": "view-store"})
+        for item in view_store:
+            locs.append(item["href"])
 
-locs_df = pd.DataFrame({"locs": locs})
-locs_df = locs_df.drop_duplicates()
-locs = locs_df["locs"].to_list()
+    locs_df = pd.DataFrame({"locs": locs})
+    locs_df = locs_df.drop_duplicates()
+    locs = locs_df["locs"].to_list()
 
-for loc in locs:
-    r = session.get(loc)
-    name = ""
-    add = ""
-    city = ""
-    state = ""
-    zc = ""
-    typ = "<MISSING>"
-    country = ""
-    store = "<MISSING>"
-    phone = "<MISSING>"
-    lat = ""
-    lng = ""
-    hours = ""
-    website = loc
-    for line in r.iter_lines(decode_unicode=True):
-        if '<span class="field-content">' in line:
-            name = line.split('<span class="field-content">')[1].split("<")[0]
-        if '<span property="streetAddress">' in line:
-            add = line.split('<span property="streetAddress">')[1].split("<")[0]
-        if '<span property="addressLocality">' in line:
-            city = line.split('<span property="addressLocality">')[1].split("<")[0]
-        if '<span property="addressRegion">' in line:
-            state = line.split('<span property="addressRegion">')[1].split("<")[0]
-        if '<span property="addressCountry">' in line:
-            country = line.split('<span property="addressCountry">')[1].split("<")[0]
-            # remove non-alpha characters
-            country = re.sub(r"[^a-zA-Z\s]", "", country)
-            if country == "United States":
-                country = "USA"
-        if '<span property="telephone">' in line:
-            phone = line.split('<span property="telephone">')[1].split("<")[0]
-        if '<span property="postalCode">' in line:
-            zc = line.split('<span property="postalCode">')[1].split("<")[0]
-        if '<meta property="latitude" content="' in line:
-            lat = line.split('<meta property="latitude" content="')[1].split('"')[0]
-        if '<meta property="longitude" content="' in line:
-            lng = line.split('<meta property="longitude" content="')[1].split('"')[0]
-        if "name-field-weekday" in line:
-            day = line.split('">')[1].split("<")[0]
-        if "name-field-store-open" in line:
-            hro = line.split('">')[1].split("<")[0]
-        if "name-field-store-closed" in line:
-            hrs = day + ": " + hro + "-" + line.split('">')[1].split("<")[0]
-            if hours == "":
-                hours = hrs
-            else:
-                hours = hours + "; " + hrs
-    if hours == "":
-        hours = "<MISSING>"
+    for page_url in locs:
+        if page_url == "https://www.coffeebean.com/node/1655":
+            continue
+        r = session.get(page_url).text
+        soup = bs(r, "html.parser")
 
-    if "temporarily closed" in r.text.lower():
-        hours = "Temporarily Closed"
-    if lat == "":
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-    if name == "":
-        name = city
-    if phone == "NULL":
-        phone = "<MISSING>"
-    if add == "":
-        add = "<MISSING>"
-    if zc == "":
-        zc = "<MISSING>"
-    if country in ["", "NULL"]:
+        locator_domain = "coffeebean.com"
+        try:
+            state = soup.find("span", attrs={"property": "addressRegion"}).text.strip()
+        except Exception:
+            try:
+                state = soup.find(
+                    "span", attrs={"itemprop": "addressRegion"}
+                ).text.strip()
+            except Exception:
+                state = "<MISSING>"
         if us.states.lookup(state):
-            country = "USA"
+            country_code = "USA"
+        else:
+            country_code = page_url.replace(
+                "https://www.coffeebean.com/store/", ""
+            ).split("/")[0]
 
-    if add == "<MISSING>":
-        add = website.split("/")[-1].replace("-", " ")
+        try:
+            location_name = soup.find("h1", attrs={"class": "Hero-title"}).text.strip()
+        except Exception:
+            location_name = soup.find(
+                "span",
+                attrs={
+                    "class": "field field--name-title field--type-string field--label-hidden"
+                },
+            ).text.strip()
 
-        if add.isdigit() is True:
-            add = "<MISSING>"
+        try:
+            latitude = soup.find("meta", attrs={"itemprop": "latitude"})["content"]
+        except Exception:
+            try:
+                latitude = soup.find("meta", attrs={"property": "latitude"})["content"]
+            except Exception:
+                latitude = "<MISSING>"
 
-    name = html.unescape(name)
+        try:
+            longitude = soup.find("meta", attrs={"itemprop": "longitude"})["content"]
+        except Exception:
+            try:
+                longitude = soup.find("meta", attrs={"property": "longitude"})[
+                    "content"
+                ]
+            except Exception:
+                longitude = "<MISSING>"
 
-    x = x + 1
-    if country == "USA":
-        locator_domains.append("coffeebean.com")
-        websites.append(website)
-        locations.append(loc)
-        names.append(name)
-        addresses.append(add)
-        citys.append(city)
-        states.append(state)
-        zips.append(zc)
-        countrys.append(country)
-        stores.append(store)
-        phones.append(phone)
-        location_types.append(typ)
-        latitudes.append(lat)
-        longitudes.append(lng)
-        hours_op.append(hours)
+        try:
+            city = soup.find(
+                "span", attrs={"class": "Address-field Address-city"}
+            ).text.strip()
+        except Exception:
+            try:
+                city = soup.find(
+                    "span", attrs={"property": "addressLocality"}
+                ).text.strip()
+            except Exception:
+                city = "<MISSING>"
+        store_number = "<MISSING>"
+        try:
+            address = soup.find(
+                "span", attrs={"property": "streetAddress"}
+            ).text.strip()
+        except Exception:
+            try:
+                address = soup.find(
+                    "span", attrs={"class": "Address-field Address-line1"}
+                ).text.strip()
+            except Exception:
+                address = "<MISSING>"
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": websites,
-        "location_name": names,
-        "street_address": addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": stores,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_op,
-        "country_code": countrys,
-        "location_type": typ,
-    }
-)
+        try:
+            state = soup.find("span", attrs={"property": "addressRegion"}).text.strip()
+        except Exception:
+            try:
+                state = soup.find(
+                    "span", attrs={"itemprop": "addressRegion"}
+                ).text.strip()
+            except Exception:
+                state = "<MISSING>"
 
-data = df.drop_duplicates()
-data.to_csv("data.csv", index=False)
+        try:
+            zipp = soup.find("span", attrs={"property": "postalCode"}).text.strip()
+        except Exception:
+            try:
+                zipp = soup.find("span", attrs={"itemprop": "postalCode"}).text.strip()
+            except Exception:
+                zipp = "<MISSING>"
+
+        try:
+            phone = soup.find("span", attrs={"itemprop": "telephone"}).text.strip()
+            if phone == "NULL":
+                phone = "<MISSING>"
+        except Exception:
+            phone = "<MISSING>"
+
+        location_type = "<MISSING>"
+
+        days = soup.find_all("td", attrs={"class": "c-hours-details-row-day"})
+        hour_parts = soup.find_all(
+            "td", attrs={"class": "c-hours-details-row-intervals"}
+        )
+
+        count = 0
+        hours = ""
+        for day_part in days:
+            day = day_part.text.strip()
+            hour = hour_parts[count].text.strip()
+
+            hours = hours + day + " " + hour + ", "
+        hours = hours[:-2]
+
+        if "temporarily closed" in r.lower():
+            location_type = "Temporarily Closed"
+
+        elif "coming soon" in r.lower():
+            location_type = "Coming Soon"
+
+        if "https" in country_code:
+            country_code = soup.find(
+                "span", attrs={"property": "addressCountry"}
+            ).text.strip()
+
+        address = address.encode("ascii", errors="ignore").decode().replace("    ", " ")
+
+        if (
+            city == "<MISSING>"
+            and address != "<MISSING>"
+            and len(address.split(", ")) > 2
+        ):
+            city = address.split(", ")[-2]
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

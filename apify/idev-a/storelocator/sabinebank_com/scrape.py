@@ -25,6 +25,7 @@ def fetch_data():
             addr = list(_.select("td")[0].stripped_strings)
             if not addr:
                 continue
+
             hours_of_operation = "; ".join(_.select("td")[1].stripped_strings)
             if (
                 "Drive-Thru" in hours_of_operation

@@ -59,9 +59,9 @@ class ExampleSearchIteration(SearchIteration):
         lat, lng = coord
         # just some clever accounting of locations/country:
         url = str(
-            "https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3021-07-15&checkOutDate=3021-07-16&favorCoOpHotels=false&hotelSortOrder=&include="
-            + f"&lat={lat}&lon={lng}"
-            + "&minors=0&optimizeResponse=&placeName=&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100"
+            "https://www.choicehotels.com/webapi/location/hotels?adults=1&checkInDate=3022-05-19&checkOutDate=3022-05-20&hotelSortOrder=RELEVANCE&include=amenity_groups%2C%20amenity_totals%2C%20rating%2C%20relative_media%2C%20renovation_info%2C%20awards_info"
+            + f"&lat={lat}&lon={lng}&"
+            + "optimizeResponse=image_url&placeId=404698&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         )
         headers = {}
         headers[
@@ -75,11 +75,12 @@ class ExampleSearchIteration(SearchIteration):
             "user-agent"
         ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         try:
-            locations = http.get(url, headers=headers).json()
+            locations = SgRequests.raise_on_err(http.get(url, headers=headers)).json()
             errorName = None
         except Exception as e:
-            logzilla.error(f"{e}")
+            logzilla.error(f"{e} , {url}<-F")
             locations = {"hotelCount": 0}
+            locations["status"] = "FAIL"
             errorName = str(e)
         if (
             locations["status"] == "OK"
@@ -182,7 +183,9 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_8()
+        search_type="DynamicGeoSearch",
+        granularity=Grain_8(),
+        expected_search_radius_miles=100,
     )
 
     with SgWriter(
@@ -194,7 +197,6 @@ if __name__ == "__main__":
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=SearchableCountries.ALL,
-                max_threads=6,
             )
 
             for rec in par_search.run():

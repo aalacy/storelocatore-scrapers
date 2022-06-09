@@ -1,0 +1,9 @@
+--ignore GeoConsistencyValidator (Not US ZIP)
+Found 1 concerning rows. Examples:
+     zip    state                REASON  rowNumber
+1  93000  Sarawak  ZIPCODE_NOT_IN_STATE          1
+
+--ignore CountryValidator (NOT US STATE)
+Found 1 concerning rows. Examples:
+     state        phone    zip            REASON  rowNumber
+1  Sarawak  010-9361858  93000  INVALID_US_STATE          1

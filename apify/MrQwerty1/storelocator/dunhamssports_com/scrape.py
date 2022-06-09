@@ -1,116 +1,66 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://www.dunhamssports.com/on/demandware.store/Sites-dunhamssports-Site/en_US/Stores-FindStores?showMap=true&radius=3000&lat=41.7697&long=-87.6985"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://www.dunhamssports.com/"
-    api_url = "https://www.dunhamssports.com/on/demandware.store/Sites-Dunhams-Site/en_US/Stores-GetInitialData"
-
-    session = SgRequests()
-    r = session.get(api_url)
+    r = session.get(api, headers=headers)
     js = r.json()["stores"]
 
     for j in js:
-        locator_domain = url
-        location_name = j.get("storeName")
-        adr1 = j.get("address1")
-        if adr1:
-            if adr1[0].isdigit() or not j.get("address2"):
-                street_address = (
-                    f"{j.get('address1')} {j.get('address2') or ''}".strip()
-                    or "<MISSING>"
-                )
-            else:
-                street_address = j.get("address2") or "<MISSING>"
-        else:
-            street_address = "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("stateCode") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
-        country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = (
-            f" https://www.dunhamssports.com/weekly-ads.html?store_code={store_number}"
-        )
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        location_name = j.get("name")
+        store_number = j.get("ID")
+        page_url = f"https://www.dunhamssports.com/on/demandware.store/Sites-dunhamssports-Site/en_US/Stores-Detail?storeID={store_number}"
+
+        street_address = f'{j.get("address1")} {j.get("address2") or ""}'.strip()
+        city = j.get("city")
+        state = j.get("stateCode")
+        postal = j.get("postalCode")
+        country_code = j.get("countryCode")
+        phone = j.get("phone")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
 
         _tmp = []
-        text = j.get("storeHours") or "<html></html>"
-        tree = html.fromstring(text)
+        source = j.get("storeHours") or "<html></html>"
+        tree = html.fromstring(source)
         tr = tree.xpath("//tr")
         for t in tr:
-            day = "".join(t.xpath("./td[1]/text()")).strip()
-            time = (
-                "".join(t.xpath("./td[2]/text()"))
-                .replace("Open 1 Hour Early for Elderly/Vulnerable", "")
-                .strip()
-            )
-            _tmp.append(f"{day} {time}")
+            day = "".join(t.xpath("./td[1]//text()")).strip()
+            time = "".join(t.xpath("./td[2]/text()")).strip()
+            _tmp.append(f"{day}: {time}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        if hours_of_operation.lower().count("closed") == 7:
-            continue
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=str(latitude),
+            longitude=str(longitude),
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.dunhamssports.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

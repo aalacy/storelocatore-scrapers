@@ -1,3 +1,3 @@
-VALIDATOR_VERSION: 0.0.70
-COMMAND: validate.py data.csv --ignore StreetAddressHasNumber --ignore StoreNumberColumnValidator
-PYTHON_VERSION: sys.version_info(major=3, minor=7, micro=6, releaselevel='final', serial=0)
+VALIDATOR_VERSION: 0.0.71
+COMMAND: D:\SafeGraph\westcoastdental_com\validate.py data.csv --ignore StreetAddressHasNumber
+PYTHON_VERSION: sys.version_info(major=3, minor=9, micro=5, releaselevel='final', serial=0)

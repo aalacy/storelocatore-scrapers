@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 logger = SgLogSetup().get_logger("aspencreekgrill_com")
 
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -17,11 +17,9 @@ headers = {
 def fetch_data():
     url = "https://aspencreekgrill.com/"
     locs = []
-    r = session.get(url, headers=headers, verify=False)
-    if r.encoding is None:
-        r.encoding = "utf-8"
+    r = session.get(url, headers=headers)
     Found = False
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if '<ul class="sub-menu">' in line and len(locs) == 0:
             Found = True
         if Found and "Menus</a>" in line:
@@ -31,6 +29,8 @@ def fetch_data():
             if (
                 "-menu" not in lurl
                 and lurl not in locs
+                and "/gift" not in lurl
+                and "/mom" not in lurl
                 and "uploads" not in lurl
                 and "/cart" not in lurl
                 and "contact-" not in lurl
@@ -40,6 +40,7 @@ def fetch_data():
                 locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
+        logger.info(loc)
         name = ""
         add = ""
         city = ""
@@ -55,9 +56,7 @@ def fetch_data():
         website = "aspencreekgrill.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         for line2 in lines:
             if "<title>" in line2 and name == "":
                 name = line2.split("<title>")[1].split("<")[0]
@@ -104,7 +103,15 @@ def fetch_data():
         phone = "<MISSING>"
         store = "<MISSING>"
         country = "US"
-        if "/star" not in loc:
+        if (
+            "/star" not in loc
+            and city != "<MISSING>"
+            and city != ""
+            and "/dad" not in loc
+            and "/rewards" not in loc
+            and "campfire-cocktails" not in loc
+            and "harvest" not in loc
+        ):
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

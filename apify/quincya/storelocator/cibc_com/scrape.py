@@ -1,65 +1,42 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("cibc_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
+    base_link = "https://locations.cibc.com/?locale=en_CA"
 
-    data = []
+    session = SgRequests(verify_ssl=False)
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
     found = []
     locator_domain = "cibc.com"
 
-    provs = ["AB", "BC", "SK", "NS", "MB", "QC", "ON", "NT", "PE", "NL", "NU", "YT"]
+    provs = base.find(class_="tetris-states-list").find_all("a")
 
     for prov in provs:
-        logger.info(prov)
-        state_link = "https://locations.cibc.com/" + prov.lower()
+        state_link = "https://locations.cibc.com/" + prov["href"].lower()
+        logger.info(state_link)
         req = session.get(state_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        city_links = base.find(class_="grid_12").find_all("a")
+        city_links = base.find_all(class_="tetris-cities-link")
         for city_link in city_links:
             if "letter=" in str(city_link):
                 continue
@@ -69,19 +46,20 @@ def fetch_data():
                     + city_link["href"]
                     + "?t=&page=%s&filters=filter-_-Branch" % (num)
                 )
-                req = session.get(base_link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
-
                 try:
-                    items = base.find(id="results_list").find_all("li")
-
+                    req = session.get(base_link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    continue
+                try:
+                    items = base.find_all(class_="tetris-results-item")
                     all_scripts = base.find_all("script")
                 except:
                     break
 
                 for script in all_scripts:
                     if '"lat":' in str(script):
-                        script = script.text
+                        script = script.contents[0]
                         break
                 lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', script)
                 lons = re.findall(r'lon":-[0-9]{2,3}\.[0-9]+', script)
@@ -104,7 +82,7 @@ def fetch_data():
                     zip_code = item.find(class_="postal-code").text.strip()
                     country_code = "CA"
                     location_type = "Branch"
-                    phone = item.find(class_="tel").text.strip()
+                    phone = item.find(class_="tetris-result-phone").text.strip()
 
                     if "temporary clos" in item.text.lower():
                         hours_of_operation = "Temporary Closure"
@@ -113,8 +91,8 @@ def fetch_data():
                             hours_of_operation = " ".join(
                                 list(
                                     item.find(
-                                        class_="locationHours bankHours"
-                                    ).table.stripped_strings
+                                        class_="tetris-hours-table"
+                                    ).stripped_strings
                                 )
                             )
                         except:
@@ -128,23 +106,23 @@ def fetch_data():
 
                     link = "https://locations.cibc.com" + item.a["href"]
 
-                    data.append(
-                        [
-                            locator_domain,
-                            link,
-                            location_name,
-                            street_address,
-                            city,
-                            state,
-                            zip_code,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            latitude,
-                            longitude,
-                            hours_of_operation,
-                        ]
+                    sgw.write_row(
+                        SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=link,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip_code,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                        )
                     )
 
                 if not base.find("a", attrs={"aria-label": "Next page"}):
@@ -204,6 +182,10 @@ def fetch_data():
                 state = "New York"
                 zip_code = "10036"
 
+            if "6000 Fairview Road" in street_address:
+                state = "North Carolina"
+                zip_code = "28210"
+
             country_code = "US"
             store_number = "<MISSING>"
 
@@ -235,31 +217,25 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            data.append(
-                [
-                    locator_domain,
-                    base_link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=base_link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

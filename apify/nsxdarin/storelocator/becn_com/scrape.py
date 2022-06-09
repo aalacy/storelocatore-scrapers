@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 logger = SgLogSetup().get_logger("becn_com")
 
@@ -12,43 +15,15 @@ headers = {
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=25,
+    max_search_distance_miles=None,
     max_search_results=None,
 )
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    ids = []
-    for lat, lng in search:
-        x = lat
-        y = lng
+    for llat, llng in search:
+        x = llat
+        y = llng
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
         url = (
             "https://site.becn.com/api-man/StoreLocation?facets=&lat="
@@ -58,13 +33,11 @@ def fetch_data():
             + "&range=100"
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '"name":"' in line:
                 items = line.split('"name":"')
                 for item in items:
-                    if '"phone":"' in item:
+                    if '"addressLine1":' in item:
                         name = item.split('"')[0]
                         store = "<MISSING>"
                         website = "becn.com"
@@ -79,41 +52,56 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(",")[0]
                         lng = item.split('"longitude":')[1].split(",")[0]
                         hours = "<MISSING>"
-                        loc = "<MISSING>"
+                        loc = "https://www.becn.com/find-a-store"
                         phone = item.split('"phone":"')[1].split('"')[0]
                         if country == "UNITED STATES":
                             country = "US"
                         typ = item.split('"branchname":"')[1].split('"')[0]
                         name = name + " " + typ
-                        storeinfo = name + "|" + add + "|" + lat
                         if phone == "":
                             phone = "<MISSING>"
-                        if storeinfo not in ids and country == "US":
-                            ids.append(storeinfo)
+                        if country == "US":
                             if "*" in add:
                                 add = add.split("*")[0].strip()
                             name = typ
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
