@@ -50,7 +50,9 @@ class ExampleSearchIteration(SearchIteration):
     ) -> Iterable[SgRecord]:
         for lat, lng in coord:
             with SgRequests() as session:
-                locations = session.get(base_url.format(lat, lng), headers=_headers).json()
+                locations = session.get(
+                    base_url.format(lat, lng), headers=_headers
+                ).json()
                 logger.info(f"[{lat, lng}] {len(locations)}")
 
                 for _ in locations:
@@ -79,7 +81,9 @@ class ExampleSearchIteration(SearchIteration):
                         page_url=_["order_url"] or "https://restaurants.quiznos.com/",
                         store_number=_["number"],
                         location_name=_["name"],
-                        street_address=street_address.replace("Gaetz Avenue Crossing", "")
+                        street_address=street_address.replace(
+                            "Gaetz Avenue Crossing", ""
+                        )
                         .replace("HMS Host, Honolulu International Airport", "")
                         .replace("T. Turck Plaza - Swifties Food Mart", ""),
                         city=_["city"],
@@ -95,9 +99,7 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch"
-    )
+    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
