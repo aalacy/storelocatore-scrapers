@@ -148,9 +148,13 @@ def fetch_data():
                     phone = soup.find("div", {"id": "phone-main"}).text
                 except:
                     phone = "<MISSING>"
-                hours = soup.find("table", {"class": "c-hours-details"}).text.replace(
-                    "PM", "PM "
-                )
+                print(branch)
+                try:
+                    hours = soup.find(
+                        "table", {"class": "c-hours-details"}
+                    ).text.replace("PM", "PM ")
+                except:
+                    hours = "<MISSING>"
                 try:
                     hours = hours.split("Week", 1)[1]
                 except:
