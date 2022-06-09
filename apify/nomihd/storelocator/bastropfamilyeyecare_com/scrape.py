@@ -7,7 +7,7 @@ import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "primaryeyecare.com"
+website = "bastropfamilyeyecare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "Connection": "keep-alive",
