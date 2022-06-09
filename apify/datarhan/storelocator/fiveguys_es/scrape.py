@@ -23,12 +23,12 @@ def fetch_data():
         all_locations = []
         if len(url.split("/")) > 1:
             all_locations.append(url)
-            continue
-        response = session.get(urljoin(start_url, url))
-        dom = etree.HTML(response.text)
-        all_locations = dom.xpath(
-            '//a[span[contains(text(), "Entérate de todo")]]/@href'
-        )
+        else:
+            response = session.get(urljoin(start_url, url))
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath(
+                '//a[span[contains(text(), "Entérate de todo")]]/@href'
+            )
 
         for url in all_locations:
             page_url = urljoin(start_url, url)

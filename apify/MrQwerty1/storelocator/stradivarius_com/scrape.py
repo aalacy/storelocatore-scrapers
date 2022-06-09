@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch
 
 
-def parse_js(js, cc, sgw: SgWriter):
+def parse_js(js, cc, sgw: SgWriter, *args):
     locator_domain = f"https://www.stradivarius.com/{cc.lower()}"
 
     for j in js:
@@ -29,6 +29,9 @@ def parse_js(js, cc, sgw: SgWriter):
             phone = SgRecord.MISSING
         latitude = j.get("latitude")
         longitude = j.get("longitude")
+        if args:
+            search = args[0]
+            search.found_location_at(latitude, longitude)
 
         _tmp = []
         days = [
@@ -156,16 +159,18 @@ def fetch_data(sgw: SgWriter):
     for api in apis:
         cc = api.split("Code=")[1].split("&")[0]
         js = get_js(api)
-        if len(js) == 50:
+        if len(js) > 40:
             search = DynamicGeoSearch(
-                country_codes=[cc.lower()], expected_search_radius_miles=100
+                country_codes=[cc.lower()],
+                expected_search_radius_miles=20,
+                max_search_distance_miles=500,
             )
             for lat, lng in search:
                 start = api.split("&latitude")[0]
                 end = f"&receiveEcommerce=false&countryCode={cc}&languageId=-5&radioMax=5000&appId=1"
                 new_api = f"{start}&latitude={lat}&longitude={lng}{end}"
                 js = get_js(new_api)
-                parse_js(js, cc, sgw)
+                parse_js(js, cc, sgw, search)
         else:
             parse_js(js, cc, sgw)
 
