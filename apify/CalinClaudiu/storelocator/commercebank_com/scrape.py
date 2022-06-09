@@ -44,7 +44,7 @@ def fetch_data(sgw: SgWriter):
                     location_type = "branch"
                 if page_url.find("commercial-office") != -1:
                     location_type = "commercial office"
-            except Exception:
+            except Exception as e:
                 logzilla.error(f"page_url\n{str(page_url)}\n\n\n\n{str(j)}", exc_info=e)
             street_address = (
                 f"{j.get('street')} {j.get('street2') or ''}".replace(
