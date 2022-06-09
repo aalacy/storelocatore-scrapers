@@ -37,9 +37,6 @@ ca_provinces_codes = {
 
 
 class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self._http = http
-
     def do(
         self,
         coord: Tuple[float, float],
@@ -48,54 +45,51 @@ class ExampleSearchIteration(SearchIteration):
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
     ) -> Iterable[SgRecord]:
-        for lat, lng in coord:
-            with SgRequests() as session:
-                locations = session.get(
-                    base_url.format(lat, lng), headers=_headers
-                ).json()
-                logger.info(f"[{lat, lng}] {len(locations)}")
+        lat = str(coord[0])
+        lng = str(coord[1])
+        with SgRequests() as session:
+            locations = session.get(base_url.format(lat, lng), headers=_headers).json()
+            logger.info(f"[{lat, lng}] {len(locations)}")
 
-                for _ in locations:
-                    found_location_at(_["latitude"], _["longitude"])
-                    street_address = _["address_line_1"]
-                    if _["address_line_2"]:
-                        street_address += " " + _["address_line_2"]
-                    phone = _["phone_number"]
-                    if phone:
-                        phone = phone.split("Ext")[0].strip()
-                    hours = []
-                    for day in days:
-                        day = day.lower()
-                        open = _[f"hour_open_{day}"]
-                        close = _[f"hour_close_{day}"]
-                        if "Open 24 Hours" in open:
-                            hours.append(f"{day}: {open}")
-                        else:
-                            hours.append(f"{day}: {open} - {close}")
+            for _ in locations:
+                found_location_at(_["latitude"], _["longitude"])
+                street_address = _["address_line_1"]
+                if _["address_line_2"]:
+                    street_address += " " + _["address_line_2"]
+                phone = _["phone_number"]
+                if phone:
+                    phone = phone.split("Ext")[0].strip()
+                hours = []
+                for day in days:
+                    day = day.lower()
+                    open = _[f"hour_open_{day}"]
+                    close = _[f"hour_close_{day}"]
+                    if "Open 24 Hours" in open:
+                        hours.append(f"{day}: {open}")
+                    else:
+                        hours.append(f"{day}: {open} - {close}")
 
-                    country_code = "USA"
-                    if _["province"] in ca_provinces_codes:
-                        country_code = "CA"
+                country_code = "USA"
+                if _["province"] in ca_provinces_codes:
+                    country_code = "CA"
 
-                    yield SgRecord(
-                        page_url=_["order_url"] or "https://restaurants.quiznos.com/",
-                        store_number=_["number"],
-                        location_name=_["name"],
-                        street_address=street_address.replace(
-                            "Gaetz Avenue Crossing", ""
-                        )
-                        .replace("HMS Host, Honolulu International Airport", "")
-                        .replace("T. Turck Plaza - Swifties Food Mart", ""),
-                        city=_["city"],
-                        state=_["province"],
-                        zip_postal=_["postal_code"],
-                        latitude=_["latitude"],
-                        longitude=_["longitude"],
-                        country_code=country_code,
-                        phone=phone,
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                    )
+                yield SgRecord(
+                    page_url=_["order_url"] or "https://restaurants.quiznos.com/",
+                    store_number=_["number"],
+                    location_name=_["name"],
+                    street_address=street_address.replace("Gaetz Avenue Crossing", "")
+                    .replace("HMS Host, Honolulu International Airport", "")
+                    .replace("T. Turck Plaza - Swifties Food Mart", ""),
+                    city=_["city"],
+                    state=_["province"],
+                    zip_postal=_["postal_code"],
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    country_code=country_code,
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":
