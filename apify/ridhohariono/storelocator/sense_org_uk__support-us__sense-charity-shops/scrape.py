@@ -70,9 +70,13 @@ def fetch_data():
             info = store.find("div", {"class": "banner__content"})
             raw_address = info.find("p").get_text(strip=True, separator=",")
             street_address, city, state, zip_postal = getAddress(raw_address)
+            if "SA43 1JG" in raw_address:
+                zip_postal = "SA43 1JG"
             if len(street_address) < 4:
                 street_address = raw_address.split(",")[0].strip()
             phone = info.find("dl").find("dd").text.strip()
+            if "tba" in phone or "email" in phone:
+                phone = MISSING
             country_code = "UK"
             store_number = MISSING
             hours_of_operation = (
