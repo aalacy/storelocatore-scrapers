@@ -1,4 +1,4 @@
-import re
+import demjson
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -28,24 +28,12 @@ def fetch_data():
         loc_response = session.get(page_url, headers=headers)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath("//h1/span/text()")[0]
-        street_address = loc_dom.xpath(
-            '//div[@itemprop="address"]/following-sibling::div[1]/text()'
+        data = (
+            loc_dom.xpath('//script[contains(text(), "store =")]/text()')[0]
+            .split("store =")[1]
+            .split(";\r\n    var")[0]
         )
-        street_address = [elem.strip() for elem in street_address if elem.strip()]
-        street_address = " ".join(street_address) if street_address else ""
-        city = loc_dom.xpath(
-            '//div[@itemprop="address"]/following-sibling::div[2]/text()'
-        )
-        city = city[0].strip() if city[0].strip() else ""
-        zip_code = loc_dom.xpath(
-            '//div[@itemprop="address"]/following-sibling::div[4]/text()'
-        )
-        zip_code = zip_code[0].strip() if zip_code else ""
-        country_code = re.findall('countryCode":"(.+?)",', loc_response.text)[0]
-        if country_code not in ["US", "GB", "CA"]:
-            continue
-        store_number = page_url.split("-")[-1]
+        poi = data = demjson.decode(data)
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
         phone = phone[0].strip() if phone and phone[0].strip() else ""
         hours_of_operation = loc_dom.xpath(
@@ -56,17 +44,17 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state="",
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            location_name=poi["name"],
+            street_address=poi["address"],
+            city=poi["town"],
+            state=poi["county"],
+            zip_postal=poi["postCode"],
+            country_code=poi["countryCode"],
+            store_number=poi["code"],
             phone=phone,
-            location_type="",
-            latitude="",
-            longitude="",
+            location_type=poi["storeType"],
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hours_of_operation,
         )
 
