@@ -1,4 +1,3 @@
-import re
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -22,46 +21,34 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        url = "http://codysoriginalroadhouse.com/locations.html"
-        r = session.get(url, headers=headers)
+        r = session.get(DOMAIN, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "clearfix grpelem"}).find_all(
-            "a", {"class": "nonblock nontext grpelem"}
-        )
+        loclist = soup.findAll("ul", {"aria-hidden": "true"})[0].findAll("li")
         for loc in loclist:
-            page_url = DOMAIN + loc["href"]
-            if "index" in page_url:
-                continue
-            elif "drink" in page_url:
-                continue
-            elif "menu" in page_url:
-                continue
-            elif "facebook" in page_url:
-                continue
+            page_url = loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_details = (
-                soup.find("div", {"class": "clearfix colelem", "id": re.compile("-")})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
-            location_details = location_details.split("Phone:")
-            address = location_details[0]
-            location_details = location_details[1].split("Hours of Operation:")
-            phone = location_details[0]
-            hours_of_operation = location_details[1]
-            coords = soup.select_one("iframe[src*=maps]")["src"]
+            location_details = soup.findAll(
+                "div", {"data-testid": "mesh-container-content"}
+            )[-2]
+            hours_of_operation = location_details.get_text(
+                separator="|", strip=True
+            ).replace("|", " ")
             try:
-                longitude, latitude = (
-                    coords.split("!2d", 1)[1].split("!2m", 1)[0].split("!3d")
-                )
+                hours_of_operation = "Monday" + hours_of_operation.split("Monday")[1]
             except:
-                longitude, latitude = (
-                    coords.split("ll=", 1)[1].split("&", 1)[0].split(",")
-                )
-            if "!3m" in latitude:
-                latitude = latitude.split("!3m")[0]
+                hours_of_operation = "Mon" + hours_of_operation.split("Mon")[1]
+            hours_of_operation = hours_of_operation.replace("e-6-19_705_COLOR", "")
+            if "1/" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("1/")[0]
+            location_details = location_details.get_text(
+                separator="|", strip=True
+            ).split("|")
+            phone = location_details[3]
+            if "Monday" in phone:
+                phone = location_details[2].split(":")[1]
+            address = location_details[1]
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -88,6 +75,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            city = city.replace("W", "")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -101,8 +89,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
+                latitude=MISSING,
+                longitude=MISSING,
                 hours_of_operation=hours_of_operation,
             )
 

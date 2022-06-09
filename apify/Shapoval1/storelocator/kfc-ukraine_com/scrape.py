@@ -9,40 +9,52 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://kfc-ukraine.com"
-    api_url = "https://kfc-ukraine.com/restaurants"
+    api_url = "https://www.kfc-ukraine.com/stores"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "var restaurants = ")]/text()'))
-        .split("var restaurants = ")[1]
-        .split("var nearest_restaurant;")[0]
-        .replace("}];", "}]")
-        .replace("null", "None")
-        .strip()
-    )
-    js = eval(jsblock)
+    div = tree.xpath('//div[@class="card"]')
 
-    for j in js:
+    for d in div:
 
-        page_url = "".join(j.get("share_url")).replace("\\", "").strip()
-        location_name = j.get("name") or "<MISSING>"
-        street_address = j.get("address") or "<MISSING>"
-        country_code = j.get("country_name")
-        city = j.get("city_name") or "<MISSING>"
-        store_number = page_url.split("/")[-1].strip()
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lon") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        hours_of_operation = (
-            f"{j.get('start_time')} - {j.get('finish_time')}" or "<MISSING>"
+        page_url = "https://www.kfc-ukraine.com/stores"
+        location_name = (
+            "".join(d.xpath('.//h5[@class="card-title mainColor"]/text()'))
+            .replace("\n", "")
+            .strip()
         )
-        cms = j.get("opening_soon")
-        if cms == "1":
-            hours_of_operation = "Coming Soon"
+        ad = (
+            "".join(d.xpath('.//p[@class="card-text address"]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        postal = ad.split(",")[-1].strip()
+        country_code = "UA"
+        city = ad.split(",")[-2].strip()
+        if city.find("область") != -1:
+            city = ad.split(",")[-3].strip()
+        street_address = (
+            ad.split(f", {city}")[0]
+            .replace(', ТРЦ "Мегамолл"', "")
+            .replace(", ТРК Victoria Gardens", "")
+            .replace("Дом торговли", "")
+            .strip()
+        )
+        store_number = "".join(d.xpath("./@data-id"))
+        latitude = "".join(d.xpath("./@data-lat"))
+        longitude = "".join(d.xpath("./@data-lng"))
+        hours_of_operation = (
+            " ".join(
+                d.xpath(
+                    './/td[text()="На винос - часи роботи:"]/following-sibling::td//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -51,14 +63,15 @@ def fetch_data(sgw: SgWriter):
             street_address=street_address,
             city=city,
             state=SgRecord.MISSING,
-            zip_postal=SgRecord.MISSING,
+            zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
-            phone=phone,
+            phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -67,6 +80,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)
