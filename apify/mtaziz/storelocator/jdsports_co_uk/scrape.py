@@ -10,6 +10,9 @@ import json
 import ssl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
+from tenacity import retry, stop_after_attempt
+import tenacity
+
 
 try:
     _create_unverified_https_context = (
@@ -61,20 +64,31 @@ def format_store_locator_url():
     return lofc_locator
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response_store(url):
-    with SgRequests(proxy_country="us") as http:
-        r = http.get(url, headers=headers)
-        return r
+    with SgRequests(proxy_country="gb") as http:
+        response = http.get(url, headers=headers)
+        logger.info(f"HTTPStatusCode: {response.status_code} | {url}")
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTPStatusCode: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTPErrorCode: {response.status_code}")
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response_store_locator(url):
-    with SgRequests(proxy_country="us") as http:
-        r = http.get(url, headers=headers)
-        return r
+    with SgRequests(proxy_country="gb") as http:
+        response = http.get(url, headers=headers)
+        logger.info(f"HTTPStatusCode: {response.status_code} | {url}")
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTPStatusCode200 OK: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTPErrorCode: {response.status_code}")
 
 
 def get_store_urls_per_country(all_stores_url, web, domain_name, country_name):
     r = get_response_store_locator(all_stores_url)
+    logger.info(f"HTTPStatusCode: {r.status_code}")
     sel = html.fromstring(r.text, "lxml")
     links = sel.xpath('//li[contains(@data-e2e, "storeLocator-list-item")]/a/@href')
     links_full = []

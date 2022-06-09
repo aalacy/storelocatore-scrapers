@@ -13,7 +13,7 @@ headers = {
 
 def fetch_data():
     def from_sitemap(session):
-        url = "https://www.raisingcanes.com/sitemap.xml"
+        url = "http://www.raisingcanes.com/sitemap.xml"
         session.get(url)
         soup = b4(session.page_source, "lxml")
         links = soup.find_all("url")
@@ -24,7 +24,7 @@ def fetch_data():
     with SgChrome() as session:
         for index in from_sitemap(session):
             url = str(
-                f"https://www.raisingcanes.com/page-data/location/{index}/page-data.json"
+                f"http://www.raisingcanes.com/page-data/location/{index}/page-data.json"
             )
             session.get(url)
             data = json.loads(session.page_source)

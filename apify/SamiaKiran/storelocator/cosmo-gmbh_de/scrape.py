@@ -4,9 +4,9 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import unidecode
 
 session = SgRequests()
 website = "cosmo-gmbh_de"
@@ -45,30 +45,44 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.findAll("div", {"class": "salons-two-column"})
-            address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
-            address = address.split("Telefon:")
-            phone = address[-1]
-            raw_address = (
-                strip_accents(address[0]).replace("COSMO", "").replace("Shop", "")
-            )
-            pa = parse_address_intl(raw_address)
 
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
-
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
-
+            phone = MISSING
             hours_of_operation = strip_accents(
                 temp[1].get_text(separator="|", strip=True).replace("|", " ")
             )
+
+            hours_of_operation = hours_of_operation.split("Uhr")[0].strip()
             country_code = "DE"
+
+            address_parts = (
+                soup.find("div", attrs={"class": "content-gallery"})
+                .find("div", attrs={"class": "left-content"})
+                .find("p")
+            )
+            address_parts = str(address_parts).replace("<br/>", "")
+
+            street_address = address_parts.split("\n")[1].strip()
+            city_parts = (
+                address_parts.split("\n")[-1].split("<")[0].strip().split(" ")[1:]
+            )
+
+            city = ""
+            for part in city_parts:
+                city = city + part + " "
+            city = city[:-1].strip()
+
+            state = "<MISSING>"
+            zip_postal = (
+                address_parts.split("\n")[-1]
+                .split("<")[0]
+                .strip()
+                .split(" ")[0]
+                .strip()
+            )
+
+            street_address = unidecode.unidecode(street_address)
+            city = unidecode.unidecode(city)
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -84,7 +98,6 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 

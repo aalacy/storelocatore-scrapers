@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
 
     items = base.find_all(class_="card__link btn btn--primary")
-    locator_domain = "https://www.sbe.com"
+    locator_domain = "https://slshotels.com/"
 
     for item in items:
         link = "https://www.sbe.com" + item["href"]

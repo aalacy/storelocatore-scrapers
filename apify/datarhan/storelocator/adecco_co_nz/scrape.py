@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from time import sleep
 from lxml import etree
 from urllib.parse import urljoin
@@ -45,8 +44,8 @@ def fetch_data():
         geo = loc_dom.xpath('//iframe[contains(@src, "maps")]/@src')
         if geo:
             geo = geo[0].split("!2d")[-1].split("!2m")[0].split("!3d")
-            latitude = geo[0]
-            longitude = geo[1]
+            latitude = geo[1].split("!")[0]
+            longitude = geo[0].split("!")[0]
         hoo = loc_dom.xpath('//div[@class="branch-locator__opening"]//li/text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
@@ -77,13 +76,16 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        city = addr.city
+        if not city:
+            city = location_name
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
             zip_postal=addr.postcode,
             country_code="NZ",

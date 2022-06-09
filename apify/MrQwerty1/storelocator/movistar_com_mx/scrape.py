@@ -78,7 +78,10 @@ def fetch_data(sgw: SgWriter):
         js = r.json()["data"]
 
         for j in js:
-            street_address = j.get("direccion")
+            street_address = j.get("direccion") or ""
+            street_address = " ".join(
+                street_address.replace("S/N.", "").replace("S/N", "").split()
+            )
             city = j.get("ciudad")
             state = j.get("estado")
             postal = j.get("cp")

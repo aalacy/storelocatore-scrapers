@@ -91,7 +91,7 @@ def _info(_):
         raw_address,
         street_address,
         addr.state,
-        addr.postcode,
+        zip_postal,
     )
 
 
