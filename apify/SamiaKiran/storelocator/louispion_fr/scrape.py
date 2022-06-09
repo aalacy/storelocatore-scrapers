@@ -37,26 +37,30 @@ def fetch_data():
             page_url = "https://boutiques.louispion.fr" + loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            loc = r.text.split('<script type="application/ld+json">')[1].split('</script>')[0]
+            loc = r.text.split('<script type="application/ld+json">')[1].split(
+                "</script>"
+            )[0]
             loc = json.loads(loc)
-            location_name = loc['name']
-            store_number = loc["@id"]
+            location_name = loc["name"]
+            store_number = loc["@id"].split("-")[1]
             address = loc["address"]
             street_address = strip_accents(address["streetAddress"])
             city = strip_accents(address["addressLocality"])
             state = MISSING
             zip_postal = address["postalCode"]
             country_code = address["addressCountry"]
-            phone = loc['telephone']
+            phone = loc["telephone"]
             latitude = loc["geo"]["latitude"]
             longitude = loc["geo"]["longitude"]
             hour_list = loc["openingHoursSpecification"]
             hours_of_operation = ""
             for hour in hour_list:
-                day = hour["dayOfWeek"].replace('http://schema.org/','')
+                day = hour["dayOfWeek"].replace("http://schema.org/", "")
                 opens = hour["opens"]
                 closes = hour["closes"]
-                hours_of_operation = hours_of_operation + " " + day + " " + opens+"-"+closes
+                hours_of_operation = (
+                    hours_of_operation + " " + day + " " + opens + "-" + closes
+                )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
