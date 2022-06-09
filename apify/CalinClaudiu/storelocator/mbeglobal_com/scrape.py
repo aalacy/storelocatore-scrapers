@@ -133,7 +133,7 @@ def ret_record(record):
         location_type=location_type,
         latitude=latitude,
         longitude=longitude,
-        locator_domain="https://www.starbucks.com/",
+        locator_domain="www.mbeglobal.com",
         hours_of_operation=hours_of_operation,
         raw_address=raw_address,
     )
