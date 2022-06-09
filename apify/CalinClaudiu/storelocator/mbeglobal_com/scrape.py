@@ -109,14 +109,22 @@ def ret_record(record):
         pass
 
     parsed = parser.parse_address_intl(raw_address)
-    country_code = parsed.country if parsed.country else MISSING
     street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
     street_address = (
         (street_address + ", " + parsed.street_address_2)
         if parsed.street_address_2
         else street_address
     )
+
+    try:
+        raw_address = " ".join(data2)
+    except Exception:
+        pass
+    raw_address = raw_address.replace("Contact", "").strip()
+    raw_address = re.sub("[\t\r\n ]+", " ", raw_address)
+    parsed = parser.parse_address_intl(raw_address)
     city = parsed.city if parsed.city else MISSING
+    country_code = parsed.country if parsed.country else MISSING
     state = parsed.state if parsed.state else MISSING
     zip_postal = parsed.postcode if parsed.postcode else MISSING
 
