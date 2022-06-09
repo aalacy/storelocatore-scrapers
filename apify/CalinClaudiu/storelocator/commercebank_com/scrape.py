@@ -27,17 +27,25 @@ def fetch_data(sgw: SgWriter):
                 try:
                     page_url = j["location_url"]
                 except Exception as e:
-                    logzilla.error(f"page_url\n\n\n{str(j)}", exc_info=e)
+                    logzilla.error(
+                        f"page_url\n{str(page_url)}\n\n\n\n{str(j)}", exc_info=e
+                    )
+
+            if page_url == "<MISSING>" or not page_url:
+                logzilla.error(f"page_url\n{str(page_url)}\n\n\n\n{str(j)}")
 
             location_name = j.get("location_name") or "<MISSING>"
             ad = j.get("formatted_address")
             location_type = "<MISSING>"
-            if page_url.find("atm") != -1:
-                location_type = "atm"
-            if page_url.find("branch") != -1:
-                location_type = "branch"
-            if page_url.find("commercial-office") != -1:
-                location_type = "commercial office"
+            try:
+                if page_url.find("atm") != -1:
+                    location_type = "atm"
+                if page_url.find("branch") != -1:
+                    location_type = "branch"
+                if page_url.find("commercial-office") != -1:
+                    location_type = "commercial office"
+            except Exception:
+                logzilla.error(f"page_url\n{str(page_url)}\n\n\n\n{str(j)}", exc_info=e)
             street_address = (
                 f"{j.get('street')} {j.get('street2') or ''}".replace(
                     "None", ""
