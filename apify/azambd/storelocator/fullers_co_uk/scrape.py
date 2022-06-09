@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from selenium.webdriver.common.by import By
 
 import ssl
@@ -70,8 +70,8 @@ def get_address(raw_address):
 
 
 def fetch_data():
-    with SgFirefox() as driver:
-        driver.get(api_json)
+    with SgChrome() as driver:
+        driver.get_and_wait_for_request(api_json)
         source = driver.find_element(by=By.XPATH, value=".//pre").text
         stores = json.loads(source)["Data"]
         log.info(f"Total stores = {len(stores)}")

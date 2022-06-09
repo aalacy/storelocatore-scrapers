@@ -5,8 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from sgpostal import sgpostal as parser
 import re
+import lxml.html
 
 DOMAIN = "thesill.com"
 BASE_URL = "https://www.thesill.com"
@@ -24,7 +25,7 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
+            data = parser.parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -48,21 +49,23 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
+    sel = lxml.html.fromstring(req.text)
+    return soup, sel
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("span", text="Store Details & Inventory")
-    for row in contents:
-        page_url = BASE_URL + row.parent.parent.parent["href"]
-        store = pull_content(page_url)
-        info = store.select_one(
-            "div.sill-container.w-full.h-full.flex.flex-col.gap-6.pt-6.pb-4"
-        )
-        location_name = info.find("h2").text.strip()
+    soup, sel = pull_content(LOCATION_URL)
+    contents = sel.xpath(
+        '//a[./span[@class="location__title font-medium text-primary"]]/@href'
+    )
+    for store_url in contents:
+        page_url = BASE_URL + store_url
+        store, sel = pull_content(page_url)
+        info = store.select_one("div.sill-container.w-full.h-full.flex.flex-col.gap-4")
+        location_name = info.find("h1").text.strip()
         if "Coming Soon" in location_name:
             continue
         raw_address = info.find("div", {"class": "flex items-center gap-4"}).get_text(

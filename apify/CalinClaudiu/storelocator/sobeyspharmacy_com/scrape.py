@@ -7,6 +7,9 @@ from sgscrape import simple_utils as utils
 from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+import html
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="sob")
 
 
 def stubborn_store(url):
@@ -21,7 +24,12 @@ def stubborn_store(url):
     with open("fml.txt", mode="w", encoding="utf-8") as file:
         file.write(str(soup))
 
-    k = {}
+    k = {
+        "lat": None,
+        "lng": None,
+        "phone": None,
+        "zip": None,
+    }
     try:
         coords = soup.find("div", {"data-lat": True, "data-lng": True})
         k["lat"] = coords["data-lat"]
@@ -145,14 +153,22 @@ def para(idey):
     except Exception:
         son["contact_details"]["phone_details"]["phone"] = "<MISSING>"
 
-    if son["location"]["address"]["province"] == "<MISSING>":
-        if son["location"]["address"]["postal_code"] == "<MISSING>":
-            if son["contact_details"]["phone_details"]["phone"] == "<MISSING>":
-                extras = stubborn_store(son["slug"])
-                son["location"]["coordinates"]["latitude"] = extras["lat"]
-                son["location"]["coordinates"]["longitude"] = extras["lng"]
-                son["location"]["address"]["postal_code"] = extras["zip"]
-                son["contact_details"]["phone_details"]["phone"] = extras["phone"]
+    if any(
+        i == "<MISSING>"
+        for i in [
+            son["location"]["address"]["province"],
+            son["location"]["address"]["postal_code"],
+            son["contact_details"]["phone_details"]["phone"],
+        ]
+    ):
+        extras = stubborn_store(son["slug"])
+        if extras["lat"]:
+            son["location"]["coordinates"]["latitude"] = extras["lat"]
+            son["location"]["coordinates"]["longitude"] = extras["lng"]
+        if extras["zip"]:
+            son["location"]["address"]["postal_code"] = extras["zip"]
+        if extras["phone"]:
+            son["contact_details"]["phone_details"]["phone"] = extras["phone"]
 
     return son
 
@@ -197,6 +213,30 @@ def nice_hours(x):
     return x
 
 
+def fix_comma(x):
+    cop = []
+    try:
+        for i in x:
+            if i:
+                cop.append(i)
+        x = ", ".join(cop)
+    except Exception as e:
+        logzilla.error(f"{x}", exc_info=e)
+
+    try:
+        x = x.replace("None", "")
+        x = x.split(",")
+        copy = []
+        for i in x:
+            if len(i.strip()) > 0:
+                copy.append(i.strip())
+        x = ", ".join(copy)
+        return x
+    except Exception as e:
+        logzilla.error(f"{x}", exc_info=e)
+        return x.replace("None", "")
+
+
 def scrape():
     url = "https://sobeyspharmacy.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
@@ -205,7 +245,9 @@ def scrape():
             mapping=["slug"],
             value_transform=lambda x: "https://sobeyspharmacy.com/stores/" + x + "/",
         ),
-        location_name=MappingField(mapping=["title", "rendered"]),
+        location_name=MappingField(
+            mapping=["title", "rendered"], value_transform=lambda x: html.unescape(x)
+        ),
         latitude=MappingField(
             mapping=["location", "coordinates", "latitude"],
             is_required=False,
@@ -221,8 +263,8 @@ def scrape():
                 ["location", "address", "address_1"],
                 ["location", "address", "address_2"],
             ],
-            multi_mapping_concat_with=", ",
             part_of_record_identity=True,
+            raw_value_transform=fix_comma,
         ),
         city=MappingField(mapping=["location", "address", "city"], is_required=False),
         state=MappingField(

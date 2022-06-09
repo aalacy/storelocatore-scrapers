@@ -69,6 +69,17 @@ def get_store_urls():
         return store_urls
 
 
+def get_hours(sel):
+    store_location_details = sel.xpath(
+        '//div[@class="store-locations__details"]//text()'
+    )
+    store_location_details1 = [" ".join(i.split()) for i in store_location_details]
+    store_location_details2 = [i for i in store_location_details1 if i]
+    hours = " ".join(store_location_details2)
+    hours = hours.split("Contact Us")[0].split("Hours")[-1]
+    return hours
+
+
 def fetch_records(idx, url, sgw: SgWriter):
     with SgRequests() as http:
         logger.info(f"PullingContentFrom: {url}")
@@ -96,9 +107,8 @@ def fetch_records(idx, url, sgw: SgWriter):
                 '//div[@class="store-locations__details"]//a[contains(@href, "tel:")]/text()'
             )
         )
-        hoo = sel.xpath('//p[contains(@class, "wysiwyg")]/text()')
-        hoo = "; ".join([e.strip() for e in hoo if e.strip()]) if hoo else ""
-        [lat, lng, ln, tel, hoo]
+        hoo = get_hours(sel)
+        hoo = hoo.replace(" Curbside hours vary by store; please call to confirm.", "")
         item = SgRecord(
             locator_domain="jamesavery.com",
             page_url=page_url,

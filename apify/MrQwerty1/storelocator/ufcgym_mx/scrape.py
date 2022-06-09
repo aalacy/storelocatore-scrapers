@@ -29,15 +29,8 @@ def get_coords_from_embed(text):
     return latitude, longitude
 
 
-def get_version():
-    r = session.get("https://ufcgym.mx/?wc-ajax=get_customer_location", headers=headers)
-
-    return r.json()["data"]["hash"]
-
-
 def fetch_data(sgw: SgWriter):
-    version = get_version()
-    page_url = f"https://ufcgym.mx/sucursales/?v={version}"
+    page_url = "https://ufcgym.mx/sucursales/"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[contains(@data-vc-content, '.vc_tta-panel-body')]")
