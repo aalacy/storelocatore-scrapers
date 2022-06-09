@@ -15,7 +15,7 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
-        street_address = poi["address"]["street"] + ", " + poi["address"]["number"]
+        street_address = poi["address"]["street"] + ", " + str(poi["address"]["number"])
 
         item = SgRecord(
             locator_domain=domain,

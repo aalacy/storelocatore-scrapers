@@ -4,6 +4,7 @@ from sgscrape import simple_scraper_pipeline as sp
 import os
 import json
 import ssl
+from sglogging import sglog
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -36,6 +37,7 @@ def extract_json(html_string):
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
     url = "https://www.carrefour.fr/magasin"
     with SgFirefox(
         block_third_parties=True,
@@ -53,9 +55,9 @@ def get_data():
         ]
 
     for url in region_urls:
+        log.info("url: " + url)
         with SgFirefox(
-            block_third_parties=True,
-            proxy_country="fr",
+            block_third_parties=True, proxy_country="fr", is_headless=False
         ) as driver:
             driver.get(url)
             response = driver.page_source
@@ -69,9 +71,15 @@ def get_data():
             ]
 
             for sub_url in subregion_urls:
-                driver.get(sub_url)
-                response = driver.page_source
-                json_objects = extract_json(response)
+                log.info("sub_url: " + sub_url)
+                try:
+                    driver.get(sub_url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
+                except Exception:
+                    driver.get(sub_url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
 
                 for location in json_objects[1]["search"]["data"]["stores"]:
                     locator_domain = "carrefour.fr"
@@ -95,6 +103,7 @@ def get_data():
                     state = "<MISSING>"
                     zipp = location["address"]["postalCode"]
 
+                    log.info("page_url: " + page_url)
                     driver.get(page_url)
                     phone_response = driver.page_source
 

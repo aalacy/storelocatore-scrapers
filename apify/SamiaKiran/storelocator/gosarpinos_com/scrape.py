@@ -26,7 +26,9 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("ul", {"class": "sitemap__list"})[-1].findAll("li")
         for loc in loclist:
-            page_url = loc.find("a")["href"]
+            page_url = loc.find("a")["href"].replace(
+                "http://gosarpinos.local.com:91", DOMAIN
+            )
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             try:
