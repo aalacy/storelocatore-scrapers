@@ -60,7 +60,7 @@ def fetch_data():
                 country_code=poi["location"]["country"],
                 store_number=poi["poicode"],
                 phone=poi.get("contactData", {}).get("phoneNumber"),
-                location_type="",
+                location_type=poi["objectType"]["code"],
                 latitude=poi["location"]["coordinates"][1],
                 longitude=poi["location"]["coordinates"][0],
                 hours_of_operation=hoo,
