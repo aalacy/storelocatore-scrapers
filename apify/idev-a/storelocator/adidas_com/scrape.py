@@ -94,7 +94,7 @@ def fetch_records():
                 for _ in locations
                 if "opening_soon" not in _.get("operational_status", "").lower()
             ]
-            for _, phone, hours, page_url in locations:
+            for _, phone, hours, page_url in fetchConcurrentList(locations):
                 zip_postal = _.get("postal_code")
                 if zip_postal == "n/a":
                     zip_postal = ""
