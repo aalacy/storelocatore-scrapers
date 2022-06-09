@@ -210,6 +210,11 @@ def nice_hours(x):
     )
     if x.count("<MISSING>") == 7:
         x = "Open 24 Hours"
+
+    x = x.replace(
+        "sunday: ; monday: ; tuesday: ; wednesday: ; thursday: ; friday: ; saturday:",
+        "<MISSING>",
+    )
     return x
 
 

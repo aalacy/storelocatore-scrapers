@@ -3,8 +3,8 @@ from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
 
 session = SgRequests(verify_ssl=False)
 headers = {
@@ -46,6 +46,10 @@ def fetch_data():
                         .split("%22")[0]
                         .replace("%20", " ")
                     )
+                    add = ""
+                    city = ""
+                    state = ""
+                    zc = ""
                     formatted_addr = parse_address_intl(raw_address)
                     add = formatted_addr.street_address_1
                     if formatted_addr.street_address_2:
@@ -59,7 +63,15 @@ def fetch_data():
                         if formatted_addr.postcode
                         else "<MISSING>"
                     )
-                    phone = item.split("nfoPhone%22%3A%22")[1].split("%")[0]
+                    phone = (
+                        item.split("nfoPhone%22%3A%22")[1]
+                        .split("%22%2C%22infoEmail")[0]
+                        .replace("%28", "(")
+                        .replace("%29", ")")
+                        .replace("%5Cu00a0", "")
+                        .replace("%20", " ")
+                        .strip()
+                    )
                     hours = (
                         item.split("WorkingHours%22%3A%22")[1]
                         .split("%22%2C%22infoWindow")[0]
@@ -87,7 +99,23 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                },
+                fail_on_empty_id=False,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

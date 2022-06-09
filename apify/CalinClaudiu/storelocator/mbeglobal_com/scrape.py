@@ -7,6 +7,8 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape import sgpostal as parser
 
+import re
+
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 import json
 
@@ -61,15 +63,13 @@ def ret_record(record):
         pass
 
     try:
-        street_address = data2[2]
-        street_address = (
-            street_address.replace("\n", " ").replace("  ", " ").replace("  ", " ")
-        )
+        street_address = str(data2[2]).strip()
+        street_address = re.sub("[\t\r\n ]+", " ", street_address)
     except Exception:
         pass
 
     try:
-        raw_address = " ".join(data2)
+        raw_address = str(data2[2]).replace("Contact", "").strip()
     except Exception:
         pass
 

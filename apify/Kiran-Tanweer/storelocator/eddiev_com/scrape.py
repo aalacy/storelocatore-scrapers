@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import lxml.html
 
 logger = SgLogSetup().get_logger("eddiev_com")
 
@@ -33,20 +33,20 @@ headers = {
 
 
 def fetch_data():
-    linklist = []
     url = "https://www.eddiev.com/locations/all-locations"
     r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    more_link = soup.findAll("div", {"class", "more_links"})
-    for link_div in more_link:
-        link = link_div.find("a", {"id": "locDetailsId"})["href"]
-        linklist.append(link)
-    linklist.append("/locations/fl/fort-lauderdale/fort-lauderdale/8528")
+    stores_sel = lxml.html.fromstring(r.text)
+    linklist = stores_sel.xpath('//input[@id="redirectLocationUrl"]/@value')
     for link in linklist:
         link = "https://www.eddiev.com" + link
         logger.info(link)
         p = session.get(link, headers=headers)
         bs = BeautifulSoup(p.text, "html.parser")
+        comingsoon = bs.find("div", {"class": "loc_span opendt"})
+        if comingsoon:
+            if "OPENING" in comingsoon.text.strip().upper():
+                continue
+
         left_bar = bs.find("div", {"class": "left-bar"})
         title = left_bar.find("h1", {"class": "style_h1"}).text.strip()
         addr_div = left_bar.find("p")
