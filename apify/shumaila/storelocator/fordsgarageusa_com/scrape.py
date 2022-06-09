@@ -17,9 +17,9 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup1 = BeautifulSoup(r.text, "html.parser")
     divlist = soup1.findAll("div", {"class": "wpb_text_column"})
-    print(len(divlist))
+
     for div in divlist:
-        flag = 0
+
         title = div.find("h4").text
         link = "https://www.fordsgarageusa.com" + div.find("a")["href"]
 
