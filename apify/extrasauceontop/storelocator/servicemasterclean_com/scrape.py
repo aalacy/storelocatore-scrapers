@@ -11,65 +11,64 @@ import os
 
 def get_data():
     page_urls = []
-    with SgFirefox(
-        block_third_parties=False,
-        is_headless=False,
-    ) as driver:
-        search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA],
-            granularity=Grain_8(),
-            expected_search_radius_miles=100,
-        )
-        session = SgRequests()
-        url = "https://www.servicemasterclean.com/locations/?CallAjax=GetLocations"
-        x = 0
-        for search_code in search:
-            x = x + 1
-            if x == 100:
-                return
-            param = {
-                "zipcode": search_code,
-                "distance": "5000",
-                "tab": "ZipSearch",
-                "templates": {
-                    "Item": '&lt;li data-servicetype="[{ServiceTypeIDs}]" data-serviceid="[{ServiceIDs}]"&gt;\t&lt;h2&gt;{FranchiseLocationName}&lt;/h2&gt;\t&lt;div class="info flex"&gt;\t\t&lt;if field="GMBLink"&gt;\t\t\t&lt;span class="rating-{FN0:GMBReviewRatingScoreOutOfFive}"&gt;\t\t\t\t{FN1:GMBReviewRatingScoreOutOfFive}\t\t\t\t&lt;svg data-use="star.36" class="rate1"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate2"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate3"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate4"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate5"&gt;&lt;/svg&gt;\t\t\t&lt;/span&gt;\t\t\t&lt;a href="{http:GMBLink}" target="_blank"&gt;Visit Google My Business Page&lt;/a&gt;\t\t&lt;/if&gt;\t\t&lt;if field="YelpLink"&gt;\t\t\t&lt;span class="rating-{FN0:YelpReviewRatingScoreOutOfFive}"&gt;\t\t\t\t{FN1:YelpReviewRatingScoreOutOfFive}\t\t\t\t&lt;svg data-use="star.36" class="rate1"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate2"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate3"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate4"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate5"&gt;&lt;/svg&gt;\t\t\t&lt;/span&gt;\t\t\t&lt;a href="{http:YelpLink}" target="_blank"&gt;Visit Yelp Page&lt;/a&gt;\t\t&lt;/if&gt;\t\t&lt;a class="flex" href="tel:{Phone}"&gt;\t\t\t&lt;svg data-use="phone.36"&gt;&lt;/svg&gt; {F:P:Phone}\t\t&lt;/a&gt;\t\t&lt;if field="Path"&gt;\t\t\t&lt;a href="{Path}" class="text-btn" rel="nofollow noopener"&gt;Website&lt;/a&gt;\t\t&lt;/if&gt;\t&lt;/div&gt;\t&lt;div class="type flex"&gt;\t\t&lt;strong&gt;Services:&lt;/strong&gt;\t\t&lt;ul&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2638"&gt;\t\t\t\t&lt;li&gt;Commercial&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2658"&gt;\t\t\t\t&lt;li&gt;Residential&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2634"&gt;\t\t\t\t&lt;li&gt;Janitorial&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t&lt;/ul&gt;\t&lt;/div&gt;&lt;/li&gt;'
-                },
-            }
-            response = session.post(url, json=param).json()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_8(),
+        expected_search_radius_miles=100,
+        max_search_distance_miles=5000,
+    )
+    session = SgRequests()
+    url = "https://www.servicemasterclean.com/locations/?CallAjax=GetLocations"
+    x = 0
+    for search_code in search:
+        x = x + 1
+        params = {
+            "zipcode": search_code,
+            "distance": "5000",
+            "tab": "ZipSearch",
+            "templates": {
+                "Item": '&lt;li data-servicetype="[{ServiceTypeIDs}]" data-serviceid="[{ServiceIDs}]"&gt;\t&lt;h2&gt;{FranchiseLocationName}&lt;/h2&gt;\t&lt;div class="info flex"&gt;\t\t&lt;if field="GMBLink"&gt;\t\t\t&lt;span class="rating-{FN0:GMBReviewRatingScoreOutOfFive}"&gt;\t\t\t\t{FN1:GMBReviewRatingScoreOutOfFive}\t\t\t\t&lt;svg data-use="star.36" class="rate1"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate2"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate3"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate4"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate5"&gt;&lt;/svg&gt;\t\t\t&lt;/span&gt;\t\t\t&lt;a href="{http:GMBLink}" target="_blank"&gt;Visit Google My Business Page&lt;/a&gt;\t\t&lt;/if&gt;\t\t&lt;if field="YelpLink"&gt;\t\t\t&lt;span class="rating-{FN0:YelpReviewRatingScoreOutOfFive}"&gt;\t\t\t\t{FN1:YelpReviewRatingScoreOutOfFive}\t\t\t\t&lt;svg data-use="star.36" class="rate1"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate2"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate3"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate4"&gt;&lt;/svg&gt;\t\t\t\t&lt;svg data-use="star.36" class="rate5"&gt;&lt;/svg&gt;\t\t\t&lt;/span&gt;\t\t\t&lt;a href="{http:YelpLink}" target="_blank"&gt;Visit Yelp Page&lt;/a&gt;\t\t&lt;/if&gt;\t\t&lt;a class="flex" href="tel:{Phone}"&gt;\t\t\t&lt;svg data-use="phone.36"&gt;&lt;/svg&gt; {F:P:Phone}\t\t&lt;/a&gt;\t\t&lt;if field="Path"&gt;\t\t\t&lt;a href="{Path}" class="text-btn" rel="nofollow noopener"&gt;Website&lt;/a&gt;\t\t&lt;/if&gt;\t&lt;/div&gt;\t&lt;div class="type flex"&gt;\t\t&lt;strong&gt;Services:&lt;/strong&gt;\t\t&lt;ul&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2638"&gt;\t\t\t\t&lt;li&gt;Commercial&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2658"&gt;\t\t\t\t&lt;li&gt;Residential&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t\t&lt;if field="{ServiceIDs}" contains="2634"&gt;\t\t\t\t&lt;li&gt;Janitorial&lt;/li&gt;\t\t\t&lt;/if&gt;\t\t&lt;/ul&gt;\t&lt;/div&gt;&lt;/li&gt;'
+            },
+        }
+        response = session.post(url, json=params).json()
 
-            try:
-                if response[0]["Message"] == "Zip Code Not Found":
-                    continue
+        try:
+            if response[0]["Message"] == "Zip Code Not Found":
+                continue
 
-            except Exception:
-                pass
-            for location in response:
-                locator_domain = "www.servicemasterclean.com"
-                page_url = "https://www.servicemasterclean.com" + location["Path"]
-                latitude = location["Latitude"]
-                longitude = location["Longitude"]
-                search.found_location_at(latitude, longitude)
-                if page_url in page_urls:
-                    continue
+        except Exception:
+            pass
+        for location in response:
+            locator_domain = "www.servicemasterclean.com"
+            page_url = "https://www.servicemasterclean.com" + location["Path"]
+            latitude = location["Latitude"]
+            longitude = location["Longitude"]
+            search.found_location_at(latitude, longitude)
+            if page_url in page_urls:
+                continue
 
-                page_urls.append(page_url)
-                location_name = location["BusinessName"]
-                city = location["City"]
-                state = location["State"]
-                store_number = location["FranchiseLocationID"]
-                address = location["Address1"]
-                zipp = location["ZipCode"]
-                phone = location["Phone"]
-                location_type = "<MISSING>"
-                country_code = location["Country"]
+            page_urls.append(page_url)
+            location_name = location["BusinessName"]
+            city = location["City"]
+            state = location["State"]
+            store_number = location["FranchiseLocationID"]
+            address = location["Address1"]
+            zipp = location["ZipCode"]
+            phone = location["Phone"]
+            location_type = "<MISSING>"
+            country_code = location["Country"]
 
-                y = 0
-                while True:
-                    y = y + 1
-                    if y == 10:
-                        hours = "<MISSING>"
-                        break
-                    try:
+            y = 0
+            while True:
+                y = y + 1
+                if y == 10:
+                    hours = "<MISSING>"
+                    break
+                try:
+                    with SgFirefox(
+                        block_third_parties=False,
+                        is_headless=False,
+                    ) as driver:
                         driver.get(page_url)
                         element = driver.find_element_by_id(
                             "HoursContainer"
@@ -90,27 +89,27 @@ def get_data():
                             hours = hours + day + " " + times + ", "
 
                         hours = hours[:-2]
-                        break
+                    break
 
-                    except Exception:
-                        continue
+                except Exception:
+                    continue
 
-                yield {
-                    "locator_domain": locator_domain,
-                    "page_url": page_url,
-                    "location_name": location_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "city": city,
-                    "store_number": store_number,
-                    "street_address": address,
-                    "state": state,
-                    "zip": zipp,
-                    "phone": phone,
-                    "location_type": location_type,
-                    "hours": hours,
-                    "country_code": country_code,
-                }
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
 def scrape():
