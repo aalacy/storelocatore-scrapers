@@ -19,7 +19,7 @@ def fetch_data():
     frm = {"address": "rio", "localization": {}}
     data = session.post(start_url, headers=hdr, json=frm).json()
 
-    for poi in data["entries"].values():
+    for poi in data["entries"]:
         if type(poi) == bool:
             continue
 
