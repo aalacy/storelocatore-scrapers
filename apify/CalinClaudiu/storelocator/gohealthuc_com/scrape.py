@@ -1,112 +1,39 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-
-from sgscrape import simple_utils as utils
-
-
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as b4
-
-import json
 
 
-def determine_type(k):
-    if k["coming_soon"]:
-        return "Coming Soon"
-    if k["alt_title"] and k["title"]:
-        try:
-            z = (
-                k["alt_title"].split("C", 1)[0]
-                + "C"
-                + k["alt_title"].split("C", 1)[1].split(" ", 1)[0]
-            )
-            return z
-        except Exception:
-            return "<MISSING>"
-    else:
-        return "<MISSING>"
-
-
-def para(url):
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-
-    allscripts = soup.find_all("script", {"type": "text/javascript"})
-    thescript = ""
-    for script in allscripts:
-        if "jQuery.extend(Drupal.settings" in script.text:
-            thescript = script.text
-
-    thescript = (
-        thescript.split("jQuery.extend(Drupal.settings,", 1)[1].split("});", 1)[0] + "}"
-    )
-    son = json.loads(thescript)
-
-    for rec in son["gohealth_regional_landing_pages"]["clinics"]:
-        yield rec
+def f_adr(rec):
+    real_address = rec["full_address"].split(rec["city"], 1)[0]
+    rec["real_address"] = real_address
+    return rec
 
 
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.gohealthuc.com/#center-locator-anchor"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-    links = soup.find("select", {"id": "regionSelect"})
-    links = links.find_all("option", {"value": lambda x: x and "/" in x})
+    url = "https://www.gohealthuc.com/"
+    with SgRequests() as session:
+        res = SgRequests.raise_on_err(session.get(url))
 
-    pages = []
-    for i in links:
-        pages.append("https://www.gohealthuc.com" + i["value"])
-
-    lize = utils.parallelize(
-        search_space=pages,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
-    )
-    for county in lize:
-        for entry in county:
-            if (
-                entry["title"] != "Virtual Visit"
-                and "virtual-visit" not in entry["link"]
-                and "covid-19" not in entry["link"]
-            ):
-                entry["type"] = determine_type(entry)
-                yield entry
-
+        build_ID = res.text.split('"buildId":"', 1)[1].split('"', 1)[0]
+        data_url = f"https://www.gohealthuc.com/_next/data/{build_ID}/locations.json"
+        data = SgRequests.raise_on_err(session.get(data_url)).json()
+        for record in data["pageProps"]["centers"]:
+            yield f_adr(record)
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
 def human_hours(x):
-    days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-    ]
-    i = 0
+
     hours = []
     for i in x:
         hours.append(
             str(
-                days[int(i["day"])]
+                str(i["day_of_week"])
                 + ": "
-                + str(int(i["starthours"]) / 100)
-                + ":"
-                + str(int(i["starthours"]) % 100)
-                + " - "
-                + str(int(i["endhours"]) / 100)
-                + ":"
-                + str(int(i["endhours"]) % 100)
+                + str(i["open_time"])
+                + "-"
+                + str(i["close_time"])
             )
         )
 
@@ -117,53 +44,58 @@ def scrape():
     url = "https://www.gohealthuc.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(
-            mapping=["link"], value_transform=lambda x: "https://www.gohealthuc.com" + x
+        page_url=sp.MultiMappingField(
+            mapping=[
+                ["jv"],
+                ["uid"],
+            ],
+            multi_mapping_concat_with="/locations/",
+            part_of_record_identity=True,
+            value_transform=lambda x: "https://www.gohealthuc.com/" + x,
         ),
         location_name=sp.MappingField(
-            mapping=["title"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["name"], value_transform=lambda x: x.replace("None", "<MISSING>")
         ),
         latitude=sp.MappingField(
-            mapping=["geolocation", "lat"],
+            mapping=["coordinates", "latitude"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         longitude=sp.MappingField(
-            mapping=["geolocation", "lon"],
+            mapping=["coordinates", "longitude"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         street_address=sp.MappingField(
-            mapping=["address", "thoroughfare"],
+            mapping=["real_address"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         city=sp.MappingField(
-            mapping=["address", "locality"],
+            mapping=["city"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         state=sp.MappingField(
-            mapping=["address", "administrative_area"],
+            mapping=["state"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         zipcode=sp.MappingField(
-            mapping=["address", "postal_code"],
+            mapping=["zipCode"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
-            mapping=["address", "country"],
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            mapping=["time_zone"],
+            value_transform=lambda x: x.split("/", 1)[0],
         ),
         phone=sp.MappingField(
-            mapping=["phone"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["phone_number"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         store_number=sp.MappingField(
-            mapping=["clockwise_id"],
+            mapping=["id"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["hours"], raw_value_transform=human_hours
+            mapping=["hoursArr"], raw_value_transform=human_hours
         ),
-        location_type=sp.MappingField(
-            mapping=["type"], value_transform=lambda x: x.replace("None", "<MISSING>")
-        ),
+        location_type=sp.MissingField(),
         raw_address=sp.MissingField(),
     )
 

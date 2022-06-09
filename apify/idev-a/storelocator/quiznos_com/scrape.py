@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from typing import Iterable, Tuple, Callable
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("")
@@ -34,15 +36,23 @@ ca_provinces_codes = {
 }
 
 
-def fetch_data(search):
-    for lat, lng in search:
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        lat = str(coord[0])
+        lng = str(coord[1])
         with SgRequests() as session:
             locations = session.get(base_url.format(lat, lng), headers=_headers).json()
-            if locations:
-                search.found_location_at(lat, lng)
             logger.info(f"[{lat, lng}] {len(locations)}")
 
             for _ in locations:
+                found_location_at(_["latitude"], _["longitude"])
                 street_address = _["address_line_1"]
                 if _["address_line_2"]:
                     street_address += " " + _["address_line_2"]
@@ -83,15 +93,21 @@ def fetch_data(search):
 
 
 if __name__ == "__main__":
+    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
         )
     ) as writer:
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA, SearchableCountries.PUERTO_RICO],
-            expected_search_radius_miles=100,
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=lambda: ExampleSearchIteration(),
+            country_codes=[
+                SearchableCountries.USA,
+                SearchableCountries.CANADA,
+                SearchableCountries.PUERTO_RICO,
+            ],
         )
-        results = fetch_data(search)
-        for rec in results:
+
+        for rec in par_search.run():
             writer.write_row(rec)

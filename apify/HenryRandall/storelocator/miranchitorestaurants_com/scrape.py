@@ -1,10 +1,7 @@
 import re
 import json
-
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -27,10 +24,7 @@ def fetch_data(sgw: SgWriter):
         loc = loc_data["address"]["addressLocality"]
         loc_url = url + loc.lower().replace(" ", "-")
         street_address = loc_data["address"]["streetAddress"]
-        regex = f'(?<={street_address}).*?(?="menuLandingPageUrl")'
-        coords = re.findall(regex, str(soup))
-        lat, long = re.findall(r'"lat":(-?[\d\.]+),"lng":(-?[\d\.]+)', str(coords))[0]
-
+        lat, long = "<MISSING>", "<MISSING>"
         sgw.write_row(
             SgRecord(
                 locator_domain=url,
@@ -40,7 +34,7 @@ def fetch_data(sgw: SgWriter):
                 city=loc,
                 state=loc_data["address"]["addressRegion"],
                 zip_postal=loc_data["address"]["postalCode"],
-                country_code=SgRecord.MISSING,
+                country_code="US",
                 store_number=SgRecord.MISSING,
                 phone=loc_data["address"]["telephone"],
                 location_type=loc_data["@type"],
