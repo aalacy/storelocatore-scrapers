@@ -89,7 +89,11 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA, SearchableCountries.PUERTO_RICO],
+            country_codes=[
+                SearchableCountries.USA,
+                SearchableCountries.CANADA,
+                SearchableCountries.PUERTO_RICO,
+            ],
             expected_search_radius_miles=100,
         )
         results = fetch_data(search)
