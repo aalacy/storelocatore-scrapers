@@ -69,6 +69,14 @@ def fix_comma(x):
         return x.replace("None", "")
 
 
+def fix_phone(x):
+    try:
+        x = x.split("or")[0]
+    except Exception:
+        pass
+    return (x.replace("None", "<MISSING>").replace("Phone:", "").strip(),)
+
+
 def scrape():
     url = "https://www.gohealthuc.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -121,9 +129,7 @@ def scrape():
         country_code=sp.MissingField(),
         phone=sp.MappingField(
             mapping=["Phone"],
-            value_transform=lambda x: x.replace("None", "<MISSING>")
-            .replace("Phone:", "")
-            .strip(),
+            value_transform=fix_phone,
             is_required=False,
         ),
         store_number=sp.MissingField(),
