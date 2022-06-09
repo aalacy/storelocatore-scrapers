@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         city = j.get("district").get("name") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("latitud") or "<MISSING>"
-        longitude = j.get("latitud") or "<MISSING>"
+        longitude = j.get("longitud") or "<MISSING>"
         hours_of_operation = (
             "De lunes " + r.text.split('"De lunes')[1].split('")')[0].strip()
         )

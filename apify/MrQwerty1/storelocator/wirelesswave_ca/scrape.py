@@ -1,66 +1,35 @@
-import csv
 import json
 
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.wirelesswave.ca/"
-    api_url = "https://www.wirelesswave.ca/en/locations/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.wirelesswave.ca/en/locations/"
+    r = session.get(api)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(),'page.locations =')]/text()"))
     text = text.split("page.locations =")[1].split(";")[0].strip()
     js = json.loads(text)
 
     for j in js:
-        street_address = (
-            f"{j.get('Address')} {j.get('Address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("CountryCode") or "<MISSING>"
-        state = j.get("ProvinceAbbrev") or "<MISSING>"
-        postal = j.get("PostalCode") or "<MISSING>"
-        country_code = j.get("CountryCode") or "<MISSING>"
-        store_number = j.get("LocationId") or "<MISSING>"
+        adr1 = j.get("Address") or ""
+        adr2 = j.get("Address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("City")
+        state = j.get("ProvinceAbbrev")
+        postal = j.get("PostalCode")
+        country_code = j.get("CountryCode")
+        store_number = j.get("LocationId")
         page_url = f"https://www.wirelesswave.ca/en/locations/{store_number}/"
-        location_name = " ".join(j.get("Name").replace("WW ", "").split()[:-2])
-        phone = j.get("Phone") or "<MISSING>"
-        latitude = j.get("Google_Latitude") or "<MISSING>"
-        longitude = j.get("Google_Longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        location_name = " ".join(str(j.get("Name")).replace("WW ", "").split()[:-2])
+        phone = j.get("Phone")
+        latitude = j.get("Google_Latitude")
+        longitude = j.get("Google_Longitude")
 
         _tmp = []
         hours = j.get("HoursOfOperation") or []
@@ -69,41 +38,37 @@ def fetch_data():
             start = h.get("Open")
             end = h.get("Close")
             if start and end:
-                start, end = str(start), str(end)
-                if len(start) == 3:
-                    start = f"0{start}"
-
+                start, end = str(start).zfill(4), str(end).zfill(4)
                 _tmp.append(f"{day}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}")
             else:
                 _tmp.append(f"{day}: Closed")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.wirelesswave.ca/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

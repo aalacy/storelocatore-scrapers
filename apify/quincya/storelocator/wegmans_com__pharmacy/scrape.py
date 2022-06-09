@@ -87,18 +87,22 @@ def fetch_data(sgw: SgWriter):
             continue
         location_type = ""
 
+        hours = list(
+            base.find(
+                class_="pharmacy store-departments-content department_list"
+            ).stripped_strings
+        )
+
+        hours_of_operation = ""
+        for row in hours:
+            if "day" in row:
+                hours_of_operation = (hours_of_operation + " " + row).strip()
+
         phone = (
             base.find(class_="pharmacy store-departments-content department_list")
             .find(class_="phone show-desktop")
             .text.strip()
         )
-        hours_of_operation = " ".join(
-            list(
-                base.find(
-                    class_="store-departments-info store-department-time"
-                ).stripped_strings
-            )
-        ).replace("—", "-")
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"

@@ -101,6 +101,10 @@ def fetch_data():
                 if ":" in phone:
                     phone = phone.split(":")[1].strip()
 
+            if len(phone) <= 0:
+                phone = "".join(
+                    store_sel.xpath('//span[@class="phoneNumber"]//text()')
+                ).strip()
             hours = list(
                 filter(
                     str,

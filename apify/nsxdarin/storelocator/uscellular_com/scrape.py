@@ -19,20 +19,23 @@ def fetch_data():
     sm = "https://local.uscellular.com/sitemap.xml"
     r = session.get(sm, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "sitemap.xml" in line:
             states.append(
                 line.strip().replace("\r", "").replace("\t", "").replace("\n", "")
             )
     for state in states:
+        Found = True
         r2 = session.get(state, headers=headers)
         logger.info(state)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "https://local.uscellular.com/" in line2:
-                locs.append(
+            if "https://local.uscellular.com/" in line2 and Found:
+                lurl = (
                     line2.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                 )
+                if lurl.count("/") == 4:
+                    Found = False
+                if Found:
+                    locs.append(lurl)
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         website = "uscellular.com"
@@ -51,18 +54,14 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if '<strong class="name">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 name = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
             if '<div class="street">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 add = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
             if '<div class="locality">' in line2:
                 g = next(lines)
-                g = str(g.decode("utf-8"))
                 csz = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                 city = csz.split(",")[0]
                 state = csz.split(",")[1].strip().split(" ")[0]

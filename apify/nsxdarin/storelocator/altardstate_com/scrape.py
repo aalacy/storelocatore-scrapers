@@ -31,8 +31,14 @@ def fetch_data():
         lat = item["latitude"]
         lng = item["longitude"]
         zc = item["postalCode"]
-        phone = item["phone"]
-        hours = str(item["storeHours"])
+        try:
+            phone = item["phone"]
+        except:
+            phone = "<MISSING>"
+        try:
+            hours = str(item["storeHours"])
+        except:
+            hours = "<MISSING>"
         try:
             hours = (
                 hours.split("<td>", 1)[1]

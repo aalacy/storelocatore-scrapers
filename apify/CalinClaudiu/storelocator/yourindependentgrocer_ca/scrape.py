@@ -3,10 +3,9 @@ from sglogging import sglog
 
 import ssl
 from sgscrape import simple_utils as utils
-from sgrequests.sgrequests import SgRequests
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -379,11 +378,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
 
     def determined_possible():
         def passed():
-            retryBehaviour = Retry(total=2, connect=2, read=2, backoff_factor=0.1)
-            retryBehaviour = False
-            with SgRequests(
-                retry_behavior=retryBehaviour, proxy_rotation_failure_threshold=2
-            ) as session:
+            with SgRequests() as session:
                 try:
                     if result["api"]:
                         test_url = result["api"]
@@ -466,6 +461,11 @@ def do_everything(k):
 
 
 def url_fix(url):
+    if "DoSearch2" not in url:
+        ClientId = url.split("ClientId=", 1)[1].split("&", 1)[0]
+        ApiKey = url.split("ApiKey=", 1)[1].split("&", 1)[0]
+        goodtype = f"https://ws2.bullseyelocations.com/RestSearch.svc/DoSearch2?ClientId={ClientId}&ApiKey={ApiKey}&CountryId=2&CountryScope=ALL&FillAttr=true&GetHoursForUpcomingWeek=true&LanguageCode=en&Latitude=44.6437182&Longitude=-63.6200314&Radius=20&SearchTypeOverride=1&MaxResults=15&PageSize=15&StartIndex=0&CategoryIDs=93238&MatchAllCategories=true"
+        url = str(goodtype)
     url = url.split("StartIndex")[0] + "StartIndex" + "=0"
     url = "Radius=200".join(url.split("Radius="))  # (means 20020)
     url = "MaxResults=100".join(url.split("MaxResults="))  # (means 10010)
@@ -474,42 +474,60 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    driver = SgChrome().driver()
-    driver.get(url)
-    to_click = WebDriverWait(driver, 40).until(
-        EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
-        )
-    )
-    to_click.click()
+    z = None
+    with SgFirefox() as driver:
+        driver.get(url)
+        time.sleep(60)
+        url = None
+        try:
+            to_click = WebDriverWait(driver, 60).until(
+                EC.visibility_of_element_located(
+                    (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+                )
+            )
+            to_click.click()
+        except Exception:
+            pass
 
-    input_field = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+        input_field = WebDriverWait(driver, 60).until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+                )
             )
         )
-    )
-    input_field.send_keys("B3L 4T2")
-    input_field.send_keys(Keys.RETURN)
-    time.sleep(10)
-    wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+        input_field.send_keys("B3L 4T2")
+        input_field.send_keys(Keys.RETURN)
+        time.sleep(30)
+        try:
+            wait_for_loc = WebDriverWait(driver, 60).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                    )
+                )
             )
-        )
-    )
+        except Exception:
+            logzilla.info(driver.page_source)
 
-    time.sleep(10)
-    for r in driver.requests:
+        time.sleep(10)
+        z = driver.requests
+    headers = {}
+    for r in z:
         if "DoSearch2" in r.path:
             url = r.url
             headers = r.headers
-    driver.quit()
-    time.sleep(10)
+    for r in z:
+        if "RestSearch.svc/GetCategories" in r.path:
+            url = r.url
+            headers = r.headers
+
+    if not url:
+        for i in z:
+            logzilla.info(i.path)
+
     return url, headers
 
 
@@ -626,6 +644,34 @@ def lesser_datasource():
         }
 
 
+def fix_rec(x):
+    x["Address1x"] = x.get("Address1")
+    x["Address2x"] = x.get("Address2")
+    x["Address3x"] = x.get("Address3")
+    x["Address4x"] = x.get("Address4")
+    try:
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address2"]
+        ):
+            x["Address2"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address3"]
+        ):
+            x["Address3"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address4"]
+        ):
+            x["Address4"] = ""
+    except Exception:
+        pass
+    return x
+
+
 def fetch_data():
     # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
     # DoSearch2? # noqa
@@ -661,17 +707,15 @@ def fetch_data():
             try:
                 return get_api_call(url)
             except Exception as e:
-                logzilla.info(f"Handling this:\n{str(e)}")
-                retry_starting()
-                # shouldn't be to worried,
-                # worst case if their API changes crawl will timeout
-                # rather than just pull from the other (worse) data source
+                logzilla.error("nope\n", exc_info=e)
 
         if retry:
             retry_starting()
+
         return get_api_call(url)
 
     url, headers = rRetry(False)
+
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa
@@ -707,7 +751,7 @@ def fetch_data():
             megafails.append(i)  # noqa
             yield defuzz(i)
         else:
-            yield i
+            yield fix_rec(i)
 
     # ########for debugging megafails: # noqa
     # print(len(megafails)) # noqa
@@ -715,7 +759,7 @@ def fetch_data():
     #    file.write(json.dumps(megafails)) # noqa
 
     for i in lesser_datasource():
-        yield i
+        yield fix_rec(i)
     logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
 
 
@@ -725,7 +769,8 @@ def fix_comma(x):
     try:
         for i in x.split(", "):
             if len(i.strip()) >= 1:
-                h.append(i)
+                if i != ",":
+                    h.append(i)
         return ", ".join(h)
     except Exception:
         return x
@@ -767,6 +812,13 @@ def phoneident(x):
     return x
 
 
+def fix_city(x):
+    try:
+        return x.split(",")[0]
+    except Exception:
+        return x
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -802,6 +854,7 @@ def scrape():
         ),
         city=sp.MappingField(
             mapping=["City"],
+            value_transform=fix_city,
             is_required=False,
         ),
         state=sp.MappingField(
@@ -836,7 +889,12 @@ def scrape():
             is_required=False,
             part_of_record_identity=True,
         ),
-        raw_address=sp.MissingField(),
+        raw_address=sp.MultiMappingField(
+            mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
+            multi_mapping_concat_with=" ",
+            is_required=False,
+            part_of_record_identity=True,
+        ),
     )
 
     pipeline = sp.SimpleScraperPipeline(

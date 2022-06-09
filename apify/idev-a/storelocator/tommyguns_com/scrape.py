@@ -34,7 +34,7 @@ url = "https://ca.tommyguns.com/blogs/locations"
 
 def fetch_data():
     with SgChrome() as driver:
-        with SgRequests() as session:
+        with SgRequests(proxy_country="us") as session:
             driver.get(base_url)
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "li.location"))
@@ -51,8 +51,11 @@ def fetch_data():
                 hr_text = soup1.select_one("div.store-details__wait-time").text.lower()
                 if "coming soon" in hr_text or "hours will be posted" in hr_text:
                     continue
+                store_number = soup1.select_one("div.store-details__wait-time")[
+                    "data-id"
+                ]
                 hours = []
-                json_url = f"https://gft.tommyguns.com/api/v1/kiosk/GetShopStatus/{soup1.select_one('div.store-details__wait-time')['data-id']}"
+                json_url = f"https://gft.tommyguns.com/api/v1/kiosk/GetShopStatus/{store_number}"
                 res = session.get(json_url, headers=_headers)
                 if res.status_code == 200:
                     status_data = res.json()["hours"]["openHours"]
@@ -78,6 +81,7 @@ def fetch_data():
                     )[-1]
                 yield SgRecord(
                     page_url=page_url,
+                    store_number=store_number,
                     location_name=_.h2.text.strip().replace("–", "-"),
                     street_address=street_address,
                     city=city,

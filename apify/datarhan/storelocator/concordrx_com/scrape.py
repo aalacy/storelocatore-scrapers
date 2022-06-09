@@ -18,59 +18,45 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@href="/contact"]/following-sibling::ul//a/@href')
+    all_locations = dom.xpath(
+        '//a[contains(text(), "Locations ")]/following-sibling::ul[1]//a/@href'
+    )
     for url in all_locations:
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1[@class="pageTitle"]/text()')
-        location_name = location_name[0] if location_name else ""
-        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
-        street_address = street_address[0] if street_address else ""
-        if (
-            "Suite"
-            in loc_dom.xpath('//span[@itemprop="streetAddress"]/following::text()')[1]
-        ):
-            street_address += (
-                " "
-                + loc_dom.xpath('//span[@itemprop="streetAddress"]/following::text()')[
-                    1
-                ].strip()
-            )
-        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
-        city = city[0] if city else ""
-        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else ""
-        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code[0] if zip_code else ""
-        phone = loc_dom.xpath('//p[@itemprop="telephone"]/text()')
-        if not phone:
-            phone = loc_dom.xpath('//li[contains(text(), "Phone:")]/text()')
-        phone = phone[0].split(":")[-1].strip() if phone else ""
-        hoo = loc_dom.xpath('//ul[@class="hours hours2"]//text()')
-        if not hoo:
-            hoo = loc_dom.xpath(
-                '//li[contains(text(), "Fax:")]/following-sibling::li/text()'
-            )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else ""
+        location_name = loc_dom.xpath('//h1[@class="pageTitle"]/text()')[0]
+        raw_address = loc_dom.xpath(
+            '//h2[contains(text(), "Our Location")]/following-sibling::div[1]//li//text()'
+        )
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "re Open")]/following-sibling::div[1]//li/text()'
+        )
+        hoo = " ".join(hoo)
+        geo = (
+            loc_dom.xpath("//iframe/@src")[0]
+            .split("!2d")[-1]
+            .split("!2m3")[0]
+            .split("!3d")
+        )
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[1],
+            zip_postal=raw_address[2],
             country_code="",
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation=hours_of_operation,
+            latitude=geo[1].split("!")[0],
+            longitude=geo[0].split("!")[0],
+            hours_of_operation=hoo,
         )
 
         yield item

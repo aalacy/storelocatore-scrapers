@@ -101,7 +101,9 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=1,
+        max_search_distance_miles=250,
+        expected_search_radius_miles=100,
+        max_search_results=250,
     )
     count = 0
 

@@ -45,6 +45,8 @@ def fetch_data():
         store_sel = lxml.html.fromstring(store_req.text)
 
         location_name = store["title"]
+        if location_name == "Tiny House Dental Office":
+            continue
         location_type = "<MISSING>"
         locator_domain = website
 
@@ -57,9 +59,25 @@ def fetch_data():
 
         country_code = "US"
         store_number = "<MISSING>"
-        phone = store_sel.xpath('//a[@class="x-btn x-btn-global red-btn"]/text()')
+        phone = list(
+            filter(
+                str,
+                [
+                    x.strip()
+                    for x in store_sel.xpath(
+                        '//div[@class="cta-wrapper"]/a[contains(@href,"tel:")]//text()'
+                    )
+                ],
+            )
+        )
         if len(phone) > 0:
             phone = "".join(phone[0]).strip()
+        else:
+            phone = "".join(
+                store_sel.xpath(
+                    '//a[@class="x-anchor x-btn x-btn-global th-btn"]//text()'
+                )
+            ).strip()
 
         hours = list(filter(str, store_sel.xpath('//span[@class="loc_hours"]//text()')))
 

@@ -45,8 +45,8 @@ def fetch_data():
             loc_dom = etree.HTML(loc_response.text)
             poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
             location_name = data_json[num]["name"]
-            if poi:
-                poi = json.loads(poi[0])
+            if poi and not poi[-1].strip().startswith("<"):
+                poi = json.loads(poi[-1])
                 hoo = loc_dom.xpath(
                     '//section[@class="storeDetails__hoursInformation"]/div/p/text()'
                 )

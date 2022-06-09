@@ -27,7 +27,10 @@ def fetch_data():
         next_page = dom.xpath('//a[@class="action  next"]/@href')
 
     for poi_html in all_locations:
-        street_address = poi_html.xpath(".//strong/text()")[0]
+        geo = poi_html.xpath(".//a/@onclick")[0].split("Map(")[-1].split(",")[:2]
+        street_address = poi_html.xpath(".//h4/strong/text()")[0]
+        if street_address == "Default Source":
+            continue
         city = (
             poi_html.xpath(".//p[1]//text()")[0]
             .strip()
@@ -50,8 +53,8 @@ def fetch_data():
             store_number="",
             phone="",
             location_type="",
-            latitude="",
-            longitude="",
+            latitude=geo[0],
+            longitude=geo[1],
             hours_of_operation=hoo,
         )
 

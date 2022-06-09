@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 from urllib.parse import urlparse
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -11,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
-
+import html as ht
 
 try:
     _create_unverified_https_context = (
@@ -23,27 +25,46 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "sephora.cz"
-LOCATION_URLS_GRID = [
-    "https://www.sephora.cz/prodejny",
-    "https://www.sephora.dk/butikker/",
-    "https://www.sephora.fr/magasin",
-    "https://www.sephora.pt/lojas",
-    "https://www.sephora.es/tiendas",
-    "https://www.sephora.se/butiker/",
-    "https://www.sephora.ae/en/store",
-    "https://www.sephora.de/Stores-Alle",
-    "https://www.sephora.it/beauty-store/",
-    "https://www.sephora.pl/perfumerie",
-]
-LOCATION_URLS_GRID = sorted(LOCATION_URLS_GRID)
-
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("sephora_cz")  # noqa
+
 headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
 }
-MAX_WORKERS = 10
+MAX_WORKERS = 5
+
+LOCATION_URLS_GRID = [
+    "https://www.sephora.ae/en/store",
+    "https://www.sephora.bh/bh/en/store",
+    "https://www.sephora.com.kw/kw/en/store",
+    "https://www.sephora.cz/prodejny",
+    "https://www.sephora.de/Stores-Alle",
+    "https://www.sephora.dk/butikker/",
+    "https://www.sephora.es/tiendas",
+    "https://www.sephora.fr/magasin",
+    "https://www.sephora.it/beauty-store/",
+    "https://www.sephora.om/om/en/store",
+    "https://www.sephora.pl/perfumerie",
+    "https://www.sephora.pt/lojas",
+    "https://www.sephora.qa/qa/en/store",
+    "https://www.sephora.sa/en/store",
+    "https://www.sephora.se/butiker/",
+]  # Store locators for all countries
+
+
+# Middle East
+# These new store locators added.
+# The stores in these locators used to be available un AE domain.
+middle_east_store_locators = [
+    "https://www.sephora.sa/en/store",
+    "https://www.sephora.qa/qa/en/store",
+    "https://www.sephora.com.kw/kw/en/store",
+    "https://www.sephora.bh/bh/en/store",
+    "https://www.sephora.ae/en/store",
+    "https://www.sephora.om/om/en/store",
+]  # Informational
+
+logger.info(f"Middle East Store Locators: {middle_east_store_locators}")
 
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
@@ -92,6 +113,20 @@ def fetch_records(idx, store_url, sgw: SgWriter):
 
         location_name = data_json["name"]
         location_name = location_name if location_name else MISSING
+        if location_name == "-":
+            location_name = MISSING
+        if location_name == "0":
+            location_name = MISSING
+        if location_name == "00":
+            location_name = MISSING
+        if location_name == "000":
+            location_name = MISSING
+        if location_name == "0000":
+            location_name = MISSING
+        if location_name == "00000":
+            location_name = MISSING
+        if location_name == "000000":
+            location_name = MISSING
 
         if "address" in data_json:
             add = data_json["address"]
@@ -125,7 +160,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
         logger.info(f"[{idx}] Zip Code: {zip_postal}")  # noqa
 
         # Street Address has additional info which
-        # should be removed
+        # should be removed.
         street_address = " ".join(street_address.split())
         sta_sp = street_address.split(",")
         sta_additional_info_rmved = ""
@@ -138,6 +173,9 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             in sta_additional_info_rmved
         ):
             sta_additional_info_rmved = "Al Badee District, Riyadh 14924"
+
+        if sta_additional_info_rmved == "0":
+            sta_additional_info_rmved = MISSING
 
         country_code = locator_domain.split(".")[-1].upper()
         store_number = page_url.split("storeID=")[-1]
@@ -203,8 +241,44 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             hours_of_operation = MISSING
 
         # Raw Address
-        raw_address = ""
+        raw_address = street_address
         raw_address = raw_address if raw_address else MISSING
+        if raw_address == "-":
+            raw_address = MISSING
+        if raw_address == "0":
+            raw_address = MISSING
+        if raw_address == "00":
+            raw_address = MISSING
+        if raw_address == "000":
+            raw_address = MISSING
+        if raw_address == "0000":
+            raw_address = MISSING
+        if raw_address == "00000":
+            raw_address = MISSING
+        if raw_address == "000000":
+            raw_address = MISSING
+
+        # Clean and making unsescaped for Germany's address
+        # "D&uuml;sseldorf" needs to be transformed to Düsseldorf
+        if country_code == "DE":
+            raw_address = raw_address.split("+")[0].strip()
+            raw_address = ht.unescape(raw_address)
+            location_name = ht.unescape(location_name)
+            sta_additional_info_rmved = sta_additional_info_rmved.split("+")[0].strip()
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
+        if country_code == "CZ":
+            raw_address = ht.unescape(raw_address)
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
+        if country_code in ["ES", "DK", "FR", "SE", "PT", "PL", "IT"]:
+            raw_address = ht.unescape(raw_address)
+            location_name = ht.unescape(location_name)
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
         idx += 1
         item = SgRecord(
             locator_domain=locator_domain,
@@ -221,7 +295,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=street_address,
+            raw_address=raw_address,
         )
         sgw.write_row(item)
     except Exception as e:
@@ -245,7 +319,7 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-    logger.info("Started")  # noqa
+    logger.info("Started")
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -258,7 +332,7 @@ def scrape():
         )
     ) as writer:
         fetch_data(writer)
-    logger.info("Finished")  # noqa
+    logger.info("Finished")
 
 
 if __name__ == "__main__":

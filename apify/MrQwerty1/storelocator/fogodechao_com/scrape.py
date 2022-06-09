@@ -57,6 +57,8 @@ def fetch_data(sgw: SgWriter):
             continue
 
         street_address = j.get("address1") or ""
+        if not street_address:
+            continue
         st = j.get("city_state") or ""
         city, state = st.split(", ")[:2]
         postal = str(j.get("address2")).split()[-1].replace(".", "")

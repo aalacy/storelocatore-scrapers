@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+from time import sleep
 from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgFirefox
+import os
 
 
 def fetch_data():
@@ -25,6 +25,7 @@ def fetch_data():
                 f'https://www.orange.be/nl/shop_locator/shop/{poi["slug"]}.json'
             ).json()
             driver.get(page_url)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
             hoo = loc_dom.xpath('//div[@class="hours-week"]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
@@ -62,6 +63,14 @@ def fetch_data():
 
 
 def scrape():
+    try:
+        proxy_pass = os.environ["PROXY_PASSWORD"]
+
+    except Exception:
+        proxy_pass = "No"
+
+    if proxy_pass == "No":
+        raise Exception("Run this with a proxy")
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
