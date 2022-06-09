@@ -130,8 +130,10 @@ def parse(data):
         )["href"]
         try:
             k["country"] = dat.split("countryIso=", 1)[1].split("&", 1)[0]
-        except Exception:
-            pass
+        except Exception as e:
+            logzilla.error(f"country_code {dat}", exc_info=e)
+            if not dat:
+                logzilla.error(f"\n\n\n\n\n\n\n\n\n\n{str(soup)}\n\n\n\n\n\n\n\n\n\n")
         try:
             k["id"] = dat.split("storeId=", 1)[1].strip()
         except Exception:
@@ -221,8 +223,9 @@ def grab_links(state):
 
 def fetch_stores(state):
     with SgRequests() as session:
+        url_to_test = "https://stores.armaniexchange.com/united-kingdom/ax-armani-exchange-westfield-stratford-city"
         logzilla.info(
-            f"{parse((b4(session.get('https://stores.armaniexchange.com/china/ax-armani-exchange-beijing-crystal-mall').text,'lxml'),'https://stores.armaniexchange.com/china/ax-armani-exchange-beijing-crystal-mall'))}"
+            f"{parse((b4(session.get(url_to_test).text,'lxml'),url_to_test))}"
         )
         for next_r in state.request_stack_iter():
             logzilla.info(str("https://stores.armaniexchange.com/" + next_r.url))
@@ -253,6 +256,7 @@ def fetch_stores(state):
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
     state.get_misc_value("init", default_factory=lambda: grab_links(state))
+    state.save(override=True)
     for store in fetch_stores(state):
         yield store
 
@@ -261,19 +265,21 @@ def scrape():
     url = "https://armaniexchange.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["url"]),
-        location_name=MappingField(mapping=["name"]),
-        latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lng"]),
-        street_address=MappingField(mapping=["address"]),
-        city=MappingField(mapping=["city"]),
-        state=MappingField(mapping=["state"]),
-        zipcode=MappingField(mapping=["zip"]),
-        country_code=MappingField(mapping=["country"]),
-        phone=MappingField(mapping=["phone"]),
-        store_number=MappingField(mapping=["id"], part_of_record_identity=True),
-        hours_of_operation=MappingField(mapping=["hours"]),
-        location_type=MappingField(mapping=["type"]),
+        page_url=MappingField(mapping=["url"], part_of_record_identity=True),
+        location_name=MappingField(mapping=["name"], is_required=False),
+        latitude=MappingField(mapping=["lat"], is_required=False),
+        longitude=MappingField(mapping=["lng"], is_required=False),
+        street_address=MappingField(mapping=["address"], is_required=False),
+        city=MappingField(mapping=["city"], is_required=False),
+        state=MappingField(mapping=["state"], is_required=False),
+        zipcode=MappingField(mapping=["zip"], is_required=False),
+        country_code=MappingField(mapping=["country"], is_required=False),
+        phone=MappingField(mapping=["phone"], is_required=False),
+        store_number=MappingField(
+            mapping=["id"], is_required=False, part_of_record_identity=True
+        ),
+        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
+        location_type=MappingField(mapping=["type"], is_required=False),
     )
 
     pipeline = SimpleScraperPipeline(
