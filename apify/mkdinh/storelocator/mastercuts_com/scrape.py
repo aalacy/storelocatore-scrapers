@@ -72,16 +72,36 @@ def fetch_location(poi_html, retry=0):
         latitude = latitude[0] if latitude else ""
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
         hoo = loc_dom.xpath('//div[contains(@class,"salon-timings")]//span')
+        if not len(hoo):
+            hoo = loc_dom.xpath('//div[contains(@class,"store-hours")]//span')
 
         hours_of_operation = []
         for dayhour in hoo:
             if "closedNow" in dayhour.attrib["class"]:
                 continue
 
-            day = dayhour.xpath('div[contains(@class, "week-day")]/text()')[0]
-            hour = dayhour.xpath('div[contains(@class, "oper-hours")]/text()')[0]
+            day_matches = dayhour.xpath('div[contains(@class, "week-day")]/text()')
+            hour_matches = dayhour.xpath('div[contains(@class, "oper-hours")]/text()')
+            if not len(day_matches) or not len(hour_matches):
+                continue
+
+            day = day_matches[0]
+            hour = hour_matches[0]
 
             hours_of_operation.append(f"{day}: {hour}")
+
+        if not len(hours_of_operation):
+            data = session.get(
+                f"https://info3.regiscorp.com/salonservices/siteid/100/salon/{store_number}"
+            ).json()
+            hours_of_operation = [
+                f'{dayhour["days"]}: {dayhour["hours"]["open"]}-{dayhour["hours"]["close"]}'
+                for dayhour in data["store_hours"]
+            ]
+
+        if not len(hours_of_operation):
+            days = ["Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            hours_of_operation = [f"{day}: Closed" for day in days]
 
         hours_of_operation = ",".join(hours_of_operation)
 
@@ -103,7 +123,7 @@ def fetch_location(poi_html, retry=0):
         )
 
         return item
-    except:
+    except Exception as e:
         if retry < 3:
             return fetch_location(poi_html, retry + 1)
 
