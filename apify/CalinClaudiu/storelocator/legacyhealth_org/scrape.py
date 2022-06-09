@@ -102,11 +102,8 @@ def scrape():
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        street_address=sp.MultiMappingField(
-            mapping=[
-                ["Address1"],
-                ["Address2"],
-            ],
+        street_address=sp.MappingField(
+            mapping=["Address1"],
             part_of_record_identity=True,
             raw_value_transform=fix_comma,
             is_required=False,
