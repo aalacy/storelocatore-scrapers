@@ -1,6 +1,4 @@
 import ssl
-import json
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
@@ -13,13 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "moesitaliansandwiches_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -46,7 +38,7 @@ def get_driver(url, class_name, driver=None):
             ).driver()
             driver.get(url)
 
-            WebDriverWait(driver, 2).until(
+            WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
@@ -70,79 +62,45 @@ def fetch_data():
             driver = get_driver(url, class_name)
         else:
             driver = get_driver(url, class_name, driver=driver)
-        loclist = driver.page_source.split("customLocationContent")[1:]
+        loclist = (
+            driver.page_source.split("window.POPMENU_APOLLO_STATE = ")[1]
+            .split("[]}};")[0]
+            .split("RestaurantLocation:")[1:-1]
+        )
         if len(loclist) == 0:
             continue
         else:
             break
-    coords_list = driver.page_source.split('"lat":')[1:]
     for loc in loclist:
-        loc = (
-            '{"customLocationContent'
-            + loc.split(',"showLocationPhotoInLocationSearch')[0]
-            + "}"
-        )
-        loc = json.loads(loc)
+        try:
+            page_url = loc.split('"customLocationContent":"')[1].split("View")[0]
+        except:
+            continue
         page_url = (
-            DOMAIN
-            + BeautifulSoup(loc["customLocationContent"], "html.parser").find("a")[
-                "href"
-            ]
+            BeautifulSoup(page_url, "html.parser")
+            .find("a")["href"]
+            .replace('"/', "")
+            .replace('"', "")
         )
+        page_url = DOMAIN + page_url
         log.info(page_url)
-        driver = get_driver(page_url, class_name)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        location_name = soup.find("h4").text
-        temp = soup.findAll("p")
-        phone = temp[1].text
-        address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
-        address = address.replace(",", " ")
-        address = usaddress.parse(address)
-        i = 0
-        street_address = ""
-        city = ""
-        state = ""
-        zip_postal = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street_address = street_address + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                zip_postal = zip_postal + " " + temp[0]
-            i += 1
-        city = city.replace("(Inside Mobil)", "").replace("inside Mobil", "")
+        store_number = loc.split('"id":')[1].split('"')[0]
+        location_name = loc.split('"name":"')[1].split('"')[0]
+        log.info(page_url)
+        phone = loc.split('"displayPhone":"')[1].split('"')[0]
+        street_address = loc.split('"streetAddress":"')[1].split('"')[0]
+        city = loc.split('"city":"')[1].split('"')[0]
+        state = loc.split('"state":"')[1].split('"')[0]
+        zip_postal = loc.split('"postalCode":"')[1].split('"')[0]
+        country_code = loc.split('"country":"')[1].split('"')[0]
+        latitude = loc.split('"lat":')[1].split(",")[0]
+        longitude = loc.split('"lng":')[1].split(",")[0]
         hours_of_operation = (
-            soup.find("div", {"class": "hours"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
+            loc.split('"schemaHours":[')[1]
+            .split("]")[0]
+            .replace('","', " ")
+            .replace('"', "")
         )
-        if "NOW OFFERING" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("NOW OFFERING")[0]
-        elif "ONLINE ORDERING" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("ONLINE ORDERING")[0]
-        elif "DELIVERY" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("DELIVERY")[0]
-        elif "NEW HOURS" in hours_of_operation:
-            hours_of_operation = hours_of_operation.split("NEW HOURS")[0]
-        for coords in coords_list:
-            if location_name in coords:
-                coords = coords.split(',"googlePlaceId"')[0].split(",")
-                latitude = coords[0]
-                longitude = coords[1].replace('"lng":', "")
-                break
-        country_code = "US"
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
@@ -152,8 +110,8 @@ def fetch_data():
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
-            phone=phone.strip(),
+            store_number=store_number,
+            phone=phone,
             location_type=MISSING,
             latitude=latitude,
             longitude=longitude,

@@ -17,7 +17,9 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//h3/following-sibling::*//a")
+    div = tree.xpath(
+        "//h3/following-sibling::div[./p][1]//a | //h3/following-sibling::p[./a]"
+    )
 
     for d in div:
 
@@ -28,12 +30,8 @@ def fetch_data(sgw: SgWriter):
             or page_url == "#"
         ):
             continue
-        if (
-            page_url.find("occasion") != -1
-            or page_url.find("franchise.cashconverters") != -1
-        ):
-            continue
         location_name = "".join(d.xpath(".//text()")).strip()
+
         try:
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
@@ -42,28 +40,12 @@ def fetch_data(sgw: SgWriter):
         ad = (
             "".join(
                 tree.xpath(
-                    '//h3[text()="Coordonnées"]/following-sibling::div[1]//text()'
+                    "//img[contains(@src, 'localisation')]/following-sibling::div//text()"
                 )
             )
-            .replace("\n", "")
-            .strip()
             or "<MISSING>"
         )
-        ad = " ".join(ad.split())
-        if ad == "<MISSING>":
-            ad = (
-                "".join(
-                    tree.xpath(
-                        '//strong[contains(text(), "Adresse")]/following-sibling::*[1]//text() | //strong[contains(text(), "Adresse")]/following-sibling::text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-        if ad.find("Labège près") != -1:
-            ad = ad.split("Labège près")[0].strip()
-        ad = ad.replace("42 000", "42000").strip()
+
         a = parse_address(International_Parser(), ad)
         street_address = (
             f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
@@ -73,56 +55,27 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "FR"
         city = a.city or "<MISSING>"
-        if postal == "<MISSING>":
-            postal = ad.split("- ")[-1].split()[0].strip()
         phone = (
             "".join(
                 tree.xpath(
-                    '//h3[text()="Coordonnées"]/following-sibling::div[2]//text()'
+                    '//img[contains(@src, "mobile")]/following-sibling::div//text()'
                 )
             )
-            .replace("\n", "")
-            .strip()
             or "<MISSING>"
         )
-        if phone == "<MISSING>":
-            phone = (
-                "".join(
-                    tree.xpath(
-                        '//strong[contains(text(), "Téléphone")]/following-sibling::*[1]//text() | //strong[contains(text(), "Téléphone")]/following-sibling::text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-        phone = phone.replace(".", "").strip()
-        phone = " ".join(phone.split())
+        if phone == "-":
+            phone = "<MISSING>"
         _tmp = []
-        days = tree.xpath('//table[@class="company_schedules_table"]//tr/th[1]//text()')
+        days = tree.xpath("//h1/following-sibling::div[1]/div[1]//ul/li//text()")
         days = list(filter(None, [a.strip() for a in days]))
-        times = tree.xpath(
-            '//table[@class="company_schedules_table"]//tr/td[1]//text()'
-        )
+        times = tree.xpath("//h1/following-sibling::div[1]/div[2]//ul/li//text()")
         times = list(filter(None, [a.strip() for a in times]))
         for b, t in zip(days, times):
             _tmp.append(f"{b.strip()}: {t.strip()}")
         hours_of_operation = (
             "; ".join(_tmp).replace("\n", "").replace("\r", "").strip() or "<MISSING>"
         )
-        hours_of_operation = " ".join(hours_of_operation.split())
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//td[./img[contains(@src, "horaire")]]/following-sibling::td[1]//text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-            hours_of_operation = " ".join(hours_of_operation.split())
+
         text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
         try:
             if text.find("ll=") != -1:

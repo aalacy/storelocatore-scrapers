@@ -12,8 +12,10 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
 import random
-from webdriver_manager.chrome import ChromeDriverManager
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 os.environ[
     "PROXY_URL"
@@ -262,6 +264,8 @@ def request_with_retries(page_url):
     ) as session:
         _headers["User-Agent"] = random.choice(user_agents)
         sp1 = session.get(page_url, headers=_headers)
+        if sp1.status_code != 200:
+            return None
         if not sp1.text.strip():
             raise Exception
         return sp1
@@ -275,11 +279,12 @@ def _d(loc, domain, country):
 
     logger.info(page_url)
     try:
-        _ = json.loads(
-            bs(request_with_retries(page_url).text, "lxml")
-            .select_one("script#__NEXT_DATA__")
-            .text
-        )["props"]["pageProps"]["queryResult"]["Store"]
+        res = request_with_retries(page_url)
+        if not res:
+            return None
+        _ = json.loads(bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text)[
+            "props"
+        ]["pageProps"]["queryResult"]["Store"]
     except Exception as err:
         logger.info(str(err))
         return None
@@ -304,7 +309,7 @@ def _d(loc, domain, country):
     return SgRecord(
         page_url=page_url,
         store_number=_["id"],
-        location_name=_["name"],
+        location_name=_["name"].split("-")[0],
         street_address=_["address"],
         city=city,
         state=state,
@@ -320,85 +325,90 @@ def _d(loc, domain, country):
     )
 
 
-def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
+def fetch_data():
+    with SgChrome(
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
-    ).driver()
-
-
-def fetch_data():
-    driver = get_driver()
-    with SgRequests(proxy_country="us") as session:
-        for country, base_url in urls.items():
-            logger.info(f"[{country}] {base_url}")
-            domain = "/".join(base_url.split("/")[:-1])
-            res_sd = json.loads(
-                bs(session.get(base_url, headers=_headers).text, "lxml")
-                .select_one("script#__NEXT_DATA__")
-                .text
-            )["props"]["pageProps"]["queryResult"]["Retailers"]
-            if not res_sd.get("nodes"):
-                continue
-            store_indices = [ss for ss in res_sd["nodes"] if ss]
-            for store_index in store_indices:
-                if not store_index.get("link") or not store_index["link"].get("url"):
-                    continue
-                store_index_url = domain + store_index["link"]["url"]
-                try:
-                    driver.get(store_index_url)
-                    navs = json.loads(
-                        bs(driver.page_source, "lxml")
-                        .select_one("script#__NEXT_DATA__")
-                        .text
-                    )["props"]["pageProps"]["queryResult"]["Breadcrumb"][
-                        "navigationLinks"
-                    ]
-                    if not navs:
-                        continue
-                    store_url = domain + navs[0]["url"]
-                except Exception as err:
-                    logger.info(str(err))
-                res_ss = json.loads(
-                    bs(request_with_retries(store_url).text, "lxml")
+    ) as driver:
+        with SgRequests(proxy_country="us") as session:
+            for country, base_url in urls.items():
+                logger.info(f"[{country}] {base_url}")
+                domain = "/".join(base_url.split("/")[:-1])
+                res_sd = json.loads(
+                    bs(session.get(base_url, headers=_headers).text, "lxml")
                     .select_one("script#__NEXT_DATA__")
                     .text
-                )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
-                if not res_ss["links"]:
+                )["props"]["pageProps"]["queryResult"]["Retailers"]
+                if not res_sd.get("nodes"):
                     continue
-                stores = [ss for ss in res_ss["links"] if ss]
-                for store in stores:
-                    if not store.get("url"):
+                store_indices = [ss for ss in res_sd["nodes"] if ss]
+                for store_index in store_indices:
+                    if not store_index.get("link") or not store_index["link"].get(
+                        "url"
+                    ):
                         continue
-                    store_location_url = domain + store["url"]
-                    logger.info(store_location_url)
+                    store_index_url = domain + store_index["link"]["url"]
                     try:
-                        results = json.loads(
-                            bs(
-                                request_with_retries(store_location_url).text,
-                                "lxml",
-                            )
+                        driver.get(store_index_url)
+                        navs = json.loads(
+                            bs(driver.page_source, "lxml")
                             .select_one("script#__NEXT_DATA__")
                             .text
-                        )["props"]["pageProps"]["queryResult"]
+                        )["props"]["pageProps"]["queryResult"]["Breadcrumb"][
+                            "navigationLinks"
+                        ]
+                        if not navs:
+                            continue
+                        store_url = domain + navs[0]["url"]
                     except Exception as err:
                         logger.info(str(err))
-
-                    if results.get("StoresByCity"):
-                        locations = [
-                            ll for ll in results["StoresByCity"]["nodes"] if ll
-                        ]
-                        if not locations:
+                    res = request_with_retries(store_url)
+                    if not res:
+                        continue
+                    res_ss = json.loads(
+                        bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text
+                    )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
+                    if not res_ss["links"]:
+                        continue
+                    stores = [ss for ss in res_ss["links"] if ss]
+                    for store in stores:
+                        if not store.get("url"):
                             continue
-                        for loc in locations:
-                            yield _d(loc, domain, country)
-                    else:
-                        yield _d(store, domain, country)
+                        store_location_url = domain + store["url"]
+                        logger.info(store_location_url)
+                        try:
+                            res = request_with_retries(store_url)
+                            if not res:
+                                continue
+                            results = json.loads(
+                                bs(
+                                    res.text,
+                                    "lxml",
+                                )
+                                .select_one("script#__NEXT_DATA__")
+                                .text
+                            )["props"]["pageProps"]["queryResult"]
+                        except Exception as err:
+                            logger.info(str(err))
+
+                        if results.get("StoresByCity"):
+                            locations = [
+                                ll for ll in results["StoresByCity"]["nodes"] if ll
+                            ]
+                            if not locations:
+                                continue
+                            for loc in locations:
+                                yield _d(loc, domain, country)
+                        else:
+                            yield _d(store, domain, country)
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             if rec:

@@ -1,3 +1,4 @@
+import re
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -12,10 +13,8 @@ def get_international(line):
     adr2 = adr.street_address_2 or ""
     street = f"{adr1} {adr2}".strip()
     city = adr.city or SgRecord.MISSING
-    state = adr.state or SgRecord.MISSING
-    postal = adr.postcode or SgRecord.MISSING
 
-    return street, city, state, postal
+    return street, city
 
 
 def fetch_data(sgw: SgWriter):
@@ -26,7 +25,24 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         g = j.get("geolocation") or {}
         raw_address = g.get("address") or ""
-        street_address, city, state, postal = get_international(raw_address)
+        postal = "".join(re.findall(r"\d{2,3}.\d{3}", raw_address))
+        if not postal:
+            street_address, city = raw_address.split(", ")
+        else:
+            adr = raw_address.replace(", Polska", "").split(postal)
+            adr = list(filter(None, [a.strip() for a in adr]))
+            if len(adr) == 2:
+                street_address, city = adr
+            else:
+                line = adr.pop()
+                if "Warszawa" in line:
+                    street_address = line.replace("Warszawa", "").strip()
+                    city = "Warszawa"
+                else:
+                    street_address, city = get_international(line)
+
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         state = j.get("region")
         country_code = "PL"
         location_type = ", ".join(j.get("services") or [])

@@ -71,7 +71,7 @@ def fetch_data(sgw: SgWriter):
 
         if (
             page_url != "https://www.apcshop.com/retailer/retailer/index/"
-            or page_url != "https://minishopmadrid.com/"
+            and page_url != "https://minishopmadrid.com/"
         ):
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)

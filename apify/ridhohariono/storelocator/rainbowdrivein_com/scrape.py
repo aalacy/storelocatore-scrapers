@@ -1,127 +1,125 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-from sglogging import sglog
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
-import re
-
-DOMAIN = "rainbowdrivein.com"
-BASE_URL = "https://rainbowdrivein.com"
-LOCATION_URL = "https://rainbowdrivein.com/locations/"
-HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-}
-MISSING = "<MISSING>"
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
+def fetch_data(sgw: SgWriter):
 
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
-
-
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
-
-
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return "<MISSING>", "<MISSING>"
-    return latlong.group(1), latlong.group(2)
-
-
-def fetch_data():
-    log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.find("div", {"class": "clearfix eltd-full-section-inner"}).find_all(
-        "div", {"class": re.compile(r"wpb_column vc_column_container vc_col-sm-1/5.*")}
+    locator_domain = "https://rainbowdrivein.com/"
+    api_url = "https://www.google.com/maps/d/u/0/embed?mid=1ZrSu9RQvg_anylS-qaRL10tkm57rZTwT&ll=21.354652853702625%2C-157.97386819511723&z=11"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    cleaned = (
+        r.text.replace("\\t", " ")
+        .replace("\t", " ")
+        .replace("\\n]", "]")
+        .replace("\n]", "]")
+        .replace("\\n,", ",")
+        .replace("\\n", "#")
+        .replace('\\"', '"')
+        .replace("\\u003d", "=")
+        .replace("\\u0026", "&")
+        .replace("\\", "")
+        .replace("\xa0", " ")
+        .replace('"[{', "[{")
+        .replace('}]"', "}]")
     )
-    for row in contents:
-        location_name = row.find("h2", {"class": "eltd-section-title"}).text.strip()
-        info = row.find_all("div", {"class": "wpb_text_column wpb_content_element"})
-        raw_address = info[0].get_text(strip=True, separator=",")
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = info[1].text.strip()
+    locations = json.loads(
+        cleaned.split('var _pageData = "')[1].split('";</script>')[0]
+    )[1][6][0][12][0][13][0]
+
+    for l in locations:
+        page_url = "https://rainbowdrivein.com/locations/"
+        location_name = l[5][0][1][0]
+        slug = str(location_name).split()[0].strip()
+        if location_name == "Rainbow Drive-In":
+            slug = "3308"
+        if str(location_name).find("Pearlridge") != -1:
+            slug = "98-1005"
+        if location_name == "Rainbow Drive-In Kalihi":
+            slug = "1339"
+
+        country_code = "US"
+        latitude = l[1][0][0][0]
+        longitude = l[1][0][0][1]
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        street_address = (
+            "".join(tree.xpath(f'//p[contains(text(), "{slug}")]/text()[1]'))
+            .replace("\n", "")
+            .strip()
+            or location_name
+        )
+        ad = (
+            "".join(tree.xpath(f'//p[contains(text(), "{slug}")]/text()[2]'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        if ad == "<MISSING>" and street_address == "94-226 Leoku St":
+            ad = "Waipahu, HI 96797"
+        city = ad.split(",")[0].strip()
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        location_name = (
+            "".join(
+                tree.xpath(f'//p[contains(text(), "{slug}")]/preceding::h2[1]//text()')
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        phone = (
+            "".join(
+                tree.xpath(f'//p[contains(text(), "{slug}")]/following::h6[1]//text()')
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
         hours_of_operation = (
-            info[3]
-            .get_text(strip=True, separator=",")
-            .replace("Temporary hours as of 9/1/21,", "")
+            " ".join(
+                tree.xpath(
+                    f'//p[contains(text(), "{slug}")]/following::*[contains(text(), "HOURS")][1]/following::p[1]//text()'
+                )
+            )
+            .replace("\n", "")
             .strip()
         )
-        country_code = "US"
-        store_number = MISSING
-        location_type = "rainbowdrivein"
-        latitude = MISSING
-        longitude = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
-            zip_postal=zip_postal,
+            zip_postal=postal,
             country_code=country_code,
-            store_number=store_number,
+            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            raw_address=f"{street_address} {ad}",
         )
 
+        sgw.write_row(row)
 
-def scrape():
-    log.info("start {} Scraper".format(DOMAIN))
-    count = 0
+
+if __name__ == "__main__":
+    session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
-
-
-scrape()
+        fetch_data(writer)

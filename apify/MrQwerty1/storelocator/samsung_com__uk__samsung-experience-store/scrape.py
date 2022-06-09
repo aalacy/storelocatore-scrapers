@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sglogging import sglog
 
 
 def fetch_data(sgw: SgWriter):
@@ -43,7 +44,8 @@ def fetch_data(sgw: SgWriter):
             + ',"distance":500000},"filters":[{"columnName":"storeTypes","operation":"equal","value":["1_ses"]}]}'
         )
         r = session.post(api, data=data, headers=headers)
-        if r.status_code == 503:
+        logger.info(f"{page_url}: {r.status_code}")
+        if r.status_code != 200:
             continue
         js = r.json()["locations"]
 
@@ -56,14 +58,17 @@ def fetch_data(sgw: SgWriter):
             store_number = j.get("searchableId")
             location_name = j.get("name")
             a = j.get("address") or {}
-            street_address = a.get("street")
-            city = j.get("locality")
-            postal = a.get("zip")
-            phone = j.get("telephone")
+            street_address = a.get("street") or ""
+            city = j.get("locality") or ""
+            postal = a.get("zip") or ""
+            phone = j.get("telephone") or ""
+            if phone.count("+") > 1:
+                phone = phone.split("+")[1].strip()
             c = j.get("coordinates") or {}
             latitude = c.get("latitude")
             longitude = c.get("longitude")
             hours_of_operation = j.get("openingHours")
+            raw_address = " ".join(f"{street_address} {city} {postal}".split())
 
             row = SgRecord(
                 page_url=page_url,
@@ -78,6 +83,7 @@ def fetch_data(sgw: SgWriter):
                 location_type=location_type,
                 phone=phone,
                 locator_domain=locator_domain,
+                raw_address=raw_address,
                 hours_of_operation=hours_of_operation,
             )
 
@@ -102,6 +108,7 @@ if __name__ == "__main__":
         "TE": "trailers",
         "Pragma": "no-cache",
     }
+    logger = sglog.SgLogSetup().get_logger(logger_name="samsung.com")
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
