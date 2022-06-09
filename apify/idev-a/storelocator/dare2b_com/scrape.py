@@ -44,9 +44,10 @@ def fetch_data(search):
                 zip_postal = _["postcode"].strip()
                 state = _["region"]
                 if not state:
-                    if not zip_postal.split()[0].isdigit():
+                    zz = zip_postal.split()
+                    if len(zz) > 2:
                         state = zip_postal.split()[0]
-                        zip_postal = zip_postal.split()[-1]
+                        zip_postal = " ".join(zip_postal.split()[1:])
                 country_code = _["country"]
                 if zip_postal == "n/a":
                     zip_postal = ""

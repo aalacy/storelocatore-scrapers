@@ -37,6 +37,7 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Now Open For Safe Indoor Dining Service", "")
                 .replace("NOW OPEN FOR DINE IN!", "")
+                .replace("Delivery available after 5pm", "")
             )
             if "Reserve" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("Reserve")[0]

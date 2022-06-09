@@ -206,6 +206,10 @@ def fetch_data():
         state = getJSONObjectVariable(store, "stateCode")
         zip_postal = getJSONObjectVariable(store, "postalCode")
         street_address = street_address.replace(f",{zip_postal}", "")
+
+        if "temporarily closed" in str(street_address):
+            location_type = "temporarily closed"
+
         country_code = getJSONObjectVariable(store, "country_code")
         phone = getJSONObjectVariable(store, "phone")
         latitude = getJSONObjectVariable(store, "latitude")
@@ -220,6 +224,10 @@ def fetch_data():
             .replace("<br/", " ")
             .strip()
         )
+        if "temporarily closed" in str(hours_of_operation):
+            location_type = "temporarily closed"
+        if "temporarily closed" in str(hours_of_operation):
+            hours_of_operation = MISSING
 
         raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
             MISSING, ""
@@ -229,6 +237,10 @@ def fetch_data():
         if raw_address[len(raw_address) - 1] == ",":
             raw_address = raw_address[:-1]
 
+        street_address = street_address.replace("Store temporarily closed. ,", "")
+        street_address = street_address.replace(
+            "Store re-opening 26th September. ,", ""
+        )
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,

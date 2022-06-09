@@ -57,6 +57,8 @@ def fetch_data():
                 if formatted_addr.street_address_2:
                     street_address = formatted_addr.street_address_2
 
+            if "-" in street_address.split(" ")[-1].strip():
+                street_address = "".join(street_address.rsplit("-", 1)[0].strip())
             city = store["city"]
             state = "<MISSING>"
             zip = (
@@ -80,10 +82,17 @@ def fetch_data():
 
             hours_list = []
             hours = store["time_slots"]
+            days_list = []
             for hour in hours:
-                hours_list.append(
-                    hour["day"] + ":" + hour["start_time"] + " - " + hour["end_time"]
-                )
+                if hour["day"] not in days_list:
+                    days_list.append(hour["day"])
+                    hours_list.append(
+                        hour["day"]
+                        + ":"
+                        + hour["start_time"]
+                        + " - "
+                        + hour["end_time"]
+                    )
 
             hours_of_operation = "; ".join(hours_list).strip()
 

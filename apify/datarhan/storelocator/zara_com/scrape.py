@@ -105,7 +105,7 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=30,
     )
 
     with SgWriter(

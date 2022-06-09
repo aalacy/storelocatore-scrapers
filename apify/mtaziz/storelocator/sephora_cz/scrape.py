@@ -273,6 +273,12 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
             city = ht.unescape(city)
 
+        if country_code in ["ES", "DK", "FR", "SE", "PT", "PL", "IT"]:
+            raw_address = ht.unescape(raw_address)
+            location_name = ht.unescape(location_name)
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
         idx += 1
         item = SgRecord(
             locator_domain=locator_domain,

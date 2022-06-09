@@ -19,7 +19,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def getAddress(raw_address):
@@ -71,17 +71,21 @@ def fetch_data():
     for row in store_lists:
         page_url = LOCATION_URL
         location_name = row.find("h2").text.strip()
+        try:
+            row.find("div", {"class": "col-md-5"}).find("img").parent.decompose()
+        except:
+            continue
         details = row.find("div", {"class": "col-md-5"}).find_all("p")
-        raw_address = details[2].get_text(strip=True, separator=",").strip()
+        raw_address = details[0].get_text(strip=True, separator=",").strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = details[3].text.replace("Phone", "")
+        phone = details[1].text.replace("Phone", "").strip()
         hours_of_operation = (
-            details[4]
+            details[2]
             .text.replace(", until further notice", "")
             .replace("Store Hours", "")
         )
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = MISSING
         location_type = "PHARMACY"
         map_link = row.find("iframe")["src"]
         latitude, longitude = get_latlong(map_link)
