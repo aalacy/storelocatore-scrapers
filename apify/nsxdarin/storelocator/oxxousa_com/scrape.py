@@ -77,6 +77,8 @@ def fetch_data():
                         .split("%22%2C%22infoWindow")[0]
                         .replace("%20", " ")
                         .replace("%3A", ":")
+                        .replace("%2C", ",")
+                        .replace("%26", "-")
                     )
                     yield SgRecord(
                         locator_domain=website,
