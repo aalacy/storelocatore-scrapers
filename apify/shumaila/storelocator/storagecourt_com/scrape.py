@@ -65,6 +65,10 @@ def fetch_data():
                 hours = hours.split("(", 1)[0]
             except:
                 pass
+            try:
+                hours = hours.split("hours:", 1)[1].strip()
+            except:
+                pass
         except:
             street = soup.find("span", {"class": "p-street-address"}).text
             city = soup.find("span", {"class": "p-locality"}).text
