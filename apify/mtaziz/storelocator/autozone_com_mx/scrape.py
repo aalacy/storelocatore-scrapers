@@ -7,9 +7,7 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from lxml import html
-import time
 import ssl
-import random
 import json
 from sgselenium import SgChrome
 
