@@ -24,20 +24,26 @@ def fetch_data():
             if loc_response.status_code == 200:
                 loc_dom = etree.HTML(loc_response.text)
                 hoo = loc_dom.xpath(
-                    '//p[strong[contains(text(), "SERVISNI SPREJEM ")]]/text()'
+                    '//p[strong[contains(text(), "SALON LEXUS")]]/text()'
                 )
-                hoo = hoo[-1] if hoo else ""
+                hoo = [e.strip() for e in hoo if ": od" in e]
+                hoo = " ".join(hoo) if hoo else ""
                 if not hoo:
-                    hoo = loc_dom.xpath(
-                        '//h3[label[contains(text(), "Uudet autot")]]/following-sibling::ul//text()'
-                    )
-                    hoo = " ".join([e.strip() for e in hoo if e.strip()])
+                    if not hoo:
+                        hoo = loc_dom.xpath(
+                            '//h5[contains(text(), "Uudet autot")]/following-sibling::p/text()'
+                        )[:6]
+                    hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(
+                        " Maanantai"
+                    )[0]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi["url"],
                 location_name=poi["name"],
-                street_address=poi["address"]["address1"],
+                street_address=poi["address"]["address1"].replace(
+                    " (lokacija BTC)", ""
+                ),
                 city=poi["address"]["city"],
                 state=poi["address"]["region"],
                 zip_postal=poi["address"]["zip"],

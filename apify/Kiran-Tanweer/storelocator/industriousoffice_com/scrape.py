@@ -22,72 +22,78 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        link_list = []
+        locations = []
+        diff_loc = []
         search_url = "https://www.industriousoffice.com/locations"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
-        locations = soup.findAll("a", {"class": "gtm-all-locations-link"})
+        US_locations = soup.find(
+            "div", {"class": "all-locations-list row small-gutters"}
+        ).findAll("a")
+        for us_loc in US_locations:
+            locations.append(us_loc["href"])
+        Intl_locations = soup.findAll(
+            "a", {"class": "gtm-all-locations-international-link"}
+        )
+        for intl_loc in Intl_locations:
+            if intl_loc["href"].find("singapore") == -1:
+                locations.append(intl_loc["href"])
+        locations = list(dict.fromkeys(locations))
         for loc in locations:
-            link = loc["href"]
-            req = session.get(link, headers=headers)
-            bs = BeautifulSoup(req.text, "html.parser")
-            link = bs.findAll("a", {"class": "link-to-all gtm-view-details"})
-            if link == []:
-                url = loc["href"].strip()
-                if loc["href"] not in link_list:
-                    link_list.append(loc["href"])
-            else:
-                for url in link:
-                    if url["href"] not in link_list:
-                        link_list.append(url["href"])
-
-        link = soup.findAll("a", {"class": "gtm-all-locations-international-link"})
-        for loc_link in link:
-            req = session.get(loc_link["href"], headers=headers)
-            bs = BeautifulSoup(req.text, "html.parser")
-            link = bs.findAll("a", {"class": "link-to-all gtm-view-details"})
-            for loc in link:
-                if link == []:
-                    url = loc["href"].strip()
-                    if loc["href"] not in link_list:
-                        link_list.append(loc["href"])
-                else:
-                    for url in link:
-                        if url["href"] not in link_list:
-                            link_list.append(url["href"])
-
-        for store in link_list:
-            req = session.get(store, headers=headers)
-            bs = BeautifulSoup(req.text, "html.parser")
-            title = bs.find("h3", {"class": "location-name"}).text
+            link = loc
+            stores_req = session.get(link, headers=headers)
+            soup = BeautifulSoup(stores_req.text, "html.parser")
             try:
-                label = bs.find("div", {"data-test-id": "location_label"}).text
+                title = soup.find("h3", {"class": "location-name"}).text
             except AttributeError:
+                url = soup.findAll("a", {"class": "link-to-all gtm-view-details"})
+                for loc_url in url:
+                    locations.append(loc_url["href"])
+        locations = list(dict.fromkeys(locations))
+        for loc in locations:
+            link = loc
+            stores_req = session.get(link, headers=headers)
+            soup = BeautifulSoup(stores_req.text, "html.parser")
+            store_type = link.split("com/")[1].split("/")[0].strip()
+            if store_type == "m":
+                store_type = "Market"
+            else:
+                store_type = "Industry"
+            label = soup.find("div", {"data-test-id": "location_label"})
+            if label is None:
+                diff_loc.append(link)
                 label = MISSING
-            label = label.lower()
-            if label.find("opening") != -1:
+                continue
+            else:
+                label = label.text
+            try:
+                title = soup.find("h3", {"class": "location-name"}).text
+            except AttributeError:
+                title = MISSING
+            address = soup.find("address", {"class": "mb-0"}).find("a")
+            coords = address["href"]
+            address = address.text
+            if label.find("Coming") != -1:
                 title = title + " " + "Coming Soon"
-            if label.find("coming") != -1:
+            if label.find("Opening") != -1:
                 title = title + " " + "Coming Soon"
-            phone = bs.find("a", {"class": "phone phone-ga-mobile"})
-            if phone is None:
+            try:
+                coords = coords.split("!3d")[1].strip()
+                lat, lng = coords.split("!4d")
+            except IndexError:
+                try:
+                    coords = coords.split("/@")[1].strip()
+                    lat, lng = coords.split(",1")[0].split(",")
+                except IndexError:
+                    lat = MISSING
+                    lng = MISSING
+            try:
+                phone = soup.find("a", {"class": "phone phone-ga-mobile"}).text
+            except AttributeError:
                 phone = MISSING
-            else:
-                phone = phone.text
-            address = bs.find("a", {"data-test-id": "location_address_link"}).text
-            coords = bs.find("div", {"id": "locationMap"})
-            lat = coords["data-lat"]
-            lng = coords["data-lng"]
-            if store.find("manchester") != -1:
-                country = "UK"
-            elif store.find("london") != -1:
-                country = "UK"
-            else:
-                country = "US"
-            address = address.strip()
-            address = address.replace("\n", " ")
-            address = address.replace("                     ", " ")
 
+            address = address.replace(",", "")
+            address = address.strip()
             parsed = parser.parse_address_usa(address)
             street1 = (
                 parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
@@ -101,31 +107,16 @@ def fetch_data():
             state = parsed.state if parsed.state else "<MISSING>"
             pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
-            if street == "Windmill Green 24 Mount St":
-                pcode = state + " " + pcode
-                state = MISSING
-
-            if street == "245 Hammersmith Rd":
-                pcode = state + " " + pcode
-                state = MISSING
-                city = "London"
-
-            if street == "70 St Mary Axe London, Unit Ec3A 8Be":
-                street = street.split("London")
-                street, city = street
-                pcode = city.split(",")
-                pcode = pcode[1].strip()
-                pcode = pcode.lstrip("Unit").strip()
-                city = "London"
-            title = title.strip()
-
-            title = title.replace(
-                "Industrious Biltmore Coming Soon", "Industrious Biltmore"
-            ).strip()
+            if link.find("london") != -1:
+                country = "UK"
+            elif link.find("manchester") != -1:
+                country = "UK"
+            else:
+                country = "US"
 
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=store,
+                page_url=link,
                 location_name=title,
                 street_address=street.strip(),
                 city=city.strip(),
@@ -134,10 +125,11 @@ def fetch_data():
                 country_code=country,
                 store_number=MISSING,
                 phone=phone,
-                location_type=MISSING,
+                location_type=store_type,
                 latitude=lat,
                 longitude=lng,
                 hours_of_operation=MISSING,
+                raw_address=address,
             )
 
 
@@ -145,9 +137,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

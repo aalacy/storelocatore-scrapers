@@ -22,6 +22,8 @@ def fetch_data():
     log.info("Fetching store_locator data")
     data = session.post(API_URL, headers=HEADERS).json()
     for row in data["Locations"]:
+        if "Coming soon" in row["OpenHours"]:
+            continue
         page_url = BASE_URL + row["CustomUrl"]
         location_name = row["Name"] if row["Name"] else "Ollie's Bargain"
         if row["Address2"]:
@@ -31,7 +33,7 @@ def fetch_data():
         city = row["City"]
         state = row["State"]
         zip_postal = row["Zip"]
-        phone = row["Phone"]
+        phone = row["Phone"].strip()
         store_number = row["StoreCode"]
         country_code = "US"
         hours_of_operation = row["OpenHours"].replace("<br />", ",").rstrip(",").strip()

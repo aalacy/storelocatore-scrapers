@@ -42,7 +42,9 @@ def fetch_data():
             )
             if not location_name:
                 continue
-            page_url = search_url
+            page_url = "".join(
+                store.xpath('.//a[contains(text(),"VISIT WEBSITE")]/@href')
+            ).strip()
 
             location_type = "<MISSING>"
             store_info = list(

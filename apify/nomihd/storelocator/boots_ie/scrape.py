@@ -60,11 +60,17 @@ def parallel_run(store_url):
                 street_address = "".join(
                     sec.xpath('dd[@class="store_info_list_item"][1]/text()')
                 ).strip()
-                city = "".join(
-                    sec.xpath('dd[@class="store_info_list_item"][2]/text()')
-                ).strip()
+                city = (
+                    "".join(sec.xpath('dd[@class="store_info_list_item"][2]/text()'))
+                    .strip()
+                    .replace("Co.", "")
+                    .strip()
+                    .replace("Co,", "")
+                    .strip()
+                )
                 if "Dublin" in city:
                     city = "Dublin"
+
                 state = "".join(
                     sec.xpath('dd[@class="store_info_list_item"][3]/text()')
                 ).strip()

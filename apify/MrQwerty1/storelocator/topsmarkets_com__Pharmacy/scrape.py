@@ -16,11 +16,12 @@ def get_urls():
     return tree.xpath("//div[@id='StoreLocator']//tr[not(@class)]/td/a/@href")
 
 
-def get_data(page_url, sgw: SgWriter):
+def get_data(api, sgw: SgWriter):
+    store_number = api.split("L=")[1].split("&")[0]
+    page_url = f"https://www.topsmarkets.com/StoreLocator/Store/?L={store_number}&S="
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    store_number = "".join(tree.xpath("//p[@class='StoreNumber']/text()")).strip()
     line = tree.xpath("//p[@class='Address']/text()")
     line = list(filter(None, [l.strip() for l in line]))
     csz = line.pop()
@@ -68,7 +69,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

@@ -36,6 +36,7 @@ def fetch_data():
             location_name = strip_accents(loc["name"])
             log.info(location_name)
             phone = loc["phone"].split("/")[0]
+            store_number = loc["id"]
             street_address = strip_accents(loc["address"])
             log.info(street_address)
             city = strip_accents(loc["city"])
@@ -57,7 +58,7 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
                 latitude=latitude,

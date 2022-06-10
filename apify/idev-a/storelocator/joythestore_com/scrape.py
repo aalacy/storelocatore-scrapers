@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
+from sgpostal.sgpostal import parse_address_intl
 
 try:
     _create_unverified_https_context = (
@@ -28,30 +29,38 @@ def fetch_data():
             "section.vtex-store-components-3-x-container > div > div  div.items-stretch.pr0"
         )
         for _ in locations:
-            if not _.text.strip():
+            if not _.text.strip() or not _.p or len(_.select("p")) < 2:
                 break
             p = _.select("p")
-            addr = list(p[1].stripped_strings)
+            _addr = list(p[1].stripped_strings)
             phone = ""
-            if "Phone" in addr[-1]:
-                phone = addr[-1].split(":")[-1]
-            raw_address = addr[0].split(":")[-1].strip()
-            street_address = " ".join(raw_address.split()[:-2]).strip()
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
+            _pp = list(p[-2].stripped_strings)[-1]
+            if "Phone" in _pp:
+                phone = _pp.split(":")[-1]
 
-            hours = list(p[2].stripped_strings)
+            raw_address = _addr[0].split(":")[-1].strip()
+            addr = parse_address_intl(raw_address + ", United Kingdom")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+
+            hours = list(p[-1].stripped_strings)
             if hours:
                 hours = hours[1:]
-            coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
+            try:
+                coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
+            except:
+                coord = ["", ""]
+            city = addr.city
+            if not city:
+                city = (
+                    p[0].text.replace("JOY", "").replace("OUTLET O2 ARENA", "").strip()
+                )
             yield SgRecord(
                 page_url=base_url,
                 location_name=p[0].text.strip(),
                 street_address=street_address,
-                city=p[0]
-                .text.replace("JOY", "")
-                .replace("OUTLET O2 ARENA", "")
-                .strip(),
+                city=city,
                 zip_postal=" ".join(raw_address.split()[-2:]),
                 country_code="UK",
                 latitude=coord[0],

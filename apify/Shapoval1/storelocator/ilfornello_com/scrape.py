@@ -21,13 +21,14 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-        if page_url == "#":
-            continue
         location_name = "".join(d.xpath(".//span/text()")).replace("\n", "").strip()
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
+        cms = "".join(tree.xpath('//*[contains(text(), "COMING SOON")]/text()'))
+        if cms:
+            continue
         ad = tree.xpath('//a[contains(@href, "goo")]//text()')
         if location_name.find("Bayview") != -1:
             ad = tree.xpath('//a[contains(@href, "goo")]/following::p[1]//text()')
@@ -68,27 +69,46 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
-        if hours_of_operation.find("HOLIDAY HOURS") != -1:
-            hours_of_operation = hours_of_operation.split("HOLIDAY HOURS")[0].strip()
-        if hours_of_operation.find("Holiday Hours Dec") != -1:
-            hours_of_operation = hours_of_operation.split("Holiday Hours Dec")[
-                0
-            ].strip()
-        if hours_of_operation.find("requests.") != -1:
-            hours_of_operation = hours_of_operation.split("requests.")[1].strip()
-        if hours_of_operation.find("Hours:") != -1:
-            hours_of_operation = hours_of_operation.split("Hours:")[1].strip()
-        if hours_of_operation.find("Brunch") != -1:
-            hours_of_operation = hours_of_operation.split("Brunch")[0].strip()
-        if hours_of_operation.find("Phone") != -1:
-            hours_of_operation = hours_of_operation.split("Phone")[0].strip()
-        if hours_of_operation.find("*") != -1:
-            hours_of_operation = hours_of_operation.split("*")[0].strip()
+        if hours_of_operation.find("TAKEOUT") != -1:
+            hours_of_operation = hours_of_operation.split("TAKEOUT")[1].strip()
+        if hours_of_operation.find("DELIVERY:") != -1:
+            hours_of_operation = hours_of_operation.split("DELIVERY:")[1].strip()
+        if hours_of_operation.find("DELIVERY") != -1:
+            hours_of_operation = hours_of_operation.split("DELIVERY")[1].strip()
+        if hours_of_operation.find("Please call") != -1:
+            hours_of_operation = hours_of_operation.split("Please call")[0].strip()
+        if hours_of_operation.find("HOURS") != -1:
+            hours_of_operation = (
+                hours_of_operation.split("HOURS")[1].split("905")[0].strip()
+            )
         hours_of_operation = (
-            hours_of_operation.replace("HOURS OF OPERATION:", "")
-            .replace("Open for Indoor Dining", "")
+            hours_of_operation.replace("Open for Indoor Dining", "")
+            .replace(f"{phone}", "")
             .strip()
         )
+        if page_url.find("https://ilfornello.com/st-catharines/") != -1:
+            street_address = (
+                "".join(tree.xpath('//a[contains(@href, "goo")]//text()'))
+                or "<MISSING>"
+            )
+            ad = "".join(
+                tree.xpath(
+                    '//strong[./a[contains(@href, "goo")]]/following-sibling::text()'
+                )
+            )
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+            phone = "".join(
+                tree.xpath("//p[./strong/a]/following-sibling::p[1]//text()")
+            )
+            hours_of_operation = (
+                " ".join(tree.xpath('//p[contains(text(), "Monday")]//text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,

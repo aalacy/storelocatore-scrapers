@@ -37,14 +37,14 @@ def fetch_data(sgw: SgWriter):
         city = location_name
         latitude = (
             "".join(tree.xpath('//script[contains(text(), "let locations")]/text()'))
-            .split(f"{location_name}")[1]
+            .split(f"{location_name.split('–')[0].strip()}")[1]
             .split(",")[1]
             .replace("'", "")
             .strip()
         )
         longitude = (
             "".join(tree.xpath('//script[contains(text(), "let locations")]/text()'))
-            .split(f"{location_name}")[1]
+            .split(f"{location_name.split('–')[0].strip()}")[1]
             .split(",")[2]
             .replace("'", "")
             .replace("]", "")
@@ -59,6 +59,9 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        if location_name.find("Coming Soon") != -1:
+            city = city.split("–")[0].strip()
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

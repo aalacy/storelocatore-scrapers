@@ -8,7 +8,6 @@ from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import retry, stop_after_attempt
 import tenacity
 from lxml import html
@@ -27,7 +26,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-LOCATION_URL = "https://www.ikea.is/nanar"
+LOCATION_URL = "https://www.ikea.is/is/afgreidslutimi"
 DOMAIN = "ikea.is"
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("ikea_is__nanar")
@@ -42,34 +41,9 @@ user_agent = (
 )
 
 
-def get_driver(url, class_name, timeout, driver=None):
-    if driver is not None:
-        driver.quit()
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-            WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 6:
-                raise Exception("Fix the issue:(")
-            return
-    return driver
-
-
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response(urlnum, url):
-    with SgRequests() as http:
+    with SgRequests(verify_ssl=False) as http:
         logger.info(f"[{urlnum}] Pulling the data from: {url}")
         r = http.get(url, headers=headers)
         if r.status_code == 200:
@@ -80,38 +54,54 @@ def get_response(urlnum, url):
 
 def get_googlemap_place_details_urls():
     class_name = "container-fluid"
-    driver = get_driver(LOCATION_URL, class_name, 30)
-    iframe_xpath = '//iframe[contains(@src, "google.com/maps/d/embed?mid=")]'
-    iframe = driver.find_element_by_xpath(iframe_xpath)
-    driver.switch_to.frame(iframe)
-    logger.info("Switch to iframe")
-    selg = html.fromstring(driver.page_source)
-    gmap_url = selg.xpath('//meta[@itemprop="url"]/@content')[0]
-    logger.info(f"Google Map URL: {gmap_url}")
-    driver2 = get_driver(gmap_url, "i4ewOd-haAclf", 30)
-    place_details_url_list = []
-    time.sleep(10)
-    s1 = set()
-    for i in range(0, 3):
-        driver2.find_element_by_xpath(
-            f'//div[@role="button" and contains(@style, "z-index: {str(i)};")]/img'
-        ).click()
-        time.sleep(10)
-        sel = html.fromstring(driver2.page_source)
-        getplacedetails_xpath = (
-            '//script[contains(@src, "PlaceService.GetPlaceDetails")]/@src'
+    timeout = "30"
+    with SgChrome(
+        user_agent=user_agent, is_headless=True, driver_wait_timeout=120
+    ) as driver:
+        driver.get(LOCATION_URL)
+        WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.CLASS_NAME, class_name))
         )
-        getplacedetails_url = sel.xpath(getplacedetails_xpath)
-        logger.info(f"place details url: {getplacedetails_url}")
-        locname_xpath = '//div[contains(text(), "name")]/following-sibling::div/text()'
-        ln = "".join(sel.xpath(locname_xpath))
-        for gpd in getplacedetails_url:
-            if gpd not in s1:
-                place_details_url_list.append((gpd, ln))
-            s1.add(gpd)
 
-        logger.info(f"place details url: {getplacedetails_url}")
-    return place_details_url_list
+        iframe_xpath = '//iframe[contains(@src, "google.com/maps/d/embed?mid=")]'
+        iframe = driver.find_element(by=By.XPATH, value=iframe_xpath)
+        driver.switch_to.frame(iframe)
+        logger.info("Switch to iframe")
+        selg = html.fromstring(driver.page_source)
+        gmap_url = selg.xpath('//meta[@itemprop="url"]/@content')[0]
+        logger.info(f"Google Map URL: {gmap_url}")
+        classname2 = "i4ewOd-haAclf"
+        with SgChrome(
+            user_agent=user_agent, is_headless=True, driver_wait_timeout=120
+        ) as driver2:
+            driver2.get(gmap_url)
+            WebDriverWait(driver2, timeout).until(
+                EC.presence_of_element_located((By.CLASS_NAME, classname2))
+            )
+            place_details_url_list = []
+            time.sleep(10)
+            s1 = set()
+            for i in range(0, 3):
+                zindex_xpath = f'//div[@role="button" and contains(@style, "z-index: {str(i)};")]/img'
+                driver2.find_element(by=By.XPATH, value=zindex_xpath).click()
+                time.sleep(10)
+                sel = html.fromstring(driver2.page_source)
+                getplacedetails_xpath = (
+                    '//script[contains(@src, "PlaceService.GetPlaceDetails")]/@src'
+                )
+                getplacedetails_url = sel.xpath(getplacedetails_xpath)
+                logger.info(f"place details url: {getplacedetails_url}")
+                locname_xpath = (
+                    '//div[contains(text(), "name")]/following-sibling::div/text()'
+                )
+                ln = "".join(sel.xpath(locname_xpath))
+                for gpd in getplacedetails_url:
+                    if gpd not in s1:
+                        place_details_url_list.append((gpd, ln))
+                    s1.add(gpd)
+
+                logger.info(f"place details url: {getplacedetails_url}")
+            return place_details_url_list
 
 
 def fetch_data():

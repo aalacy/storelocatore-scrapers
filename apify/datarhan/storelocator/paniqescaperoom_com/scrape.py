@@ -1,10 +1,8 @@
-import re
 import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -14,7 +12,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     start_url = "https://paniqescaperoom.com/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "paniqescaperoom.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -23,16 +21,15 @@ def fetch_data():
 
     all_locations = dom.xpath('//a[@data-region="us"]/@href')
     for url in all_locations:
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
+        poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')
         if loc_dom.xpath('//div[contains(text(), "Coming Soon!")]'):
             continue
-        poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')
         if not poi:
             continue
-        poi = json.loads(poi[0])
         if loc_dom.xpath('//div[contains(text(), "OPENING SOON")]'):
             continue
         if loc_dom.xpath('//div[contains(text(), "PERMANENTLY CLOSED")]'):
@@ -40,76 +37,65 @@ def fetch_data():
         if loc_dom.xpath('//div[contains(text(), "Permanently closed")]'):
             continue
 
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        raw_address = ""
-        if not poi.get("address"):
-            raw_address = (
-                loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                .split("query=")[-1]
-                .split("&query")[0]
-                .replace("+", " ")
-                .replace("%2C", ",")
-            )
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            street_address = street_address if street_address else "<MISSING>"
-            city = addr.city
-            state = addr.state
-            zip_code = addr.postcode
-            country_code = "<MISSING>"
-        else:
-            street_address = poi["address"]["streetAddress"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
-            state = poi["address"]["addressRegion"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["address"]["addressCountry"]
-            country_code = country_code if country_code else "<MISSING>"
-        if poi.get("telephone"):
-            phone = poi["telephone"]
-        else:
-            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-            phone = phone[0] if phone else "<MISSING>"
-        location_type = poi["@type"]
-        latitude = poi["geo"]["latitude"]
-        longitude = poi["geo"]["longitude"]
-        hoo = loc_dom.xpath('//div[@class="openhours"]/table//text()')
-        hoo = (
-            " ".join([e.strip() for e in hoo if e.strip()])
-            .split(" Mon,")[0]
-            .replace(
-                " Tue, Wed, Thu, Fri, Sat, Sun 10:00 AM - 11:30 PM Mon 2:00 PM - 11:30 PM",
-                "",
-            )
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Opening Hours")]/following-sibling::div[@class="table-wrap"][1]//text()'
         )
-        if loc_dom.xpath('//div[contains(text(), "temporarily closed")]'):
-            location_type = "temporarily closed"
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        all_locations = [json.loads(poi[0])]
+        if not all_locations[0].get("address"):
+            all_locations = all_locations[0].get("subOrganization")
+        if all_locations:
+            for poi in all_locations:
+                location_type = poi["@type"]
+                if loc_dom.xpath('//div[contains(text(), "temporarily closed")]'):
+                    location_type = "temporarily closed"
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code="US",
-            store_number="",
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hoo,
-            raw_address=raw_address,
-        )
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=poi["name"],
+                    street_address=poi["address"]["streetAddress"],
+                    city=poi["address"]["addressLocality"],
+                    state=poi["address"]["addressRegion"],
+                    zip_postal=poi["address"]["postalCode"],
+                    country_code=poi["address"]["addressCountry"],
+                    store_number="",
+                    phone=poi["telephone"],
+                    location_type=location_type,
+                    latitude=poi["geo"]["latitude"],
+                    longitude=poi["geo"]["longitude"],
+                    hours_of_operation=hoo,
+                )
 
-        yield item
+                yield item
+        else:
+            location_name = loc_dom.xpath("//h1/text()")[0].strip()
+            raw_address = loc_dom.xpath('//a[contains(@href, "maps")]/span/text()')[0]
+            street_address = raw_address.split(location_name)[0]
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+            poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')[
+                0
+            ]
+            poi = json.loads(poi)
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=location_name,
+                state=raw_address.split(",")[1].split()[0],
+                zip_postal=raw_address.split(",")[1].split()[1],
+                country_code="USA",
+                store_number="",
+                phone=phone,
+                location_type=poi["@type"],
+                latitude=poi["geo"]["latitude"],
+                longitude=poi["geo"]["longitude"],
+                hours_of_operation=hoo,
+            )
+
+            yield item
 
 
 def scrape():

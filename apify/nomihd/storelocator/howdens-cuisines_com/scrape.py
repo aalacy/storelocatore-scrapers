@@ -1,189 +1,123 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgpostal import sgpostal as parser
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import SearchableCountries
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 website = "howdens-cuisines.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "authority": "www.howdens-cuisines.com",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
-    "accept": "text/html, */*; q=0.01",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "x-requested-with": "XMLHttpRequest",
-    "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
-    "sec-ch-ua-platform": '"Windows"',
-    "origin": "https://www.howdens-cuisines.com",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-dest": "empty",
-    "referer": "https://www.howdens-cuisines.com/nos-depots/",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
 }
 
 
-class _SearchIteration(SearchIteration):
-    """
-    Here, you define what happens with each iteration of the search.
-    The `do(...)` method is what you'd do inside of the `for location in search:` loop
-    It provides you with all the data you could get from the search instance, as well as
-    a method to register found locations.
-    """
+def fetch_data():
+    # Your scraper here
+    base = "https://www.howdens-cuisines.com"
+    search_url = "https://www.howdens-cuisines.com/trouvez-le-showroom-le-plus-proche-de-chez-vous/"
 
-    def __init__(self, http: SgRequests):
-        self.__http = http
-        self.__state = CrawlStateSingleton.get_instance()
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        stores = search_res.text.split("var marker")[1:]
 
-        lat = coord[0]
-        lng = coord[1]
-        log.info(f"fetching data for coordinates:{lat},{lng}")
-        data = {"latitude": lat, "longitude": lng}
+        for no, store in enumerate(stores, 1):
 
-        api_url = (
-            "https://www.howdens-cuisines.com/wp-content/themes/houdan/ajax-depots.php"
-        )
+            locator_domain = website
 
-        api_res = self.__http.post(api_url, headers=headers, data=data)
+            location_name = store.split('map,title: "')[1].split('"')[0].strip()
 
-        try:
-            stores = api_res.text.split("var marker")[2:]
+            location_type = "<MISSING>"
 
-            for no, store in enumerate(stores, 1):
+            store_info_xml = (
+                store.split("content: ")[1].split("});google.maps.")[0].strip()
+            )
 
-                store_html = (
-                    store.split('("#list_point_retrait").append(\'')[1]
-                    .split("</li>")[0]
-                    .strip()
-                    + "</li>"
+            store_sel = lxml.html.fromstring(store_info_xml)
+            store_info = list(
+                filter(
+                    str,
+                    [x.strip() for x in store_sel.xpath("//text()")],
                 )
+            )
 
-                store_sel = lxml.html.fromstring(store_html)
+            slug = (
+                location_name.replace("Howdens Cuisines ", "")
+                .lower()
+                .replace("é", "e")
+                .strip()
+            )
 
-                locator_domain = website
-                store_number = "<MISSING>"
+            page_url = base + f"/depots/howdens-cuisines-{slug}/"
 
-                page_url = "https://www.howdens-cuisines.com/nos-depots/"
-                location_name = (
-                    "".join(store_sel.xpath('//span[@class="name"]//text()'))
-                    .strip()
-                    .split("(")[0]
-                    .strip()
-                )
-                location_type = "<MISSING>"
+            raw_address = store_info[2] + " " + store_info[3]
 
-                store_info = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath('//span[@class="adress"]//text()')
-                        ],
-                    )
-                )
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-                phone = (
-                    "".join(store_sel.xpath('//span[@class="tel"]//text()'))
-                    .strip()
-                    .split(":")[1]
-                    .strip()
-                )
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
 
-                raw_address = ", ".join(store_info).strip()
+            city = formatted_addr.city
 
-                formatted_addr = parser.parse_address_intl(raw_address)
-                street_address = formatted_addr.street_address_1
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
-                if street_address is not None:
-                    street_address = street_address.replace("Ste", "Suite")
+            if not city:
+                if zip:
+                    city = raw_address.split(zip)[1].strip()
 
-                city = formatted_addr.city
+            country_code = "FR"
 
-                state = formatted_addr.state
-                zip = formatted_addr.postcode
+            store_number = "<MISSING>"
+            phone = store_info[-2].replace("Tél :", "").strip()
 
-                country_code = "FR"
+            hours_of_operation = "<MISSING>"
 
-                hours_of_operation = "<MISSING>"
+            latitude, longitude = (
+                store.split("lat:")[1].split(",")[0].strip(),
+                store.split("lng:")[1].split("},")[0].strip(),
+            )
 
-                latitude, longitude = (
-                    store.split("LatLng(")[1].split(")")[0].split(",")[0],
-                    store.split("LatLng(")[1].split(")")[0].split(",")[1],
-                )
-
-                found_location_at(latitude, longitude)
-
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
-        except:
-            pass
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        max_search_results=5,
-    )
+    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                    SgRecord.Headers.LOCATION_NAME,
-                }
-            ),
-            duplicate_streak_failure_factor=-1,
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
-        with SgRequests(dont_retry_status_codes=([404])) as http:
-            search_iter = _SearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=[SearchableCountries.FRANCE],
-            )
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-            for rec in par_search.run():
-                writer.write_row(rec)
-
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

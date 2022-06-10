@@ -1,38 +1,11 @@
-import csv
 import json
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_address(line):
@@ -65,78 +38,74 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://meetyouatarnis.com/"
-    api_url = "https://meetyouatarnis.com/findmylocation/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://meetyouatarnis.com/findmylocation/"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
-        tree.xpath("//script[contains(text(), 'var allLocations =')]/text()")
+        tree.xpath("//script[contains(text(), 'var allLocations = ')]/text()")
     )
-    text = text.split("var allLocations =")[1].split("];")[0] + "]"
+    text = text.split("var allLocations = ")[1].split("}];")[0] + "}]"
     js = json.loads(text)
 
     for j in js:
-        line = j.get("address")
-        street_address, city, state, postal = get_address(line)
+        raw_address = j.get("address")
+        street_address, city, state, postal = get_address(raw_address)
         country_code = "US"
-        store_number = j.get("myLocationID") or "<MISSING>"
-        page_url = j.get("myLocation")
+        store_number = j.get("myLocationID")
         location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        phone = " ".join(
-            phone.replace("ARNI", "").replace("(", "").replace(")", "").split()
-        )
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        page_url = f"https://meetyouatarnis.com/?post_type=page&p={store_number}"
+        phone = j.get("phone") or ""
+        phone = phone.replace("ARNI", "").replace(")", "").replace("(", "").strip()
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+
         _tmp = []
         hours = j.get("hours") or []
         for h in hours:
             day = h.get("day")
-            time = h.get("hours")
-            _tmp.append(f"{day}: {time}")
+            inter = h.get("hours")
+            _tmp.append(f"{day}: {inter}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
+        if "Temporarily" in hours_of_operation:
+            hours_of_operation = "Temporarily Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://meetyouatarnis.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

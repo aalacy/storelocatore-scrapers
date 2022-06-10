@@ -30,6 +30,66 @@ def fetch_data():
             street_address = _["data-store-address1"]
             if _["data-store-address2"]:
                 street_address += " " + _["data-store-address2"]
+            addr = street_address.split(",")
+            if "China" in addr[-1]:
+                del addr[-1]
+            state = _["data-store-statecode"]
+            city = _["data-store-city"]
+            zip_postal = _["data-store-postalcode"]
+
+            raw_address = f"{street_address}, {city}, {state}"
+            _ss = addr[-1].lower()
+            if (
+                "province" in _ss
+                or "jilin" in _ss
+                or "shandong" in _ss
+                or "dalian" in _ss
+                or "zhejiang" in _ss
+                or "fujian" in _ss
+                or "sichuan" in _ss
+                or "shaanxi" in _ss
+                or "henan" in _ss
+                or "hunan" in _ss
+                or "hubei" in _ss
+                or "yunnan" in _ss
+                or "gunagxi" in _ss
+                or "shanxi" in _ss
+                or "anhui" in _ss
+                or "jiangxi" in _ss
+                or "inner mongolia" in _ss
+                or "guangdong" in _ss
+                or "jiangsu" in _ss
+                or "zhongshan" in _ss
+                or "liaoning" in _ss
+                or "heilongjiang" in _ss
+                or "guangxi" in _ss
+                or "hebei" in _ss
+                or "beijng" in _ss
+            ):
+                if not state:
+                    state = addr[-1]
+                del addr[-1]
+
+            _cc = addr[-1].lower().replace(" ", "").replace("'", "").replace("’", "")
+            c_t = _["data-store-city"].replace("'", "").replace("’", "").lower()
+            if c_t in _cc:
+                del addr[-1]
+
+            if not addr and len(street_address.split(",")) == 1:
+                addr = street_address.split(",")
+
+            if addr and ("Room" in addr[0] or "Area" in addr[0]):
+                del addr[0]
+
+            street_address = ", ".join(addr)
+            _street = street_address.split()
+            for x, aa in enumerate(_street):
+                if "district" in aa.lower():
+                    street_address = " ".join(_street[: x - 1])
+
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+
             hours = []
             temp = {}
             for hh in bs(_["data-store-details"], "lxml").select(
@@ -47,18 +107,19 @@ def fetch_data():
             coord = _coord(locs, _["data-store-name"])
             yield SgRecord(
                 page_url=base_url,
-                store_number=_["data-store-id"],
+                store_number=_["data-store-id"].replace("store", ""),
                 location_name=_["data-store-name"],
                 street_address=street_address,
-                city=_["data-store-city"],
-                state=_["data-store-statecode"],
-                zip_postal=_["data-store-postalcode"],
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code="China",
                 latitude=coord["latitude"],
                 longitude=coord["longitude"],
                 location_type="toysrus",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 

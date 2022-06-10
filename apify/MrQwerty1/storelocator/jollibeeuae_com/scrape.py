@@ -3,105 +3,61 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
-from sgscrape.sgpostal import parse_address, International_Parser
-
-
-def get_international(line):
-    adr = parse_address(International_Parser(), line)
-    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-        "None", ""
-    ).strip()
-    city = adr.city or ""
-    state = adr.state
-    postal = adr.postcode
-
-    return street_address, city, state, postal
-
-
-def get_params():
-    params = list()
-    r = session.get("https://www.jollibeeuae.com/store-locator")
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//td[contains(@id, 'maid')]")
-    for d in divs:
-        _id = "".join(d.xpath("./@id")).replace("maid", "")
-        location_name = "".join(d.xpath("./strong/text()")).strip()
-        params.append({"id": _id, "name": location_name})
-
-    return params
-
-
-def get_coords_from_embed(text):
-    try:
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    return latitude, longitude
-
-
-def get_data(param, sgw: SgWriter):
-    store_number = param.get("id")
-    location_name = param.get("name")
-    page_url = f"https://www.jollibeeuae.com/store-detail{store_number}"
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    raw_address = "".join(
-        tree.xpath("//th[contains(text(), 'ADDRESS')]/following-sibling::td/text()")
-    ).strip()
-    street_address, city, state, postal = get_international(raw_address)
-
-    text = "".join(tree.xpath(f"//iframe[@id='map{store_number}']/@src"))
-    latitude, longitude = get_coords_from_embed(text)
-
-    _tmp = []
-    hours = tree.xpath(
-        "//table[@class='table table-hover table-striped']//tr[not(./th)]"
-    )
-    for h in hours:
-        day = "".join(h.xpath("./td[1]/text()")).strip()
-        inter = "".join(h.xpath("./td[last()]/text()")).strip()
-        _tmp.append(f"{day}: {inter}")
-
-    hours_of_operation = ";".join(_tmp)
-
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code="AE",
-        latitude=latitude,
-        longitude=longitude,
-        store_number=store_number,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
-    )
-
-    sgw.write_row(row)
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def fetch_data(sgw: SgWriter):
-    params = get_params()
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    divs = tree.xpath("//div[div/h4]")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {
-            executor.submit(get_data, param, sgw): param for param in params
-        }
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    for d in divs:
+        location_name = "".join(d.xpath(".//h4/text()")).strip()
+        line = d.xpath("./following-sibling::div[1]//p[1]//text()")
+        line = list(filter(None, [li.strip() for li in line]))
+        raw_address = ", ".join(line)
+        city = line.pop()
+        if ", " in city:
+            city = city.split(", ")[-1]
+
+        street_address = ", ".join(line)
+        country_code = "AE"
+
+        _tmp = []
+        hours = d.xpath("./following-sibling::div[1]//p/strong")
+        for h in hours:
+            day = "".join(h.xpath(".//text()")).strip()
+            inter = (
+                "".join(h.xpath("./following-sibling::text()[1]"))
+                .split(" : ")[-1]
+                .strip()
+            )
+            _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            country_code=country_code,
+            raw_address=raw_address,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.jollibeeuae.com/"
-    session = SgRequests(verify_ssl=False)
-
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    locator_domain = "https://jollibeeuae.com/"
+    page_url = "https://jollibeeuae.com/find-us/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         fetch_data(writer)
