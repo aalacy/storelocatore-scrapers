@@ -1,11 +1,19 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
+from sgscrape import sgpostal as parser
 
 
 def f_adr(rec):
-    real_address = rec["full_address"].split(rec["city"], 1)[0]
-    rec["real_address"] = real_address
+    MISSING = "<MISSING>"
+    parsed = parser.parse_address_usa(str(rec["full_address"]).replace(",", "").strip())
+    street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
+    street_address = (
+        (street_address + ", " + parsed.street_address_2)
+        if parsed.street_address_2
+        else street_address
+    )
+    rec["real_address"] = street_address
     return rec
 
 
