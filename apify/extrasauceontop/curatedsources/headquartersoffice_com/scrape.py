@@ -17,7 +17,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
-log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
+log = sglog.SgLogSetup().get_logger(logger_name="hqoffice")
 
 
 def get_page_urls():
@@ -141,7 +141,7 @@ def new_map_page(driver):
                     part + " " for part in full_address.split(" ")[1:]
                 )
 
-            if latitude in full_address and longitude in full_address:
+            if latitude[:-3] in full_address and longitude[:-3] in full_address:
                 city = "<MISSING>"
                 address = "<MISSING>"
                 state = "<MISSING>"
@@ -149,7 +149,7 @@ def new_map_page(driver):
                 country_code = "<MISSING>"
                 full_address = "<MISSING>"
 
-            if full_address != "<MISSING>":
+            elif full_address != "<MISSING>":
                 addr = parse_address_intl(full_address)
                 city = addr.city
                 if city is None:
@@ -182,6 +182,7 @@ def new_map_page(driver):
             location_type = page_url.split("/")[-1]
             hours = "<MISSING>"
             location_name = location_type.replace("-", " ")
+            address = address.replace(" None", "")
             locations.append(
                 {
                     "locator_domain": locator_domain,
@@ -231,6 +232,7 @@ def old_map_page(driver):
     except Exception:
         log.info(driver.current_url)
         raise Exception
+
     for location in response["markers"]:
         locator_domain = "https://headquartersoffice.com/"
         page_url = driver.current_url
@@ -293,6 +295,20 @@ def old_map_page(driver):
             country_code = "<MISSING>"
 
         location_name = location_type.replace("-", " ")
+
+        if address == "<MISSING>":
+            full_address = location["title"].split(" - ")[-1]
+            addr = parse_address_intl(full_address)
+            if addr.street_address_1 != None:
+                address_1 = addr.street_address_1
+                address_2 = addr.street_address_2
+
+                if address_1 is None and address_2 is None:
+                    address = "<MISSING>"
+                else:
+                    address = (str(address_1) + " " + str(address_2)).strip()
+
+        address = address.replace(" None", "")
         locations.append(
             {
                 "locator_domain": locator_domain,
@@ -383,6 +399,8 @@ def get_data():
             for item in test:
                 if "base64" in item["name"] and "marker-list" in item["name"]:
                     x = x + 1
+                    log.info("new map")
+                    log.info(driver.current_url)
                     locations = new_map_page(driver)
                     found = 1
                     if len(locations) == 0:
@@ -395,6 +413,8 @@ def get_data():
                     break
 
             if found == 0:
+                log.info("old map")
+                log.info(driver.current_url)
                 locations = old_map_page(driver)
                 if len(locations) == 0:
                     log.info("")
