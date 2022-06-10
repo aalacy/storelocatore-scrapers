@@ -32,6 +32,7 @@ def get_data():
         logger.info("Pulling Code %s..." % zipcode)
 
         response = session.get(url, headers=headers).json()
+
         for location in response["dealers"]:
             locator_domain = "cadillaccanada.ca"
             page_url = location["websiteURL"]
@@ -43,10 +44,123 @@ def get_data():
             address = location["streetAddress1"]
             state = location["state"]
             zipp = location["postalCode"]
-            phone = location["primaryPhone"]
+            phone = location["salesPhone"]
             location_type = "<MISSING>"
-            hours = "<LATER>"
             country_code = "CA"
+
+            try:
+                sunday_hours = (
+                    "Sunday "
+                    + location["salesSundayOpen"][0:2]
+                    + ":"
+                    + location["salesSundayOpen"][2:4]
+                    + "-"
+                    + location["salesSundayClose"][0:2]
+                    + ":"
+                    + location["salesSundayClose"][2:4]
+                )
+            except Exception:
+                sunday_hours = "Sunday closed"
+
+            try:
+                monday_hours = (
+                    "Monday "
+                    + location["salesMondayOpen"][0:2]
+                    + ":"
+                    + location["salesMondayOpen"][2:4]
+                    + "-"
+                    + location["salesMondayClose"][0:2]
+                    + ":"
+                    + location["salesMondayClose"][2:4]
+                )
+            except Exception:
+                monday_hours = "Monday closed"
+
+            try:
+                tuesday_hours = (
+                    "Tuesday "
+                    + location["salesTuesdayOpen"][0:2]
+                    + ":"
+                    + location["salesTuesdayOpen"][2:4]
+                    + "-"
+                    + location["salesTuesdayClose"][0:2]
+                    + ":"
+                    + location["salesTuesdayClose"][2:4]
+                )
+            except Exception:
+                tuesday_hours = "Tuesday closed"
+
+            try:
+                wednesday_hours = (
+                    "Wednesday "
+                    + location["salesWednesdayOpen"][0:2]
+                    + ":"
+                    + location["salesWednesdayOpen"][2:4]
+                    + "-"
+                    + location["salesWednesdayClose"][0:2]
+                    + ":"
+                    + location["salesWednesdayClose"][2:4]
+                )
+            except Exception:
+                wednesday_hours = "Wednesday closed"
+
+            try:
+                thursday_hours = (
+                    "Thursday "
+                    + location["salesThursdayOpen"][0:2]
+                    + ":"
+                    + location["salesThursdayOpen"][2:4]
+                    + "-"
+                    + location["salesThursdayClose"][0:2]
+                    + ":"
+                    + location["salesThursdayClose"][2:4]
+                )
+            except Exception:
+                thursday_hours = "Thursday closed"
+
+            try:
+                friday_hours = (
+                    "Friday "
+                    + location["salesFridayOpen"][0:2]
+                    + ":"
+                    + location["salesFridayOpen"][2:4]
+                    + "-"
+                    + location["salesFridayClose"][0:2]
+                    + ":"
+                    + location["salesFridayClose"][2:4]
+                )
+            except Exception:
+                friday_hours = "Friday closed"
+
+            try:
+                saturday_hours = (
+                    "Saturday "
+                    + location["salesSaturdayOpen"][0:2]
+                    + ":"
+                    + location["salesSaturdayOpen"][2:4]
+                    + "-"
+                    + location["salesSaturdayClose"][0:2]
+                    + ":"
+                    + location["salesSaturdayClose"][2:4]
+                )
+            except Exception:
+                saturday_hours = "Saturday closed"
+
+            hours = (
+                sunday_hours
+                + ", "
+                + monday_hours
+                + ", "
+                + tuesday_hours
+                + ", "
+                + wednesday_hours
+                + ", "
+                + thursday_hours
+                + ", "
+                + friday_hours
+                + ", "
+                + saturday_hours
+            )
 
             yield {
                 "locator_domain": locator_domain,

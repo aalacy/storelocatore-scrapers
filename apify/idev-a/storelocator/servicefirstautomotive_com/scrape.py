@@ -34,7 +34,7 @@ def data(lat, lng):
                 },
                 "filter": {
                     "geo_distance": {
-                        "distance": "80.4672km",
+                        "distance": "1000km",
                         "center.latlong": {"lat": str(lat), "lon": str(lng)},
                     }
                 },
@@ -127,7 +127,7 @@ def fetch_records(search):
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=["us"], expected_search_radius_miles=500)
+    search = DynamicGeoSearch(country_codes=["us"], expected_search_radius_miles=50)
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10

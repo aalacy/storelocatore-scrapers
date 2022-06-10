@@ -62,6 +62,7 @@ def fetch_data():
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 coords = soup.select_one("a[href*=maps]")["href"]
+
                 try:
                     temp = coords.split("@")[1].split(",")
                     latitude = temp[0]
@@ -72,8 +73,10 @@ def fetch_data():
                             coords.split("ll=")[1].split("&")[0].split(",")
                         )
                     except:
-                        latitude = MISSING
-                        longitude = MISSING
+                        coords = soup.select_one("iframe[src*=maps]")["src"]
+                        longitude, latitude = (
+                            coords.split("!2d")[1].split("!2m")[0].split("!3d")
+                        )
                 hours_of_operation = (
                     soup.findAll(
                         "div", {"class": "wpb_text_column wpb_content_element"}

@@ -20,21 +20,22 @@ max_workers = 12
 
 headers = {
     "authority": "www.dominos.co.in",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en;q=0.9",
     "cache-control": "max-age=0",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+    "cookie": 'marketingChannel=https://www.dominos.co.in/store-locations/new-delhi/tis-hazari-metro-station-new-delhi / Direct; brandreferral=yes; brandreferral=yes; marketingChannel=https://www.dominos.co.in/store-locations/pizza-delivery-food-restaurants-in-ip-extention-shivani-appt-new-delhi-110092-area / Direct; _gcl_au=1.1.1765957974.1653051074; _ga=GA1.3.1517776804.1653051074; _fbp=fb.2.1653051075823.218470908; _gid=GA1.3.270757678.1654606888; _clck=3uzzqe|1|f24|0; hidden=value; PHPSESSID=lkqpdhkkn5hb3tj9gdsau1pjl9; marketingChannel=https://www.dominos.co.in/ / Direct; brandreferral=yes; __sts={"sid":1654608686731,"tx":1654608686731,"url":"https%3A%2F%2Fwww.dominos.co.in%2F","pet":1654608686731,"set":1654608686731}; __stp={"visit":"new","uuid":"65fc630e-4661-4d12-bb9c-507c069b4513"}; __stdf=0; __stgeo="0"; __stbpnenable=0; _uetsid=f1f295a0e66111ecba7bc17941e78770; _uetvid=2fc3e7a0971711ecbf8f913b4c7ef76e; WZRK_S_44Z-RW9-694Z=%7B%22p%22%3A9%7D; _dc_gtm_UA-45014247-1=1; _dc_gtm_UA-45014247-9=1; XSRF-TOKEN=eyJpdiI6ImRBTG5FTTZsK0JCaEpnRjBDOVFWT2c9PSIsInZhbHVlIjoiV29nRWl3YlUrTUZDNVlvOXJQRmRUUG5XeDkrWXBJRzMxQjNzaUpNOVQ1Qkp4VTc0aitmTUN3dkdHS0o4QURYVCIsIm1hYyI6IjVhNTU5MThhMGM1MmMzYjYwN2FmZmQ1YWUwYzA0MTFkOGM5ZTZiZGJlYTM1Y2M3YjU2ZmMxZDkyMTU3YzFiYjUifQ%3D%3D; jubilant_session=eyJpdiI6ImlWdUxTR3c0WWNjMkgxMTZcL1NQczh3PT0iLCJ2YWx1ZSI6IklOenk0eUx5ZmtmSUducnIwcHo3RUt1YjhUcGlDS0s2clo5aUNRNFBpNXllQit3dmZBNWNtaTBoY3VTY2N1NlYiLCJtYWMiOiJjMDQ4NjJkZWUwN2E2NTg2Y2ZhNDhiZTJkY2I4Y2FjYTZjNmQ3ZWI4NzEzODIwZDg1MGRlMGU2MWU0MGRkZGUzIn0%3D; _clsk=9x8ilv|1654610141421|5|1|l.clarity.ms/collect',
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"Linux"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
     "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9",
-    "cookie": "marketingChannel=https://www.dominos.co.in/store-locations/new-delhi/tis-hazari-metro-station-new-delhi / Direct; brandreferral=yes; _gcl_au=1.1.330237308.1645888634; _ga=GA1.3.1679887606.1645888638; _gid=GA1.3.908597514.1645888638; _clck=cyt4w4|1|ezb|0; _uetsid=2fc39d20971711eca39617b0aac65430; _uetvid=2fc3e7a0971711ecbf8f913b4c7ef76e; WZRK_S_44Z-RW9-694Z=%7B%22p%22%3A2%7D; _fbp=fb.2.1645893389322.55916883; _clsk=111s9f3|1645893393783|2|1|l.clarity.ms/collect; XSRF-TOKEN=eyJpdiI6IlF3WFlsUWFnRWVWUUpIV1JuSGJ2aXc9PSIsInZhbHVlIjoiTlQ0SG5iRnNIQXdBVXJuM0hVeGE1cFRBMm45cVJqcklpSG1QR0lZSllTR1dCalFyYnErRXlIS2MzcGtVNGwwTCIsIm1hYyI6Ijg1ZmU2MDM5ZmJmZjQ5NjQ2ZGEzMWYzZDYzOTU4YzAzNjllMTc2MzNhMmQ0NjM3MmVkOWIwZDNlM2E2YThjZDMifQ%3D%3D; jubilant_session=eyJpdiI6ImlBZUVzSVZtclBPUFE5RzRRc2NnbFE9PSIsInZhbHVlIjoiY1dnQ1lUT0hhZ0VOUWc1YkVqUE50N2ttSUpxSllKZ2d5WHl5ZnJxWU5tbjZHMlNcL0hkY2xUUXQ4Y1VpWlQwWmEiLCJtYWMiOiIwMDRhOTFlMzEzZmUxNjNlNTA5NGNjZmMxZDdmNzM4ZTgxM2RlYWQxOTllMGYzMGI1YmNmNDAwMDMxNTcwNDQ4In0%3D",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
-session = SgRequests(verify_ssl=False)
+
+session = SgRequests(proxy_country="in")
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 

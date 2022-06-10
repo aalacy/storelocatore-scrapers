@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     tmp = []
     for d in div[1:]:
         tmp.append(d.split('"')[0])
-    api_url = "https://www.monsterselfstorage.com/_nuxt/faf91aa.js"
+    api_url = "https://www.monsterselfstorage.com/_nuxt/4926854.js"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",

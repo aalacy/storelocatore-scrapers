@@ -21,17 +21,16 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "masseyspizza.com"
 
-    items = base.find(id="main-content").find_all(class_="et_pb_text_inner")
+    items = base.find(class_="content").find_all(
+        class_="grid-column border-color-secondary3"
+    )
 
     for item in items:
-        try:
-            location_name = item.strong.text.strip()
-        except:
-            continue
+        location_name = item.h4.text.strip()
         raw_address = list(item.stripped_strings)[1:]
         if "COMING SOON" in raw_address[0].upper():
             continue
-        if "NOW OPEN" in raw_address[0] or "VILLE/WORTH" in raw_address[0]:
+        if "NOW OPEN" in raw_address[0] or "/" in raw_address[0]:
             raw_address.pop(0)
         for i, y in enumerate(raw_address):
             if (
