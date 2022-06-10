@@ -27,7 +27,7 @@ def fetch_data():
         Retry = True
         logger.info(loc)
         rc = 0
-        while Retry and rc <= 5:
+        while Retry and rc <= 10:
             rc = rc + 1
             Retry = False
             logger.info(str(rc))
