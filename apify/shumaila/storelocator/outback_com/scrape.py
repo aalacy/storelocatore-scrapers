@@ -35,7 +35,10 @@ def fetch_data():
 
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
             phone = address.split("\n")[-1]
-
+            try:
+                phone = phone.split("/", 1)[0]
+            except:
+                pass
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
             hours = "<MISSING>"
@@ -146,8 +149,13 @@ def fetch_data():
                 pcode = soup.find("span", {"class": "c-address-postal-code"}).text
                 try:
                     phone = soup.find("div", {"id": "phone-main"}).text
+                    try:
+                        phone = phone.split("/", 1)[0]
+                    except:
+                        pass
                 except:
                     phone = "<MISSING>"
+                print(branch)
                 try:
                     hours = soup.find(
                         "table", {"class": "c-hours-details"}
