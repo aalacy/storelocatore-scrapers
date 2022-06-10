@@ -16,9 +16,12 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
+    found = ["540FC003", "01800038"]
+
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         expected_search_radius_miles=30,
+        max_search_results=100,
         granularity=Grain_2(),
     )
     with SgRequests() as http:
@@ -29,7 +32,7 @@ def fetch_data():
                 % (zip_code, zip_codes.items_remaining())
             )
             link = (
-                "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.reasonId=29&filter.freeFormAddress=%s&filter.maxResults=50&page.size=50"
+                "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.freeFormAddress=%s&filter.maxResults=100&page.size=100"
                 % zip_code
             )
 
@@ -45,8 +48,9 @@ def fetch_data():
                 zip = i["address"]["postalCode"]
                 country_code = "US"
                 store_number = i["id"]
-                if store_number in ["540FC003", "01800038"]:
+                if store_number in found:
                     continue
+                found.append(store_number)
                 try:
                     phone = i["phone"]
                 except:
@@ -56,7 +60,7 @@ def fetch_data():
                 latitude = i["location"]["lat"]
                 longitude = i["location"]["lng"]
                 zip_codes.found_location_at(latitude, longitude)
-                hours_of_operation = ""
+                hours_of_operation = "<INACCESSIBLE>"
 
                 id_num = str(i["id"])
                 page_url = (
@@ -66,6 +70,19 @@ def fetch_data():
                         id_num[3:],
                     )
                 )
+
+                try:
+                    api_link = (
+                        "https://www.kroger.com/appointment-management/v1/clinic-details?filter.businessName=tlc&filter.reasonId=29&filter.divisionNumber=%s&filter.storeNumber=%s"
+                        % (id_num[:3], id_num[3:])
+                    )
+                    page_det = http.get(api_link, headers=headers).json()["data"][
+                        "clinicDetails"
+                    ]
+                    hours_of_operation = " ".join(page_det["weekHours"])
+                except:
+                    pass
+
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,

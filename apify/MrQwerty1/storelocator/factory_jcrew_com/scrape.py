@@ -3,100 +3,108 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
-
-
-def generate_links():
-    r = session.get("https://stores.factory.jcrew.com/index.json")
-    js = r.json()["directoryHierarchy"]
-    urls = list(get_urls(js))
-
-    return urls
-
-
-def get_urls(states):
-    for state in states.values():
-        children = state["children"]
-        if children is None:
-            yield f"https://stores.factory.jcrew.com/{state['url']}.json"
-        else:
-            yield from get_urls(children)
-
-
-def get_data(url, sgw: SgWriter):
-    r = session.get(url)
-    j = r.json()["profile"]
-
-    page_url = url.replace(".json", "")
-    location_name = "J.Crew Factory"
-    a = j.get("address") or {}
-
-    street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
-    city = a.get("city")
-    state = a.get("region")
-    postal = a.get("postalCode")
-    country_code = a.get("countryCode")
-    store_number = j.get("corporateCode")
-    phone = j.get("mainPhone").get("display")
-    latitude = j["yextDisplayCoordinate"]["lat"]
-    longitude = j["yextDisplayCoordinate"]["long"]
-    try:
-        days = j["hours"]["normalHours"]
-    except:
-        days = []
-
-    _tmp = []
-    for d in days:
-        day = d.get("day")
-        try:
-            interval = d.get("intervals")[0]
-            start = str(interval.get("start")).zfill(4)
-            end = str(interval.get("end")).zfill(4)
-
-            if start == "0000":
-                start = "1200"
-
-            line = f"{day}:  {start[:2]}:{start[2:]}-{end[:2]}:{end[2:]}"
-        except IndexError:
-            line = f"{day}:  Closed"
-
-        _tmp.append(line)
-
-    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
-    if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = "Closed"
-
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=SgRecord.MISSING,
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-    )
-
-    sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
-    urls = generate_links()
+    api = "https://stores.factory.jcrew.com//search"
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    for cnt in range(0, 5000, 10):
+        params = {
+            "l": "en",
+            "offset": str(cnt),
+        }
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["response"]["entities"]
+
+        for j in js:
+            j = j.get("profile") or {}
+
+            a = j.get("address") or {}
+            adr1 = a.get("line1") or ""
+            adr2 = a.get("line2") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = a.get("city")
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = "US"
+            try:
+                store_number = j["meta"]["id"]
+            except KeyError:
+                store_number = SgRecord.MISSING
+            location_name = j.get("name")
+            page_url = j.get("c_pagesURL")
+
+            try:
+                phone = j["mainPhone"]["display"]
+            except KeyError:
+                phone = SgRecord.MISSING
+
+            g = j.get("yextDisplayCoordinate") or {}
+            latitude = g.get("lat")
+            longitude = g.get("long")
+
+            _tmp = []
+            try:
+                hours = j["hours"]["normalHours"]
+            except:
+                hours = []
+
+            for h in hours:
+                day = h.get("day")
+                isclosed = h.get("isClosed")
+                if isclosed:
+                    _tmp.append(f"{day}: Closed")
+                    continue
+
+                try:
+                    i = h["intervals"][0]
+                except:
+                    i = dict()
+
+                start = str(i.get("start") or "").zfill(4)
+                end = str(i.get("end") or "").zfill(4)
+                start = start[:2] + ":" + start[2:]
+                end = end[:2] + ":" + end[2:]
+                if start != end:
+                    _tmp.append(f"{day}: {start}-{end}")
+
+            hours_of_operation = ";".join(_tmp)
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
+
+            sgw.write_row(row)
+
+        if len(js) < 10:
+            break
 
 
 if __name__ == "__main__":
     locator_domain = "https://factory.jcrew.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json",
+        "Referer": "https://stores.factory.jcrew.com/",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

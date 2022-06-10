@@ -117,26 +117,32 @@ def fetch_data():
                         .split('endHrs":"')[1]
                         .split('"')[0]
                     )
-                sat = (
-                    line.split('Name":"Fuel Center","name":"GAS"')[1]
-                    .split('"saturdayHrs":{"startHrs":"')[1]
-                    .split('"')[0]
-                    + "-"
-                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
-                    .split('"saturdayHrs":{"')[1]
-                    .split('"endHrs":"')[1]
-                    .split('"')[0]
-                )
-                sun = (
-                    line.split('Name":"Fuel Center","name":"GAS"')[1]
-                    .split('"sundayHrs":{"startHrs":"')[1]
-                    .split('"')[0]
-                    + "-"
-                    + line.split('Name":"Fuel Center","name":"GAS"')[1]
-                    .split('"sundayHrs":{"')[1]
-                    .split('"endHrs":"')[1]
-                    .split('"')[0]
-                )
+                try:
+                    sat = (
+                        line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"saturdayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"saturdayHrs":{"')[1]
+                        .split('"endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                except:
+                    sat = "Closed"
+                try:
+                    sun = (
+                        line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"sundayHrs":{"startHrs":"')[1]
+                        .split('"')[0]
+                        + "-"
+                        + line.split('Name":"Fuel Center","name":"GAS"')[1]
+                        .split('"sundayHrs":{"')[1]
+                        .split('"endHrs":"')[1]
+                        .split('"')[0]
+                    )
+                except:
+                    sun = "Closed"
                 hours = "Mon-Fri: " + mf + "; Sat: " + sat + "; Sun: " + sun
             if '"clubDetails":' in line:
                 name = (
