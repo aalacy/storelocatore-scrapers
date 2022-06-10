@@ -141,7 +141,7 @@ def fetch_records(lat, lng, search_mx, sgw: SgWriter, driver):
 def fetch_data(sgw: SgWriter):
     search_mx = DynamicGeoSearch(
         country_codes=[SearchableCountries.MEXICO],
-        expected_search_radius_miles=500,
+        expected_search_radius_miles=20,
         max_search_results=10,
         granularity=Grain_8(),
         use_state=False,
