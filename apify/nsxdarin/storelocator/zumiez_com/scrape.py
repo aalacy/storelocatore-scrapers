@@ -26,8 +26,11 @@ def fetch_data():
         hours = ""
         country = "US"
         name = ""
+        Closed = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if "TEMPORARILY CLOSED" in line2:
+                Closed = True
             if "<title>" in line2 and name == "":
                 name = line2.split("<title>")[1].split(" |")[0]
             if 'itemprop="streetAddress">' in line2:
@@ -62,6 +65,9 @@ def fetch_data():
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
+        if Closed:
+            hours = "Temporarily Closed"
+            name = name + " - Temporarily Closed"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
