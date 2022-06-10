@@ -56,6 +56,7 @@ def fetch_data():
             state = pa.state
             state = state.strip() if state else MISSING
 
+            street_address = street_address.replace("Corner Of", "")
             hours_of_operation = (
                 soup.find("table")
                 .get_text(separator="|", strip=True)
