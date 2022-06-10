@@ -47,7 +47,9 @@ def fetch_data():
         data = session.post(start_url, headers=hdr, json=frm).json()
         all_locations = data["data"]["getLocations"]
         if not all_locations:
+            all_coords.found_nothing()
             continue
+        all_coords.found_location_at(lat, lng)
         for poi in all_locations:
             hoo = []
             for e in poi["hours"]["baseHours"]:
