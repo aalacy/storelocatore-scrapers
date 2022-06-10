@@ -259,7 +259,9 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["country"], is_required=False, part_of_record_identity=True
         ),
-        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
+        phone=sp.MappingField(
+            mapping=["phone"], is_required=False, part_of_record_identity=True
+        ),
         store_number=sp.MappingField(
             mapping=["id"],
             is_required=False,

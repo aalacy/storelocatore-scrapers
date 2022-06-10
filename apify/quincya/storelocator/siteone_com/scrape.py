@@ -26,7 +26,7 @@ def fetch_data(sgw: SgWriter):
     found = []
     for i in range(100):
         base_link = (
-            "https://www.siteone.com/store-finder?q=60101&miles=2000&page=%s" % i
+            "https://www.siteone.com/store-finder?q=60101&miles=3000&page=%s" % i
         )
         log.info(base_link)
         try:

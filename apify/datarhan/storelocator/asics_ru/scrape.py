@@ -55,6 +55,10 @@ def fetch_data():
             country_code = poi["URL"].split("/")[1].upper()
             if "Sri Lanka" in poi["Title"]:
                 country_code = "Sri Lanka"
+            if city and city.startswith("1"):
+                city = " ".join(city.split()[1:])
+            if city:
+                city = city.split(",")[0]
 
             item = SgRecord(
                 locator_domain=domain,
@@ -66,12 +70,14 @@ def fetch_data():
                 zip_postal=zip_code,
                 country_code=country_code,
                 store_number=poi["ID"],
-                phone=poi["Phone"],
+                phone=poi["Phone"].split("/")[0].split(",")[0],
                 location_type=location_type,
                 latitude=poi["Latitude"],
                 longitude=poi["Longitude"],
                 hours_of_operation="",
-                raw_address=poi["Address"],
+                raw_address=" ".join(
+                    [e.strip() for e in poi["Address"].split() if e.strip()]
+                ),
             )
 
             yield item

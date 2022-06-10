@@ -17,12 +17,23 @@ else:
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def fix_comma(x):
+    try:
+        x = x.split(",")
+        copy = []
+        for i in x:
+            if len(i.strip()) > 0:
+                copy.append(i)
+        return ",".join(copy)
+    except Exception:
+        return x
+
+
 def fix_record2(rec):
-    country = rec[1]
     rec = rec[0]
     k = {}
+    k["country"] = rec["country"]
     k["host"] = "<MISSING>"
-
     try:
         k["name"] = rec["storeDisplayName"]
     except Exception:
@@ -35,7 +46,7 @@ def fix_record2(rec):
     try:
         k["address"] = rec["address"]["addrLine1"]
         try:
-            k["address"] = k["address"] + rec["address"]["addrLine2"]
+            k["address"] = k["address"] + ", " + rec["address"]["addrLine2"]
         except Exception:
             pass
     except Exception:
@@ -45,13 +56,48 @@ def fix_record2(rec):
     k["zip"] = "<MISSING>"
 
     try:
+        k["state"] = rec["address"]["stateProvince"]
+    except Exception:
+        k["state"] = "<MISSING>"
+
+    try:
+        k["zip"] = rec["address"]["fullPostalCode"]
+    except Exception:
+        k["zip"] = "<MISSING>"
+
+    try:
         k["city"] = rec["address"]["city"]
     except Exception:
         k["city"] = "<MISSING>"
 
-    k["country"] = country
+    try:
+        k["phone"] = rec["formattedPhoneNumber"]
+        phone = []
+        for i in k["phone"]:
+            if i.isdigit():
+                phone.append(i)
+        k["phone"] = "".join(phone)
+    except Exception:
+        k["phone"] = "<MISSING>"
+
+    try:
+        k["page_url"] = rec["storeUrl"]
+    except Exception:
+        k["page_url"] = "<MISSING>"
+
+    try:
+        k["host"] = rec["storeUrl"].split("/")[2]
+    except Exception:
+        k["host"] = "<MISSING>"
+
     k["id"] = "<MISSING>"
     k["hours"] = "<MISSING>"
+    if k["hours"] == "<MISSING>":
+        try:
+            k["hours"] = str(rec["timings1"]) + ", " + str(rec["timings2"])
+        except Exception:
+            k["hours"] = "<MISSING>"
+
     return k
 
 
@@ -150,6 +196,14 @@ def fix_record(rec, host):
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
         for rec in data["statesAndProvinces"][country]["stores"]:
+            try:
+                rec["country"] = data["countryCode"]
+            except Exception:
+                try:
+                    rec["country"] = data["name"]
+                except Exception:
+                    rec["country"] = "<MISSING>"
+
             yield (rec, country)
 
 
@@ -229,7 +283,10 @@ def scrape():
             part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
-            mapping=["address"], part_of_record_identity=True
+            mapping=["address"],
+            part_of_record_identity=True,
+            value_transform=fix_comma,
+            is_required=False,
         ),
         city=sp.MappingField(
             mapping=["city"], is_required=False, part_of_record_identity=True
@@ -239,13 +296,17 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["country"], is_required=False, part_of_record_identity=True
         ),
-        phone=sp.MissingField(),
+        phone=sp.MappingField(
+            mapping=["phone"], part_of_record_identity=True, is_required=False
+        ),
         store_number=sp.MappingField(
             mapping=["id"],
             is_required=False,
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours"], is_required=False, value_transform=fix_comma
+        ),
         location_type=sp.MappingField(mapping=["type"], is_required=False),
         raw_address=sp.MissingField(),
     )
