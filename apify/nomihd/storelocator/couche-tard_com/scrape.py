@@ -50,7 +50,7 @@ def fetch_data():
                     logger.info("retrying to get stores")
                     retry_count = retry_count + 1
 
-            if stores is None:
+            if stores is None or len(stores) <= 0:
                 cont = False
                 break
             logger.info(f"visiting pageno:{page}")
@@ -97,7 +97,12 @@ def fetch_data():
                                     .replace("&#039;", "'")
                                     .strip()
                                 )
-                                if street_address[-1:] == ",":
+                                if street_address:
+                                    street_address = street_address.split("(")[
+                                        0
+                                    ].strip()
+
+                                if street_address[-1] == ",":
                                     street_address = street_address[:-1]
                                 city = (
                                     store_json["address"]["addressLocality"]

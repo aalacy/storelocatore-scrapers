@@ -38,9 +38,9 @@ def fetch_locations(lat, lng):
                 "geoip": False,
                 "dataview": "store_default",
                 "order": "tblstoretype DESC,_distance",
-                "limit": 100,
+                "limit": 1000,
                 "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
-                "searchradius": "100",
+                "searchradius": "1000",
                 "radiusuom": "mile",
                 "where": {
                     "tblstorestatus": {"in": "Open,OPEN,open"},
@@ -106,7 +106,10 @@ def fetch_locations(lat, lng):
                     hours = hours + day + " " + loc[day] + " "
             except:
                 hours = "<MISSING>"
-        if len(phone) < 3:
+        try:
+            if len(phone) < 3:
+                phone = "<MISSING>"
+        except:
             phone = "<MISSING>"
         phone = phone.replace("t. ", "").replace("?", "").strip()
         try:
@@ -138,7 +141,7 @@ def fetch_data():
 
     mylist = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=5,
+        expected_search_radius_miles=10,
         max_search_distance_miles=1000,
     )
     search = list(mylist)
