@@ -89,6 +89,12 @@ def fetch_data(sgw: SgWriter):
             " ".join(a.xpath("./p[2]//text()")).replace("\n", "").strip() or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("Restaurant Hours") != -1:
+            hours_of_operation = (
+                hours_of_operation.split("Restaurant Hours")[1]
+                .split("Café Hours")[0]
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
