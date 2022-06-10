@@ -1,3 +1,4 @@
+import re
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -30,11 +31,10 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
-            temp = soup.find("div", {"class": "info-container w-container"}).findAll(
-                "p", {"class": "wg-body-copy"}
-            )
+            location_name = ""
+            temp = soup.find("div", {"class": "executivesdiv"}).findAll("p")
             address = temp[0].text
+            raw_address = address
             phone = temp[1].text
             hours_of_operation = (
                 soup.find("div", {"class": "centered-block"})
@@ -42,6 +42,7 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Hours of Operation", "")
                 .replace("Open daily", "")
+                .replace("NOW OPEN", "")
             )
             address = address.replace(",", " ")
             address = usaddress.parse(address)
@@ -71,7 +72,26 @@ def fetch_data():
                 i += 1
             country_code = "US"
             if not city:
-                city = location_name.lower()
+                if "sandiego" in page_url:
+                    city = "San Diego"
+                    state = "CA"
+                elif "vegas" in page_url:
+                    city = "Las Vegas"
+                    state = "NV"
+                elif "/sm" in page_url:
+                    city = "Santa Monica"
+                    state = "CA"
+            try:
+                map_str = soup.find("a", string="VIRTUAL TOUR")["href"]
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(map_str))[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                latitude = ""
+                longitude = ""
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -84,9 +104,10 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 

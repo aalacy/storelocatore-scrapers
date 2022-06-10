@@ -64,7 +64,7 @@ def fetch_data():
                 city = store["city"]
                 state = "<MISSING>"
                 zip = store["zip"]
-                country_code = "CH"
+                country_code = "ES"
                 phone = "<MISSING>"
                 hours_of_operation = "<MISSING>"
 

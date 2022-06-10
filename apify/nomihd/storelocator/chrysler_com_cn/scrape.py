@@ -4,66 +4,84 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgpostal import sgpostal as parser
-import json
+import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "chrysler.com.cn"
+website = "chrysler.cn"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 headers = {
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+    "Accept": "application/xml, text/xml, */*",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "Connection": "keep-alive",
+    "Referer": "http://chrysler.cn/dealer.html",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
 }
 
 
 def fetch_data():
     # Your scraper here
 
-    api_url = "http://www.chrysler.com.cn/js/dealer_data.js"
+    api_url = "http://chrysler.cn/js/dealer_new.xml"
 
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         api_res = session.get(api_url, headers=headers)
-        json_str = api_res.text.split("let dealerData =")[1].strip()
-        json_res = json.loads(json_str)
-        stores = json_res
+        stores_sel = lxml.html.fromstring(
+            api_res.text.replace("<![CDATA[", "")
+            .replace("]]>", "")
+            .replace("<br>", "\n")
+        )
+        stores = stores_sel.xpath("//dealerlist/dealer")
 
         for store in stores:
 
             locator_domain = website
 
-            location_name = store["name"]
-            page_url = "<MISSING>"
+            location_name = "".join(store.xpath("./name/text()")).strip()
+            page_url = "".join(store.xpath("./site/text()")).strip()
+            if "建设中" in page_url:
+                page_url = "http://chrysler.cn/dealer.html"
 
             location_type = "<MISSING>"
 
-            raw_address = store["address"]
+            raw_address = "".join(store.xpath("./address/text()")).strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
 
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-            city = store["city"]
-            state = store["province"]
+            city = "".join(store.xpath("./city/text()")).strip()
+            state = "".join(store.xpath("./province/text()")).strip()
             zip = formatted_addr.postcode
 
             country_code = "CN"
 
             phone = (
-                store["phone"]
+                "".join(store.xpath("./phone/text()"))
+                .strip()
                 .replace("&mdash;", "-")
                 .strip()
                 .split(";")[0]
                 .strip()
                 .split("/")[0]
                 .strip()
+                .split(",")[0]
+                .strip()
             )
             hours_of_operation = "<MISSING>"
 
-            store_number = store["id"]
-            map_info = store["map"]
+            store_number = "".join(store.xpath("./id/text()")).strip()
+
+            map_info = "".join(store.xpath("./map/text()")).strip()
             if map_info:
                 latitude, longitude = map_info.split(",")[0], map_info.split(",")[1]
             else:
