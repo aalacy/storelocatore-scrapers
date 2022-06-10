@@ -1,4 +1,4 @@
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from sgscrape import simple_scraper_pipeline as sp
 from sgscrape.pause_resume import CrawlStateSingleton
@@ -13,13 +13,9 @@ DOMAIN = "napacanada.com"
 
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
-
 
 def get_all_stores():
-    with SgChrome(user_agent=user_agent) as driver:
+    with SgFirefox(block_javascript=False) as driver:
 
         driver.get_and_wait_for_request(
             "https://www.napacanada.com/en/auto-parts-stores-near-me"
@@ -38,14 +34,14 @@ def get_all_stores():
             for url in soup.select("a[href*=auto-parts-stores-near-me]")[1:-1]:
                 urls.append("https://www.napacanada.com" + url["href"])
 
-    return driver, urls
+    return urls
 
 
 def get_missed_cities(MISSED_CITIES):
     """
     Find and get broken store links.
     """
-    with SgChrome(user_agent=user_agent) as driver:
+    with SgFirefox(block_javascript=False) as driver:
 
         new_links = []
 
@@ -101,32 +97,34 @@ def parse(location):
 
 
 def fetch_data():
+    with SgFirefox(block_javascript=False) as driver:
 
-    driver, urls = get_all_stores()
-    logger.info(f"Total pages to crawl: {len(urls)}")
-    MISSED_CITIES = []
-    for url in urls:
-        logger.info(f"Crawling {url}")
-        driver.get_and_wait_for_request(url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        try:
+        urls = get_all_stores()
+        logger.info(f"Total pages to crawl: {len(urls)}")
+        MISSED_CITIES = []
+        for url in urls:
+            url = url.replace(" ", "%20")
+            logger.info(f"Crawling {url}")
+            driver.get_and_wait_for_request(url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            try:
+                location = json.loads(soup.select("script[type*=application]")[1].text)
+                data = parse(location)
+                yield data
+            except Exception as e:
+                logger.info(f"BROKEN LINK {url} : {e}")
+                MISSED_CITIES.append(url)
+                continue
+
+        missed_links = get_missed_cities(MISSED_CITIES)
+        logger.info(f"Total broken or missed urls: {len(missed_links)}")
+        for url in missed_links:
+            logger.info(f"Crawling missed link: {url}")
+            driver.get_and_wait_for_request(url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             location = json.loads(soup.select("script[type*=application]")[1].text)
-        except Exception as e:
-            logger.info(f"BROKEN LINK {url}: {e}")
-            MISSED_CITIES.append(url)
-            continue
-        data = parse(location)
-        yield data
-
-    missed_links = get_missed_cities(MISSED_CITIES)
-    logger.info(f"Total broken or missed urls: {len(missed_links)}")
-    for url in missed_links:
-        logger.info(f"Crawling missed link: {url}")
-        driver.get_and_wait_for_request(url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        location = json.loads(soup.select("script[type*=application]")[1].text)
-        data = parse(location)
-        yield data
+            data = parse(location)
+            yield data
 
 
 def scrape():
