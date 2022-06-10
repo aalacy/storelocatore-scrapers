@@ -144,6 +144,8 @@ def get_data():
             if location_type_check != "atm" and other_check != "passing":
                 continue
 
+            hours = hours.replace("<br/>", " ").strip()
+
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
