@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sgzip.dynamic import SearchableCountries
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
