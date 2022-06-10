@@ -72,22 +72,7 @@ def fetch_data():
                 zip_code = addr.postcode
                 if not zip_code:
                     if len(" ".join(address_raw).split(", ")) == 3:
-                        zip_code = " ".join(address_raw).split(", ")[-1]
-
-                geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')
-                latitude = ""
-                longitude = ""
-                if geo_data:
-                    geo = re.findall(r"center: \[(.+?)\],", geo_data[0])
-                    if geo:
-                        geo = geo[0].split(",")
-                        latitude = geo[1]
-                        longitude = geo[0]
-                    else:
-                        geo = re.findall(r"center: (.+?}),", geo_data[0])[0]
-                        geo = demjson.decode(geo)
-                        latitude = geo["lat"]
-                        longitude = geo["lng"]
+                        zip_code = " ".join(address_raw).split(", ")[-1]    
                 hours_of_operation = loc_dom.xpath('//p[@class="day"]//text()')
                 if not hours_of_operation:
                     hours_of_operation = loc_dom.xpath(
@@ -146,6 +131,9 @@ def fetch_data():
                     zip_code = "SL4 1PJ"
                 if hours_of_operation == "We are now temporarily closed":
                     hours_of_operation = "temporarily closed"
+                
+                if country_code == 'England' or country_code == 'Scotland':
+                    country_code = 'GB'
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -159,8 +147,8 @@ def fetch_data():
                     store_number="",
                     phone="",
                     location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
+                    latitude="",
+                    longitude="",
                     hours_of_operation=hours_of_operation,
                     raw_address=" ".join(address_raw),
                 )
