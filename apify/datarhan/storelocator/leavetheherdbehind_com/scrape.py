@@ -72,7 +72,7 @@ def fetch_data():
                 zip_code = addr.postcode
                 if not zip_code:
                     if len(" ".join(address_raw).split(", ")) == 3:
-                        zip_code = " ".join(address_raw).split(", ")[-1]    
+                        zip_code = " ".join(address_raw).split(", ")[-1]
                 hours_of_operation = loc_dom.xpath('//p[@class="day"]//text()')
                 if not hours_of_operation:
                     hours_of_operation = loc_dom.xpath(
@@ -131,9 +131,9 @@ def fetch_data():
                     zip_code = "SL4 1PJ"
                 if hours_of_operation == "We are now temporarily closed":
                     hours_of_operation = "temporarily closed"
-                
-                if country_code == 'England' or country_code == 'Scotland':
-                    country_code = 'GB'
+
+                if country_code == "England" or country_code == "Scotland":
+                    country_code = "GB"
 
                 item = SgRecord(
                     locator_domain=domain,
