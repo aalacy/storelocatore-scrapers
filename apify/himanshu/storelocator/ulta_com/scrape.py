@@ -167,7 +167,13 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
         )
     ) as writer:
         fetch_data(writer)
