@@ -13,6 +13,7 @@ def fetch_data():
         "https://lv.lexus.lv/api/dealers/all",
         "https://www.lexus-polska.pl/api/dealers/all"
     ]
+
     loc_url = {
         "hu": "https://www.lexus.hu/",
         "lv": "https://lv.lexus.lv/",
