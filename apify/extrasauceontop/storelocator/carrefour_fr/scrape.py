@@ -57,7 +57,7 @@ def get_data():
     for url in region_urls:
         log.info("url: " + url)
         with SgFirefox(
-            block_third_parties=True, proxy_country="fr", is_headless=False
+            block_third_parties=True, proxy_country="fr", is_headless=True
         ) as driver:
             driver.get(url)
             response = driver.page_source
