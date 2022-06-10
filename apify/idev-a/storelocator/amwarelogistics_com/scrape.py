@@ -41,7 +41,7 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             if sp1.select("table td"):
-                for _ in sp1.select("table td"):
+                for _ in sp1.select_one("table").select("td"):
                     blocks = list(_.stripped_strings)
                     addr = []
                     phone = ""
@@ -54,24 +54,30 @@ def fetch_data():
                             phone = ""
                     if not addr:
                         for x, bb in enumerate(blocks):
-                            if bb == _.select_one("ul li").text:
+                            if bb == _.select_one("ul li").text.strip():
                                 addr = blocks[:x]
                                 break
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=blocks[0],
-                        street_address=addr[-2],
-                        city=addr[-1].split(",")[0].strip(),
-                        state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                        zip_postal=addr[-1]
-                        .split(",")[1]
-                        .strip()
-                        .split(" ")[-1]
-                        .strip(),
-                        country_code="US",
-                        phone=phone,
-                        locator_domain=locator_domain,
-                    )
+
+                    try:
+                        yield SgRecord(
+                            page_url=page_url,
+                            location_name=blocks[0],
+                            street_address=addr[-2],
+                            city=addr[-1].split(",")[0].strip(),
+                            state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                            zip_postal=addr[-1]
+                            .split(",")[1]
+                            .strip()
+                            .split(" ")[-1]
+                            .strip(),
+                            country_code="US",
+                            phone=phone,
+                            locator_domain=locator_domain,
+                        )
+                    except:
+                        import pdb
+
+                        pdb.set_trace()
             else:
                 blocks = list(
                     sp1.find(

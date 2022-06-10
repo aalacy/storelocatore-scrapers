@@ -17,7 +17,7 @@ _headers = {
 
 base_url = "https://www.nisalocally.co.uk/stores/index.html"
 locator_domain = "https://www.nisalocally.co.uk/"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 12
 
 
@@ -56,16 +56,19 @@ def request_with_retries(url):
 
 def _d(sp1, page_url):
     logger.info(page_url)
-    street_address = sp1.select_one('meta[itemprop="streetAddress"]')["content"]
+    street_address = sp1.select_one('meta[itemprop="streetAddress"]')["content"].strip()
+    if street_address.endswith(","):
+        street_address = street_address[:1]
+    location_name = sp1.select_one("span#location-name .LocationName-geo").text.strip()
+    if location_name.endswith(","):
+        location_name = location_name[:-1]
     hours = [hh["content"] for hh in sp1.select("table.c-hours-details tbody tr")]
     phone = ""
     if sp1.select_one("div#phone-main"):
         phone = sp1.select_one("div#phone-main").text.strip()
     return SgRecord(
         page_url=page_url,
-        location_name=sp1.select_one(
-            "span#location-name .LocationName-geo"
-        ).text.strip(),
+        location_name=location_name,
         street_address=street_address,
         city=sp1.select_one('meta[itemprop="addressLocality"]')["content"],
         zip_postal=sp1.select_one(".c-address-postal-code").text.strip(),
@@ -81,6 +84,10 @@ def _d(sp1, page_url):
 def fetch_data():
     soup = bs(session.get(base_url, headers=_headers).text, "lxml")
     states = soup.select("ul.Directory-listLinks a")
+    total = 0
+    for state in states:
+        total += int(state["data-count"][1:-1])
+    logger.info(f"total {total} locations")
     logger.info(f"{len(states)} found")
     for state_url, sp1 in fetchConcurrentList(states):
         cities = sp1.select("ul.Directory-listLinks a")
@@ -116,3 +123,5 @@ if __name__ == "__main__":
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+    del session

@@ -39,6 +39,7 @@ def fetch_data(sgw: SgWriter):
         phone = line.pop(0)
         raw_address = " ".join(line)
         street_address, city, state, postal = get_international(raw_address)
+        city = location_name.split("-")[-1].strip()
 
         text = "".join(d.xpath(".//div[@data-map-args]/@data-map-args"))
         j = json.loads(text)

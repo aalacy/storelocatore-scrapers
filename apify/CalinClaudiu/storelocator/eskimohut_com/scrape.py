@@ -3,7 +3,7 @@ from sgscrape import simple_utils as utils
 from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 
 
 def para(url):
@@ -25,7 +25,7 @@ def para(url):
         data = "<MISSING>"
 
     try:
-        addressData = list(soup.find("h3", {"id": "1603828934"}).stripped_strings)
+        addressData = list(soup.find("div", {"id": "1603828934"}).stripped_strings)
     except Exception:
         k["status"] = False
         addressData = "<MISSING>"
@@ -42,9 +42,14 @@ def para(url):
         k["longitude"] = "<MISSING>"
 
     try:
-        k["hours"] = "; ".join(
-            list(soup.find("h3", {"id": "1566722847"}).stripped_strings)
+        k["hours"] = (
+            "; ".join(list(soup.find("div", {"id": "1566722847"}).stripped_strings))
+            .strip()
+            .split("; DELIVERY HOURS")[0]
+            .strip()
         )
+        if "PLEASE CALL TO CONFIRM HOURS" in k["hours"]:
+            k["hours"] = "<MISSING>"
     except Exception:
         k["hours"] = "<MISSING>"
 
@@ -69,7 +74,7 @@ def para(url):
     k["state"] = nice.state
     k["zip"] = nice.postcode
     k["country"] = nice.country
-    k["raw"] = addressData
+    k["raw"] = noice
 
     k["type"] = "<MISSING>"
 
@@ -98,7 +103,7 @@ def para(url):
 def fetch_data():
     para("/houston-westheimer")
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.eskimohut.com/find-a-hut"
+    url = "https://www.eskimohut.com/contacts"
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
@@ -111,8 +116,10 @@ def fetch_data():
             "google" not in i["href"]
             and i["href"].count("/") == 1
             and "newsletter" not in i["href"]
+            and i["href"] != "/"
         ):
             h.append(i["href"])
+
     pages = h
 
     lize = utils.parallelize(
@@ -132,7 +139,7 @@ def scrape():
     url = "https://www.eskimohut.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(mapping=["page_url"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
         location_name=sp.MappingField(mapping=["name"]),
         latitude=sp.MappingField(
             mapping=["latitude"],
@@ -140,14 +147,12 @@ def scrape():
         longitude=sp.MappingField(
             mapping=["longitude"],
         ),
-        street_address=sp.MappingField(
-            mapping=["address"], part_of_record_identity=True
-        ),
-        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
-        state=sp.MappingField(mapping=["state"], part_of_record_identity=True),
-        zipcode=sp.MappingField(mapping=["zip"], part_of_record_identity=True),
+        street_address=sp.MappingField(mapping=["address"]),
+        city=sp.MappingField(mapping=["city"]),
+        state=sp.MappingField(mapping=["state"]),
+        zipcode=sp.MappingField(mapping=["zip"]),
         country_code=sp.MappingField(mapping=["country"]),
-        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
+        phone=sp.MappingField(mapping=["phone"]),
         store_number=sp.MissingField(),
         hours_of_operation=sp.MappingField(mapping=["hours"]),
         location_type=sp.MappingField(mapping=["type"]),

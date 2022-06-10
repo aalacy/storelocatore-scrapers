@@ -31,13 +31,13 @@ def fetch_data(sgw: SgWriter):
 
         location_name = base.h1.text.strip()
 
-        raw_address = (
-            base.find(class_="location-meta-info-sub").text.strip().split("\r\n")
-        )
+        raw_address = list(base.find(class_="location-meta-info").stripped_strings)[
+            1
+        ].split("\r\n")
         if len(raw_address) == 1:
-            raw_address = (
-                base.find(class_="location-meta-info-sub").text.strip().split("\n")
-            )
+            raw_address = list(base.find(class_="location-meta-info").stripped_strings)[
+                1
+            ].split("\n")
         street_address = raw_address[0].strip()
         city = raw_address[1].split(",")[0].strip()
         state = raw_address[1].split(",")[1].split()[0].strip()
@@ -47,23 +47,17 @@ def fetch_data(sgw: SgWriter):
         location_type = "<MISSING>"
 
         try:
-            phone = (
-                base.find(class_="button-seperator")
-                .find_all("a")[-1]["href"]
-                .replace("tel:", "")
-                .strip()
-            )
+            phone = base.find(class_="location-meta-info").a.text.strip()
         except:
             phone = "<MISSING>"
 
-        raw_hours = str(base.find(class_="location-meta-info"))[3:]
-        hours_of_operation = (
-            raw_hours[raw_hours.find(">") + 1 : raw_hours.find("<")]
+        raw_hours = (
+            list(base.find(class_="location-meta-info").stripped_strings)[-1]
             .replace("\r\n", " ")
             .replace("\n", " ")
             .strip()
         )
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        hours_of_operation = (re.sub(" +", " ", raw_hours)).strip()
 
         map_data = base.find(id="map")
         latitude = map_data["data-latitude"]

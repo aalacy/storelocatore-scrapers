@@ -1,80 +1,130 @@
-import csv
-
-from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium import SgChrome
 
 
-def fetch_data():
-    out = []
-    url = 'https://directauto.com/'
-
-    session = SgRequests()
-    headers = {'Accept': 'application/json'}
-
-    for i in range(0, 100000, 10):
-        r = session.get(f'https://local.directauto.com/search?q=&l=en&offset={i}', headers=headers)
-        js = r.json()['response']['entities']
-        for jj in js:
-
-            j = jj.get('profile')
-            a = j.get('address')
-            locator_domain = url
-            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or '<MISSING>'
-            city = a.get('city') or '<MISSING>'
-            location_name = j.get('name')
-            state = a.get('region') or '<MISSING>'
-            postal = a.get('postalCode') or '<MISSING>'
-            country_code = a.get('countryCode') or '<MISSING>'
-            store_number = '<MISSING>'
-            page_url = f'https://local.directauto.com/{jj.get("url")}' or '<MISSING>'
-            phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
-            latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
-            longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
-            location_type = '<MISSING>'
-
-            hours = j.get('hours', {}).get('normalHours')
-            _tmp = []
-            for h in hours:
-                day = h.get('day')
-                if not h.get('isClosed'):
-                    interval = h.get('intervals')
-                    start = str(interval[0].get('start'))
-                    if len(start) == 3:
-                        start = f'0{start}'
-                    end = str(interval[0].get('end'))
-                    line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-                else:
-                    line = f'{day[:3].capitalize()}: Closed'
-                _tmp.append(line)
-
-            hours_of_operation = ';'.join(_tmp) or '<MISSING>'
-            if hours_of_operation.count('Closed') == 7:
-                hours_of_operation = 'Closed'
-
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-            out.append(row)
-        if len(js) < 10:
-            break
-
-    return out
+def get_locations(session, offset):
+    return session.execute_async_script(
+        f"""
+        fetch("https://local.directauto.com/search?offset={offset}&l=en", {{
+            "credentials": "include",
+            "headers": {{
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+                "Accept": "application/json",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Alt-Used": "local.directauto.com",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "no-cors",
+                "Sec-Fetch-Site": "same-origin",
+                "Pragma": "no-cache",
+                "Cache-Control": "no-cache"
+            }},
+            "referrer": "https://local.directauto.com/search",
+            "method": "GET",
+            "mode": "cors"
+        }})
+            .then(res => res.json())
+            .then(arguments[0])
+            .catch(err => arguments[0](JSON.stringify(err.error)))
+    """
+    )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    with SgChrome(is_headless=True) as session:
+        session.set_page_load_timeout(600)
+        session.set_script_timeout(300)
+        page_url = "https://local.directauto.com/"
+        try:
+            session.get(page_url)
+        except:
+            pass
+
+        for cnt in range(0, 5000, 10):
+            result = get_locations(session, cnt)
+
+            js = result["response"]["entities"]
+
+            for j in js:
+                j = j.get("profile") or {}
+
+                a = j.get("address") or {}
+                adr1 = a.get("line1") or ""
+                adr2 = a.get("line2") or ""
+                street_address = f"{adr1} {adr2}".strip()
+                city = a.get("city")
+                state = a.get("region")
+                postal = a.get("postalCode")
+                country_code = "US"
+                try:
+                    store_number = j["meta"]["id"]
+                except KeyError:
+                    store_number = SgRecord.MISSING
+                location_name = j.get("name")
+                page_url = j.get("c_pagesURL")
+
+                try:
+                    phone = j["mainPhone"]["display"]
+                except KeyError:
+                    phone = SgRecord.MISSING
+
+                g = j.get("yextDisplayCoordinate") or {}
+                latitude = g.get("lat")
+                longitude = g.get("long")
+
+                _tmp = []
+                try:
+                    hours = j["hours"]["normalHours"]
+                except:
+                    hours = []
+
+                for h in hours:
+                    day = h.get("day")
+                    isclosed = h.get("isClosed")
+                    if isclosed:
+                        _tmp.append(f"{day}: Closed")
+                        continue
+
+                    try:
+                        i = h["intervals"][0]
+                    except:
+                        i = dict()
+
+                    start = str(i.get("start") or "").zfill(4)
+                    end = str(i.get("end") or "").zfill(4)
+                    start = start[:2] + ":" + start[2:]
+                    end = end[:2] + ":" + end[2:]
+                    if start != end:
+                        _tmp.append(f"{day}: {start}-{end}")
+
+                hours_of_operation = ";".join(_tmp)
+
+                row = SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    latitude=latitude,
+                    longitude=longitude,
+                    phone=phone,
+                    store_number=store_number,
+                    hours_of_operation=hours_of_operation,
+                    locator_domain=locator_domain,
+                )
+
+                sgw.write_row(row)
+
+            if len(js) < 10:
+                break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://directauto.com/"
+
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

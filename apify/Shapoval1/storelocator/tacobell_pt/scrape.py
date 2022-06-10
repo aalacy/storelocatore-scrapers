@@ -28,8 +28,13 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
 
         ad = (
-            " ".join(tree.xpath('//div[@class="dir"]/text()')).replace("\n", "").strip()
+            " ".join(tree.xpath('//div[@class="dir"]/text()'))
+            .replace("\r\n", "")
+            .strip()
         )
+        ad = " ".join(ad.split())
+        if ad.find("HORÁRIO") != -1:
+            ad = ad.split("HORÁRIO")[0].strip()
         if ad.find("Horário") != -1:
             ad = ad.split("Horário")[0].strip()
         a = parse_address(International_Parser(), ad)

@@ -1,108 +1,110 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import usaddress
-from sglogging import SgLogSetup
-from sgscrape.sgrecord import SgRecord
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("talbots_com")
-
-
-def write_output(data):
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
-    ) as writer:
-        for row in data:
-            writer.write_row(row)
-
-
 session = SgRequests()
+website = "firstcommercialbk_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://www.firstcommercialbk.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate",
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "max-age=0",
-        "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "cross-site",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
-    }
-    res = session.get("https://www.firstcommercialbk.com/locations/", headers=headers)
-
+    url = "https://www.firstcommercialbk.com/locations/"
+    res = session.get(url, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
     div = soup.find("div", {"id": "pl-30"})
-    locs = div.text.split(" Address:")
-
+    locs = str(div).split("<img")[1:]
     for loc in locs:
-        if locs.index(loc) == 0:
-            continue
-        prev = locs[locs.index(loc) - 1]
-        if "Division" in prev:
-            name = prev.split("Division")[-1]
-        else:
-            name = prev.split("p.m.")[-1]
-        cur = loc.split("p.m.")[-1]
-        loc = loc.replace("p.m." + cur, "p.m.")
-
-        addr = loc.split("Phone:")[0].strip()
-        if "Ridgeland" in loc:
-            addr = addr.replace("Ridgeland", " Ridgeland").replace(
-                "1076 Highland Colony Parkway", ""
-            )
-        addr = usaddress.tag(addr)[0]
-        street = addr["AddressNumber"] + " " + addr["StreetName"]
-        if "StreetNamePostType" in addr:
-            street += " " + addr["StreetNamePostType"]
-        if "SubaddressType" in addr:
-            street += ", " + addr["SubaddressType"]
-        if "SubaddressIdentifier" in addr:
-            street += " " + addr["SubaddressIdentifier"]
-        if "OccupancyType" in addr:
-            street += ", " + addr["OccupancyType"]
-        if "OccupancyIdentifier" in addr:
-            street += " " + addr["OccupancyIdentifier"]
-
-        if "Ridgeland" in loc:
-            street += ", 1076 Highland Colony Parkway"
-
-        city = addr["PlaceName"]
-        state = addr["StateName"]
-        zip = addr["ZipCode"]
-
-        phone = re.findall(r"Phone: ([\d\-]+)", loc)[0]
-        tim = re.findall(r"Business Hours (.*)", loc)[0]
-
+        loc = BeautifulSoup(loc, "html.parser")
+        loc = loc.findAll("p")
+        address = loc[0].get_text(separator="|", strip=True).split("|")
+        location_name = address[0].replace(":", "")
+        log.info(location_name)
+        address = " ".join(address[1:])
+        address = address.replace(",", " ")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
+        city = city.replace("Highland Bluff Building", "")
+        country_code = "US"
+        phone = (
+            loc[1]
+            .get_text(separator="|", strip=True)
+            .split("|")[0]
+            .replace("Phone:", "")
+        )
+        hours_of_operation = (
+            loc[2]
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+            .replace("Business Hours", "")
+            .replace("Lobby", "")
+        )
         yield SgRecord(
-            locator_domain="https://www.firstcommercialbk.com",
-            page_url="https://www.firstcommercialbk.com/locations/",
-            location_name=name,
-            street_address=street,
+            locator_domain=DOMAIN,
+            page_url=url,
+            location_name=location_name,
+            street_address=street_address,
             city=city,
             state=state,
-            zip_postal=zip,
-            country_code="US",
-            store_number="<MISSING>",
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=MISSING,
             phone=phone,
-            location_type="<MISSING>",
-            latitude="<MISSING>",
-            longitude="<MISSING>",
-            hours_of_operation=tim.strip(),
+            location_type=MISSING,
+            latitude=MISSING,
+            longitude=MISSING,
+            hours_of_operation=hours_of_operation,
         )
 
 
 def scrape():
-    write_output(fetch_data())
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

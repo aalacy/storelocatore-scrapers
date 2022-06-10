@@ -10,3 +10,6 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
+## Info: 
+
+- Total Locations 422 as of 12th Sep, 2021

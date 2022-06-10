@@ -1,43 +1,32 @@
-import csv
-
-from sgrequests import SgRequests
+import json
 from lxml import html
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_states(url):
-    session = SgRequests()
-    r = session.get(url)
+    r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
-    return tree.xpath("//div[@class='state-listing']//a/@href")
+    return tree.xpath("//a[@class='state-li']/@href")
+
+
+def get_address(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    try:
+        text = "".join(tree.xpath("//script[contains(text(), 'areaServed')]/text()"))
+        j = json.loads(text)["provider"]["address"]
+    except:
+        j = {}
+    street = j.get("streetAddress")
+    city = j.get("addressLocality")
+    state = j.get("addressRegion")
+    postal = j.get("postalCode")
+
+    return street, city, state, postal
 
 
 def generate_pin_dict(text):
@@ -57,24 +46,19 @@ def generate_pin_dict(text):
     return d
 
 
-def fetch_data():
-    out = []
-    session = SgRequests()
-    url = "https://www.glassusa.com/locations/"
-    states = get_states(url)
+def fetch_data(sgw: SgWriter):
+    states = get_states("https://www.glassusa.com/locations/")
 
     for s in states:
-        r = session.get(f"https://www.glassusa.com{s}")
+        r = session.get(f"https://www.glassusa.com{s}", headers=headers)
         tree = html.fromstring(r.text)
-        locator_domain = url
         items = tree.xpath("//li[@class='group-container']")
         text = "".join(tree.xpath("//script[contains(text(),'mapMarker ')]/text()"))
         _tmp = generate_pin_dict(text)
         for item in items:
             store_number = "".join(item.xpath("./@data-branch"))
-            page_url = (
-                "https://www.glassusa.com"
-                + "".join(item.xpath("./@onclick")).split("'")[1]
+            page_url = "https://www.glassusa.com" + "".join(
+                item.xpath(".//span[@class='item-more']/a/@href")
             )
             line = item.xpath(".//span[@class='item-address']/span[not(@class)]/text()")
             line = list(filter(None, [l.replace("\xa0", " ").strip() for l in line]))
@@ -86,12 +70,15 @@ def fetch_data():
                 line = line.split(",")[1].strip()
                 state = line.split()[0]
                 postal = line.split()[1]
+            elif not line:
+                street_address, city, state, postal = get_address(page_url)
             else:
                 line = line.pop()
-                street_address = "<MISSING>"
+                street_address = SgRecord.MISSING
                 city = line.split(",")[0].strip()
                 state = line.split(",")[1].strip()
-                postal = "<MISSING>"
+                postal = SgRecord.MISSING
+
             country_code = "US"
             location_name = "".join(
                 item.xpath(".//span[@class='loc-name highlight']/text()")
@@ -101,38 +88,34 @@ def fetch_data():
                     ".//span[@class='item-phone']/span[@class='highlight']/text()"
                 )
             ).strip()
-            latitude = _tmp.get(store_number, {}).get("lat") or "<MISSING>"
-            longitude = _tmp.get(store_number, {}).get("lon") or "<MISSING>"
+            latitude = _tmp.get(store_number, {}).get("lat")
+            longitude = _tmp.get(store_number, {}).get("lon")
             if latitude == "0" or longitude == "0":
-                latitude, longitude = "<MISSING>", "<MISSING>"
-            location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.glassusa.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0"
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

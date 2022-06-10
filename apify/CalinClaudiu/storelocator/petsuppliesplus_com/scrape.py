@@ -114,7 +114,7 @@ def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
         page_url=MappingField(mapping=["data", "requrl"]),
-        location_name=MappingField(mapping=["FormattedStoreName"]),
+        location_name=MappingField(mapping=["Name"]),
         latitude=MappingField(mapping=["LatPos"]),
         longitude=MappingField(mapping=["LngPos"]),
         street_address=MultiMappingField(

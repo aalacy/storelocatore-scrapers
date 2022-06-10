@@ -14,7 +14,6 @@ def fetch_data(sgw: SgWriter):
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
-        "Content-Length": "65",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "Host": "www.snapfitness.com",
         "Origin": "https://www.snapfitness.com",
@@ -32,16 +31,22 @@ def fetch_data(sgw: SgWriter):
 
     payload = {
         "lat": "44.977753",
-        "limitToCountry": "true",
+        "limitToCountry": "false",
         "long": "-93.265015",
-        "radius": "4236.899793572078",
+        "radius": "20236.899793572078",
         "search": "",
     }
 
     res_json = session.post(base_link, headers=headers, data=payload).json()
 
-    for loc in res_json:
-        location_name = "Snap Fitness " + loc["Name"].strip()
+    for i in res_json:
+        loc = res_json[i]
+        try:
+            location_name = (
+                "Snap Fitness " + loc["Name"].replace("Cronulla", "").strip()
+            )
+        except:
+            continue
 
         phone_number = loc["PhoneNumber"]
         if not phone_number:
@@ -52,20 +57,23 @@ def fetch_data(sgw: SgWriter):
             street_address = (loc["Address1"] + " " + loc["Address2"]).strip()
         except:
             street_address = loc["Address1"]
-        city = loc["City"]
+        try:
+            city = loc["City"].replace("Cronulla", "")
+        except:
+            city = loc["City"]
         state = loc["State"]
         zip_code = loc["Postcode"]
         country_code = loc["Country"]
-        if "US" in country_code:
-            country_code = "US"
-        elif "CA" in country_code:
-            country_code = "CA"
-        else:
-            continue
         store_number = loc["ID"]
 
         hours = "<INACCESSIBLE>"
-        page_url = "https://www.snapfitness.com/" + loc["URL"]
+        page_url = (
+            "https://www.snapfitness.com"
+            + loc["URL"].replace("stage=Stage", "").strip()
+        )
+        page_url = page_url.replace("?", "")
+        if "cronulla" in page_url:
+            page_url = "<INACCESSIBLE>"
         location_type = "<MISSING>"
 
         sgw.write_row(

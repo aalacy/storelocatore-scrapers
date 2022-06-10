@@ -20,7 +20,7 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="addressBox"]/script/text()')
     for poi in all_locations:
-        poi = json.loads(poi)
+        poi = json.loads(" ".join(poi.replace("\n", "").split()))
         addr = parse_address_intl(poi["address"])
         street_address = addr.street_address_1
         if street_address and addr.street_address_2:
@@ -37,12 +37,12 @@ def fetch_data():
             state=addr.state,
             zip_postal=addr.postcode,
             country_code=addr.country,
-            store_number=SgRecord.MISSING,
+            store_number="",
             phone=poi["telephone"],
             location_type=poi["@type"],
             latitude=poi["geo"]["latitude"],
             longitude=poi["geo"]["longitude"],
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation="",
             raw_address=poi["address"],
         )
 

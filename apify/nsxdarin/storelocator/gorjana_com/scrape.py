@@ -1,69 +1,91 @@
-import csv
+import re
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def fetch_data():
-    locs = []
-    url = 'https://gorjana.com/pages/store-locator'
-    r = session.get(url, headers=headers)
-    website = 'gorjana.com'
-    country = 'US'
-    typ = '<MISSING>'
-    loc = '<MISSING>'
-    store = '<MISSING>'
-    lat = '<MISSING>'
-    lng = '<MISSING>'
-    lines = r.iter_lines()
-    Found = False
-    for line in lines:
-        line = str(line.decode('utf-8'))
-        if Found is False and 'var storeMarkers' in line:
-            Found = True
-        if Found and '</script>' in line:
-            Found = False
-        if Found and 'id: ' in line:
-            store = line.split('id: ')[1].split(',')[0]
-            g = next(lines)
-            g = str(g.decode('utf-8'))
-            name = g.split('title: `')[1].split('`')[0]
-            g = next(lines)
-            g = str(g.decode('utf-8'))
-            g = g.split(': `')[1].split('`')[0]
-            if g.count('<br />') == 0:
-                add = g.split(',')[0].strip() + ' ' + g.split(',')[1].strip()
-                city = g.split(',')[2].strip()
-                state = g.split(',')[3].strip().split(' ')[0]
-                zc = g.rsplit(' ',1)[1]
-            elif g.count('<br />') == 1:
-                add = g.split('<br')[0]
-                city = g.split('<br />')[1].split(',')[0]
-                state = g.split('<br />')[1].split(',')[1].strip().split(' ')[0]
-                zc = g.rsplit(' ',1)[1]
-            else:
-                add = g.split('<br />')[0].strip() + ' ' + g.split('<br />')[1].strip()
-                city = g.split('<br />')[2].split(',')[0]
-                state = g.split('<br />')[2].split(',')[1].strip().split(' ')[0]
-                zc = g.rsplit(' ',1)[1]
-        if Found and 'phone: `' in line:
-            phone = line.split('phone: `')[1].split('`')[0]
-        if Found and 'working_hours: `' in line:
-            hours = line.split('working_hours: `')[1].split('`')[0].replace('<br />','; ').replace('|',':')
-            if hours == '':
-                hours = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    locator_domain = "https://gorjana.com/"
+    api_url = "https://gorjana.com/pages/store-locator"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath(
+        '//div[@class="stores stores_desktop"]/div[@class="store"]/span[@class="store__title title-medium"]/a'
+    )
+    for d in div:
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://gorjana.com{slug}"
+        location_name = "".join(d.xpath(".//text()")).replace("\n", "").strip()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        info = tree.xpath(
+            '//div[@class="elm text-edit gf-elm-left gf-elm-center-lg gf-elm-center-md gf-elm-center-sm gf-elm-center-xs"]//text() | //div[@class="elm text-edit gf-elm-center-lg gf-elm-center-md gf-elm-center-sm gf-elm-center-xs gf-elm-center"]//text()'
+        )
+        info = list(filter(None, [a.strip() for a in info]))
+        adr = " ".join(info)
+        ad_info = tree.xpath("//div[./b]//text()")
+        if not ad_info:
+            ad_info = tree.xpath("//div[./strong]//text()")
+        ad_info = list(filter(None, [a.strip() for a in ad_info]))
+        raw_address = " ".join(ad_info)
+        a = parse_address(International_Parser(), raw_address)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        if city == "<MISSING>":
+            city = location_name.split(",")[0].strip()
+        ph = (
+            re.findall(r"[(][\d]{3}[)][ ]?[\d]{3}-[\d]{4}", adr)
+            or re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", adr)
+            or "<MISSING>"
+        )
+        phone = "".join(ph)
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        for i in info:
+            if "PM" in i or "Mon-" in i or "Sun" in i:
+                tmp.append(i)
+            hours_of_operation = (
+                "; ".join(tmp).replace(":;", ":").strip() or "<MISSING>"
+            )
 
-scrape()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

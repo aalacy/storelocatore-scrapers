@@ -1,21 +1,21 @@
+import ssl
 import time
 import json
-from lxml import etree
-
-from sgselenium import SgChrome
+from lxml import html
+from sgpostal.sgpostal import parse_address_usa
+from sgselenium.sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-
 from sglogging import sglog
-import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 MISSING = SgRecord.MISSING
 DOMAIN = "theunionkitchen.com"
-
+website = "https://www.theunionkitchen.com"
+location_type = "Restaurant"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 start_url = "https://www.theunionkitchen.com/locations"
 user_agent = (
@@ -23,59 +23,79 @@ user_agent = (
 )
 
 
+def get_address(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"Address Missing: {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
 def fetch_data():
 
     with SgChrome(user_agent=user_agent) as driver:
         driver.get(start_url)
-        time.sleep(8)
-        htmlSource = driver.page_source
-        dom = etree.HTML(htmlSource)
+        driver.implicitly_wait(30)
+        htmlpage = driver.page_source
+        body = html.fromstring(htmlpage, "lxml")
 
-    data = dom.xpath('//script[@class="js-react-on-rails-component"]/text()')[0]
-    jdata = json.loads(data)
-    locs = jdata["preloadQueries"][4]["data"]["restaurant"]["pageContent"]["sections"][
-        0
-    ]["locations"]
-    for loc in locs:
-        store_url = start_url
-        street_address = loc["streetAddress"].replace("\n", "")
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        location_name = loc["name"]
-        log.info(f"Location Name: {location_name}")
-        city = loc["city"]
-        state = loc["state"]
-        zip_code = loc["postalCode"]
-        raw_address = f"{street_address}, {city}, {state}, {zip_code}"
-        country_code = loc["country"]
-        store_number = loc["id"]
-        phone = loc["phone"]
-        location_type = MISSING
-        latitude = loc["lat"]
-        longitude = loc["lng"]
-        hoo = loc["schemaHours"]
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo)
-
-        log.info(f"Raw Address: {raw_address}")
-
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+        jsons = body.xpath('//script[contains(@id, "popmenu-apollo-state")]/text()')
+        jsontext = (
+            jsons[0]
+            .split("window.POPMENU_APOLLO_STATE = ")[1]
+            .replace(";\n", "")
+            .strip()
         )
+        data = json.loads(jsontext)
+        res_id_nodes = data["CustomPageSection:82228"]["locations"]
+        for rl in res_id_nodes:
+            rl_id = rl["__ref"]
+            slug = data[f"{rl_id}"]["slug"]
+            page_url = f"{website}/{slug}"
+            store_number = data[f"{rl_id}"]["id"]
+            location_name = data[f"{rl_id}"]["name"]
+            phone = data[f"{rl_id}"]["phone"]
+            latitude = data[f"{rl_id}"]["lat"]
+            longitude = data[f"{rl_id}"]["lng"]
+            raw_address = data[f"{rl_id}"]["fullAddress"].replace("\n", " ")
+            street_address, city, state, zip_postal = get_address(raw_address)
+            hours_of_operation = ", ".join(data[f"{rl_id}"]["schemaHours"])
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                store_number=store_number,
+                page_url=page_url,
+                location_name=location_name,
+                location_type=location_type,
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
+                state=state,
+                country_code="US",
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

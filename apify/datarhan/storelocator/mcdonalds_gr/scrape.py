@@ -10,7 +10,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://mcdonalds.gr/wp-admin/admin-ajax.php"
     domain = "mcdonalds.gr"
@@ -32,11 +32,9 @@ def fetch_data():
         page_url = poi["permalink"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath(
-            '//div[a[contains(text(), "Outdoor Lobby")]]/following-sibling::div//tr//text()'
-        )
+        hoo = loc_dom.xpath('//table[@class="location-hours-table"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo)
+        hours_of_operation = " ".join(hoo).split(" Δευτέρα")[0]
         if poi["latlng"].get("street_name"):
             if poi["latlng"].get("street_number"):
                 street_address = (

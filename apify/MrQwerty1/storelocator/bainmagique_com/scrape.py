@@ -1,38 +1,11 @@
-import csv
 import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def translate(hours):
@@ -51,45 +24,35 @@ def translate(hours):
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.bainmagique.com/qc-fr/liste-des-succursales/")
     tree = html.fromstring(r.text)
 
     return tree.xpath("//div[@class='ColumnsWrapper']//a/@href")
 
 
-def get_data(page_url):
-    session = SgRequests()
-    locator_domain = "https://www.bainmagique.com/"
-
+def get_data(page_url, sgw: SgWriter):
     try:
         r = session.get(page_url)
+        tree = html.fromstring(r.text)
     except:
         return
-
-    tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[@type='application/ld+json']/text()"))
     js = json.loads(text)
 
     location_name = "".join(tree.xpath("//div[@class=' bf-location-info']/h2/text()"))
     a = js.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("addressCountry").get("name") or "<MISSING>"
+    street_address = a.get("streetAddress")
+    city = a.get("addressLocality")
+    state = a.get("addressRegion")
+    postal = a.get("postalCode") or ""
+    country_code = a.get("addressCountry").get("name")
     if " " in postal:
         country_code = "CA"
 
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//a[@class='bf-li-item_phone']/text()")).strip()
-        or "<MISSING>"
-    )
+    phone = "".join(tree.xpath("//a[@class='bf-li-item_phone']/text()")).strip()
     g = js.get("geo") or {}
-    latitude = g.get("latitude") or "<MISSING>"
-    longitude = g.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+    latitude = g.get("latitude")
+    longitude = g.get("longitude")
 
     _tmp = []
     hours = tree.xpath("//ul[@class='hours-wrap']/li")
@@ -98,48 +61,39 @@ def get_data(page_url):
         time = "".join(h.xpath("./span[@class='bf-hours']/text()")).strip()
         _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
     if hours_of_operation.lower().count("closed") == 7:
         hours_of_operation = "Closed"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.bainmagique.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

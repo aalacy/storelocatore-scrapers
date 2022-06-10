@@ -1,51 +1,10 @@
-import csv
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_address(line):
@@ -81,68 +40,84 @@ def get_address(line):
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+        street_address = SgRecord.MISSING
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.tylerstx.com/"
-    page_url = "https://www.tylerstx.com/store-contacts"
+def get_coords_from_google_url(url):
+    try:
+        if url.find("ll=") != -1:
+            latitude = url.split("ll=")[1].split(",")[0]
+            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
+        else:
+            latitude = url.split("@")[1].split(",")[0]
+            longitude = url.split("@")[1].split(",")[1]
+    except IndexError:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-    session = SgRequests()
-    r = session.get(page_url)
+    return latitude, longitude
+
+
+def fetch_data(sgw: SgWriter):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
-        "//div[@class='shg-c-lg-2 shg-c-md-2 shg-c-sm-2 shg-c-xs-12' and .//table]"
+        "//div[@class='shg-c-lg-3 shg-c-md-3 shg-c-sm-3 shg-c-xs-6' and .//img]"
     )
 
     for d in divs:
-        location_name = "".join(d.xpath(".//h1/text()")).strip()
-        line = d.xpath(".//tr[1]//text()")
-        line = ", ".join(list(filter(None, [l.strip() for l in line])))
+        lines = d.xpath(".//p//text()")
+        if "soon" in lines[-1]:
+            continue
+        if "@" in lines[-1]:
+            lines.pop()
 
-        street_address, city, state, postal = get_address(line)
+        location_name = lines.pop(0)
+        raw_address = lines.pop(0)
+        if lines[0][0].isdigit():
+            phone = lines.pop(0)
+        else:
+            raw_address += f", {lines.pop(0)}"
+            phone = lines.pop(0)
+
+        street_address, city, state, postal = get_address(raw_address)
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = "".join(d.xpath(".//tr[2]//text()")).strip() or "<MISSING>"
-        text = "".join(d.xpath(".//tr[1]//a[contains(@href, 'google')]/@href"))
+
+        hours_of_operation = " ".join(lines)
+        text = "".join(d.xpath(".//a[contains(@href, 'google')]/@href"))
         latitude, longitude = get_coords_from_google_url(text)
-        location_type = "<MISSING>"
 
-        hours = d.xpath(".//tr[3]//text()")
-        hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours) or "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.tylerstx.com/"
+    page_url = "https://www.tylerstx.com/store-contacts"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)
