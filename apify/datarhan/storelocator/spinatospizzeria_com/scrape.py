@@ -6,7 +6,6 @@ from urllib.parse import urljoin
 from time import sleep
 
 from sgselenium import SgChrome
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -21,7 +20,6 @@ else:
 
 
 def fetch_data():
-    session = SgRequests()
     start_url = "https://www.spinatospizzeria.com/locations-and-menus"
     domain = "spinatospizzeria.com"
 
@@ -44,8 +42,9 @@ def fetch_data():
             poi_html = etree.HTML(poi["customLocationContent"])
             url = poi_html.xpath('.//a[contains(text(), "Menu")]/@href')[0]
             page_url = urljoin(start_url, url)
-            loc_response = session.get(page_url)
-            loc_dom = etree.HTML(loc_response.text)
+            print(page_url)
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
             location_type = poi["__typename"]
             if loc_dom.xpath('//span[contains(text(), "Temporarily Closed")]'):
                 location_type = "Temporarily Closed"
