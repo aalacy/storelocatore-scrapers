@@ -30,7 +30,7 @@ def get_coords_from_embed(text):
 
 
 def fetch_data(sgw: SgWriter):
-    page_url = "https://ufcgym.mx/sucursales/"
+    page_url = f"https://ufcgym.mx/sucursales/"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[contains(@data-vc-content, '.vc_tta-panel-body')]")
@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
         phone = "".join(d.xpath(".//p/text()")[1]).replace("Teléfono:", "").strip()
         location_name = "".join(d.xpath(".//span/text()")).strip()
         street_address, city, state, postal = get_international(raw_address)
-        city = city.replace(".", "").strip()
+        city = city.replace("Cdmx", "").replace(".", "").strip()
         country_code = "MX"
 
         text = "".join(d.xpath(".//iframe/@src"))
