@@ -142,7 +142,7 @@ def fetch_data():
     mylist = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
         expected_search_radius_miles=5,
-        max_search_distance_miles=1000,
+        max_search_distance_miles=2000,
     )
     search = list(mylist)
 

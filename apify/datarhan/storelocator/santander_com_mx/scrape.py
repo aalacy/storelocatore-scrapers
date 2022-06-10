@@ -48,18 +48,24 @@ def fetch_data():
             zip_code = poi["location"]["zipcode"]
             if zip_code and street_address:
                 street_address = street_address.split(zip_code)[0]
+            city = (
+                poi["location"]["city"].split(",")[0] if poi["location"]["city"] else ""
+            )
+            phone = poi.get("contactData", {}).get("phoneNumber")
+            if phone:
+                phone = phone.split("/")[0].split("Fax")[0].split("int")[0]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi.get("urlDetailPage"),
                 location_name=poi.get("name"),
                 street_address=street_address,
-                city=poi["location"]["city"],
+                city=city,
                 state="",
                 zip_postal=zip_code,
                 country_code=poi["location"]["country"],
                 store_number=poi["poicode"],
-                phone=poi.get("contactData", {}).get("phoneNumber"),
+                phone=phone,
                 location_type=poi["objectType"]["code"],
                 latitude=poi["location"]["coordinates"][1],
                 longitude=poi["location"]["coordinates"][0],

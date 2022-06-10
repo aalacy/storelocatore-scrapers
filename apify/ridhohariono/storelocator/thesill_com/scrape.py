@@ -22,6 +22,27 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
+
+
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
@@ -63,7 +84,7 @@ def fetch_data():
     )
     for store_url in contents:
         page_url = BASE_URL + store_url
-        store, sel = pull_content(page_url)
+        store, store_sel = pull_content(page_url)
         info = store.select_one("div.sill-container.w-full.h-full.flex.flex-col.gap-4")
         location_name = info.find("h1").text.strip()
         if "Coming Soon" in location_name:
@@ -88,8 +109,10 @@ def fetch_data():
         country_code = "US"
         store_number = MISSING
         location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        map_link = "".join(
+            store_sel.xpath('//iframe[contains(@src,"maps/embed")]/@src')
+        ).strip()
+        latitude, longitude = get_latlng(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
