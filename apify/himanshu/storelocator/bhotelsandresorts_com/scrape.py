@@ -1,109 +1,73 @@
-import csv
-import json
-
-from bs4 import BeautifulSoup
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
-    }
-
+    locator_domain = "https://www.bhotelsandresorts.com/"
+    api_url = "https://www.bhotelsandresorts.com/destinations/"
     session = SgRequests()
-    locator_domain = "https://www.bhotelsandresorts.com"
-    r = session.get("https://www.bhotelsandresorts.com/destinations", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//a[text()="LEARN MORE"]')
+    for d in div:
 
-    script_temp = soup.find(id="menu-main").ul
-    for script_location in script_temp.find_all("li"):
-        location_url = script_location.find("a")["href"]
+        page_url = "".join(d.xpath(".//@href"))
+        location_name = "".join(d.xpath(".//preceding-sibling::h2[1]/text()"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        street_address = (
+            "".join(tree.xpath('//p[text()="Main"]/preceding-sibling::p[1]/text()[1]'))
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//p[text()="Main"]/preceding-sibling::p[1]/text()[2]'))
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
+        state = ad.split()[-2].strip()
+        postal = ad.split()[-1].strip()
+        country_code = "US"
+        city = " ".join(ad.split()[:-2]).strip()
+        phone = (
+            "".join(tree.xpath('//p[text()="Main"]/following-sibling::p[1]/text()'))
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
 
-        r1 = session.get(location_url, headers=headers)
-        tree = html.fromstring(r1.text)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {ad}",
+        )
 
-        text = "".join(tree.xpath("//script[contains(text(), 'places')]/text()"))
-        text = text.split('"places":[')[-1].split("}}")[0] + "}}}"
-        address_json = json.loads(text)
-
-        location_name = tree.xpath(
-            "//div[contains(@class,'vc_custom_heading')]/h2/text()"
-        )[0].strip()
-        street_address = address_json["address"].split(",")[0]
-        state = address_json["location"]["state"]
-        city = address_json["location"]["city"]
-        zipp = address_json["location"]["postal_code"]
-        if not state:
-            city = address_json["address"].split(",")[1].strip()
-            state = address_json["address"].split(",")[2].split()[0].strip()
-            zipp = address_json["address"].split(",")[2].split()[1].strip()
-        latitude = address_json["location"]["lat"]
-        longitude = address_json["location"]["lng"]
-        phone = address_json["content"]
-        if "-" not in phone:
-            phone = "<MISSING>"
-
-        store = [
-            locator_domain,
-            location_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zipp,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        return_main_object.append(store)
-
-    return return_main_object
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

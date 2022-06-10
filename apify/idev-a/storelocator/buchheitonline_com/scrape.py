@@ -2,16 +2,19 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+locator_domain = "https://buchheits.com/"
+page_url = "https://buchheits.com/about-us/locations"
+base_url = "https://buchheits.com/api/pages?menu=3&path=locations"
+
 
 def fetch_data():
-    locator_domain = "https://buchheits.com/"
-    page_url = "https://buchheits.com/about-us/locations"
-    base_url = "https://buchheits.com/api/pages?menu=3&path=locations"
     with SgRequests() as session:
         locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "table tr td"
@@ -40,11 +43,20 @@ def fetch_data():
                 phone=addr[3],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

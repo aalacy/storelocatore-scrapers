@@ -35,19 +35,14 @@ def fetch_data():
                 store_url = "https://www.jlindeberg.com/gb/en/stores"
                 location_name = poi["storeName"]
                 street_address = poi["address1"]
-                street_address = street_address if street_address else "<MISSING>"
                 state = poi.get("state")
-                state = state if state else "<MISSING>"
                 zip_code = poi["postalCode"]
-                zip_code = zip_code if zip_code else "<MISSING>"
                 store_number = poi["storeID"]
                 phone = poi["phone"]
-                phone = phone if phone else "<MISSING>"
-                location_type = "<MISSING>"
                 latitude = poi["latitude"]
-                latitude = latitude if latitude else "<MISSING>"
                 longitude = poi["longitude"]
-                longitude = longitude if longitude else "<MISSING>"
+                if city == "Abbotsford" and not zip_code:
+                    continue
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -60,7 +55,7 @@ def fetch_data():
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone,
-                    location_type=location_type,
+                    location_type="",
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation="",
@@ -75,7 +70,7 @@ def scrape():
             SgRecordID(
                 {
                     SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

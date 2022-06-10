@@ -1,76 +1,114 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
+    api = "https://stores.lanebryant.com/search"
 
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    for cnt in range(0, 5000, 10):
+        params = {
+            "l": "en_US",
+            "offset": str(cnt),
+        }
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["response"]["entities"]
 
-        for row in data:
-            writer.writerow(row)
+        for j in js:
+            j = j.get("profile") or {}
+            a = j.get("address") or {}
+            adr1 = a.get("line1") or ""
+            adr2 = a.get("line2") or ""
+            street_address = " ".join(f"{adr1} {adr2}".split())
+            city = a.get("city")
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = a.get("countryCode")
+            try:
+                store_number = j["meta"]["id"]
+            except KeyError:
+                store_number = SgRecord.MISSING
+            location_name = j.get("name") or ""
 
+            page_url = j.get("c_pagesURL") or j.get("c_cAPagesURL")
+            location_type = "Retail"
+            if "Outlet" in location_name:
+                location_type = "Outlet"
 
-def fetch_data():
-    out = []
-    url = 'https://stores.lanebryant.com/index.html'
+            try:
+                phone = j["mainPhone"]["display"]
+            except KeyError:
+                phone = SgRecord.MISSING
 
-    session = SgRequests()
-    headers = {'Accept': 'application/json'}
+            g = j.get("yextDisplayCoordinate") or {}
+            latitude = g.get("lat")
+            longitude = g.get("long")
 
-    for i in range(0, 100000, 10):
-        r = session.get(f'https://stores.lanebryant.com/search?q=&offset={i}', headers=headers)
-        js = r.json()['response']['entities']
-        for jj in js:
-            j = jj.get('profile')
-            a = j.get('address')
-            locator_domain = url
-            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or '<MISSING>'
-            city = a.get('city') or '<MISSING>'
-            location_name = f"Lane Bryant {j.get('geomodifier')}"
-            state = a.get('region') or '<MISSING>'
-            postal = a.get('postalCode') or '<MISSING>'
-            country_code = a.get('countryCode') or '<MISSING>'
-            store_number = '<MISSING>'
-            page_url = j.get('websiteUrl')
-            phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
-            latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
-            longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
-            location_type = '<MISSING>'
-            hours = j.get('hours', {}).get('normalHours')
             _tmp = []
+            try:
+                hours = j["hours"]["normalHours"]
+            except:
+                hours = []
+
             for h in hours:
-                day = h.get('day')
-                if not h.get('isClosed'):
-                    interval = h.get('intervals')
-                    start = str(interval[0].get('start'))
-                    if len(start) == 3:
-                        start = f'0{start}'
-                    end = str(interval[0].get('end'))
-                    line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-                else:
-                    line = f'{day[:3].capitalize()}: Closed'
-                _tmp.append(line)
+                day = h.get("day")
+                isclosed = h.get("isClosed")
+                if isclosed:
+                    _tmp.append(f"{day}: Closed")
+                    continue
 
-            hours_of_operation = ';'.join(_tmp) or '<MISSING>'
+                try:
+                    i = h["intervals"][0]
+                except:
+                    i = dict()
 
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-            out.append(row)
+                start = str(i.get("start") or "").zfill(4)
+                end = str(i.get("end") or "").zfill(4)
+                start = start[:2] + ":" + start[2:]
+                end = end[:2] + ":" + end[2:]
+                if start != end:
+                    _tmp.append(f"{day}: {start}-{end}")
+
+            hours_of_operation = ";".join(_tmp)
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                location_type=location_type,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
+
+            sgw.write_row(row)
+
         if len(js) < 10:
             break
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://stores.lanebryant.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json",
+        "Referer": "https://stores.lanebryant.com/",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

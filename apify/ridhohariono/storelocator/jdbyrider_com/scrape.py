@@ -23,7 +23,7 @@ def fetch_data():
     log.info("Fetching store_locator data")
     data = session.get(API_ENDPOINT, headers=HEADERS).json()
     for key, val in data.items():
-        if val["location_is_closed"]:
+        if not val or val["location_is_closed"]:
             continue
         page_url = val["dealershipPageUri"]
         location_name = val["_BusName"]
@@ -67,12 +67,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

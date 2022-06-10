@@ -18,17 +18,22 @@ def get_params():
         r = session.post("https://www.aspirus.org/find-a-location", data=data)
         tree = html.fromstring(r.text)
 
-        script = "".join(tree.xpath("//script[contains(text(),'var marker;')]/text()"))
-        script = (
-            script.split("var marker;")[1]
-            .split("infowindow = null;")[0]
-            .split(".LatLng")[1:]
-        )
+        try:
+            script = "".join(
+                tree.xpath("//script[contains(text(),'var marker;')]/text()")
+            )
+            script = (
+                script.split("var marker;")[1]
+                .split("infowindow = null;")[0]
+                .split(".LatLng")[1:]
+            )
 
-        for s in script:
-            coords.append(eval(s.split(";")[0]))
+            for s in script:
+                coords.append(eval(s.split(";")[0]))
+        except:
+            pass
 
-        links = tree.xpath("//li[@data-loc]/ul/a/@href")
+        links = tree.xpath("//li[@data-loc]/a/@href")
         for link in links:
             try:
                 coord = coords[cnt]
@@ -111,6 +116,8 @@ def get_data(param, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
+    if " - " in location_name:
+        location_name = location_name.split(" - ")[0].strip()
     line = tree.xpath("//section[@class='rel-loc']//li/p/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
@@ -126,6 +133,9 @@ def get_data(param, sgw: SgWriter):
         city = SgRecord.MISSING
         state = SgRecord.MISSING
         postal = SgRecord.MISSING
+
+    if street_address == SgRecord.MISSING and city == SgRecord.MISSING:
+        return
     store_number = page_url.split("-")[-1]
     phone = "".join(
         tree.xpath(

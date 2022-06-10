@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -43,7 +43,7 @@ def fetch_data():
                     end = _[f"{day}DeliveryEnd"]
                     hours.append(f"{day}: {start} - {end}")
             page_url = f"https://uae.kfc.me/#/store/{_['ID']}"
-            _addr = _["Address"]
+            _addr = _["Address"].split("\n")[0].strip()
             if "UAE" not in _addr and "United Arab Emirates" not in _addr:
                 _addr += ", United Arab Emirates"
             addr = parse_address_intl(
@@ -54,18 +54,26 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             if not street_address:
                 street_address = _["Address"].strip()
+            latitude = _["MapLocation"]["Latitude"]
+            longitude = _["MapLocation"]["Longitude"]
+            if latitude == 0:
+                latitude = ""
+            if longitude == 0:
+                longitude = ""
+            if street_address == "" and latitude == "" and longitude == "":
+                continue
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["ID"],
                 location_name=location_name,
                 street_address=street_address,
                 city=city.get("Name"),
-                latitude=_["MapLocation"]["Latitude"],
-                longitude=_["MapLocation"]["Longitude"],
+                latitude=latitude,
+                longitude=longitude,
                 country_code="UAE",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=_["Address"].strip(),
+                raw_address=_["Address"].split("\n")[0].strip(),
             )
 
 

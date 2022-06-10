@@ -1,10 +1,10 @@
---extra-index-url https://dl.cloudsmith.io/snjnnLURl1gQtgOE/crawl/sgzip/python/simple/
-sgzip==0.6.9
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgzip==0.10.15
 lxml==4.6.2
-sgrequests==0.1.12
+sgrequests==0.1.13
 sglogging==0.0.4
 sgselenium==0.1.4
-sgscrape==0.0.23
+sgscrape==0.2.9
 selenium==3.141.0
 selenium-wire==4.2.5
 webdriver-manager==3.4.2

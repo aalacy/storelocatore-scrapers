@@ -1,51 +1,27 @@
-import csv
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_coords():
-    coords = []
-    session = SgRequests()
+    coords = dict()
     r = session.get(
-        "https://www.google.com/maps/d/u/0/kml?mid=1K5owjFYA9Cmw-5LeqANVtvPEqzM&forcekml=1"
+        "https://www.google.com/maps/d/u/0/kml?mid=1K5owjFYA9Cmw-5LeqANVtvPEqzM&forcekml=1",
+        headers=headers,
     )
-    tree = html.fromstring(r.content)
-    markers = tree.xpath("//coordinates/text()")
+    source = r.text.replace("<![CDATA[", "").replace("]]>", "")
+    tree = html.fromstring(source.encode())
+    markers = tree.xpath("//placemark")
     for m in markers:
-        m = m.replace(",0", "")
-        lng, lat = m.split(",")
-        coords.append((lat.strip(), lng.strip()))
+        key = (
+            "".join(m.xpath("./name/text()")).split("–")[-1].strip().split()[0].lower()
+        )
+        value = "".join(m.xpath(".//coordinates/text()")).replace(",0", "").split(",")
+        coords[key] = value
 
     return coords
 
@@ -82,23 +58,16 @@ def get_address(line):
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+        street_address = SgRecord.MISSING
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://burritobeach.com/"
+def fetch_data(sgw: SgWriter):
     page_url = "https://burritobeach.com/locations"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
@@ -108,20 +77,25 @@ def fetch_data():
 
     for d in divs:
         location_name = "".join(d.xpath(".//h2/text()")).strip()
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+        slug = location_name.lower()
+        if "st." in slug:
+            slug = "streeterville"
+
+        for k, v in coords.items():
+            if k in slug:
+                latitude = v[1].strip()
+                longitude = v[0].strip()
+
         line = "".join(
             d.xpath(".//p[./span[@class='fa fa-map-marker']][1]/text()")
         ).strip()
         street_address, city, state, postal = get_address(line)
-        country_code = "US"
-        store_number = "<MISSING>"
         phone = (
             "".join(d.xpath(".//p[./span[@class='fa fa-phone']]/text()"))
             .replace("P:", "")
             .strip()
-            or "<MISSING>"
         )
-        latitude, longitude = coords.pop(0)
-        location_type = "<MISSING>"
 
         hours = d.xpath(".//p[./span[@class='fa fa-clock-o']]/text()")
         hours = list(
@@ -130,35 +104,33 @@ def fetch_data():
                 [h.replace("amâ", " - ").replace("Hours", "").strip() for h in hours],
             )
         )
-        hours_of_operation = ";".join(hours) or "<MISSING>"
+        hours_of_operation = ";".join(hours)
         if "closed" in hours_of_operation:
             hours_of_operation = "Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://burritobeach.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests(verify_ssl=False)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

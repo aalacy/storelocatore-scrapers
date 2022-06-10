@@ -1,109 +1,75 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from urllib.parse import urljoin
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
 
-from util import Util  # noqa: I900
+logger = SgLogSetup().get_logger("")
 
-myutil = Util()
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+locator_domain = "https://www.bhldn.com"
+base_url = "https://www.bhldn.com/pages/stores"
 
 
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def _p(val):
+    if (
+        val
+        and val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
 
 
 def fetch_data():
-    data = []
-
-    locator_domain = "https://www.bhldn.com/"
-    base_url = "https://www.bhldn.com/pages/stores"
-    r = session.get(base_url)
-    soup = bs(r.text, "lxml")
-    links = soup.select("ul.secondary-nav__children li.secondary-nav__item a")
-    for link in links:
-        page_url = urljoin("https://www.bhldn.com", link["href"])
-        r1 = session.get(page_url)
-        soup1 = bs(r1.text, "lxml")
-        store_number = "<MISSING>"
-        location_name = soup1.select_one("#store-banner p.title.large").text
-        address = [
-            _
-            for _ in soup1.select_one("#store-banner p.subtitle.pink").stripped_strings
-        ]
-        street_address = " ".join(address[:-2])
-        _split = address[-2].split(",")
-        city = _split[0]
-        state = _split[1].strip().split(" ")[0]
-        zip = _split[1].strip().split(" ")[1]
-        country_code = "US"
-        phone = address[-1]
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours = []
-        _hours = soup1.select("#store-banner div.flex.horizontal p.day")
-        for _ in _hours:
-            hours.append(
-                f"{_.select_one('.smaller').text}:{_.select_one('.time').text}"
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        links = soup.select("ul.secondary-nav__children li.secondary-nav__item a")
+        for link in links:
+            page_url = locator_domain + link["href"]
+            logger.info(page_url)
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            addr = list(sp1.select_one("p.subtitle.medium").stripped_strings)
+            phone = ""
+            if _p(addr[-1]):
+                phone = addr[-1]
+                del addr[-1]
+            hours = [
+                ": ".join(hh.stripped_strings)
+                for hh in sp1.select("div.flex.horizontal > div")
+            ]
+            yield SgRecord(
+                page_url=page_url,
+                location_name=sp1.select_one("p.title.large").text.strip(),
+                street_address=" ".join(addr[:-1])
+                .replace("Highland Village", "")
+                .replace("Highland Park Village", ""),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
+                country_code="US",
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr),
             )
-
-        hours_of_operation = myutil._valid("; ".join(hours))
-
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        data.append(_item)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

@@ -1,107 +1,94 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
+import re
+from sglogging import SgLogSetup
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("")
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+locator_domain = "https://www.flanigans.net"
+base_url = "https://www.flanigans.net/locations/"
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def _hoo(hr):
+    hours = []
+    for hh in hr.find_next_siblings():
+        _ho = hh.text.strip()
+        if not _ho:
+            continue
+        if "seven days" in _ho.lower():
+            continue
+        hours.append(_ho)
+    return hours
 
 
 def fetch_data():
-    base_url = "https://www.flanigans.net"
-    res = session.get("https://www.flanigans.net/locations/")
-    store_list = json.loads(
-        res.text.split('<script type="application/ld+json">')[1].split("</script>")[0]
-    )
-    data = []
-    for store in store_list["subOrganization"]:
-        page_url = store["url"]
-        res = session.get(page_url)
-        soup = bs(res.text, "lxml")
-        location_name = store["address"]["name"]
-        street_address = store["address"]["streetAddress"].split(",")[0]
-        city = store["address"]["addressLocality"]
-        state = store["address"]["addressRegion"]
-        zip = store["address"]["postalCode"]
-        phone = store["telephone"]
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = store["@type"]
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = (
-            soup.select_one("div.loc1")
-            .text.split("Online Ordering")
-            .pop()
-            .split("3793")
-            .pop()
-            .replace("–", "-")
-            .replace("\xa0", " ")
-            .replace("’", "'")
-            .replace("Open seven days a week", "")
-            .strip()
-        )
-        hours_of_operation = (
-            hours_of_operation[1:]
-            if hours_of_operation.startswith(".") or hours_of_operation.startswith(",")
-            else hours_of_operation
-        )
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
+    with SgRequests() as session:
+        res = session.get(base_url, headers=_headers)
+        locations = json.loads(
+            res.text.split('<script type="application/ld+json">')[1].split("</script>")[
+                0
             ]
-        )
+        )["subOrganization"]
+        for _ in locations:
+            addr = _["address"]
+            logger.info(_["url"])
+            sp1 = bs(session.get(_["url"], headers=_headers).text, "lxml")
+            online_ordering = sp1.select_one("section#intro div.row").find(
+                "", string=re.compile(r"Online Ordering")
+            )
+            if online_ordering:
+                hr = (
+                    online_ordering.find_parent()
+                    .find_parent()
+                    .find_parent()
+                    .find_parent()
+                )
 
-    return data
+                if hr:
+                    hours = _hoo(hr)
+                if not hours:
+                    hours = _hoo(hr.find_parent())
+            else:
+                hr = sp1.select_one("section#intro").find(
+                    "",
+                    string=re.compile(
+                        r"seven days a week",
+                    ),
+                )
+                if hr:
+                    hours = [hr.text.strip()]
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            location_name = addr["name"]
+            location_type = ""
+            if "Temporarily  Closed" in location_name:
+                location_type = "Temporarily  Closed"
+            location_name = location_name.split("(")[0].strip()
+            yield SgRecord(
+                page_url=_["url"],
+                location_name=location_name,
+                street_address=addr["streetAddress"].split(",")[0],
+                city=addr["addressLocality"],
+                state=addr["addressRegion"],
+                zip_postal=addr["postalCode"],
+                country_code="US",
+                phone=_["telephone"],
+                location_type=location_type,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
