@@ -1,3 +1,4 @@
+import re
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -80,6 +81,16 @@ def fetch_data():
                 elif "/sm" in page_url:
                     city = "Santa Monica"
                     state = "CA"
+            try:
+                map_str = soup.find("a", string="VIRTUAL TOUR")["href"]
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(map_str))[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                latitude = ""
+                longitude = ""
 
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -93,8 +104,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
                 raw_address=raw_address,
             )
