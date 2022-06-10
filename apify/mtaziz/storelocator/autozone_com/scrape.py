@@ -1,4 +1,3 @@
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -12,6 +11,16 @@ import re
 from lxml import html
 import time
 import ssl
+
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 MAX_WORKERS = 5
@@ -163,7 +172,6 @@ def fetch_records(idx, url, sgw: SgWriter, driver):
 def fetch_data(sgw: SgWriter):
     all_store_urls = get_filtered_urls()
     logger.info(f"Store URLs count: {len(all_store_urls)}")
-    print(all_store_urls)
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         with SgChrome() as driver:
