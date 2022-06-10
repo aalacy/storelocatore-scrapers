@@ -50,6 +50,7 @@ def fetch_data():
                 store_number = i["id"]
                 if store_number in found:
                     continue
+                found.append(store_number)
                 try:
                     phone = i["phone"]
                 except:
