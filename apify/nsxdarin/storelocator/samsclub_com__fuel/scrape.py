@@ -22,7 +22,7 @@ def fetch_data():
         if "<loc>https://www.samsclub.com/club/" in line:
             items = line.split("<loc>https://www.samsclub.com/club/")
             for item in items:
-                if '<?xml version="' not in item and "6617" in item:
+                if '<?xml version="' not in item:
                     lurl = "https://www.samsclub.com/club/" + item.split("<")[0]
                     locs.append(lurl)
     for loc in locs:
