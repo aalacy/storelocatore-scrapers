@@ -1,56 +1,77 @@
+import json
+import unicodedata
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
-session = SgRequests(proxy_country="bd")
+session = SgRequests()
 website = "louispion_fr"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-DOMAIN = "https://louispion.fr/"
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://www.louispion.fr/"
 MISSING = SgRecord.MISSING
 
 
-url = "https://boutiques.louispion.fr/controller/map/html/controller/components/region/0/departement/0/code_insee_ville/0/page/1/perpage/1000000/zoom/1200000/distance/50000/maxitems/1000000"
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-    "Referer": "https://boutiques.louispion.fr/",
-    "Cookie": "PHPSESSID=9s71ls2tta7iugnv0clfdr2b93;SERVERID110649=STO-PROD-GRA-APP2|YcA32|YcArJ;",
-}
+def strip_accents(text):
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+
+    return str(text)
 
 
 def fetch_data():
     if True:
+        url = "https://boutiques.louispion.fr/fr/all"
         r = session.get(url, headers=headers)
-        loclist = r.text.split("entries[")[2:-1]
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("li", {"class": "indexes-all__element"})
         for loc in loclist:
-            page_url = loc.split('url : "')[1].split('"')[0]
+            page_url = "https://boutiques.louispion.fr" + loc.find("a")["href"]
             log.info(page_url)
-            location_name = loc.split('title : "')[1].split('"')[0]
-            store_number = loc.split('store_code: "')[1].split('"')[0]
-            phone = loc.split('telephone : "')[1].split('"')[0]
-            street_address = loc.split('adresse : "')[1].split('"')[0]
-            city = loc.split('ville : "')[1].split('"')[0]
+            r = session.get(page_url, headers=headers)
+            loc = r.text.split('<script type="application/ld+json">')[1].split(
+                "</script>"
+            )[0]
+            loc = json.loads(loc)
+            location_name = loc["name"]
+            store_number = loc["@id"].split("-")[1]
+            address = loc["address"]
+            street_address = strip_accents(address["streetAddress"])
+            city = strip_accents(address["addressLocality"])
             state = MISSING
-            zip_postal = loc.split(' code_postal : "')[1].split('"')[0]
-            country_code = "FR"
-            latitude = loc.split('latitude : "')[1].split('"')[0]
-            longitude = loc.split('longitude : "')[1].split('"')[0]
-            hours_of_operation = "<INACCESSIBLE>"
+            zip_postal = address["postalCode"]
+            country_code = address["addressCountry"]
+            phone = loc["telephone"]
+            latitude = loc["geo"]["latitude"]
+            longitude = loc["geo"]["longitude"]
+            hour_list = loc["openingHoursSpecification"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                day = hour["dayOfWeek"].replace("http://schema.org/", "")
+                opens = hour["opens"]
+                closes = hour["closes"]
+                hours_of_operation = (
+                    hours_of_operation + " " + day + " " + opens + "-" + closes
+                )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
@@ -59,18 +80,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
