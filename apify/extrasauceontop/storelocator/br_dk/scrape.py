@@ -17,13 +17,42 @@ def get_data():
         locator_domain = "br.dk"
         location_name = location["name"]
         page_url = (
-            "https://www.br.dk/kundeservice/find-butik/"
-            + location_name.replace(" ", "-").lower()
-            + "/c/"
-            + location_name.replace(" ", "-").lower()
+            (
+                "https://www.br.dk/kundeservice/find-butik/"
+                + location_name.replace(" ", "-").lower()
+                + "/c/"
+                + location_name.replace(" ", "-").lower()
+            )
+            .replace("ø", "oe")
+            .replace("å", "aa")
+            .replace("æ", "ae")
         )
-        latitude = location["coordinates"][0]
-        longitude = location["coordinates"][1]
+        if location_name == "BR Bryggen":
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-bryggen-vejle/c/br-bryggen-vejle/"
+
+        if location_name == "BR Nykøbing F":
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-nykoebing-falster/c/br-nykoebing-falster/"
+
+        if location_name == "BR Rosengårdscentret":
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-rosengaardscenteret/c/br-rosengaardscenteret/"
+
+        if (
+            page_url
+            == "https://www.br.dk/kundeservice/find-butik/br-fields/c/br-fields"
+        ):
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-fields-koebenhavn-s/c/br-fields-koebenhavn-s/"
+
+        if location_name == "BR Løven, Aalborg Sv":
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-loeven-aalborg/c/br-loeven-aalborg/"
+
+        if location_name == "BR Ro`s Torv":
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-ros-torv-roskilde/c/br-ros-torv-roskilde/"
+
+        if location_name == "BR Frederiksberg":
+            page_url = "https://www.br.dk/kundeservice/find-butik/br-frederiksberg-centret/c/br-frederiksberg-centret/"
+
+        longitude = location["coordinates"][0]
+        latitude = location["coordinates"][1]
         city = location["address"]["city"]
         store_number = location["sapSiteId"]
         address = location["address"]["street"]
@@ -101,3 +130,6 @@ def scrape():
 
 
 scrape()
+
+# https://www.br.dk/kundeservice/find-butik/br-roedovre/c/br-roedovre/
+# https://www.br.dk/kundeservice/find-butik/br-r%C3%B8dovre/c/br-r%C3%B8dovre

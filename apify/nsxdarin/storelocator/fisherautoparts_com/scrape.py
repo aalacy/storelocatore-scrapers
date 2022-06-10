@@ -62,6 +62,8 @@ def fetch_data():
                         purl = (
                             "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
                         )
+                        if len(phone) < 5 or "(0)" in phone or phone == "":
+                            phone = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=purl,
