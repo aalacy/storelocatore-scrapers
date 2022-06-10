@@ -101,6 +101,10 @@ def fix_record2(rec):
             k["hours"] = "<MISSING>"
     k["country"] = cc
 
+    if cc == "ME":
+        k["address"] = k["name"]
+        k["name"] = "<MISSING>"
+
     return k
 
 
