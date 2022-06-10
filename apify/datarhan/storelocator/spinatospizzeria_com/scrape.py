@@ -36,7 +36,7 @@ def fetch_data():
             .strip()[:-1]
             .split(";\n      window")[0]
         )
-        data = json.loads(data)
+        data = json.loads(data.split(";\n      window")[0])
 
         all_locations = [k for k in data.keys() if "RestaurantLocation:" in k]
         for k in all_locations:
