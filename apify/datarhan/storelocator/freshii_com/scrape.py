@@ -25,34 +25,13 @@ def fetch_data():
                         "longitude": lng,
                     },
                     "southWest": {
-                        "latitude": lat - 30.0,
-                        "longitude": lng - 30.0,
+                        "latitude": lat - 10.0,
+                        "longitude": lng + 10.0,
                     },
-                    "distanceFrom": {"latitude": lat, "longitude": lng},
+                    "distanceFrom": {"latitude": lat + 5.0, "longitude": lng + 5.0},
                     "handoffMode": "PICKUP",
                     "offset": 0,
                     "limit": 500,
-                }
-            },
-            "query": "query getLocations($input: LocationFilter) {\n  getLocations(input: $input) {\n    id\n    name\n    storeName\n    streetAddress\n    city\n    state\n    country\n    telephone\n    zipCode\n    latitude\n    longitude\n    utcOffset\n    hours {\n      baseHours {\n        day\n        endDay\n        hourFrom\n        hourFromSuffix\n        hourTo\n        hourToSuffix\n        handoffMode\n      }\n    }\n    distance {\n      value\n      unit\n    }\n  }\n}\n",
-        }
-
-        {
-            "operationName": "getLocations",
-            "variables": {
-                "input": {
-                    "northEast": {
-                        "latitude": 49.30931702055876,
-                        "longitude": -123.05181545715331,
-                    },
-                    "southWest": {
-                        "latitude": 49.256126836158145,
-                        "longitude": -123.18965954284667,
-                    },
-                    "distanceFrom": {"latitude": 43.793547, "longitude": -79.217297},
-                    "handoffMode": "PICKUP",
-                    "offset": 0,
-                    "limit": 20,
                 }
             },
             "query": "query getLocations($input: LocationFilter) {\n  getLocations(input: $input) {\n    id\n    name\n    storeName\n    streetAddress\n    city\n    state\n    country\n    telephone\n    zipCode\n    latitude\n    longitude\n    utcOffset\n    hours {\n      baseHours {\n        day\n        endDay\n        hourFrom\n        hourFromSuffix\n        hourTo\n        hourToSuffix\n        handoffMode\n      }\n    }\n    distance {\n      value\n      unit\n    }\n  }\n}\n",
@@ -80,7 +59,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="",
+                page_url="https://orders.freshii.com/en/stores",
                 location_name=poi["name"],
                 street_address=poi["streetAddress"],
                 city=poi["city"],
