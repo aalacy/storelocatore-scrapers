@@ -42,7 +42,6 @@ def fetch_data():
             poi_html = etree.HTML(poi["customLocationContent"])
             url = poi_html.xpath('.//a[contains(text(), "Menu")]/@href')[0]
             page_url = urljoin(start_url, url)
-            print(page_url)
             driver.get(page_url)
             loc_dom = etree.HTML(driver.page_source)
             location_type = poi["__typename"]
