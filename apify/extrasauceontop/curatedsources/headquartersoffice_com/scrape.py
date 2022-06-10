@@ -299,7 +299,7 @@ def old_map_page(driver):
         if address == "<MISSING>":
             full_address = location["title"].split(" - ")[-1]
             addr = parse_address_intl(full_address)
-            if addr.street_address_1 != None:
+            if addr.street_address_1 is not None:
                 address_1 = addr.street_address_1
                 address_2 = addr.street_address_2
 
