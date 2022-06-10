@@ -5,6 +5,8 @@ import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "salvatores.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -48,8 +50,11 @@ def fetch_data():
                 zip = json_data["address"]["postalCode"]
                 phone = json_data["telephone"]
                 country_code = json_data["address"]["addressCountry"]
-                latitude = json_data["geo"]["lattitude"]
-                longitude = json_data["geo"]["longitude"]
+                if "geo" in json_data:
+                    latitude = json_data["geo"]["lattitude"]
+                    longitude = json_data["geo"]["longitude"]
+                else:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
 
                 hours_of_operation = "<MISSING>"
                 hours = json_data["openingHoursSpecification"]
@@ -91,7 +96,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -30,12 +30,11 @@ def get_ids(res):
 
 
 def fetch_data():
-
     search_url = "https://storelocator.petsupermarket.com/"
     search_res = session.get(search_url, headers=headers)
     ids = get_ids(search_res.text)
 
-    url = "https://petsupermarket.com/"
+    locator_domain = "https://petsupermarket.com/"
 
     api_url = f"https://sls-api-service.sweetiq-sls-production-east.sweetiq.com/ACdGkpGYCl9hdgJigx7fHE7Vx1Tujs/locations-details?locale=en_US&ids={ids}&clientId=5e3da261df2763dd5ce605ab&cname=storelocator.petsupermarket.com"
     r = session.get(api_url, headers=headers)
@@ -43,25 +42,20 @@ def fetch_data():
     for j in js:
         g = j["geometry"]["coordinates"]
         j = j["properties"]
-        locator_domain = url
         page_url = f"https://storelocator.petsupermarket.com/{j.get('slug')}"
-        location_name = j.get("name") or "<MISSING>"
-        street_address = (
-            f"{j.get('addressLine1')} {j.get('addressLine2') or ''}" or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("province") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("branch") or "<MISSING>"
-        phone = j.get("phoneLabel") or "<MISSING>"
+        location_name = j.get("name")
+        street_address = f"{j.get('addressLine1')} {j.get('addressLine2') or ''}"
+        city = j.get("city")
+        state = j.get("province")
+        postal = j.get("postalCode")
+        country_code = j.get("country")
+        store_number = j.get("branch")
+        phone = j.get("phoneLabel")
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         if g:
             latitude = g[1]
             longitude = g[0]
-
-        location_type = "<MISSING>"
 
         hours = j.get("hoursOfOperation") or "<MISSING>"
         if hours == "<MISSING>":
@@ -70,9 +64,13 @@ def fetch_data():
             _tmp = []
             days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             for d in days:
-                start = hours.get(d)[0][0]
-                close = hours.get(d)[0][1]
-                _tmp.append(f"{d}: {start} - {close}")
+                try:
+                    start = hours.get(d)[0][0]
+                    close = hours.get(d)[0][1]
+                    _tmp.append(f"{d}: {start} - {close}")
+                except IndexError:
+                    _tmp.append("Temporarily closed")
+                    break
 
             hours_of_operation = ";".join(_tmp)
 
@@ -87,7 +85,6 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,

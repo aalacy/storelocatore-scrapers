@@ -13,7 +13,7 @@ _headers = {
 locator_domain = "https://www.makro.com.br"
 urls = {
     "Columbia": "https://makro.com.co/makro.php?id=CompraMakro#modal",
-    "Brazil": "https://www.makro.com.br/makro.php?id=ondecomprar",
+    "Brazil": "https://www.makro.com.br/lojasmakro",
     "Peru": "https://www.makro.pe/nuestras-tiendas",
 }
 
@@ -35,9 +35,8 @@ def fetch_data():
                 phone = ""
                 for bb in block:
                     if "Teléfono" in bb or "Telefone" in bb:
-                        phone = bb.split(":")[-1]
+                        phone = bb.split(":")[-1].lower().split("anexo")[0]
                         break
-
                 hours = [hh.text.strip() for hh in _.select("p2")]
                 coord = _.a["onclick"].split("(")[-1].split(")")[0].split(",")
                 yield SgRecord(

@@ -1,2 +1,1 @@
---ignore StreetAddressHasNumber --ignore StateLevelCountValidator (Confirmed on website)
-Hours available on page_url but inefficient to scrape since it requires selenium
+--ignore CountryCodeFillRateChecker --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator --ignore CountValidator --ignore StateLevelCountValidator (Confirmed on website)

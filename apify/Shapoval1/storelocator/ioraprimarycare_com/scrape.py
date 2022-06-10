@@ -51,11 +51,14 @@ def get_data(url, sgw: SgWriter):
     location_type = "".join(tree.xpath("//h1/text()[1]")).replace(":", "").strip()
     hours_of_operation = (
         " ".join(
-            tree.xpath('//p[text()="Practice Hours:"]/following-sibling::p/text()')
+            tree.xpath(
+                '//p[text()="Practice Hours:"]/following-sibling::div[last()]/p/text()'
+            )
         )
         .replace("\n", "")
         .strip()
     )
+    hours_of_operation = " ".join(hours_of_operation.split())
     latitude = (
         "".join(tree.xpath('//script[@id="simple-locator-single-js-extra"]/text()'))
         .split('latitude":"')[1]

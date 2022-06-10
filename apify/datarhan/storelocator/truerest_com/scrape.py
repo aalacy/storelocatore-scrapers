@@ -30,10 +30,14 @@ def fetch_data():
         }
         all_locations = session.post(start_url, headers=hdr, data=frm).json()
         for i, poi in all_locations.items():
-            page_url = poi["gu"]
+            if poi["ca"]["0"] == "Coming Soon":
+                continue
+            page_url = poi["we"].strip()
             loc_response = session.get(page_url, headers=hdr)
             loc_dom = etree.HTML(loc_response.text)
             if loc_dom.xpath('//h4[contains(text(), "Coming Soon!")]'):
+                continue
+            if loc_dom.xpath('//h4[contains(text(), "Opening February")]'):
                 continue
 
             poi_html = etree.HTML(poi["de"])
@@ -48,9 +52,7 @@ def fetch_data():
             addr = parse_address_intl(" ".join(raw_address))
             phone = poi_html.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
-            hoo = loc_dom.xpath(
-                '//div[@class="store_locator_single_opening_hours"]//text()'
-            )[1:]
+            hoo = loc_dom.xpath('//table[@class="mabel-bhi-businesshours"]//text()')
             hoo = " ".join(hoo)
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -64,13 +66,14 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code="",
+                country_code="US",
                 store_number=poi["ID"],
                 phone=phone,
                 location_type="",
                 latitude=poi["lat"],
                 longitude=poi["lng"],
                 hours_of_operation=hoo,
+                raw_address=" ".join(raw_address),
             )
 
             yield item

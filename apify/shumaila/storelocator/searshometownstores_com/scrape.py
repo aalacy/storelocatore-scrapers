@@ -1,50 +1,19 @@
-import csv
-from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36",
-    "content-type": "application/json",
-    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
+
     linklist = []
     week = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
     times = {
@@ -73,8 +42,12 @@ def fetch_data():
         "73800": "8:30",
         "41400": "11:30",
         "59400": "4:30",
+        "21600": "9:00",
+        "55800": "3:30",
     }
     zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
+    zips = zips + ["36330", "35121", "36301"]
+
     if True:
         for zip_code in zips:
             search_url = "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/nearby"
@@ -110,6 +83,7 @@ def fetch_data():
                 pcode = loc["zipCode"]
                 phone = loc["phone"]
                 phone = "(" + phone[0:3] + ") " + phone[3:6] + "-" + phone[6:10]
+
                 store = str(loc["unitNumber"])
                 link = (
                     "https://www.searshometownstores.com/home/"
@@ -127,6 +101,7 @@ def fetch_data():
 
                 hours = ""
                 for day in week:
+
                     hours = (
                         hours
                         + day
@@ -138,33 +113,35 @@ def fetch_data():
                     )
                 longt = loc["storeDetails"]["longitude"]
                 lat = loc["storeDetails"]["latitude"]
-
-                data.append(
-                    [
-                        "https://www.searshometownstores.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours,
-                    ]
+                if len(phone.strip()) < 7:
+                    phone = "<MISSING>"
+                yield SgRecord(
+                    locator_domain="https://www.searshometownstores.com/",
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=str(store),
+                    phone=phone.strip(),
+                    location_type=SgRecord.MISSING,
+                    latitude=str(lat),
+                    longitude=str(longt),
+                    hours_of_operation=hours,
                 )
-        return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

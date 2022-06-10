@@ -93,14 +93,24 @@ castates = [
 def fetch_data():
     locs = []
     session = SgRequests()
-    url = "https://www.tesla.com/findus/list/services"
+    url = "https://www.tesla.com/findus/list"
     r = session.get(url, headers=headers)
     website = "tesla.com/findus/list/services"
     typ = "<MISSING>"
     logger.info("Pulling Stores")
+    states = []
     for line in r.iter_lines():
-        if '<a href="/findus/location/service/' in line:
-            locs.append("https://www.tesla.com" + line.split('href="')[1].split('"')[0])
+        if '<a href="/findus/list/services/' in line:
+            states.append(
+                "https://www.tesla.com" + line.split('href="')[1].split('"')[0]
+            )
+    for state in states:
+        logger.info(state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<a href="/findus/location/service/' in line2:
+                lurl = "https://www.tesla.com" + line2.split('href="')[1].split('"')[0]
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -346,6 +356,78 @@ def fetch_data():
         )
         if city == "" or city is None:
             city = "<MISSING>"
+        hours = hours.strip()
+        if hours[-1:] == ";":
+            hours = hours[:-1]
+        if "." not in lat:
+            lat = "<MISSING>"
+        if "." not in lng:
+            lng = "<MISSING>"
+        hours = hours.replace("sedSun", "sed; Sun").replace("pmSun", "pm; Sun")
+        if "appointment" in hours.lower():
+            hours = "Monday-Sunday: Closed"
+        if "Petah Tikva" in city:
+            country = "IL"
+        if "Dubai" in city:
+            country = "UAE"
+        if "Amman" in rawadd:
+            country = "Jordan"
+        if "San Juan" in city:
+            country = "PR"
+        if (
+            "Ciudad De M" in city
+            or "Guadalajara" in name
+            or "Campestre" in city
+            or "Mexico City" in city
+        ):
+            country = "MX"
+        if "Aarhus" in city:
+            country = "Denmark"
+        if "Wellington" in city or "auckland" in loc or "christchurch" in loc:
+            country = "NZ"
+        if "singapore" in loc:
+            country = "SG"
+        if (
+            "seongnam" in loc
+            or "gwangju" in loc
+            or "daegu" in loc
+            or "busan" in loc
+            or "seoul" in loc
+            or "yongin" in loc
+            or "jejuaewol" in loc
+        ):
+            country = "KR"
+        if (
+            "Adelaide" in city
+            or "Brisbane" in name
+            or "Canberra" in name
+            or "Sydney" in name
+            or "Gold Coast" in name
+            or "Perth" in name
+        ):
+            country = "AU"
+        if (
+            "newtaipei" in loc
+            or "apactwhsinchu" in loc
+            or "taichungs" in loc
+            or "taipei" in loc
+            or "kaohsiung" in loc
+        ):
+            country = "TW"
+        if "macau" in loc:
+            country = "CN"
+        if "apleichau" in loc or "kowloon" in loc:
+            country = "HK"
+        if (
+            "sendai" in loc
+            or "osaka" in loc
+            or "tokyo" in loc
+            or "aichinagoya" in loc
+            or "kawasaki" in loc
+            or "yokohama" in loc
+            or "fukuoka" in loc
+        ):
+            country = "JP"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

@@ -20,16 +20,11 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//section[@class="c-tab__panel"]')
     for d in div:
 
-        country_code = "".join(d.xpath("./@id"))
-        if country_code == "section-NA":
-            country_code = "US"
-
         blocks = d.xpath('.//div[@class="c-tab__panel-card"]//a')
         for b in blocks:
             slug = "".join(b.xpath(".//@href"))
             page_url = f"https://sirspeedy.com{slug}"
-            if country_code != "US":
-                country_code = "".join(b.xpath(".//preceding::h3[1]/text()"))
+
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             ad = (
@@ -43,10 +38,20 @@ def fetch_data(sgw: SgWriter):
                 "None", ""
             ).strip()
             state = a.state or "<MISSING>"
+            country_code = "US"
             if state == "ON":
                 country_code = "CA"
+            country_head = "".join(b.xpath(".//preceding::h3[1]/text()"))
+            if country_head == "Brazil":
+                country_code = "Brazil"
+            if country_head == "India":
+                country_code = "India"
+            if country_head == "Taiwan":
+                country_code = "Taiwan"
             postal = a.postcode or "<MISSING>"
             city = a.city or "<MISSING>"
+            if city == "<MISSING>":
+                city = "".join(b.xpath(".//text()"))
             location_name = (
                 "".join(
                     tree.xpath(
