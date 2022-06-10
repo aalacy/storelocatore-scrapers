@@ -62,6 +62,8 @@ def fetch_data():
                         purl = (
                             "https://www.fisherautoparts.com/Fisher-Store-Locator.aspx"
                         )
+                        if len(phone) < 5 or "(0)" in phone or phone == "":
+                            phone = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=purl,
@@ -82,7 +84,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 

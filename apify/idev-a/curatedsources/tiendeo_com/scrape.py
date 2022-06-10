@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
 from sgpostal.sgpostal import parse_address_intl
-from webdriver_manager.chrome import ChromeDriverManager
 import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
@@ -265,6 +264,8 @@ def request_with_retries(page_url):
     ) as session:
         _headers["User-Agent"] = random.choice(user_agents)
         sp1 = session.get(page_url, headers=_headers)
+        if sp1.status_code != 200:
+            return None
         if not sp1.text.strip():
             raise Exception
         return sp1
@@ -278,11 +279,12 @@ def _d(loc, domain, country):
 
     logger.info(page_url)
     try:
-        _ = json.loads(
-            bs(request_with_retries(page_url).text, "lxml")
-            .select_one("script#__NEXT_DATA__")
-            .text
-        )["props"]["pageProps"]["queryResult"]["Store"]
+        res = request_with_retries(page_url)
+        if not res:
+            return None
+        _ = json.loads(bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text)[
+            "props"
+        ]["pageProps"]["queryResult"]["Store"]
     except Exception as err:
         logger.info(str(err))
         return None
@@ -307,7 +309,7 @@ def _d(loc, domain, country):
     return SgRecord(
         page_url=page_url,
         store_number=_["id"],
-        location_name=_["name"],
+        location_name=_["name"].split("-")[0],
         street_address=_["address"],
         city=city,
         state=state,
@@ -325,7 +327,6 @@ def _d(loc, domain, country):
 
 def fetch_data():
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
     ) as driver:
@@ -361,10 +362,11 @@ def fetch_data():
                         store_url = domain + navs[0]["url"]
                     except Exception as err:
                         logger.info(str(err))
+                    res = request_with_retries(store_url)
+                    if not res:
+                        continue
                     res_ss = json.loads(
-                        bs(request_with_retries(store_url).text, "lxml")
-                        .select_one("script#__NEXT_DATA__")
-                        .text
+                        bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text
                     )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
                     if not res_ss["links"]:
                         continue
@@ -375,9 +377,12 @@ def fetch_data():
                         store_location_url = domain + store["url"]
                         logger.info(store_location_url)
                         try:
+                            res = request_with_retries(store_url)
+                            if not res:
+                                continue
                             results = json.loads(
                                 bs(
-                                    request_with_retries(store_location_url).text,
+                                    res.text,
                                     "lxml",
                                 )
                                 .select_one("script#__NEXT_DATA__")
