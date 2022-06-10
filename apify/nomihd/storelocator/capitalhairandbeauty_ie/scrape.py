@@ -64,6 +64,7 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+
         state = "<MISSING>"
         zip = store_info[-1].strip()
         country_code = "IE"
@@ -71,6 +72,9 @@ def fetch_data():
         location_name = "".join(
             store.xpath(".//a[@title and not(./img)]//text()")
         ).strip()
+        if not city:
+            city = location_name.split(" ")[0].strip()
+
         phone = list(
             filter(
                 str,
@@ -99,10 +103,15 @@ def fetch_data():
             "; ".join(hours[1:-1]).replace("day;", "day:").replace(":;", ":").strip()
         )
 
-        latitude, longitude = (
-            store_res.text.split("lat:")[1].split(",")[0].strip(),
-            store_res.text.split("lng:")[1].split("};")[0].strip(),
-        )
+        try:
+            latitude = store_res.text.split("lat:")[1].split(",")[0].strip()
+        except:
+            latitude = "<MISSING>"
+
+        try:
+            longitude = store_res.text.split("lng:")[1].split("};")[0].strip()
+        except:
+            longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,

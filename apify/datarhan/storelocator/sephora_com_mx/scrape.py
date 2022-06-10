@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,7 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.sephora.com.mx/stores/"
     domain = "sephora.com.mx"

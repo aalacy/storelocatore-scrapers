@@ -8,7 +8,4 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
-
-same lat & lng and address,invalid zip  this website
-
-all data come by api so there will come be some errors come in validate
+--ignore CentroidValidator

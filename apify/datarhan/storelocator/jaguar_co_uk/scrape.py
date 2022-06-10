@@ -23,10 +23,8 @@ def fetch_data():
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath(
-            '//h1[contains(@class, "headerBox__heroTitle")]/text()'
-        )
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = loc_dom.xpath("//h1/span/text()")
+        location_name = location_name[0] if location_name else ""
         if "PAGE NOT FOUND" in location_name:
             continue
         street_address = loc_dom.xpath(
@@ -39,25 +37,24 @@ def fetch_data():
         street_3 = loc_dom.xpath('//span[@class="retailerContact__address3"]/text()')
         if street_3:
             street_address += " " + street_3[0]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = street_address if street_address else ""
         city = loc_dom.xpath('//span[@class="retailerContact__locality"]/text()')
-        city = city[0] if city else "<MISSING>"
+        city = city[0] if city else ""
         zip_code = loc_dom.xpath('//span[@class="retailerContact__postcode"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        zip_code = zip_code[0] if zip_code else ""
         country_code = "UK"
-        store_number = "<MISSING>"
+        store_number = ""
         phone = loc_dom.xpath('//a[@class="tel"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        phone = phone[0] if phone else ""
         latitude = loc_dom.xpath("//@data-lat")
-        latitude = latitude[0] if latitude else "<MISSING>"
+        latitude = latitude[0] if latitude else ""
         longitude = loc_dom.xpath("//@data-long")
-        longitude = longitude[0] if longitude else "<MISSING>"
+        longitude = longitude[0] if longitude else ""
         hoo = loc_dom.xpath(
             '//h2[contains(text(), "SALES OPENING TIMES")]/following-sibling::table//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -70,7 +67,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=location_type,
+            location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,

@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import lxml.html
 
 website = "eriksbikeshop.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -30,6 +31,23 @@ headers = {
 def fetch_data():
     # Your scraper here
 
+    home_req = session.get("https://www.eriksbikeshop.com/stores", headers=headers)
+    home_sel = lxml.html.fromstring(home_req.text)
+    json_str = "".join(
+        home_sel.xpath('//template[@data-varname="__RUNTIME__"]/script/text()')[0]
+    ).strip()
+    json_runtime = json.loads(json_str)["cacheHints"]
+    sha256Hash = ""
+    for key in json_runtime.keys():
+        if (
+            json_runtime[key]["provider"] == "vtex.store-locator@0.x"
+            and json_runtime[key]["sender"] == "vtex.store-locator@0.x"
+            and json_runtime[key]["version"] == 1
+        ):
+            sha256Hash = key
+            break
+
+    log.info(f"sha256Hash value is: {sha256Hash}")
     search_url = "https://www.eriksbikeshop.com/_v/private/graphql/v1"
     params = (
         ("workspace", "master"),
@@ -46,7 +64,7 @@ def fetch_data():
         "extensions": {
             "persistedQuery": {
                 "version": 1,
-                "sha256Hash": "200466567f80973aacb4e7a7b6df609c2ea071cea84680c2cef0dc6265e220fc",
+                "sha256Hash": sha256Hash,
                 "sender": "vtex.store-locator@0.x",
                 "provider": "vtex.store-locator@0.x",
             },
@@ -104,7 +122,8 @@ def fetch_data():
                 hours_list.append(day + ":Closed")
 
         hours_of_operation = "; ".join(hours_list).strip()
-
+        if hours_of_operation.count("Closed") == 7:
+            continue
         latitude = str(store["address"]["location"]["latitude"])
         longitude = str(store["address"]["location"]["longitude"])
 

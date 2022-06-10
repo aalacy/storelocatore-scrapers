@@ -8,3 +8,6 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 address contains state name,address contains state name,invalid zip and i checked all data is true for this site
+
+## Note: 
+The rewrite workflow actually doesn’t work for curated sources. We’re going to fix but in the meantime, you can just override the current code & publish under their directory. 

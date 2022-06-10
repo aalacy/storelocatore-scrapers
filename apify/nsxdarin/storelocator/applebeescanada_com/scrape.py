@@ -113,6 +113,8 @@ def fetch_data():
                     hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
+        if "location/applebees-thunderbay" in loc:
+            hours = "Sun-Sat: 11:30 AM to 8:00 PM"
         if "huron-church" in loc:
             phone = "519-972-3000"
             name = "Applebee's Huron Church"

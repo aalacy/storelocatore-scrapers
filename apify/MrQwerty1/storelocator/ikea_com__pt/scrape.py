@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -24,17 +25,35 @@ def get_hours(page_url):
     tree = html.fromstring(r.text)
 
     _tmp = []
-    inters = tree.xpath(
-        "//p[./strong[contains(text(), 'Store')]]/following-sibling::p/text()"
-    )
-    inters = list(filter(None, [inter.strip() for inter in inters]))
-    days = tree.xpath(
-        "//p[./strong[contains(text(), 'Store')]]/following-sibling::p/strong/text()"
-    )
-    for day, inter in zip(days, inters):
-        _tmp.append(f"{day}: {inter}")
+    coords = [SgRecord.MISSING, SgRecord.MISSING]
+    text = "".join(tree.xpath("//script[contains(text(), 'FurnitureStore')]/text()"))
+    if text:
+        j = json.loads(text)
+        g = j.get("geo") or {}
+        lat = g.get("latitude")
+        lng = g.get("longitude")
+        coords = [lat, lng]
+        hours = j.get("openingHoursSpecification") or []
+        for h in hours:
+            start = h.get("opens")
+            end = h.get("closes")
+            days = h.get("dayOfWeek") or []
+            if len(days) > 1:
+                _tmp.append(f"{days[0]}-{days[-1]}: {start}-{end}")
+            else:
+                _tmp.append(f"{days[0]}: {start}-{end}")
+    else:
+        days = tree.xpath(
+            "//p[./strong[contains(text(), 'Store')]]/following-sibling::p[1]/strong"
+        )
+        for d in days:
+            day = "".join(d.xpath("./text()")).strip()
+            if "/" in day:
+                continue
+            inter = "".join(d.xpath("./following-sibling::text()[1]")).strip()
+            _tmp.append(f"{day}: {inter}")
 
-    return ";".join(_tmp)
+    return coords, ";".join(_tmp)
 
 
 def fetch_data(sgw: SgWriter):
@@ -59,16 +78,8 @@ def fetch_data(sgw: SgWriter):
             ",,", ","
         )
         street_address, city, state, postal = get_international(raw_address)
-
-        text = "".join(d.xpath(".//p/a/@href"))
-        try:
-            latitude = text.split("@")[1].split(",")[0]
-            longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude = SgRecord.MISSING
-            longitude = SgRecord.MISSING
-
-        hours_of_operation = get_hours(page_url)
+        coords, hours_of_operation = get_hours(page_url)
+        latitude, longitude = coords
 
         row = SgRecord(
             page_url=page_url,

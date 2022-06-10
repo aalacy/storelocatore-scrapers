@@ -61,12 +61,12 @@ def fetch_data():
     )
     for row in contents:
         info = row.find_next("div", {"class": "sqs-block html-block sqs-block-html"})
-        raw_address = info.find("p").find("strong").get_text(strip=True, separator=",")
-        if "coming soon!" in raw_address.lower():
+        if "coming" in info.text.strip().lower():
             continue
         location_name = row.find(
             "div", {"class": "image-title sqs-dynamic-text"}
         ).text.strip()
+        raw_address = info.find("a").get_text(strip=True, separator=",")
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         phone = MISSING
