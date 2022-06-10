@@ -155,7 +155,6 @@ def fetch_data():
                         pass
                 except:
                     phone = "<MISSING>"
-                print(branch)
                 try:
                     hours = soup.find(
                         "table", {"class": "c-hours-details"}
