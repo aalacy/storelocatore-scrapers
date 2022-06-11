@@ -76,20 +76,26 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         soup = BeautifulSoup(r.text, "html.parser")
         if "Closed" in soup.find("h1").text:
             continue
-        location_name = soup.find("span", {"class": "c-location-title-row"}).text
+        location_name = soup.find("span", {"class": "c-location-title-row"}).get_text(separator='|', strip=True).replace('|'," ")
         street_address = soup.find("span", {"class": "c-address-street-1"}).text
-        city = soup.find("span", {"class": "c-address-city"}).text.replace(",", "")
+        city = soup.find("span", {"class": "c-address-city"}).text
         state = soup.find("span", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
         country_code = "US"
         latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
         phone = soup.find("span", {"itemprop": "telephone"}).text
-        hours_of_operation = (
-            soup.find("table", {"class": "c-location-hours-details"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-        )
+        hour_list = soup.find("div", {"class": "c-location-hours-details-wrapper"})[
+            "data-days"
+        ]
+        hour_list = json.loads(hour_list)
+        hours_of_operation = ""
+        for hour in hour_list:
+            time = hour["intervals"][0]
+            start = time["start"]
+            end = time["end"]
+            time = str(start) + "-" + str(end)
+            hours_of_operation = hours_of_operation + " " + hour["day"] + " " + time
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
