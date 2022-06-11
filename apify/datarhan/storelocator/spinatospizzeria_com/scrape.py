@@ -32,13 +32,21 @@ def fetch_data():
             dom.xpath('//script[@id="popmenu-apollo-state"]/text()')[0]
             .split("APOLLO_STATE =")[-1]
             .strip()[:-1]
+            .split(";\n      window")[0]
         )
         data = json.loads(data.split(";\n      window")[0])
 
         all_locations = [k for k in data.keys() if "RestaurantLocation:" in k]
         for k in all_locations:
             poi = data[k]
-            page_url = urljoin(start_url, poi["slug"])
+            poi_html = etree.HTML(poi["customLocationContent"])
+            url = poi_html.xpath('.//a[contains(text(), "Menu")]/@href')[0]
+            page_url = urljoin(start_url, url)
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
+            location_type = poi["__typename"]
+            if loc_dom.xpath('//span[contains(text(), "Temporarily Closed")]'):
+                location_type = "Temporarily Closed"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -51,7 +59,7 @@ def fetch_data():
                 country_code=poi["country"],
                 store_number=poi["id"],
                 phone=poi["displayPhone"],
-                location_type=poi["__typename"],
+                location_type=location_type,
                 latitude=poi["lat"],
                 longitude=poi["lng"],
                 hours_of_operation=" ".join(poi["schemaHours"]),
