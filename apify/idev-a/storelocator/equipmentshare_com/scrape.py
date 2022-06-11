@@ -1,10 +1,9 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -31,15 +30,12 @@ def fetch_data():
             if _["website"]:
                 page_url = "https://www." + _["website"]
                 logger.info(page_url)
-                try:
-                    ss = json.loads(
-                        bs(session.get(page_url, headers=_headers).text, "lxml")
-                        .find("script", type="application/ld+json")
-                        .string
-                    )
-                    hours = ss["openingHoursSpecification"]["dayOfWeek"]["name"]
-                except:
-                    pass
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in bs(
+                        session.get(page_url, headers=_headers).text, "lxml"
+                    ).select("div.hours-box div.day-row")
+                ]
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
@@ -53,12 +49,13 @@ def fetch_data():
                 country_code="US",
                 phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation="; ".join(hours),
+                raw_address=_["streetaddress"],
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

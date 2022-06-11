@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "cpchem.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -56,10 +58,16 @@ def fetch_data():
                 " ".join(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
                 .strip(",. ")
                 .strip()
+                .replace(
+                    "Chevron Phillips Global Sales FZE Dubai Airport Free Zone,", ""
+                )
+                .strip()
             )
             city = (
                 "".join(store.xpath('.//span[@itemprop="addressLocality"]/text()'))
                 .strip(",. ")
+                .strip()
+                .split("(")[0]
                 .strip()
             )
             state = (
@@ -72,6 +80,18 @@ def fetch_data():
                 .strip(",. ")
                 .strip()
             )
+            if not zip and "," in city:
+                zip = city.split(",")[-1].strip()
+                city = city.split(",")[0].strip()
+
+            if zip == "Victoria 3148":
+                state = "Victoria"
+                zip = "3148"
+
+            if city == "Frankfurt am Main 60528":
+                city = "Frankfurt am Main"
+                zip = "60528"
+
             if us.states.lookup(state):
                 country_code = "US"
             else:
@@ -111,7 +131,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

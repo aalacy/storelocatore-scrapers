@@ -7,15 +7,15 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
     api = "https://hk.sunglasshut.com/api/content/render/false/limit/9999/type/json/query/+contentType:SghStoreLocator%20+languageId:8%20+deleted:false%20+working:true/orderby/modDate%20desc"
-
     r = session.get(api)
     js = r.json()["contentlets"]
 
     for j in js:
         location_name = j.get("name")
-        slug = j.get("URL_MAP_FOR_CONTENT")
-        page_url = f"https://hk.sunglasshut.com/hk{slug}".replace("-details", "")
-        street_address = j.get("address")
+        slug = j.get("exampleUrl")
+        page_url = f"https://hk.sunglasshut.com/hk/store-locator/{slug}"
+        street_address = j.get("address") or ""
+        street_address = street_address.replace(", Hong Kong", "").strip()
         city = j.get("city")
         postal = j.get("zip")
         phone = j.get("phone")

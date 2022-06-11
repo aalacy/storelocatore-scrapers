@@ -30,7 +30,18 @@ def fetch_data(sgw: SgWriter):
             continue
 
         location_name = a.get("name") or "<MISSING>"
-        street_address = " ".join(a.get("address").get("lines"))
+        adr = a.get("address").get("lines")
+        street_address = ""
+        location_type = ""
+        tmp_street = []
+        tmp_type = []
+        for i in adr:
+            if "Store closes" not in i:
+                tmp_street.append(i)
+            if "Store closes" in i:
+                tmp_type.append(i)
+            street_address = " ".join(tmp_street)
+            location_type = " ".join(tmp_type)
         postal = "".join(a.get("address").get("zipcode"))
         country_code = "GB"
         city = "".join(a.get("address").get("city"))
@@ -76,7 +87,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,

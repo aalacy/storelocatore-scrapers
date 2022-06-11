@@ -4,138 +4,127 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "mariasitaliankitchen.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
     search_url = "https://mariasitaliankitchen.com/locations/"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = list(
-        set(
-            stores_sel.xpath(
-                '//a[contains(text(),"(Info, Directions and Pictures)")]/@href'
-            )
-        )
-    )
 
-    for store_url in stores:
-        page_url = store_url
-        log.info(page_url)
-        store_req = session.get(page_url)
-        store_sel = lxml.html.fromstring(store_req.text)
-        locator_domain = website
-        location_name = "".join(store_sel.xpath("//div/h5//text()")).strip()
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-        address = store_sel.xpath('//div[@class="organic-column one-half"]/text()')
-        if len("".join(address).strip()) <= 0:
-            address = store_sel.xpath(
-                '//div[@class="organic-column one-half"]/p[1]/text()'
-            )
-            if len("".join(address).strip()) <= 0:
-                address = store_sel.xpath(
-                    '//div[@class="panel-layout"]/div/div[1]//p[1]/text()'
+        search_sel = lxml.html.fromstring(search_res.text)
+
+        stores = search_sel.xpath("//section//div[h3]")
+
+        for no, store in enumerate(stores, 1):
+
+            locator_domain = website
+            store_number = "<MISSING>"
+
+            page_url = search_url
+
+            location_name = "".join(store.xpath("./h3//text()")).strip()
+            if location_name == "Catering":
+                continue
+
+            location_type = "<MISSING>"
+
+            store_info = list(
+                filter(
+                    str,
+                    [x.strip() for x in store.xpath(".//p//text()")],
                 )
-        add_list = []
-        for add in address:
-            if len("".join(add).strip()) > 0:
-                add_list.append("".join(add).strip())
-
-        street_address = ", ".join(add_list[:-3]).strip()
-        city = add_list[-3].strip().split(",")[0].strip()
-        if len(add_list[-3].strip().split(",")[1].strip().split(" ")) == 2:
-            state = add_list[-3].strip().split(",")[1].strip().split(" ")[0].strip()
-            zip = add_list[-3].strip().split(",")[1].strip().split(" ")[-1].strip()
-        else:
-            state = city.rsplit(" ", 1)[-1].strip()
-            city = city.replace(state, "").strip()
-            zip = add_list[-3].strip().split(",")[1].strip().split(" ")[-1].strip()
-        country_code = "US"
-
-        phone = add_list[-2].strip()
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
-        hours_of_operation = (
-            "; ".join(
-                " ".join(
-                    store_sel.xpath(
-                        '//div[@class="organic-column one-half last"]//text()'
-                    )
-                )
-                .strip()
-                .replace("HOURS", "")
-                .strip()
-                .split("\n")
             )
-            .strip()
-            .replace(";  Wine/Beer available.", "")
-            .strip()
-        )
 
-        if (
-            len(hours_of_operation) <= 0
-            or "The Original Location" in hours_of_operation
-        ):
-            sections = store_sel.xpath("//div/p")
-            for index in range(0, len(sections)):
-                if (
-                    "HOURS"
-                    in "".join(
-                        sections[index].xpath('span[@class="reddish"]/text()')
-                    ).strip()
-                ):
-                    hours_of_operation = (
-                        "; ".join(
-                            " ".join(sections[index].xpath(".//text()"))
-                            .strip()
-                            .replace("HOURS", "")
-                            .strip()
-                            .split("\n")
-                        )
-                        .strip()
-                        .replace(";  Wine/Beer available.", "")
-                        .strip()
-                    )
+            for gm_idx, x in enumerate(store_info):
+                if "GM:" in x:
                     break
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        map_link = "".join(store_sel.xpath('//a[contains(text(),"Map")]/@href')).strip()
-        if len(map_link) > 0:
-            if "?lat=" in map_link:
-                latitude = map_link.split("?lat=")[1].strip().split("&")[0].strip()
-                longitude = map_link.split("&lon=")[1].strip().split("&")[0]
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            if "GM:" in store_info[gm_idx]:
+                phone = store_info[gm_idx].split("GM:")[1].split("\n")[1].strip()
+            else:
+                phone = "<MISSING>"
+
+            raw_address = (
+                ", ".join(store_info)
+                .split("GM:")[0]
+                .strip()
+                .replace("\n", ", ")
+                .strip()
+            )
+
+            formatted_addr = parser.parse_address_usa(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
+
+            city = formatted_addr.city
+
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
+
+            country_code = "US"
+
+            for hour_idx, x in enumerate(store_info):
+                if "Hours:" in x:
+                    break
+
+            if "Hours:" in store_info[hour_idx]:
+
+                hours_of_operation = (
+                    "; ".join(store_info[hour_idx + 1 :])
+                    .replace("day; ", "day: ")
+                    .replace("day:;", "day:")
+                    .replace("OPEN FOR BUSINESS!", "")
+                    .replace("NOW OPEN!", "")
+                    .replace("\n", "")
+                    .strip()
+                    .strip(";! ")
+                )
+                hours_of_operation = hours_of_operation.split("Will be")[0].strip(" ;")
+            else:
+                hours_of_operation = "<MISSING>"
+
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

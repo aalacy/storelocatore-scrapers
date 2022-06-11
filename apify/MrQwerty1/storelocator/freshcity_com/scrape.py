@@ -1,36 +1,9 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_coords_from_embed(text):
@@ -38,66 +11,51 @@ def get_coords_from_embed(text):
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://freshcitykitchen.com/"
-    page_url = "https://freshcitykitchen.com/pages/retail"
-
-    session = SgRequests()
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@data-pf-type='Column' and .//iframe]")
 
     for d in divs:
-        location_name = "".join(d.xpath(".//span/span[1]/text()")).strip()
-        line = d.xpath(".//span[./span]/text()")
+        line = d.xpath(".//text()")
         line = list(filter(None, [l.strip() for l in line]))
-        phone = line.pop()
+        location_name = line.pop(0)
+        phone = line.pop().replace("Phone:", "").strip()
         csz = line.pop()
-
         street_address = ", ".join(line)
         city = csz.split(",")[0].strip()
         csz = csz.split(",")[1].strip()
         state = csz.split()[0]
         postal = csz.split()[1]
-        country_code = "US"
-        store_number = "<MISSING>"
 
         text = "".join(d.xpath(".//iframe/@src"))
         latitude, longitude = get_coords_from_embed(text)
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://freshcitykitchen.com/"
+    page_url = "https://freshcitykitchen.com/pages/retail"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

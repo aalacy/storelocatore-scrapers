@@ -68,7 +68,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
