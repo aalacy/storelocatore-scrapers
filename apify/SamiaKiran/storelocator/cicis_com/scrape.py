@@ -76,7 +76,11 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         soup = BeautifulSoup(r.text, "html.parser")
         if "Closed" in soup.find("h1").text:
             continue
-        location_name = soup.find("span", {"class": "c-location-title-row"}).get_text(separator='|', strip=True).replace('|'," ")
+        location_name = (
+            soup.find("span", {"class": "c-location-title-row"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
         street_address = soup.find("span", {"class": "c-address-street-1"}).text
         city = soup.find("span", {"class": "c-address-city"}).text
         state = soup.find("span", {"itemprop": "addressRegion"}).text
