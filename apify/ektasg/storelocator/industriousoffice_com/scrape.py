@@ -45,8 +45,9 @@ def fetch_data():
                 lat = loc["latitude"]
                 longt = loc["longitude"]
                 status = loc["text_status"]
-                if status.find("Coming") > -1 or status.find("Opening") > -1:
-                    continue
+                if status:
+                    if status.find("Coming") > -1 or status.find("Opening") > -1:
+                        continue
                 link = loc["permalink"].replace("\\", "")
                 if state == "Wisconsin":
                     state = "WI"

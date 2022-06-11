@@ -77,6 +77,9 @@ def fetch_data():
             street_address = street_address.split("(")[0].strip()
         city = j.get("city") or "<MISSING>"
         state = j.get("province") or "<MISSING>"
+        if city == state:
+            state = j.get("regions")
+
         postal = j.get("postalcodes") or "<MISSING>"
         country = j.get("country_name") or "<MISSING>"
         if country == "United States":
@@ -93,8 +96,6 @@ def fetch_data():
             phone = phone.split(" or ")[0].strip()
         elif phone.find(" - ") != -1:
             phone = phone.split(" - ")[0].strip()
-        elif phone == "<MISSING>":
-            phone = j.get("fax") or "<MISSING>"
 
         latitude = j.get("location_latitude") or "<MISSING>"
         longitude = j.get("location_longitude") or "<MISSING>"

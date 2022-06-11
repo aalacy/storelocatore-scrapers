@@ -1,104 +1,91 @@
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgFirefox
-from lxml import html
-
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgpostal.sgpostal import parse_address_usa
+import json
+import re
 
 DOMAIN = "herefordhouse.com"
-logger = SgLogSetup().get_logger("herefordhouse_com")
-MISSING = SgRecord.MISSING
+BASE_URL = "https://www.herefordhouse.com/"
+HEADERS = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-LOCATION_URL = "https://herefordhouse.com/locations"
+session = SgRequests()
+
+MISSING = "<MISSING>"
+
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    HEADERS["Referer"] = url
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=5, backoff_factor=0.3)
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(LOCATION_URL, headers=hdr)
-    dom = html.fromstring(response.text, "lxml")
-
-    all_locations = dom.xpath(
-        '//div[@class="entry-content"]/div/div[@class="wpb_column vc_column_container vc_col-sm-3"]'
-    )
-    with SgFirefox() as driver:
-        for idx, poi_html in enumerate(all_locations[0:]):
-            page_url = poi_html.xpath(".//a/@href")[0]
-            driver.get(page_url)
-            driver.implicitly_wait(15)
-            logger.info("Page being loaded!!")
-            iframe = driver.find_element_by_xpath("//iframe[contains(@src, 'google')]")
-            driver.switch_to.frame(iframe)
-            logger.info("iframe Loaded!!")
-            loc_dom = html.fromstring(driver.page_source, "lxml")
-            driver.switch_to.default_content()
-            logger.info("Switched back to default content!!")
-
-            location_name = "".join(loc_dom.xpath('//h1[@id="page-title"]/text()'))
-            location_name = location_name if location_name else MISSING
-            logger.info(f"[{idx}] Location Name: {location_name}")
-
-            raw_address = poi_html.xpath('.//p[@style="text-align: center;"]/text()')
-            raw_address = [e.strip() for e in raw_address if e.strip()]
-
-            # Raw address being parsed here
-            street_address = raw_address[0].strip()
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
-            logger.info(f"[{idx}] Street Address: {street_address}")
-
-            city = raw_address[-1].split(", ")[0]
-            city = city if city else MISSING
-            logger.info(f"[{idx}] City: {city}")
-
-            state = raw_address[-1].split(", ")[-1]
-            state = state if state else MISSING
-            logger.info(f"[{idx}] State: {state}")
-            zipString = loc_dom.xpath('//div[@class="address"]/text()')
-            logger.info(f"{zipString}")
-            zip_postal = loc_dom.xpath('//div[@class="address"]/text()')[0].split()[-1]
-            zip_postal = zip_postal if zip_postal else MISSING
-            logger.info(f"[{idx}] Zip Postal: {zip_postal}")
-
-            country_code = "US"
-            store_number = MISSING
-            phone = loc_dom.xpath('//strong[contains(text(), "CALL NOW")]/text()')
-            if not phone:
-                phone = poi_html.xpath(".//strong/text()")
-            phone = phone[0].split("NOW")[-1].strip() if phone else MISSING
-            logger.info(f"[{idx}] Phone: {phone}")
-
+    log.info("Fetching store_locator data")
+    soup = pull_content(BASE_URL)
+    info = soup.find("script", {"id": "popmenu-apollo-state"})
+    info = re.search(r"window\.POPMENU_APOLLO_STATE\s+=\s+(.*);", info.string).group(1)
+    info = json.loads(info)
+    for key, value in info.items():
+        if key.startswith("RestaurantLocation:"):
+            page_url = BASE_URL + value["slug"]
+            location_name = value["name"]
+            raw_address = value["fullAddress"].replace("\n", ", ")
+            street_address = value["streetAddress"].replace("\n", ", ")
+            city = value["city"]
+            state = value["state"]
+            zip_postal = value["postalCode"]
+            country_code = value["country"]
+            phone = value["displayPhone"]
             location_type = MISSING
-            latlng = "".join(
-                loc_dom.xpath('//div[@jsaction="placeCard.directions"]/a/@href')
+            store_number = value["id"]
+            latitude = value["lat"]
+            longitude = value["lng"]
+            hours_of_operation = (
+                ", ".join(value["schemaHours"])
+                .replace("Su", "Sunday:")
+                .replace("Mo", "Monday:")
+                .replace("Tu", "Tuesday:")
+                .replace("We", "Wednesday:")
+                .replace("Th", "Thursday:")
+                .replace("Fr", "Friday:")
+                .replace("Sa", "Saturday:")
             )
-            latlng = latlng.split("@")[1].split(",")
-
-            latitude = latlng[0]
-            latitude = latitude if latitude else MISSING
-            logger.info(f"[{idx}] Latitude: {latitude}")
-
-            longitude = latlng[1]
-            longitude = longitude if longitude else MISSING
-            logger.info(f"[{idx}] Longitude: {longitude}")
-            hoo = loc_dom.xpath(
-                '//h4[contains(text(), "Dine-in Hours:")]/following-sibling::p//text()'
-            )
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else MISSING
-            logger.info(f"[{idx}] HOO: {hours_of_operation}")
-
-            raw_address = [i.lstrip(",").rstrip(",") for i in raw_address]
-            raw_address = ", ".join(raw_address)
-            raw_address = raw_address if raw_address else MISSING
-            logger.info(f"[{idx}] Raw Address: {raw_address}")
-
+            log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -119,17 +106,15 @@ def fetch_data():
 
 
 def scrape():
-    logger.info("Started")
+    log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
 
-
-if __name__ == "__main__":
-    scrape()
+scrape()

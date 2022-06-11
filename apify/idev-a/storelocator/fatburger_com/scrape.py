@@ -1,10 +1,10 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from urllib.parse import urljoin
-
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("fatburger")
 
@@ -12,95 +12,107 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+header1 = {
+    "accept": "application/json, text/plain, */*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
+    "origin": "https://locations.fatburger.com",
+    "referer": "https://locations.fatburger.com/",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
 locator_domain = "https://fatburger.com/"
-base_url = "https://locations.fatburger.com/index.html"
-url = "https://locations.fatburger.com/"
+base_url = "https://locations.fatburger.com/site-map/all"
+
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
+
+
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
+def _u(url):
+    return (
+        url.split("#")[0]
+        .replace("+~", "%26")
+        .replace("-", "+")
+        .replace("_", ".")
+        .replace("~", "-")
+        .replace("*", ",")
+        .replace("'", "%27")
+    )
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("ul.Directory-listLinks li a")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            country_url = urljoin(url, link["href"])
-            states = bs(session.get(country_url, headers=_headers).text, "lxml").select(
-                "ul.Directory-listLinks li a"
-            )
-            logger.info(f'{link["href"]} [{len(states)}]')
-            for state in states:
-                state_url = urljoin(url, state["href"])
-                cities = bs(
-                    session.get(state_url, headers=_headers).text, "lxml"
-                ).select("ul.Directory-listLinks li a")
-                logger.info(f'{state["href"]} [{len(cities)}]')
-                for city in cities:
-                    city_url = urljoin(url, city["href"])
-                    locs = bs(
-                        session.get(city_url, headers=_headers).text, "lxml"
-                    ).select("li.Directory-listTeaser h2 a")
-                    if locs:
-                        for loc in locs:
-                            page_url = urljoin(url, loc["href"])
-                            logger.info(page_url)
-                            sp1 = bs(
-                                session.get(page_url, headers=_headers).text, "lxml"
-                            )
-                            state = zip_postal = city = street_address = ""
-                            if sp1.select_one(".c-address-state"):
-                                state = sp1.select_one(".c-address-state").text.strip()
-                            if sp1.select_one(".c-address-postal-code"):
-                                zip_postal = sp1.select_one(
-                                    ".c-address-postal-code"
-                                ).text.strip()
-                            if sp1.select_one('meta[itemprop="streetAddress"]'):
-                                street_address = sp1.select_one(
-                                    'meta[itemprop="streetAddress"]'
-                                )["content"]
-                            if sp1.select_one('meta[itemprop="addressLocality"]'):
-                                city = sp1.select_one(
-                                    'meta[itemprop="addressLocality"]'
-                                )["content"]
-                            phone = ""
-                            if sp1.select_one("span#telephone"):
-                                phone = sp1.select_one("span#telephone").text.strip()
-                            try:
-                                coord = (
-                                    sp1.select_one('link[itemprop="hasMap"]')["href"]
-                                    .split("center=")[1]
-                                    .split("&")[0]
-                                    .split("%2C")
-                                )
-                            except:
-                                coord = ["", ""]
-                            hours = [
-                                hh["content"]
-                                for hh in sp1.select(
-                                    "table.c-location-hours-details tbody tr"
-                                )
-                            ]
-                            yield SgRecord(
-                                page_url=page_url,
-                                location_name=loc.text.strip(),
-                                street_address=street_address,
-                                city=city,
-                                state=state,
-                                zip_postal=zip_postal,
-                                country_code=link.text.strip(),
-                                phone=phone,
-                                locator_domain=locator_domain,
-                                latitude=coord[0],
-                                longitude=coord[1],
-                                hours_of_operation="; ".join(hours).replace("–", "-"),
-                            )
-                    else:
-                        import pdb
-
-                        pdb.set_trace()
+        app_url = (
+            "https://locations.fatburger.com/"
+            + bs(session.get(base_url, headers=_headers).text, "lxml").find_all(
+                "script"
+            )[-1]["src"]
+        )
+        token = (
+            session.get(app_url, headers=_headers)
+            .text.split('constant("API_TOKEN",')[1]
+            .split(")")[0][1:-1]
+        )
+        json_url = f"https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token={token}&multi_account=true"
+        locations = session.get(json_url, headers=_headers).json()["locations"]
+        logger.info(f"{len(locations)} found")
+        header1["authorization"] = token
+        for store in locations:
+            if store["open_or_closed"] != "open":
+                continue
+            url = store["llp_url"].split("/")
+            street = _u(url[-1])
+            locality = _u(url[-2])
+            region = _u(url[-3])
+            j_url = f"https://api.momentfeed.com/v1/analytics/api/llp.json?address={street}&locality={locality}&multi_account=true&pageSize=30&region={region}"
+            logger.info(j_url)
+            for loc in session.get(j_url, headers=header1).json():
+                _ = loc["store_info"]
+                street_address = _["address"]
+                if _["address_extended"]:
+                    street_address += " " + _["address_extended"]
+                if _.get("address_3"):
+                    street_address += " " + _["address_3"]
+                hours = []
+                if _.get("store_hours"):
+                    for hh in _["store_hours"].split(";"):
+                        if not hh:
+                            continue
+                        hr = hh.split(",")
+                        hours.append(f"{hr_obj[hr[0]]}: {_time(hr[1])}-{_time(hr[2])}")
+                yield SgRecord(
+                    page_url=_["website"],
+                    location_name=_["name"],
+                    street_address=street_address,
+                    city=_["locality"],
+                    state=_.get("region"),
+                    zip_postal=_.get("postcode"),
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    country_code=_["country"],
+                    phone=_["phone"],
+                    location_type=_["brand_name"],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

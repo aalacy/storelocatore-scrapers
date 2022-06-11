@@ -1,6 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("staybridge_com")
 
@@ -8,33 +12,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +23,6 @@ def fetch_data():
     Found = False
     cities = []
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '-hotels"><span>' in line:
             if (
                 'href="https://www.ihg.com/destinations/us/en/mexico/' in line
@@ -69,34 +45,37 @@ def fetch_data():
             if lurl not in states:
                 states.append(lurl)
     for url in states:
+        time.sleep(3)
         logger.info(url)
-        r = session.get(url, headers=headers)
-        lines = r.iter_lines()
-        for line in lines:
-            line = str(line.decode("utf-8"))
-            if '<li class="listingItem"><a' in line:
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                if 'href="' not in g:
+        try:
+            r = session.get(url, headers=headers)
+            lines = r.iter_lines()
+            for line in lines:
+                if '<li class="listingItem"><a' in line:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
-                curl = g.split('href="')[1].split('"')[0]
-                if curl not in cities:
-                    cities.append(curl)
-            if '"@type":"Hotel","' in line:
-                curl = (
-                    line.split('"@type":"Hotel","')[1].split('"url":"')[1].split('"')[0]
-                )
-                if curl not in locs:
-                    if "staybridge" in curl:
-                        locs.append(curl)
+                    if 'href="' not in g:
+                        g = next(lines)
+                    curl = g.split('href="')[1].split('"')[0]
+                    if curl not in cities:
+                        cities.append(curl)
+                if '"@type":"Hotel","' in line:
+                    curl = (
+                        line.split('"@type":"Hotel","')[1]
+                        .split('"url":"')[1]
+                        .split('"')[0]
+                    )
+                    if curl not in locs:
+                        if "staybridge" in curl:
+                            locs.append(curl)
+        except:
+            pass
     for url in cities:
+        time.sleep(3)
         try:
             logger.info(url)
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '"@type":"Hotel","' in line:
                     curl = (
                         line.split('"@type":"Hotel","')[1]
@@ -109,6 +88,7 @@ def fetch_data():
         except:
             pass
     for loc in locs:
+        time.sleep(3)
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "staybridge.com"
@@ -133,7 +113,6 @@ def fetch_data():
         lng2 = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'property="og:title" content="' in line2 and name == "":
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
             if '"name" : "' in line2 and name == "":
@@ -159,6 +138,8 @@ def fetch_data():
                 country = line2.split('<span itemprop="addressCountry">')[1].split("<")[
                     0
                 ]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if lat == "" and '<meta itemprop="latitude" content="' in line2:
@@ -236,27 +217,29 @@ def fetch_data():
         state = state.replace("&nbsp;", "").replace(",", "")
         city = city.replace("&nbsp;", "").replace(",", "")
         if " Hotels" not in name and name != "":
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

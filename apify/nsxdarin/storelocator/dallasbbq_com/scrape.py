@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import re
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -15,18 +15,19 @@ headers = {
 def fetch_data():
     url = "https://www.dallasbbq.com"
     locs = []
-    r = session.get(url, headers=headers, verify=False)
-    Found = True
+    r = session.get(url, headers=headers)
+    Found = False
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if ">Locations &amp; Menus</a>" in line and len(locs) == 0:
+        if "Locations &amp; Menus</span>" in line and len(locs) == 0:
             Found = True
-        if "Gift Cards" in line:
+        if "Drinks Menu" in line:
             Found = False
         if (
             Found
-            and '<a href="/' in line
+            and 'href="/' in line
+            and '<a class="' not in line
             and "/drinks" not in line
+            and "/cart" not in line
             and "gift-" not in line
         ):
             lurl = "https://www.dallasbbq.com" + line.split('href="')[1].split('"')[0]
@@ -48,7 +49,6 @@ def fetch_data():
         lines = r2.iter_lines()
         Found = False
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = line2.split("<title>")[1].split("&m")[0].strip()
             if "&quot;addressLine1&quot;:&quot;" in line2:
@@ -65,19 +65,34 @@ def fetch_data():
                 lng = line2.split("markerLng&quot;:")[1].split("&")[0]
             if "Phone</strong><br>" in line2:
                 phone = line2.split("Phone</strong><br>")[1].split("<")[0]
+            if "PHONE</strong><br>" in line2:
+                phone = line2.split("PHONE</strong><br>")[1].split("<")[0]
             if "Hours</strong><br>" in line2:
                 hours = line2.split("Hours</strong><br>")[1].split("<")[0]
+            if "HOURS</strong><br>" in line2:
+                hours = line2.split("HOURS</strong><br>")[1].split("<")[0]
+            if "HOURS</strong><br><em>" in line2:
+                hours = line2.split("HOURS</strong><br><em>")[1].split("</p")[0]
         country = "US"
         store = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
-        hours = hours.replace(" • ", "; ").replace("&amp;", "&")
+        lng = lng.replace(",", "")
+        hours = (
+            hours.replace(" • ", "; ")
+            .replace("&amp;", "&")
+            .replace("DINE IN & TAKE OUT", "")
+            .replace("DINE IN", "")
+            .replace("TAKE OUT", "")
+            .strip()
+        )
         if "FOR TAKE" in hours:
             hours = hours.split("FOR TAKE")[0].strip()
         cleanr = re.compile("<.*?>")
         hours = re.sub(cleanr, "", hours)
+        hours = hours.replace(" ;", ";")
         if "downtown-brooklyn" in loc:
             phone = "(718) 643-5700"
         yield SgRecord(

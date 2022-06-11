@@ -1,87 +1,84 @@
-import requests
 from bs4 import BeautifulSoup
-import csv
-import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('jimanos_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.jimanos.com/locations/"
 
-		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
+    session = SgRequests()
 
-	base_link = "https://www.jimanos.com/locations/"
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+    items = base.findAll(class_="location-item-cell")
 
-	req = requests.get(base_link, headers=headers)
+    for item in items:
+        link = item.a["href"]
 
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-	items = base.findAll('a', attrs={'class': 'location-button'})
-	
-	data = []
-	for item in items:
-		link = item['href']
+        locator_domain = "jimanos.com"
+        location_name = base.find("h1").text.strip()
 
-		req = requests.get(link, headers=headers)
-		try:
-			base = BeautifulSoup(req.text,"lxml")
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        raw_data = list(
+            base.find("span", attrs={"itemprop": "address"}).stripped_strings
+        )
+        street_address = raw_data[0]
+        raw_line = raw_data[1]
+        city = raw_line[: raw_line.rfind(",")].strip()
+        state = location_name.split(",")[-1].strip()
+        zip_code = raw_line[raw_line.rfind(" ") + 1 :].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = base.find("span", attrs={"itemprop": "telephone"}).text.strip()
+        location_type = "<MISSING>"
 
-		locator_domain = "jimanos.com"		
-		location_name = base.find('h1').text.strip()
-		logger.info(location_name)
-		
-		raw_data = str(base.find('span', attrs={'itemprop': 'address'})).replace('<p>',"").replace('</p>',"").replace('\n',"").replace(',',"").split('<br/>')
-		street_address = raw_data[0][raw_data[0].rfind(">")+1:].strip()
-		raw_line = base.find('span', attrs={'itemprop': 'addressLocality'}).text.strip()
-		city = raw_line[:raw_line.rfind(',')].strip()
-		state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
-		zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		phone = base.find('span', attrs={'itemprop': 'telephone'}).text.strip()
-		location_type = "<MISSING>"
+        raw_gps = base.find("a", attrs={"id": "directions"})["href"]
 
-		raw_gps = base.find('a', attrs={'id': 'directions'})['href']
+        start_point = raw_gps.find("@") + 1
+        latitude = raw_gps[start_point : raw_gps.find(",", start_point)]
+        long_start = raw_gps.find(",", start_point) + 1
+        longitude = raw_gps[long_start : raw_gps.find(",", long_start)]
+        try:
+            int(latitude[4:8])
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
-		start_point = raw_gps.find("@") + 1
-		latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
-		long_start = raw_gps.find(',',start_point)+1
-		longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
-		try:
-			int(latitude[4:8])
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+        hours_of_operation = " ".join(
+            list(base.find("table", attrs={"class": "location-table"}).stripped_strings)
+        )
 
-		hours_of_operation = base.find('table', attrs={'class': 'location-table'}).get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
-		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

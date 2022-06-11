@@ -104,9 +104,9 @@ def fetch_data():
             page += 1
             for _ in locations:
                 page_url = _.select_one("h3 a")["href"]
-                raw_address = list(
-                    _.select_one("span.address-location").stripped_strings
-                )[-1]
+                logger.info(page_url)
+                sp1 = bs(session.post(page_url, headers=_headers).text, "lxml")
+                raw_address = sp1.select_one("div.wil_accordion__content").text.strip()
                 addr = parse_address_intl(raw_address)
                 street_address = addr.street_address_1
                 if addr.street_address_2:
@@ -122,8 +122,7 @@ def fetch_data():
                 phone = ""
                 if _.select_one("span.address-phone_number a"):
                     phone = _.select_one("span.address-phone_number a").text.strip()
-                logger.info(page_url)
-                sp1 = bs(session.post(page_url, headers=_headers).text, "lxml")
+
                 hours = [
                     ": ".join(hh.stripped_strings)
                     for hh in sp1.select("div.widget_author-calendar li")

@@ -8,10 +8,15 @@ from sgselenium.sgselenium import SgChrome
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 DOMAIN = "montagehotels.com"
 website = "https://www.montagehotels.com"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
@@ -21,7 +26,7 @@ headers = {
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 )
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -53,7 +58,7 @@ def getJSObject(response, varName, noVal=MISSING):
     return JSObject[0]
 
 
-def fetchStores():
+def fetch_stores():
     response = get_driver(f"{website}/deervalley/")
 
     body = html.fromstring(response, "lxml")
@@ -61,22 +66,33 @@ def fetchStores():
     return storeUrls
 
 
-def fetchData():
-    storeUrls = fetchStores()
+def fetch_data():
+    storeUrls = fetch_stores()
     log.info(f"Total stores = {len(storeUrls)}")
     for page_url in storeUrls:
         log.debug(f"Scrapping {page_url} ...")
         response = get_driver(page_url)
         store_number = getJSObject(response, "hotel")
-
+        log.info(f"Store Number: {store_number}")
         response = request_with_retries(
             f"https://newbooking.azds.com/api/hotel/{store_number}/configuration?lang=en"
         )
         data = json.loads(response.text)
         location_name = data["name"]
+        log.info(f"Location Name: {location_name}")
         latitude = data["latitude"]
+        log.info(f"Latitude: {latitude}")
         longitude = data["longitude"]
-        phone = data["phone"]
+        log.info(f"Longitude: {longitude}")
+        try:
+            phone = data["phone"]
+            log.info(f"Phone: {phone}")
+        except:
+            phone = MISSING
+            log.info(
+                f"Phone Number is not available in the API Endpoint, Store Number: {store_number}"
+            )
+
         city = data["city"]
         raw_address = data["address"]
 
@@ -97,7 +113,6 @@ def fetchData():
             longitude=longitude,
             raw_address=raw_address,
         )
-    return []
 
 
 def scrape():
@@ -105,8 +120,8 @@ def scrape():
     count = 0
     start = time.time()
 
-    with SgWriter() as writer:
-        result = fetchData()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        result = fetch_data()
         for rec in result:
             writer.write_row(rec)
             count = count + 1

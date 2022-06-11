@@ -1,6 +1,10 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, Grain_8, SearchableCountries
+from tenacity import retry, stop_after_attempt, wait_fixed
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("massimodutti")
@@ -10,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://www.massimodutti.com/"
-base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009456/physical-store?appId=1&languageId=-1&latitude={}&longitude={}&favouriteStores=true&lastStores=false&closerStores=true&min=10&radioMax=1000&receiveEcommerce=false&showBlockedMaxPackage=false"
+base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009527/physical-store?appId=1&languageId=-1&latitude={}&longitude={}"
 
 days = [
     "",
@@ -24,103 +28,77 @@ days = [
 ]
 
 
-search = DynamicGeoSearch(
-    country_codes=SearchableCountries.WITH_COORDS_ONLY,
-    max_radius_miles=50,
-)
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+def _d(url):
+    with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as http:
+        res = http.get(url, headers=_headers)
+        if res.status_code != 200:
+            raise Exception
+        return res.json()["closerStores"]
 
 
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
+def fetch_records(search):
     for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % lat, lng))
-        locations = session.get(base_url.format(lat, lng), headers=_headers).json()[
-            "closerStores"
-        ]
-        total += len(locations)
-        for store in locations:
-            hours = []
-            for hr in store.get("openingHours", {}).get("schedule", []):
-                times = f"{hr['timeStripList'][0]['initHour']}-{hr['timeStripList'][0]['initHour']}"
-                for hh in hr["weekdays"]:
-                    hours.append(f"{days[hh]}: {times}")
-            search.found_location_at(
-                store["latitude"],
-                store["longitude"],
-            )
-            store["street"] = " ".join(store["addressLines"])
-            store["zipcode"] = store["zipCode"] or "<MISSING>"
-            store["state"] = store["state"] or "<MISSING>"
-            store["city"] = store["state"] or "<MISSING>"
-            store["hours"] = "; ".join(hours) or "<MISSING>"
-            store["phone"] = "<MISSING>"
-            if store.get("phones"):
-                store["phone"] = store["phones"][0]
-            yield store
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        try:
+            locations = _d(base_url.format(lat, lng))
+        except:
+            locations = []
+        if locations:
+            logger.info(f"{search.current_country(), len(locations)}")
+            for store in locations:
+                hours = []
+                for hr in store.get("openingHours", {}).get("schedule", []):
+                    times = f"{hr['timeStripList'][0]['initHour']} - {hr['timeStripList'][0]['endHour']}"
+                    if len(hr["weekdays"]) == 1:
+                        hh = hr["weekdays"][0]
+                        hours.append(f"{days[hh]}: {times}")
+                    else:
+                        day = f'{days[hr["weekdays"][0]]} to {days[hr["weekdays"][-1]]}'
+                        hours.append(f"{day}: {times}")
+                phone = ""
+                if store.get("phones"):
+                    phone = store["phones"][0]
 
-        logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
+                _streat = (
+                    "-".join(store["name"].split())
+                    .lower()
+                    .replace(".", "")
+                    .replace(",", "")
+                )
+                if store["state"]:
+                    _state = "-".join(store["state"].split()).lower()
+                else:
+                    _state = "-".join(store["city"].split()).lower()
 
+                page_url = f'https://www.massimodutti.com/us/store-locator/{_state}/{_streat}/{store["latitude"]},{store["longitude"]}/{store["id"]}'
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=store["id"],
+                    location_name=store["name"],
+                    street_address=" ".join(store["addressLines"]),
+                    city=store["city"],
+                    state=store["state"],
+                    zip_postal=store["zipCode"],
+                    latitude=store["latitude"],
+                    longitude=store["longitude"],
+                    phone=phone,
+                    country_code=store["countryCode"],
+                    hours_of_operation="; ".join(hours),
+                    locator_domain=locator_domain,
+                )
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-            part_of_record_identity=True,
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-            part_of_record_identity=True,
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zipcode"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["countryCode"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        location_type=sp.MissingField(),
-        store_number=sp.MappingField(
-            mapping=["id"],
-        ),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+        else:
+            logger.warning(base_url.format(lat, lng))
 
 
 if __name__ == "__main__":
-    scrape()
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, granularity=Grain_8()
+    )
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        for rec in fetch_records(search):
+            writer.write_row(rec)
