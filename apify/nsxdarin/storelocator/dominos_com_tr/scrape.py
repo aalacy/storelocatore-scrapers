@@ -34,7 +34,6 @@ def fetch_data():
                     name = item["name"]
                     add = item["address"]
                     phone = item["phone"]
-                    loc = "<MISSING>"
                     lng = item["longitude"]
                     lat = item["lattitude"]
                     city = item["city"]["name"]
@@ -42,7 +41,7 @@ def fetch_data():
                     zc = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
-                        page_url=loc,
+                        page_url=url,
                         location_name=name,
                         street_address=add,
                         city=city,

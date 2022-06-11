@@ -1,118 +1,95 @@
-from sglogging import sglog
-from bs4 import BeautifulSoup
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-session = SgRequests()
-website = "desigual_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
-}
-
-DOMAIN = "https://desigual.com"
-MISSING = SgRecord.MISSING
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
 
-def fetch_data():
-    if True:
-        country_list = ["en_US", "en_CA"]
-        for country in country_list:
-            country_url = (
-                "https://www.desigual.com/"
-                + country
-                + "/shops/?showMap=true&horizontalView=true&isForm=true"
-            )
-            r = session.get(country_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            loclist = soup.find("ul", {"id": "collapseExample"}).findAll("li")
-            for loc in loclist:
-                page_url = loc.find("a")["href"]
-                log.info(page_url)
-                r = session.get(page_url, headers=headers)
-                temp = (
-                    r.text.split('initial-stores="')[1]
-                    .split('">')[0]
-                    .replace("&quot;", " ")
-                )
-                store_number = temp.split("id :")[1].split(",")[0]
-                location_name = temp.split("name :")[1].split(",")[0]
-                street_address = (
-                    temp.split("address :")[1]
-                    .split(", city :")[0]
-                    .replace("MIRACLE MILE SHOPS ", "")
-                )
-                city = temp.split(", city :")[1].split(",")[0]
-                state = temp.split("regionSapId :")[1].split(",")[0]
-                zip_postal = temp.split("postalCode :")[1].split(",")[0]
-                country_code = temp.split("countryCode :")[1].split(",")[0]
-                latitude = temp.split("latitude :")[1].split(",")[0]
-                longitude = temp.split("longitude :")[1].split(",")[0]
-                phone = temp.split("phone : ")[1].split(",")[0]
-                mon = "Mon " + temp.split("Monday , value :")[1].split(",")[0]
-                tue = "Tue " + temp.split("Tuesday , value :")[1].split(",")[0]
-                wed = "Wed " + temp.split("Wednesday , value :")[1].split(",")[0]
-                thu = "Thu " + temp.split("Thursday , value :")[1].split(",")[0]
-                fri = "Fri " + temp.split("Friday , value :")[1].split(",")[0]
-                sat = "Sat " + temp.split("Saturday , value :")[1].split(",")[0]
-                sun = "Sun " + temp.split("Sunday , value :")[1].split(",")[0]
-                hours_of_operation = (
-                    mon
-                    + ", "
-                    + tue
-                    + ", "
-                    + wed
-                    + ", "
-                    + thu
-                    + ", "
-                    + fri
-                    + ", "
-                    + sat
-                    + ", "
-                    + sun
-                )
-                if "," in street_address:
-                    street_address = street_address.split(",")
-                    if "MALL" in street_address[0]:
-                        street_address = " ".join(street_address[1:])
-                    else:
-                        street_address = " ".join(street_address)
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=zip_postal.strip(),
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone.strip(),
-                    location_type=MISSING,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.desigual.com/"
+    api_url = f"https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_globale_north-Site/en_US/Address-SearchStoreAddress?longitude={str(long)}&latitude={str(lat)}&deliveryPoint=STORE&radius=700&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    }
+
+    session = SgRequests()
+
+    r = session.get(api_url, headers=headers)
+    try:
+        js = r.json()["shippingAddresses"]
+    except:
+        return
+    for j in js:
+
+        page_url = j.get("detailUrl") or "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = j.get("address") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = "<MISSING>"
+        postal = j.get("postalCode") or "<MISSING>"
+        country_code = j.get("countryCode") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        hours_list = []
+        hours = j["schedule"]
+        if hours:
+            for hour in hours:
+                day = hour["name"]
+                if hour["isOpen"] is True:
+                    time = hour["value"]
+                else:
+                    time = "Closed"
+                hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
-    ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+def fetch_data(sgw: SgWriter):
 
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    for country in SearchableCountries.ALL:
+        coords = DynamicGeoSearch(
+            country_codes=[f"{country}"],
+            max_search_distance_miles=250,
+            expected_search_radius_miles=70,
+            max_search_results=None,
+        )
+
+        with futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+            for future in futures.as_completed(future_to_url):
+                future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

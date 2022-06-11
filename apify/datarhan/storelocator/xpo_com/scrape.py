@@ -20,7 +20,7 @@ def fetch_data():
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//script[@id="globalLocations"]/text()')[0]
+    all_locations = dom.xpath('//data[@id="globalLocations"]/@value')[0]
     all_locations = json.loads(all_locations)
     for poi in all_locations:
         store_url = start_url

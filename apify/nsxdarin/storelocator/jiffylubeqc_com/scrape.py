@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import unicodedata
 
 logger = SgLogSetup().get_logger("jiffylubeqc_com")
 
@@ -85,26 +86,24 @@ def fetch_data():
                     hours = hours + "; " + hrs
         if phone == "":
             phone = "<MISSING>"
+
         hours = (
-            hours.replace(" à ", "-")
+            unicodedata.normalize("NFD", hours)
+            .encode("ascii", "ignore")
+            .decode("utf-8")
+        )
+        hours = (
+            hours.replace(" a ", " - ")
             .replace("Du ", "")
             .replace("Lundi au Vendredi", "Mon-Fri")
             .replace("Samedi", "Saturday")
             .replace("Dimanche", "Sunday")
-        )
-        hours = (
-            hours.replace("Lundi", "Mon")
-            .replace("Mardi", "Tue")
-            .replace("mercredi", "Wed")
-            .replace("Jeudi", "Thu")
-            .replace("Vendredi", "Fri")
-        )
-        hours = (
-            hours.replace("FERMÉ", "Closed")
+            .replace("FERME", "Closed")
             .replace("à", "to")
-            .replace("Fermé", "Closed")
+            .replace("Ferme", "Closed")
             .replace(" et ", " and ")
         )
+        logger.info(f"HOO: {hours}")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

@@ -10,7 +10,6 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.pure.co.uk"
     api_url = "https://www.pure.co.uk/shops/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -22,7 +21,6 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         page_url = f"https://www.pure.co.uk{slug}"
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -43,7 +41,9 @@ def fetch_data(sgw: SgWriter):
             .split(",")[1]
             .strip()
         )
-        phone = "".join(tree.xpath('//span[@itemprop="telephone"]/text()'))
+        phone = (
+            "".join(tree.xpath('//span[@itemprop="telephone"]/text()')) or "<MISSING>"
+        )
         hours_of_operation = (
             " ".join(
                 tree.xpath(

@@ -37,7 +37,7 @@ def fetch_data():
             "".join(
                 stores_sel.xpath(
                     "//div[@data-maps-collection-value]/@data-maps-collection-value"
-                )
+                )[0]
             )
             .strip()
             .replace("&quot;", '"')

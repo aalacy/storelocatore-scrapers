@@ -9,7 +9,7 @@ from sgscrape.sgpostal import parse_address_usa
 import re
 
 DOMAIN = "cotrattoria.com"
-LOCATION_URL = "https://candorestaurants.com/"
+LOCATION_URL = "https://candorestaurants.com"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -61,7 +61,7 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("a", {"class": "et_pb_button et_pb_promo_button"})
+    contents = soup.select("div.et_pb_promo_description a")
     for row in contents:
         page_url = LOCATION_URL + row["href"]
         if "relocated-page" in page_url:

@@ -4,12 +4,14 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 from lxml import html
-
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from bs4 import BeautifulSoup as bs
 
 DOMAIN = "spar.co.uk"
 
@@ -18,7 +20,6 @@ MISSING = "<MISSING>"
 locationUrlFormat = "https://www.spar.co.uk/umbraco/api/storesearch/searchstores?maxResults=5&radius=10&startNodeId=1053&location=&filters=&lat={}&lng={}&filtermethod="
 
 
-session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 max_workers = 24
@@ -93,7 +94,8 @@ def getPhone(Source):
 
 
 def request_with_retries(url):
-    return session.get(url, headers=headers)
+    with SgRequests() as session:
+        return session.get(url, headers=headers)
 
 
 def fetchStores():
@@ -119,15 +121,27 @@ def fetchStores():
             longitude = getJSONObjectVariable(location, "lng")
             all_coords.found_location_at(latitude, longitude)
 
+            page_url = f"{website}{location['url']}"
+            log.info(page_url)
+            try:
+                services = list(
+                    bs(request_with_retries(page_url).text, "lxml")
+                    .select_one("ul.store-services__list")
+                    .stripped_strings
+                )
+            except:
+                pass
+
             stores.append(
                 {
-                    "url": f"{website}{location['url']}",
+                    "url": page_url,
                     "location_name": getJSONObjectVariable(location, "name")
                     .replace("\t", " ")
                     .strip(),
                     "phone": getPhone(getJSONObjectVariable(location, "telephone")),
                     "latitude": latitude,
                     "longitude": longitude,
+                    "services": ", ".join(services),
                     "store_number": getJSONObjectVariable(location, "code")
                     .replace("\t", " ")
                     .strip(),
@@ -219,7 +233,6 @@ def fetchData():
         longitude = data["longitude"]
         raw_address, street_address, city, zip_postal = getAddress(body)
 
-        location_type = "Store"
         country_code = "UK"
         hours_of_operation = getHoo(jsonData)
 
@@ -228,7 +241,7 @@ def fetchData():
             store_number=store_number,
             page_url=page_url,
             location_name=location_name,
-            location_type=location_type,
+            location_type=data["services"],
             street_address=street_address,
             city=city,
             zip_postal=zip_postal,
@@ -247,7 +260,11 @@ def scrape():
     count = 0
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1

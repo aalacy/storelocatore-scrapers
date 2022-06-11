@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "sushi-garden.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -31,7 +33,7 @@ def fetch_data():
 
         location_name = "".join(store.xpath("div[1]//h2/strong/text()")).strip()
 
-        raw_info = store.xpath("div[3]//div[@class='fusion-text'][4]/p/text()")
+        raw_info = store.xpath("div[3]//div[@class='fusion-text'][3]/p/text()")
 
         raw_list = []
         for index in range(0, len(raw_info)):
@@ -82,7 +84,19 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

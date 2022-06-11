@@ -25,8 +25,10 @@ headers = {
 session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
+# Testing:stop using tenacity
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+
+@retry(stop=stop_after_attempt(3), wait=tenacity.wait_fixed(5))
 def get_response(idx, url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
@@ -35,7 +37,6 @@ def get_response(idx, url):
         if response.status_code == 200:
             log.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
             return response
-        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
 def getXMLRoot(text):
@@ -117,6 +118,7 @@ def getXpathClean(body, xpath):
 
 
 def fetchData():
+    error_urls = []
     page_urls = fetchStores()
     log.info(f"Total stores = {len(page_urls)}")
     count = 0
@@ -124,6 +126,9 @@ def fetchData():
         count = count + 1
         log.debug(f"{count}. fetching {page_url} ...")
         response = get_response(count, page_url)
+        if response is None:
+            error_urls.append(page_url)
+            continue
 
         storeDetails = getJSObject(response.text, "]", {})
         storeDetails = storeDetails.replace("\u00E9", "").replace("\\'", "")
@@ -167,6 +172,8 @@ def fetchData():
             longitude=longitude,
             hours_of_operation=hours_of_operation,
         )
+
+    log.info(f"All Bad 500 urls: {error_urls}")
 
 
 def scrape():

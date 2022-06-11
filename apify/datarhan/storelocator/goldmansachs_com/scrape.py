@@ -21,17 +21,17 @@ def fetch_data():
     all_locations = dom.xpath('//ul[@class="listings filter"]/li')
     for poi_html in all_locations:
         country_code = poi_html.xpath('.//span[@class="country"]/text()')
-        country_code = country_code[0] if country_code else "<MISSING>"
+        country_code = country_code[0] if country_code else ""
         store_url = start_url
         location_name = poi_html.xpath('.//span[@class="address"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name[0] if location_name else ""
         raw_address = poi_html.xpath('.//span[@class="address"]/text()')[1:]
         raw_address = [e.strip() for e in raw_address if e.strip()]
         full_address = " ".join(raw_address) + " " + country_code
         addr = parse_address_intl(full_address)
         if not addr.street_address_1:
             raw_address = poi_html.xpath('.//span[@class="address"]/text()')
-            location_name = "<MISSING>"
+            location_name = ""
             addr = parse_address_intl(" ".join(raw_address))
         street_address = addr.street_address_1
         if street_address and addr.street_address_2:
@@ -44,23 +44,17 @@ def fetch_data():
             else:
                 street_address = raw_address[0]
         city = poi_html.xpath('.//span[@class="city"]/text()')
-        city = city[0].split(",")[0] if city else "<MISSING>"
+        city = city[0].split(",")[0] if city else ""
         state = addr.state
-        state = state.replace(".", "") if state else "<MISSING>"
+        state = state.replace(".", "") if state else ""
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        street_address = street_address.replace(zip_code, "")
-        store_number = "<MISSING>"
+        if street_address and zip_code:
+            street_address = street_address.replace(zip_code, "")
         phone = poi_html.xpath('.//span[@class="phone"]/span/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-
+        phone = phone[0] if phone else ""
         if street_address == "Suite 1000 East":
             street_address = f"{location_name} {street_address}"
-            location_name = "<MISSING>"
+            location_name = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -71,12 +65,12 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=store_number,
+            store_number="",
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
             raw_address=full_address,
         )
 

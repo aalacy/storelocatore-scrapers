@@ -1,108 +1,134 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-import sgzip
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_intl
+from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger('big5sportinggoods_com')
 
-
-
+DOMAIN = "big5sportinggoods.com"
+LOCATION_URL = "http://big5sportinggoods.com/store/integration/find_a_store.jsp?storeLocatorAddressField={}&miles=100&lat={}&lng={}&showmap=yes"
+HEADERS = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+MISSING = "<MISSING>"
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 200:
+        soup = bs(req.content, "lxml")
+        return soup
+    return False
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 1000
-    MAX_DISTANCE = 50
-    current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
-    while coord:
-        result_coords = []
+    log.info("Fetching store_locator data")
+    search = DynamicZipAndGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=100,
+        max_search_results=500,
+    )
+    for zipcode, coord in search:
+        page_url = LOCATION_URL.format(zipcode, coord[0], coord[1])
+        soup = pull_content(page_url)
+        if not soup:
+            continue
+        stores = soup.select("div.store-address")
+        log.info(f"Found ({len(stores)}) locations with coord => {coord[0]},{coord[1]}")
+        for row in stores:
+            info = row.find("div", {"class": "map-directions-link"})
+            location_name = info.find("input", {"name": "name"})["value"]
+            street_address = re.sub(
+                r".$|,$|.\s$|,\s$|\(.*\)",
+                "",
+                info.find("input", {"name": "address"})["value"].strip(),
+            ).strip()
+            city = re.sub(
+                r"\(.*\)", "", info.find("input", {"name": "city"})["value"]
+            ).strip()
+            state = info.find("input", {"name": "state"})["value"]
+            zip_postal = info.find("input", {"name": "postalCode"})["value"]
+            country_code = "US"
+            phone = info.find("input", {"name": "phonenumber"})["value"]
+            try:
+                hours_of_operation = row.find("ul").get_text(strip=True, separator=",")
+            except:
+                hours_of_operation = MISSING
+            location_type = MISSING
+            store_number = location_name.split("#")[1].split(" - ")[0].strip()
+            latitude = info.find("input", {"name": "lat"})["value"]
+            longitude = info.find("input", {"name": "lng"})["value"]
+            search.found_location_at(latitude, longitude)
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-        lat = coord[0]
-        lng = coord[1]
-        # logger.info(search.current_zip)
-
-        # logger.info("zip_code === ",lat)
-        base_url= "http://big5sportinggoods.com/store/integration/find_a_store.jsp?storeLocatorAddressField="+str(search.current_zip)+"&miles=100&lat="+str(lat)+"&lng="+str(lng)+"&showmap=yes"
-        try:
-            r = session.get(base_url)
-        except:
-            pass
-        soup= BeautifulSoup(r.text,"lxml")
-        a = (soup.find_all("div",{"class":"store-address"}))
-        # logger.info(a)
-        current_results_len = len(a)
-        c = (soup.find_all("input",{"name":"lngHidden"}))
-        b = (soup.find_all("input",{"name":"latHidden"}))
-        for index,i in enumerate(a):
-            location_name = (list(i.stripped_strings)[0])
-            street_address = (list(i.stripped_strings)[1].strip())
-            city = list(i.stripped_strings)[2].split(",")[0].strip()
-            state = (list(i.stripped_strings)[2].split(",")[1].split( )[0].strip())
-            zip1 = (list(i.stripped_strings)[2].split(",")[1].split( )[1].strip())
-            phone = (list(i.stripped_strings)[4].strip())
-            hours = (list(i.stripped_strings)[6:13])
-            hours_of_operation = (''.join(hours))
-            latitude = b[index]['value']
-            longitude = c[index]['value']
-            result_coords.append((latitude, longitude))
-            store = []
-            store.append("https://big5sportinggoods.com/")
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zip1)   
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours_of_operation)
-            store.append(base_url)
-            
-            if store[2] in addresses :
-                continue
-            addresses.append(store[2])
-            yield store  
-            # logger.info("--------------------",store) 
-       
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

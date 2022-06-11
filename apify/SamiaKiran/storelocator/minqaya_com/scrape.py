@@ -54,6 +54,9 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+            longitude, latitude = (
+                soup.find("iframe")["src"].split("!2d")[1].split("!2m")[0].split("!3d")
+            )
             country_code = "Germany"
 
             yield SgRecord(
@@ -68,8 +71,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )

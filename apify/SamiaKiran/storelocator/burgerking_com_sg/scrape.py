@@ -7,6 +7,13 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+import time
+
+
 session = SgRequests()
 website = "burgerking_com_sg"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -19,13 +26,31 @@ DOMAIN = "https://burgerking.com.sg/Locator"
 MISSING = SgRecord.MISSING
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(idx, url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
+
+
 def fetch_data():
     if True:
-        for link in range(1, 50):
-            url = "https://burgerking.com.sg/Locator?page=" + str(link)
-            log.info(f"Page No {link}")
-            main_r = session.get(url, headers=headers)
-            soup = BeautifulSoup(main_r.text, "html.parser")
+        for page in range(1, 16):
+            url = "https://burgerking.com.sg/Locator?page=" + str(page)
+            try:
+                response = session.get(url, headers=headers)
+                log.info(
+                    f"Fetching Stores from Page No {page} >> Response Status: {response.status_code}"
+                )
+            except Exception as e:
+                log.info(f"loclist Error: {e}")
+                response = get_response(page, url)
+
+            soup = BeautifulSoup(response.text, "html.parser")
             loclist = soup.find("div", {"id": "locationsList"}).findAll(
                 "div", {"class": "location"}
             )
@@ -82,8 +107,6 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
-            if "Next" not in main_r.text:
-                break
 
 
 def scrape():

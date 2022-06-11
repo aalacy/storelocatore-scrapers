@@ -9,8 +9,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 import re
 
 DOMAIN = "churchs.com.mx"
-BASE_URL = "https://www.churchs.com.mx/restaurant/"
-API_URL = "https://www.churchs.com.mx/service/stores/general"
+BASE_URL = "https://www.churchs.com.mx/restaurant/detail"
+API_URL = "https://churchs.com.mx/app/feed/getListAll"
+STORE_INFO_API = "https://churchs.com.mx/app/feed/getLightStoreInfo&restaurant_id="
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -54,44 +55,54 @@ def pull_content(url):
     return soup
 
 
-def get_hoo(slug):
-    hoo = ""
-    days = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-    ]
-    url = f"https://www.churchs.com.mx/service/general-store/{slug}"
-    data = session.get(url, headers=HEADERS).json()["response"][0]["schedule"]
-    for i in range(len(days)):
-        hours = (
-            re.sub(r":00$", "", data[i]["startTime"])
-            + " - "
-            + re.sub(r":00$", "", data[i]["endTime"])
-        )
-        hoo += days[i] + ": " + hours + ","
-    return hoo.rstrip(",")
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     data = session.get(API_URL, headers=HEADERS).json()
-    for row in data["response"]:
-        page_url = BASE_URL + row["url"]
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    for row in data["restaurants"]:
+        page_url = BASE_URL + "?id=" + row["restaurant_id"]
+        info = session.get(
+            STORE_INFO_API + row["restaurant_id"], headers=HEADERS
+        ).json()["restaurant"]
         location_name = row["name"]
-        raw_address = " ".join(row["address"].split())
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = row["phone"]
+        raw_address = (
+            " ".join(row["name_arabic"].split()).replace(", México", "").strip()
+        )
+        addr_split = raw_address.split(",")
+        street_address = addr_split[0].strip()
+        city = re.sub(r"\d+", "", addr_split[-2]).strip()
+        state = addr_split[-1].replace(".", "").strip()
+        zip_postal = re.sub(r"\D+", "", addr_split[-2]).strip()
+        phone = info["telephone"]
         country_code = "MX"
-        location_type = row["instance"]
-        store_number = row["id"]
-        hours_of_operation = get_hoo(row["url"])
-        latitude = row["latitude"]
-        longitude = row["longitude"]
+        location_type = "Restaurant"
+        store_number = row["restaurant_id"]
+        hoo = ""
+        hoo_content = info["working_hours"]
+        for day in days:
+            try:
+                if hoo_content[day]["working"] == "open":
+                    hours = (
+                        hoo_content[day]["start_time"]
+                        + " - "
+                        + hoo_content[day]["end_time"]
+                    )
+                else:
+                    hours = "Closed"
+                hoo += day.title() + ": " + hours + ", "
+            except:
+                hoo += day.title() + ": Closed, "
+        hours_of_operation = hoo.strip().rstrip(",")
+        latitude = row["lat"]
+        longitude = row["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

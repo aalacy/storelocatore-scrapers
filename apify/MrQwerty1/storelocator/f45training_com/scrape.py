@@ -26,13 +26,25 @@ def get_country(line):
     return adr.country
 
 
+def get_city(line):
+    adr = parse_address(International_Parser(), line)
+    return adr.city
+
+
 def get_phone(url):
     r = session.get(url, headers=headers)
     if isinstance(r, SgRequestError):
         return ""
     tree = html.fromstring(r.text)
-
-    return "".join(tree.xpath("//a[contains(@href, 'tel:')]/text()"))
+    try:
+        phone = (
+            tree.xpath("//a[contains(@href, 'tel:')]/text()")[0]
+            .replace("–", "")
+            .strip()
+        )
+    except IndexError:
+        phone = SgRecord.MISSING
+    return phone
 
 
 def fetch_data(sgw: SgWriter):
@@ -62,9 +74,17 @@ def fetch_data(sgw: SgWriter):
         page_url = f"{locator_domain}{slug}"
         raw_address = j.get("location")
         street_address, city, state, postal = get_international(raw_address)
-        country = j.get("country") or ""
+        for letter in city:
+            if letter.isdigit():
+                city = SgRecord.MISSING
+                break
+
+        country = j.get("country") or get_country(raw_address)
         if not country:
-            country = get_country(raw_address)
+            if "Korea" in raw_address:
+                country = "Korea"
+            else:
+                country = "United States"
 
         phone = phones.get(slug)
         g = j.get("_geoloc") or {}

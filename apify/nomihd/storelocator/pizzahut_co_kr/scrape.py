@@ -66,7 +66,7 @@ def fetch_data():
 
             store_number = "<MISSING>"
 
-            page_url = "<MISSING>"
+            page_url = "https://www.pizzahut.co.kr/misc/address"
 
             hours_of_operation = "<MISSING>"
 

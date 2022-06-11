@@ -1,21 +1,47 @@
+from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
+
+
+logger = SgLogSetup().get_logger("tuffshed_com")
+MISSING = SgRecord.MISSING
+
+
+def get_bearer_token():
+    bearer_token_url = "https://www.tuffshed.com/tsapi/data-shed-api.php"
+    js = session.get(bearer_token_url).json()
+    response_bearer = json.loads(js["response"])
+    bearer_token = "Bearer" + " " + response_bearer["access_token"]
+    return bearer_token
 
 
 def fetch_data(sgw: SgWriter):
-    r = session.get(
-        "https://api.tuffshed.io/sites/Sites/search?SiteTypes=1&SiteTypes=2&SiteTypes=3&SiteTypes=8",
-        headers=headers,
-    )
-    page_url = "https://www.tuffshed.com/locate/"
+    API_ENDPOINT_URL = "https://api.tuffshed.io/sites/Sites/search?SiteTypes=1&SiteTypes=2&SiteTypes=3&SiteTypes=8"
+    data = session.get(API_ENDPOINT_URL, headers=headers_new).json()
+    logger.info(f"Store Count: {len(data)}")
+    for idx, j in enumerate(data):
+        page_url = ""
+        props = j.get("properties")
+        try:
+            property_value = ""
+            for prop in props:
+                if prop["propertyName"] == "MetroPageUrl":
+                    property_value = prop.get("propertyValue")
 
-    for j in r.json():
-        if not j.get("active"):
-            continue
+            if property_value:
+                page_url = f"https://www.tuffshed.com{property_value}"
+            else:
+                page_url = MISSING
+        except Exception as e:
+            page_url = MISSING
+            logger.info(f"Fix PageURLError: << {e} >> at {props}")
+
         location_name = j.get("name") or ""
+        logger.info(f"Pulling the store: [{idx}] LocationName: {location_name}")
         g = j.get("siteCoordinates") or {}
         latitude = g.get("siteLatitude")
         longitude = g.get("siteLongitude")
@@ -29,12 +55,10 @@ def fetch_data(sgw: SgWriter):
         try:
             phone = j["phoneNumbers"][0]["number"]
         except:
-            phone = SgRecord.MISSING
+            phone = MISSING
 
         hours = j.get("openingHours") or []
         hours_of_operation = ";".join(hours)
-        if not hours_of_operation and not latitude:
-            continue
         if not hours_of_operation:
             hours_of_operation = "Closed"
 
@@ -58,13 +82,17 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    logger.info("Scrape started")
     locator_domain = "https://www.tuffshed.com"
-    headers = {
+    session = SgRequests()
+    logger.info("Pulling Bearer Token")
+    bearer_token = get_bearer_token()
+    headers_new = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
         "Accept-Encoding": "gzip, deflate, br",
-        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik1yNS1BVWliZkJpaTdOZDFqQmViYXhib1hXMCIsImtpZCI6Ik1yNS1BVWliZkJpaTdOZDFqQmViYXhib1hXMCJ9.eyJhdWQiOiJhcGk6Ly9hcGkucHJkLnR1ZmZzaGVkLmlvIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZTY5MzAwZGUtZjQ5NC00Y2Y2LTliMmMtMTVlNzA2MzY2Y2Q5LyIsImlhdCI6MTY0MzA4MTgzOSwibmJmIjoxNjQzMDgxODM5LCJleHAiOjE2NDMwODU3MzksImFpbyI6IkUyWmdZSGgvWEo1ckkrZWxyWGZtQ2o2Tllyek5Cd0E9IiwiYXBwaWQiOiI5YzM3Njc4ZS0wOTc4LTQ2M2MtOGY1Ny0wOTFlMWQ1NDdkZjciLCJhcHBpZGFjciI6IjEiLCJncm91cHMiOlsiY2M3YThhYWYtNjQ2Ni00NjRiLTlkOTMtZTM4ZWQ5MWZiOWUxIiwiOWJjNjczNDEtMDZiOS00YmNiLWFmMWItMGNkYzYxMWNlYjQxIl0sImlkcCI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2U2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOS8iLCJvaWQiOiJkNzkxZmMzNi1mOGVhLTQ4MjgtOGE4Mi0zYzhlOGZjYWIyNzgiLCJyaCI6IjAuQVRnQTNnQ1Q1cFQwOWt5YkxCWG5CalpzMlk1bk41eDRDVHhHajFjSkhoMVVmZmM0QUFBLiIsInN1YiI6ImQ3OTFmYzM2LWY4ZWEtNDgyOC04YTgyLTNjOGU4ZmNhYjI3OCIsInRpZCI6ImU2OTMwMGRlLWY0OTQtNGNmNi05YjJjLTE1ZTcwNjM2NmNkOSIsInV0aSI6IktDUlFZb05PZTBPNzhBd2dWTndZQUEiLCJ2ZXIiOiIxLjAifQ.RVekUtXVVr4s7HKfm5Qx151v6XL3xlLUyMwjYPDBQU8xy6-9xU8z9bLYpwP43ART7-miaa4QiARmsX8NSitTO70s3mLL94TNqPsEUB6QhQ00ls5Z5N2C-i83wZ0x2Ao-yrqjCRlnAqbEZDhAxM9ZghZcd_hMLFpJxpzphpxQddKWnSsyHod_CgfJBmq7oK4w1oxH19hPgtieoZeD_-R5-u84-jyCyIN8de4SKDs6JXxWmMfo6TxjN6TXrsh_ylWBQyxU0jN8rvn5HZscqSnaspARVht2PaLcExo6vqiD7uGqanxKLsPkFMA3C2elLTkKAYhAE0RErK3O3TB_Kdavag",
+        "Authorization": bearer_token,
         "Origin": "https://www.tuffshed.com",
         "Connection": "keep-alive",
         "Referer": "https://www.tuffshed.com/",
@@ -74,6 +102,19 @@ if __name__ == "__main__":
         "TE": "trailers",
     }
 
-    session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
+    ) as writer:
         fetch_data(writer)
+    logger.info("Scrape Finished")

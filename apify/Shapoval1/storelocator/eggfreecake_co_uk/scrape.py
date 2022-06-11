@@ -42,12 +42,17 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         phone = str(j.get("phone")).replace("None", "").strip() or "<MISSING>"
+        if phone.find("no - ") != -1:
+            phone = phone.split("no - ")[1].split(",")[0].strip()
+        if phone == "-":
+            phone = "<MISSING>"
         if phone.find("(") != -1:
             phone = phone.split("(")[0].strip()
+        if phone.find("-") != -1:
+            phone = phone.split("-")[0].strip()
         if phone.find(",") != -1:
-            phone = phone.split(",")[0].split(":")[1].strip()
-        if phone.find("Mobile") != -1:
-            phone = phone.split("Mobile")[0].strip()
+            phone = phone.split(",")[0].strip()
+        phone = phone.strip() or "<MISSING>"
         days = [
             "monday",
             "tuesday",

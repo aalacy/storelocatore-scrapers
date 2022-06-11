@@ -10,23 +10,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "sunglasshut.com/uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "authority": "www.sunglasshut.com",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
-    "referer": "https://www.sunglasshut.com/uk/sunglasses/store-locations/map?location=London%2C%20UK",
-}
 
-referUrl = "https://www.sunglasshut.com/uk/sunglasses/store-locations/map?location=London%2C%20UK"
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
 
 def fetch_data():
@@ -36,8 +24,6 @@ def fetch_data():
     )
 
     with SgRequests(dont_retry_status_codes=([404])) as session:
-        session.get(referUrl, headers=headers)
-
         for lat, long in search:
             log.info(f"{(lat, long)}")
 
@@ -45,17 +31,22 @@ def fetch_data():
                 ("latitude", lat),
                 ("longitude", long),
                 ("radius", "2000"),
+                ("langId", "-24"),
+                ("storeId", "11352"),
             )
 
             stores_req = session.get(
                 "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations",
+                headers=headers,
                 params=params,
             )
             log.info(f"Status Code: {stores_req}")
             stores = json.loads(stores_req.text)["locationDetails"]
             for store in stores:
                 if store["countryCode"] == "GB":
-                    page_url = "<MISSING>"
+                    page_url = (
+                        "https://www.sunglasshut.com/uk/sunglasses/store-locations"
+                    )
                     locator_domain = website
                     location_name = store["displayAddress"]
                     street_address = store["address"]
