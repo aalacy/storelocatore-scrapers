@@ -1,65 +1,69 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
-logger = SgLogSetup().get_logger('holidayinnclubvacations_com')
-
-
+logger = SgLogSetup().get_logger("holidayinnclubvacations_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    for x in range(1, 4):
-        url = 'https://holidayinnclub.com/api/resorts?page=' + str(x)
-        r = session.get(url, headers=headers)
-        website = 'holidayinnclubvacations.com'
-        country = 'US'
-        typ = 'Hotel'
-        hours = '<MISSING>'
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        store = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        for line in r.iter_lines():
-            line = str(line.decode('utf-8'))
-            if '{"_content_type_uid":"' in line:
-                items = line.split('{"_content_type_uid":"')
-                for item in items:
-                    if '{"entries":' not in item:
-                        name = item.split('"display_title":"')[1].split('"')[0]
-                        loc = 'https://holidayinnclub.com/explore-resorts/' + item.split(',"resort_slugs":"')[1].split('"')[0]
-                        phone = item.split('{"phone_number":"')[1].split('"')[0]
-                        add = item.split('"address":"')[1].split('\\n')[0]
-                        city = item.split('"display_title":"')[1].split(',')[0]
-                        state = item.split('"display_title":"')[1].split(',')[1].split('"')[0].strip()
-                        zc = item.split('"address":"')[1].split('"')[0].rsplit(' ',1)[1]
-                        lat = item.split('"latitude":')[1].split(',')[0]
-                        lng = item.split('"longitude":')[1].split('}')[0]
-                        store = '<MISSING>'
-                        if 'Apple Mountain Resort' in name:
-                            city = 'Clarkesville'
-                            state = 'Georgia'
-                        if 'Coming Soon' not in item:
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    url = "https://www.ihg.com/ubeapi/holidayinnclubvacations/cv/us/en/explore.json"
+    r = session.get(url, headers=headers)
+    website = "holidayinnclubvacations.com"
+    country = "US"
+    hours = "<MISSING>"
+    for item in json.loads(r.content)["markers"]:
+        add = item["address"]
+        city = item["city"]
+        lat = item["latitude"]
+        lng = item["longitude"]
+        name = item["hotelName"]
+        store = item["hotelCode"]
+        typ = item["brand"]
+        loc = "https:" + item["url"]
+        zc = ""
+        phone = ""
+        state = ""
+        r2 = session.get(loc, headers=headers)
+        logger.info(loc)
+        for line in r2.iter_lines():
+            if '"addressRegion": "' in line:
+                state = line.split('"addressRegion": "')[1].split('"')[0]
+            if '"postalCode": "' in line:
+                zc = line.split('"postalCode": "')[1].split('"')[0]
+            if '"telephone": "' in line:
+                phone = line.split('"telephone": "')[1].split('"')[0]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

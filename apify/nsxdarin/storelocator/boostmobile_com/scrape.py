@@ -1,81 +1,124 @@
-import csv
 from sgrequests import SgRequests
-import sgzip
-import json
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('boostmobile_com')
-
-
-
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize()
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+}
 
-MAX_RESULTS = 20
-MAX_DISTANCE = 1.0
+logger = SgLogSetup().get_logger("boostmobile_com")
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+search = DynamicZipSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_results=None,
+    granularity=Grain_8(),
+)
+
 
 def fetch_data():
-    ids = []
-    locations = []
-    coord = search.next_zip()
-    while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #logger.info('%s...' % coord)
-        url = 'https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode=' + coord + '&page=1'
+
+    all_zips = []
+
+    logger.info("Appending zip_codes ..")
+    for coord in search:
+        if len(coord) == 4:
+            coord = "0" + coord
+        all_zips.append(coord)
+
+    logger.info("Searching zip_codes .. ")
+    for coord in all_zips:
+        url = (
+            "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
+            + coord
+            + "&page=1"
+        )
         r = session.get(url, headers=headers)
-        array = json.loads(r.content)
-        rc = 0
-        for item in array['nearestOutletResponse']['nearestlocationinfolist']['nearestLocationInfo']:
-            website = 'boostmobile.com'
-            store = item['id']
-            name = 'Boost Mobile'
-            typ = item['storeName']
-            add = item['storeAddress']['primaryAddressLine']
-            city = item['storeAddress']['city']
-            state = item['storeAddress']['state']
-            zc = item['storeAddress']['zipCode']
-            lat = item['storeAddress']['lat']
-            lng = item['storeAddress']['long']
-            country = 'US'
-            phone = item['storePhone']
-            hours = 'Mon: ' + item['storeHours']['mon']
-            hours = hours + '; Tue: ' + item['storeHours']['tue']
-            hours = hours + '; Wed: ' + item['storeHours']['wed']
-            hours = hours + '; Thu: ' + item['storeHours']['thu']
-            hours = hours + '; Fri: ' + item['storeHours']['fri']
-            hours = hours + '; Sat: ' + item['storeHours']['sat']
-            hours = hours + '; Sun: ' + item['storeHours']['sun']
-            if lat == '':
-                lat = '<MISSING>'
-            if lng == '':
-                lng = '<MISSING>'
-            if phone == '':
-                phone = '<MISSING>'
-            if 'see store' in hours.lower():
-                hours = '<MISSING>'
-            if store not in ids and store != '' and 'Boost Mobile' in typ:
-                ids.append(store)
-                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        if len(array) <= MAX_RESULTS:
-            #logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_zip()
+        try:
+            array = json.loads(r.content, strict=False)
+        except Exception:
+            raise Exception(f"Err on this zip:{url}")
+        count = int(array["nearestOutletResponse"]["resultsFoundNum"])
+        pages = int((count - 1) / 50) + 2
+        for x in range(1, pages):
+            url = (
+                "https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode="
+                + coord
+                + "&page="
+                + str(x)
+            )
+            if str(x) != "1":
+                r = session.get(url, headers=headers)
+                try:
+                    array = json.loads(r.content, strict=False)
+                except Exception:
+                    raise Exception(f"Err on this zip:{url}")
+            for item in array["nearestOutletResponse"]["nearestlocationinfolist"][
+                "nearestLocationInfo"
+            ]:
+                website = "boostmobile.com"
+                store = item["id"]
+                name = item["storeName"]
+                typ = ""
+                add = item["storeAddress"]["primaryAddressLine"]
+                city = item["storeAddress"]["city"]
+                state = item["storeAddress"]["state"]
+                zc = item["storeAddress"]["zipCode"]
+                lat = item["storeAddress"]["lat"]
+                lng = item["storeAddress"]["long"]
+                if lat == 30425794:
+                    lat = 30.425794
+                country = "US"
+                phone = item["storePhone"]
+                loc = item["elevateURL"]
+                hours = "Mon: " + item["storeHours"]["mon"]
+                hours = hours + "; Tue: " + item["storeHours"]["tue"]
+                hours = hours + "; Wed: " + item["storeHours"]["wed"]
+                hours = hours + "; Thu: " + item["storeHours"]["thu"]
+                hours = hours + "; Fri: " + item["storeHours"]["fri"]
+                hours = hours + "; Sat: " + item["storeHours"]["sat"]
+                hours = hours + "; Sun: " + item["storeHours"]["sun"]
+                if lat == "":
+                    lat = "<MISSING>"
+                if lng == "":
+                    lng = "<MISSING>"
+                if phone == "":
+                    phone = "<MISSING>"
+                if "see store" in hours.lower():
+                    hours = "<MISSING>"
+                if loc == "" or loc is None:
+                    loc = "<MISSING>"
+                if store != "":
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber (Confirmed scraped correctly)
+--ignore StoreNumberColumnValidator (Confirmed scraped correctly)

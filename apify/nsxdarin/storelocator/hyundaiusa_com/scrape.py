@@ -1,62 +1,117 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sglogging import sglog
+
+
+search = DynamicZipSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_results=45,
+)
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+website = "hyundaiusa_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+
+DOMAIN = "https://www.hyundaiusa.com"
+MISSING = SgRecord.MISSING
+headers = {
+    "authority": "www.hyundaiusa.com",
+    "sec-ch-ua": '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"',
+    "accept": "application/json, text/plain, */*",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+    "sec-ch-ua-platform": '"Linux"',
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://www.hyundaiusa.com/us/en/dealer-locator",
+    "accept-language": "en-US,en;q=0.9",
+}
+
 
 def fetch_data():
-    locs = []
-    url = 'https://www.hyundaiusa.com/var/hyundai/services/dealer/dealersByZip.json?brand=hyundai&model=all&lang=en_US&zip=51448&maxdealers=1000'
-    r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '{"cobaltDealerURL":"' in line:
-            items = line.split('{"cobaltDealerURL":"')
-            for item in items:
-                if '"redCapUrl":' in item:
-                    website = 'hyundaiusa.com'
-                    typ = '<MISSING>'
-                    loc = '<MISSING>'
-                    store = item.split('"dealerCd":"')[1].split('"')[0]
-                    name = item.split('"dealerNm":"')[1].split('"')[0]
-                    add = item.split('"address1":"')[1].split('"')[0] + ' ' + item.split('"address2":"')[1].split('"')[0]
-                    add = add.strip()
-                    country = 'US'
-                    city = item.split('"city":"')[1].split('"')[0]
-                    zc = item.split(',"zipCd":"')[1].split('"')[0]
-                    state = item.split('"state":"')[1].split('"')[0]
-                    phone = item.split('"phone":"')[1].split('"')[0]
-                    lat = item.split('"latitude":')[1].split('e')[0]
-                    lng = item.split('"longitude":')[1].split('e')[0]
-                    lat = float(lat) * 10
-                    lng = float(lng) * 10
-                    lat = str(lat)
-                    lng = str(lng)
-                    hours = ''
-                    if '"operations":[]' in item:
-                        hours = '<MISSING>'
-                    else:
-                        days = item.split('"operations":[')[1].split(']')[0].split('"name":"')
-                        for day in days:
-                            if '"hour":"' in day:
-                                hrs = day.split('"day":"')[1].split('"')[0] + ': ' + day.split('"hour":"')[1].split('"')[0]
-                                if hours == '':
-                                    hours = hrs
-                                else:
-                                    hours = hours + '; ' + hrs
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    for code in search:
+        url = (
+            "https://www.hyundaiusa.com/var/hyundai/services/dealer/dealersByZip.json?brand=hyundai&model=all&lang=en_US&zip="
+            + code
+            + "&maxdealers=45"
+        )
+        try:
+            loclist = session.get(url, headers=headers).json()["dealers"]
+        except:
+            continue
+        for loc in loclist:
+            page_url = loc["cobaltDealerURL"]
+            location_name = loc["dealerNm"]
+            store_number = loc["dealerCd"]
+            phone = loc["phone"]
+            try:
+                street_address = loc["address1"] + " " + loc["address2"]
+            except:
+                street_address = loc["address1"]
+            log.info(street_address)
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["zipCd"]
+            country_code = "US"
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            search.found_location_at(latitude, longitude)
+            phone = loc["phone"]
+            hour_list = loc["operations"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                day = hour["day"]
+                time = hour["hour"]
+                hours_of_operation = hours_of_operation + " " + day + " " + time
+
+            if hours_of_operation == "":
+                hour_list = loc["showroom"]
+                hours_of_operation = ""
+                for hour in hour_list:
+                    day = hour["day"]
+                    time = hour["hour"]
+                    hours_of_operation = hours_of_operation + " " + day + " " + time
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

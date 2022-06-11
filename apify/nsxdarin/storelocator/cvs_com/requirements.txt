@@ -1,3 +1,6 @@
-sgrequests
-bs4
-sglogging
+sgrequests==0.1.12
+beautifulsoup4==4.9.3
+sglogging==0.0.4
+tenacity==7.0.0
+simplejson==3.17.2
+lxml==4.6.3

@@ -1,185 +1,106 @@
-import csv
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_1_KM
+from lxml import html
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
+from sgscrape.pause_resume import CrawlStateSingleton
+from sglogging import sglog
+import time
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
 
-logger = SgLogSetup().get_logger("abbeycarpet_com")
-session = SgRequests()
+locator_domain = "abbeycarpet.com"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+}
 
 
-def fetch_data():
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def get_response(api_url):
+    with SgRequests() as http:
+        response = http.get(api_url, headers=headers)
+        time.sleep(random.randint(3, 7))
+        if response.status_code == 200:
+            log.info(f"HTTP STATUS Return: {response.status_code}")
+            return response
+        raise Exception(f"HTTP Error Code: {response.status_code}")
 
-    adress = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-    }
-    base_url = "https://www.abbeycarpet.com"
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_results=200,
-        max_radius_miles=100,
+
+def get_data(zipps, sgw: SgWriter):
+
+    api_url = (
+        f"https://www.abbeycarpet.com/storelocator.aspx?&searchZipCode={str(zipps)}"
     )
-    for zip_code in search:
-        location_url = (
-            "https://www.abbeycarpet.com/StoreLocator.aspx?searchZipCode="
-            + str(zip_code)
+
+    r = get_response(api_url)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[contains(@class, "results-address")]')
+    if div:
+        log.debug(f"From {zipps} stores = {len(div)}")
+
+        for d in div:
+
+            page_url = api_url
+            location_name = "".join(d.xpath("./p[1]/text()")) or "<MISSING>"
+            street_address = "".join(d.xpath("./p[2]/text()")) or "<MISSING>"
+            ad = "".join(d.xpath("./p[3]/text()"))
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[0].strip()
+            country_code = "US"
+            phone = "".join(d.xpath("./p[4]/text()")) or "<MISSING>"
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=SgRecord.MISSING,
+                raw_address=f"{street_address} {ad}",
+            )
+
+            sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    postals = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=10,
+        expected_search_radius_miles=10,
+        granularity=Grain_1_KM(),
+        max_search_results=5,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
         )
-        try:
-            r = session.get(location_url, headers=headers)
-            soup = BeautifulSoup(r.text, "lxml")
-        except:
-            continue
-
-        links = soup.find_all("a", {"class": "search-store__results-links-site"})
-        for link in links:
-            page_url = base_url + link.get("href")
-            home = session.get(page_url)
-            page_soup = BeautifulSoup(home.text, "lxml")
-            store_number = "<MISSING>"
-            phone = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            location_type = "<MISSING>"
-
-            try:
-                address = page_soup.find("a", {"class": "footer-address"})[
-                    "href"
-                ].split("/")[-1]
-                name = address.split(",")[0]
-                street = address.split(",")[1]
-                city = address.split(",")[2]
-                state = address.split(",")[-1].split()[:-1]
-                if len(address.split(",")[-1].split()) > 2:
-                    state = " ".join(state)
-                else:
-                    state = address.split(",")[-1].split()[0]
-                zip_code = address.split(",")[-1].split()[-1]
-                phone = page_soup.find("a", {"class": "footer-phone"}).text
-                location_type = "<MISSING>"
-                hrs = page_soup.find("p", {"class": "hours"}).text.split("\n")
-                hours_of_operation = " ".join(hrs)
-            except:
-                try:
-                    divs = page_soup.find_all(
-                        "div", {"class": "col-xs-12 col-sm-12 col-md-3 col-lg-3 "}
-                    )
-                    for div in divs:
-                        lst = div.text.split("\n")
-                        del lst[0]
-                        del lst[-1]
-                        if len(lst) > 4:
-                            del lst[1]
-                            name = lst[0]
-                            street = lst[1]
-                            city = lst[2].split(",")[0]
-                            state = lst[2].split(",")[1].split()[0]
-                            zip_code = lst[2].split(",")[1].split()[-1]
-                            for i in lst:
-                                if "T:" in i:
-                                    phone = i[3:]
-
-                        else:
-                            hours_of_operation = " ".join(lst[1:])
-
-                except:
-                    continue
-
-            if page_soup.find("div", {"class": "mapWrapper"}) is not None:
-                iframe = page_soup.find("div", {"class": "mapWrapper"}).find("iframe")
-                src = iframe["src"]
-                if src is not None and src != []:
-                    if "!3d" in src:
-                        longitude = src.split("!2d")[1].split("!3d")[0]
-                        latitude = src.split("!2d")[1].split("!3d")[1].split("!")[0]
-                    elif "place?zoom" in src:
-                        latitude = src.split("=")[2].split(",")[0]
-                        longitude = src.split("=")[2].split(",")[1].split("&")[0]
-                    elif "!3f" in src:
-                        longitude = src.split("!2d")[1].split("!3f")[0]
-                        latitude = src.split("!2d")[1].split("!3f")[1].split("!4f")[0]
-                    else:
-                        latitude = ""
-                        longitude = ""
-                else:
-                    latitude = ""
-                    longitude = ""
-            else:
-                try:
-                    src = page_soup.find_all("iframe")[-1]
-                    if "!3d" in src["src"]:
-                        longitude = src["src"].split("!2d")[1].split("!3d")[0]
-                        latitude = (
-                            src["src"].split("!2d")[1].split("!3d")[1].split("!")[0]
-                        )
-                    elif "place?zoom" in src:
-                        latitude = src["src"].split("=")[2].split(",")[0]
-                        longitude = src["src"].split("=")[2].split(",")[1].split("&")[0]
-                    elif "!3f" in src["src"]:
-                        longitude = src["src"].split("!2d")[1].split("!3f")[0]
-                        latitude = (
-                            src["src"].split("!2d")[1].split("!3f")[1].split("!4f")[0]
-                        )
-                    else:
-                        latitude = ""
-                        longitude = ""
-                except:
-                    latitude = ""
-                    longitude = ""
-            store = []
-            store.append(base_url)
-            store.append(name)
-            store.append(street)
-            store.append(city)
-            store.append(state)
-            store.append(zip_code)
-            if zip_code.isdigit():
-                store.append("US")
-            else:
-                store.append("CA")
-            store.append(store_number)
-            store.append(phone)
-            store.append(location_type)
-            store.append(str(latitude) if latitude else "<MISSING>")
-            store.append(str(longitude) if longitude else "<MISSING>")
-            store.append(hours_of_operation)
-            store.append(page_url)
-            if store[2] in adress:
-                continue
-            adress.append(store[2])
-            yield store
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+    ) as writer:
+        fetch_data(writer)

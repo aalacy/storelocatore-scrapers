@@ -1,39 +1,12 @@
-import csv
-
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     session = SgRequests()
 
     headers = {
@@ -41,9 +14,7 @@ def fetch_data():
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
-        "Content-Length": "65",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Cookie": "PHPSESSID=e2cba0763a7db882913827a366d2ad57; _gcl_au=1.1.1726074005.1609905050; _ga=GA1.2.1727258516.1609905050; _gid=GA1.2.919295008.1609905050; _fbp=fb.1.1609905051574.1605161732; nmstat=1609905115034; _hjTLDTest=1; _hjid=a9fff4d2-9609-490d-a539-ec2f2014f1d5; _hjFirstSeen=1; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=0; _hjIncludedInSessionSample=0; _gat_UA-1757587-27=1; PHPSESSID_2=6CSHS4VeqFdNnLcYzrsD96MszsJ3j1JkZkg%2F6Nytxz4u6uQLGPlx%2FREyIOKhxsDQzEvrbuZ1EISqNQPDH1j06Q%3D%3D",
         "Host": "www.snapfitness.com",
         "Origin": "https://www.snapfitness.com",
         "Referer": "https://www.snapfitness.com/us/gyms/",
@@ -59,18 +30,23 @@ def fetch_data():
     base_link = "https://www.snapfitness.com/us/gyms/relevantLocations"
 
     payload = {
-        "lat": "40.3649407",
-        "long": "-108.9700938",
-        "radius": "4236.899793572078",
+        "lat": "44.977753",
+        "limitToCountry": "false",
+        "long": "-93.265015",
+        "radius": "20236.899793572078",
         "search": "",
     }
 
     res_json = session.post(base_link, headers=headers, data=payload).json()
 
-    data = []
-    for loc in res_json:
-
-        location_name = "Snap Fitness " + loc["Name"].strip()
+    for i in res_json:
+        loc = res_json[i]
+        try:
+            location_name = (
+                "Snap Fitness " + loc["Name"].replace("Cronulla", "").strip()
+            )
+        except:
+            continue
 
         phone_number = loc["PhoneNumber"]
         if not phone_number:
@@ -81,47 +57,44 @@ def fetch_data():
             street_address = (loc["Address1"] + " " + loc["Address2"]).strip()
         except:
             street_address = loc["Address1"]
-        city = loc["City"]
+        try:
+            city = loc["City"].replace("Cronulla", "")
+        except:
+            city = loc["City"]
         state = loc["State"]
         zip_code = loc["Postcode"]
         country_code = loc["Country"]
-        if "US" in country_code:
-            country_code = "US"
-        elif "CA" in country_code:
-            country_code = "CA"
-        else:
-            continue
         store_number = loc["ID"]
 
         hours = "<INACCESSIBLE>"
-        page_url = "https://www.snapfitness.com/" + loc["URL"]
+        page_url = (
+            "https://www.snapfitness.com"
+            + loc["URL"].replace("stage=Stage", "").strip()
+        )
+        page_url = page_url.replace("?", "")
+        if "cronulla" in page_url:
+            page_url = "<INACCESSIBLE>"
         location_type = "<MISSING>"
 
-        store_data = [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone_number,
-            location_type,
-            lat,
-            longit,
-            hours,
-            page_url,
-        ]
-
-        data.append(store_data)
-
-    return data
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone_number,
+                location_type=location_type,
+                latitude=lat,
+                longitude=longit,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

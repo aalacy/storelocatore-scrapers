@@ -1,1 +1,0 @@
-rm -rf apify_storage/ && node scrape.js && python validate.py apify_storage DEBUG

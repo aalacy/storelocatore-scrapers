@@ -1,9 +1,11 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import re
 from sglogging import SgLogSetup
+from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium import SgChrome
+from sgselenium.sgselenium import webdriver
 
 logger = SgLogSetup().get_logger("ralphlauren_com")
 
@@ -38,7 +40,18 @@ def write_output(data):
             writer.writerow(row)
 
 
-session = SgRequests()
+option = webdriver.ChromeOptions()
+option.add_argument("window-size=1280,800")
+option.add_argument("--headless")
+option.add_argument("--no-sandbox")
+option.add_argument("--disable-dev-shm-usage")
+
+driver = SgChrome(
+    is_headless=True,
+    executable_path=ChromeDriverManager().install(),
+    chrome_options=option,
+).driver()
+driver.get("https://www.ralphlauren.com/stores")
 
 
 def fetch_data():
@@ -52,12 +65,13 @@ def fetch_data():
     ]
 
     for url in url_list:
-        res = session.get(url)
-        soup = BeautifulSoup(res.text, "html.parser")
+        driver.get(url)
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
 
         data = str(soup.find_all("script", {"type": "application/ld+json"})[3])
         locs = re.findall(r'"legalName":"([^"]*)"', data)
-        logger.info("locs ", len(locs))
+        logger.info("locs " + str(len(locs)))
         timing = re.findall(r'"openingHours":"([^"]*)"', data)
         streets = re.findall(r'"streetAddress":"([^"]*)"', data)
         countries = re.findall(r'"addressCountry":"([^"]*)"', data)
@@ -134,7 +148,8 @@ def fetch_data():
                         lat,  # lat
                         lon,  # long
                         tim.strip(),  # timing
-                        url,
+                        "https://www.ralphlauren.com"
+                        + urls[js.index(j)].find("a").get("href"),
                     ]
                 )
         else:
@@ -190,7 +205,7 @@ def fetch_data():
                         url,
                     ]
                 )
-
+    driver.quit()
     return all
 
 

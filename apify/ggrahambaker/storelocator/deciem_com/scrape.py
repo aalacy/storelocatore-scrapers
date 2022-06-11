@@ -1,107 +1,112 @@
-import csv
-import os
-from sgselenium import SgSelenium
-import time
+import re
+import json
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def state_zip_parser(country_code, state_zip):
-    if country_code == 'US':
-        if len(state_zip) == 3:
-            state = state_zip[0] + ' ' + state_zip[1]
-            zip_code = state_zip[2]
-        else:
-            state = state_zip[0] 
-            zip_code = state_zip[1]
-            
-    else:
-        if len(state_zip) == 3:
-            state = state_zip[0] 
-            zip_code = state_zip[1] + ' ' + state_zip[2]
-        else:
-            state = state_zip[0] + ' ' + state_zip[1]
-            zip_code = state_zip[2] + ' ' + state_zip[3]
-            
-    return state, zip_code
 
 def fetch_data():
-    locator_domain = 'https://deciem.com/'
-    ext = 'find-us'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    session = SgRequests()
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
 
-    locs = driver.find_elements_by_css_selector('div.location-name-container')
+    scraped_items = []
 
-    all_store_data = []
-    dup_tracker = set()
-    for loc in locs:
-        country_name = loc.find_element_by_xpath('..').find_element_by_css_selector('div.address').find_elements_by_css_selector('span')[-1].get_attribute('innerHTML')##
-        
-        if country_name != 'Canada' and country_name != 'USA':
-            continue
-        if country_name == 'Canada':
-            country_code = 'CA'
-        if country_name == 'USA':
-            country_code = 'US'
-        
-        location_span = loc.find_element_by_css_selector('span.location-name')
-        on_click = location_span.get_attribute('onclick')
-        location_name = location_span.get_attribute('innerHTML')
-        if location_name not in dup_tracker:
-            dup_tracker.add(location_name)
-        else:
-            continue
-        
-        driver.execute_script(on_click)
-        driver.implicitly_wait(5)
-        
-        addy = driver.find_element_by_css_selector('div.address').text.split('\n')
-        if len(addy) == 3:
-            street_address = addy[0]
-            ect_addy = addy[1].split(',')
-            city = ect_addy[0]
-            state_zip = ect_addy[1].strip().split(' ')
-            
-            state, zip_code = state_zip_parser(country_code, state_zip)
-            
-        else:
-            street_address = addy[0] + ' ' + addy[1]
-            ect_addy = addy[2].split(',')
-            city = ect_addy[0]
-            state_zip = ect_addy[1].strip().split(' ')
-            
-            state, zip_code = state_zip_parser(country_code, state_zip)
-            
-        phone_number = driver.find_element_by_css_selector('div.tele-container').text.replace('TELEPHONE', '').replace('+1-', '').strip()
-        
-        hours = driver.find_element_by_css_selector('div.hours-container').text.replace('\n', ' ').replace('HOURS', '').strip()
+    start_url = "https://deciem.com/on/demandware.store/Sites-deciem-global-Site/en_ES/Stores-FindStores?lat={}&long={}&radius=100&distanceUnit=mi"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
 
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        page_url = '<MISSING>'
+    all_coords = DynamicGeoSearch(
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.BRITAIN,
+            SearchableCountries.CANADA,
+        ],
+        max_search_distance_miles=100,
+    )
+    for lat, lng in all_coords:
+        all_locations = []
+        try:
+            response = session.get(start_url.format(lat, lng), headers=hdr)
+            all_locations = json.loads(response.text)["stores"]
+        except:
+            try:
+                session = SgRequests()
+                response = session.get(start_url.format(lat, lng), headers=hdr)
+                all_locations = json.loads(response.text)["stores"]
+            except:
+                continue
+        for poi in all_locations:
+            store_url = "https://deciem.com/es/find-us"
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
-        
-        time.sleep(2)
+            location_name = poi["name"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = poi["address1"]
+            if poi["address2"]:
+                street_address += " " + poi["address2"]
+            street_address = street_address if street_address else "<MISSING>"
 
-    driver.quit()
-    return all_store_data
+            city = poi["city"]
+            city = city if city else "<MISSING>"
+            state = poi.get("stateCode")
+            state = state if state else "<MISSING>"
+            zip_code = poi["postalCode"]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = poi["countryCode"]
+            location_type = poi["owner"]
+            location_name = location_name + " " + street_address + " " + city
+            location_name = location_name.replace("<MISSING>", "").strip()
+            country_code = country_code if country_code else "<MISSING>"
+            if country_code not in ["CA", "GB", "US"]:
+                continue
+            store_number = "<MISSING>"
+            try:
+                phone = poi["phone"].strip()
+            except:
+
+                phone = "<MISSING>"
+            latitude = poi["latitude"]
+            longitude = poi["longitude"]
+            try:
+                hours_of_operation = poi["storeHours"].replace("\n", " ").strip()
+            except:
+                hours_of_operation = "<MISSING>"
+            if location_name not in scraped_items:
+                scraped_items.append(location_name)
+                yield SgRecord(
+                    locator_domain=domain,
+                    page_url=store_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

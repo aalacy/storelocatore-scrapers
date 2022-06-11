@@ -1,98 +1,111 @@
-import csv
-import json
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
+    api = "https://locations.bonefishgrill.com/search"
 
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    for cnt in range(0, 5000, 10):
+        params = {
+            "l": "en",
+            "offset": str(cnt),
+        }
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["response"]["entities"]
 
-        for row in data:
-            writer.writerow(row)
+        for j in js:
+            j = j.get("profile") or {}
 
+            a = j.get("address") or {}
+            adr1 = a.get("line1") or ""
+            adr2 = a.get("line2") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = a.get("city")
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = "US"
+            try:
+                store_number = j["meta"]["id"]
+            except KeyError:
+                store_number = SgRecord.MISSING
+            location_name = f"Bonefish Grill {city}, {state}"
+            page_url = j.get("c_pagesURL")
 
-def get_urls():
-    session = SgRequests()
-    r = session.get(f'https://www.bonefishgrill.com/locations/all')
-    tree = html.fromstring(r.text)
-    return tree.xpath("//li[@class='location-row']/a/@href")
+            try:
+                phone = j["mainPhone"]["display"]
+            except KeyError:
+                phone = SgRecord.MISSING
 
+            g = j.get("yextDisplayCoordinate") or {}
+            latitude = g.get("lat")
+            longitude = g.get("long")
 
-def get_data(u):
-    locator_domain = 'https://bonefishgrill.com/'
-    url = f'https://bonefishgrill.com{u}'
-    page_url = url
+            _tmp = []
+            try:
+                hours = j["hours"]["normalHours"]
+            except:
+                hours = []
 
-    # some of pages are broken
-    # e. g. https://bonefishgrill.com/locations/fl/ft.-lauderdale
-    if u.find('.') != -1:
-        return
+            for h in hours:
+                day = h.get("day")
+                isclosed = h.get("isClosed")
+                if isclosed:
+                    _tmp.append(f"{day}: Closed")
+                    continue
 
-    session = SgRequests()
-    r = session.get(url)
-    tree = html.fromstring(r.text)
+                try:
+                    i = h["intervals"][0]
+                except:
+                    i = dict()
 
-    text = ''.join(tree.xpath("//script[contains(text(), '{ initLocationDetail')]/text()"))
-    line = ','.join(text.split(',')[1:]).split(');')[0].strip()
-    j = json.loads(line)
+                start = str(i.get("start") or "").zfill(4)
+                end = str(i.get("end") or "").zfill(4)
+                start = start[:2] + ":" + start[2:]
+                end = end[:2] + ":" + end[2:]
+                if start != end:
+                    _tmp.append(f"{day}: {start}-{end}")
 
-    location_name = f"BONEFISH GRILL {j.get('Name')}"
-    street_address = j.get('Address') or '<MISSING>'
-    city = j.get('City') or '<MISSING>'
-    state = j.get('State') or '<MISSING>'
-    postal = j.get('Zip') or '<MISSING>'
-    country_code = 'US'
-    store_number = j.get('UnitId') or '<MISSING>'
-    phone = j.get('Phone') or '<MISSING>'
-    location_type = '<MISSING>'
-    latitude = j.get('Latitude') or '<MISSING>'
-    longitude = j.get('Longitude') or '<MISSING>'
+            hours_of_operation = ";".join(_tmp)
 
-    _tmp = []
-    hours = j.get('StoreHours', []) or []
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
-    for h in hours:
-        day = h.get('Key')
-        time = h.get('Value')
-        if time:
-            _tmp.append(f'{day} {time}')
-        else:
-            _tmp.append(f'{day} Closed')
+            sgw.write_row(row)
 
-    hours_of_operation = ';'.join(_tmp) or '<MISSING>'
-
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-    return row
-
-
-def fetch_data():
-    out = []
-    threads = []
-    urls = get_urls()
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for url in urls:
-            threads.append(executor.submit(get_data, url))
-
-    for task in as_completed(threads):
-        row = task.result()
-        if row:
-            out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 10:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://bonefishgrill.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json",
+        "Referer": "https://locations.bonefishgrill.com/search?q=33.028385%2C-97.08672&qp=Flower%20Mound%2C%20Texas%2075022%2C%20United%20States&l=en",
+        "Alt-Used": "locations.stmtires.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

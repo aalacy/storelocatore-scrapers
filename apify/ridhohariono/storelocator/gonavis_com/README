@@ -1,0 +1,10 @@
+78 store urls found - 13 store urls duplicate = 65 store urls
+1 url doesn't have store location informations (https://www.gonavis.com/location/home/bradenton/fl18004-sarasota) => SKIPPED
+64 store urls processed
+Found 2 store urls that have duplicate address and location name/type informations in different page_urls
+example: "https://www.gonavis.com/location/home/englewood/co1002" is duplicate with "https://www.gonavis.com/location/home/englewood/co1028"
+
+so 62 store locator saved
+
+--ignore StreetAddressHasNumber (Confirmed scraped correctly => some store urls doesn't have street address informations => example: https://www.gonavis.com/location/home/bridgeport/ct1011)
+--ignore GeoConsistencyValidator (Confirmed scraped correctly)

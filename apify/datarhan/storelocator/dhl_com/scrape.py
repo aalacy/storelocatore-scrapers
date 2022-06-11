@@ -1,149 +1,128 @@
-import csv
-import json
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
 from sgrequests import SgRequests
-from itertools import chain
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
+from tenacity import retry, stop_after_attempt
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+@retry(stop=stop_after_attempt(3))
+def fetch_latlng(lat, lng, session, search):
+    url = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints"
+    params = {
+        "servicePointResults": 50,
+        "countryCode": "",
+        "latitude": lat,
+        "longitude": lng,
+        "language": "eng",
+        "key": "963d867f-48b8-4f36-823d-88f311d9f6ef",
+    }
+    response = session.get(url, params=params)
+    if response.status_code != 200:
+        return []
+    try:
+        data = response.json()
+    except Exception:
+        return []
+    if not data.get("servicePoints"):
+        return []
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    for location in data.get("servicePoints"):
+        poi = extract(location, search)
+        yield poi
 
 
-def country_name(country):
-    if country == SearchableCountries.USA:
-        return "US"
-    elif country == SearchableCountries.CANADA:
-        return "CA"
-    else:
-        raise Exception("unexpected country")
+def extract(poi, search):
+    domain = "dhl.com"
+    location_name = poi["servicePointName"]
+    location_name = location_name if location_name else "<MISSING>"
+    street_address = poi["address"]["addressLine1"]
+    if poi["address"]["addressLine2"]:
+        street_address += ", " + poi["address"]["addressLine2"]
+    if poi["address"]["addressLine3"]:
+        street_address += ", " + poi["address"]["addressLine3"]
+    street_address = street_address if street_address else "<MISSING>"
+    city = poi["address"]["city"]
+    city = city if city else "<MISSING>"
+    state = poi["address"]["state"]
+    state = state if state else "<MISSING>"
+    zip_code = poi["address"]["zipCode"]
+    zip_code = zip_code if zip_code else "<MISSING>"
+    country_code = poi["address"]["country"]
+    country_code = country_code if country_code else "<MISSING>"
+    store_number = poi["facilityId"]
+    store_number = store_number if store_number else "<MISSING>"
+    phone = poi["contactDetails"].get("phoneNumber")
+    phone = phone if phone else "<MISSING>"
+    location_type = poi["servicePointType"]
+    location_type = location_type if location_type else "<MISSING>"
+    latitude = poi["geoLocation"]["latitude"]
+    longitude = poi["geoLocation"]["longitude"]
+    latitude = latitude if latitude else "<MISSING>"
+    longitude = longitude if longitude else "<MISSING>"
+    search.found_location_at(latitude, longitude)
+    hours_of_operation = []
+    for elem in poi["openingHours"]["openingHours"]:
+        day = elem["dayOfWeek"]
+        opens = elem["openingTime"]
+        closes = elem["closingTime"]
+        hours_of_operation.append("{} {} - {}".format(day, opens, closes))
+    hours_of_operation = (
+        ", ".join(hours_of_operation).split(", HOLIDAY")[0]
+        if hours_of_operation
+        else "<MISSING>"
+    )
+
+    item = SgRecord(
+        locator_domain=domain,
+        page_url=SgRecord.MISSING,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_code,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
+
+    return item
 
 
 def fetch_data():
-    return chain(
-        scrape_country(SearchableCountries.USA),
-        scrape_country(SearchableCountries.CANADA),
-    )
 
-
-def scrape_country(country):
     session = SgRequests()
-
-    scrape_items = []
-
-    DOMAIN = "dhl.com"
-    api_url = "https://wsbexpress.dhl.com/ServicePointLocator/restV3/servicepoints?servicePointResults=50&address=&countryCode={}&capability=80&weightUom=lb&dimensionsUom=in&latitude={}&longitude={}&languageScriptCode=Latn&language=eng&languageCountryCode=GB&resultUom=mi&key=963d867f-48b8-4f36-823d-88f311d9f6ef"
     session.get("https://locator.dhl.com/ServicePointLocator/restV3/appConfig")
 
     search = DynamicGeoSearch(
-        country_codes=[country], max_radius_miles=50, max_search_results=None
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        granularity=Grain_2(),
     )
-
-    for lat, lng in search:
-        url = api_url.format(country_name(country), str(lat), str(lng))
-        response = session.get(url)
-        if not response.text:
-            continue
-
-        data = json.loads(response.text)
-
-        if not data.get("servicePoints"):
-            continue
-
-        coords = []
-        for poi in data["servicePoints"]:
-            store_url = ""
-            store_url = store_url if store_url else "<MISSING>"
-            location_name = poi["servicePointName"]
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["address"]["addressLine1"]
-            if poi["address"]["addressLine2"]:
-                street_address += ", " + poi["address"]["addressLine2"]
-            if poi["address"]["addressLine3"]:
-                street_address += ", " + poi["address"]["addressLine3"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["address"]["city"]
-            city = city if city else "<MISSING>"
-            state = poi["address"]["state"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["zipCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["address"]["country"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = poi["facilityId"]
-            store_number = store_number if store_number else "<MISSING>"
-            phone = poi["contactDetails"].get("phoneNumber")
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["servicePointType"]
-            location_type = location_type if location_type else "<MISSING>"
-            latitude = poi["geoLocation"]["latitude"]
-            longitude = poi["geoLocation"]["longitude"]
-            if latitude and longitude:
-                coords.append((latitude, longitude))
-            latitude = latitude if latitude else "<MISSING>"
-            longitude = longitude if longitude else "<MISSING>"
-            hours_of_operation = []
-            for elem in poi["openingHours"]["openingHours"]:
-                day = elem["dayOfWeek"]
-                opens = elem["openingTime"]
-                closes = elem["closingTime"]
-                hours_of_operation.append("{} {} - {}".format(day, opens, closes))
-            hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-            )
-
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            check = "{} {}".format(store_number, street_address)
-            if check not in scrape_items:
-                scrape_items.append(check)
-                yield item
-        search.mark_found(coords)
+    session = SgRequests()
+    for lat, lon in search:
+        locations = fetch_latlng(lat, lon, session, search)
+        for loc in locations:
+            yield loc
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    CrawlStateSingleton.get_instance().save(override=True)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

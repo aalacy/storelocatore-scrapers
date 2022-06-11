@@ -54,11 +54,20 @@ def fetch_data():
         store_list = soup.select("div.location")
         for store in store_list:
             phone = store.select_one(".tel").string
-            if "Closed" in phone:
-                continue
             page_url = base_url + store.select_one(".location-nav a")["href"]
+            res1 = session.get(page_url)
+            soup1 = bs(res1.text, "lxml")
+            street_address = soup1.select_one("span[itemprop='streetAddress']").string
+            street_address = street_address.split(", ")
+            while True:
+                try:
+                    street_address.remove("")
+                except:
+                    break
+            street_address = ", ".join(street_address)
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             location_name = store.select_one(".org").string
-            street_address = store.select_one(".street-address").string
             city = store.select_one(".locality").string
             zip = store.select_one(".postal-code").string
             state = store.select_one(".region").string

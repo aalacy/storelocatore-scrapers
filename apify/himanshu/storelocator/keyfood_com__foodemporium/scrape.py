@@ -1,82 +1,102 @@
-import csv
-from bs4 import BeautifulSoup as bs
-import re
-import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('keyfood_com__foodemporium')
-
-
+website = "keyfoodstores_keyfood_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-
-def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://keyfoodstores.keyfood.com/store/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    base_url = "https://www.keyfood.com/"
-
-    addresses = []
-    header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5',
-              'Content-type': 'application/x-www-form-urlencoded'}
-
-    for i in range(0,2):
-
-        url = "https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=85029&page="+str(i)+"&radius=500000"
-
-        response = session.get(url).json()
-        for q in response['data']:
-            street_address = ''
-            line1 = q['line1']
-            street_address = line1
-            if q['line2']:
-                street_address =street_address + ' '+q['line2']
-            dictlist=[]
-            for key, value in q['openings'].items():
-                temp = " ".join([key,value])
-                dictlist.append(temp)
-            hours_of_operation = " ".join(dictlist)
-            
-
-            store = []
-            store.append("https://www.keyfood.com/")
-            store.append(q['displayName'] if q['displayName'] else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(q['town'] if q['town'] else '<MISSING>')
-            store.append(q['state'] if q['state'] else '<MISSING>')
-            store.append(q['postalCode'] if q['postalCode'] else '<MISSING>')
-            store.append("US")
-            store.append( '<MISSING>')
-            store.append(q['phone'] if q['phone'] else '<MISSING>')
-            store.append(q['displayName'])
-            store.append(q['latitude'] if q['latitude'] else '<MISSING>')
-            store.append(q['longitude'] if q['longitude'] else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append("https://www.keyfood.com/store"+q['url'] if q['url']  else '<MISSING>')
-            # logger.info("===", str(store))
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            yield  store
-
-   
-    
-
-   
+    page = 0
+    while True:
+        data = session.get(
+            "https://www.keyfood.com/store/keyFood/en/store-locator?q=11756&page="
+            + str(page)
+            + "&radius=5000000000&all=true",
+            headers=headers,
+        ).json()["data"]
+        for store_data in data:
+            store_number = store_data["name"]
+            location_name = store_data["displayName"]
+            try:
+                street = store_data["line1"] + " " + store_data["line2"]
+            except:
+                store_data["line1"]
+            zip_code = store_data["postalCode"]
+            if "10305" in street:
+                street.replace("10305", "").strip()
+                zip_code = "10305"
+            street_address = street
+            city = store_data["town"]
+            state = store_data["state"]
+            zip_postal = zip_code
+            country_code = "US"
+            phone = store_data["phone"] if store_data["phone"] else "<MISSING>"
+            page_url = store_data["siteUrl"] + store_data["url"].split("?")[0]
+            latitude = store_data["latitude"]
+            longitude = store_data["longitude"]
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            try:
+                location_type = base.find(class_="banner__component simple-banner").img[
+                    "title"
+                ]
+            except:
+                location_type = MISSING
+            try:
+                hours = ""
+                for hour in store_data["openings"]:
+                    hours = hours + " " + hour + " " + store_data["openings"][hour]
+            except:
+                hours = "<MISSING>"
+            hours_of_operation = hours.strip() if hours else "<MISSING>"
+            log.info(page_url)
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        if len(data) < 250:
+            break
+        page = page + 1
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()    
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

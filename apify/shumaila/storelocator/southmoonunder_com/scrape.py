@@ -1,91 +1,79 @@
-from time import sleep
-import csv, re
 from bs4 import BeautifulSoup
+import re
 from sgrequests import SgRequests
-from selenium import webdriver
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('southmoonunder_com')
-
-
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome("chromedriver", options = options)
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    data = []
-    p = 0
-    pattern = re.compile(r'\s\s+') 
-    url = 'https://www.southmoonunder.com/store-locator?dwcont=C766496694'
-    logger.info(url)
-    driver.get(url)
-    
-    driver.find_element_by_xpath('/html/body/div[1]/div/div[2]/div[1]/div/div[1]/div[2]/form/fieldset/button').click()
-    sleep(5)
-    divlist = driver.find_element_by_class_name('storeslocated')
-    divlist = BeautifulSoup(divlist.get_attribute('innerHTML'),'html.parser')
-    driver.quit()
-    
-    divlist = divlist.findAll('div',{'class':'storeTile'})
+
+    pattern = re.compile(r"\s\s+")
+    url = "https://southmoonunder.com/pages/store-locator"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.find("div", {"class": "store-locator"}).findAll(
+        "div", {"class": "block"}
+    )
+
     for div in divlist:
-        title = div.find('h2').text.lstrip().replace('\n','').rstrip()
-        link = 'https://www.southmoonunder.com'+div.find('h2').find('a')['href']
-        address = div.find('div',{'class':'storeaddress'}).text.splitlines()
-        street = address[1]
-        city,state = address[2].replace('\t','').split(', ')
-        state,pcode = state.lstrip().split(' ',1)
-        phone = address[4].split('\xa0')[0]        
-        coord = div.find('iframe')['src'].split('!2d',1)[1].split('!2m')[0]
-        longt, lat = coord.split('!3d')
-        hourlist = div.find('div',{'class':'storeHours'}).findAll('li')
-        hours= ''
-        for hr in hourlist:
-            hours = hours + hr.text +' '
-        hours = re.sub(pattern,' ',hours).replace('pm',' pm').replace('am',' am')
-        data.append([
-                        'https://www.southmoonunder.com/',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        '<MISSING>',
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-        #logger.info(p,data[p])
-        p += 1
-                            
-   
-    
-    
-    return data
+        content = re.sub(pattern, "\n", div.text).strip().splitlines()
+
+        m = 0
+        title = content[m]
+        m = m + 1
+        street = content[m]
+        m = m + 1
+        try:
+            city, state = content[m].split(", ", 1)
+        except:
+            m = m + 1
+            city, state = content[m].split(", ", 1)
+        m = m + 1
+        try:
+            state, pcode = state.split(" ", 1)
+        except:
+            pcode = state[2:]
+            state = state[0:2]
+        phone = content[-1]
+        hours = " ".join(content[m : len(content) - 2]).replace("|", "").strip()
+        lat, longt = (
+            div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
+        )
+        longt = longt.split(",", 1)[0]
+
+        yield SgRecord(
+            locator_domain="https://southmoonunder.com/",
+            page_url=SgRecord.MISSING,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
+
 scrape()

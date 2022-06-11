@@ -82,35 +82,54 @@ def fetch_data():
         except:
             link = store["services"][0]["contact"]["website"]
 
-        # print(link)
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        try:
-            phone = base.find("span", attrs={"itemprop": "telephone"}).text.strip()
-        except:
-            phone = store["contact"]["phoneNumber"]["national"]
-
-        try:
-            hr_link = (link + base.find(class_="contact-us").a["href"]).replace(
-                "uk//", "uk/"
-            )
-            req = session.get(hr_link, headers=headers)
+        if "www" in link:
+            req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            hours_of_operation = " ".join(
-                list(base.find_all(class_="loc-hours-table")[0].stripped_strings)
-            )
-        except:
             try:
-                hours_of_operation = ""
-                hours = store["services"][0]["openingTimes"]
-                for h in hours:
-                    hours_of_operation = (
-                        hours_of_operation + " " + h["day"] + " " + h["openTime"]
-                    ).strip()
+                phone = base.find("span", attrs={"itemprop": "telephone"}).text.strip()
             except:
-                hours_of_operation = "<MISSING>"
+                phone = store["contact"]["phoneNumber"]["national"]
+
+            try:
+                hr_link = (link + base.find(class_="contact-us").a["href"]).replace(
+                    "uk//", "uk/"
+                )
+                req = session.get(hr_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+
+                hours_of_operation = " ".join(
+                    list(base.find_all(class_="loc-hours-table")[0].stripped_strings)
+                )
+            except:
+                try:
+                    hours_of_operation = ""
+                    hours = store["services"][0]["openingTimes"]
+                    for h in hours:
+                        hours_of_operation = (
+                            hours_of_operation + " " + h["day"] + " " + h["openTime"]
+                        ).strip()
+                except:
+                    hours_of_operation = "<MISSING>"
+        else:
+            link = "<MISSING>"
+            phone = store["contact"]["phoneNumber"]["national"]
+
+            hours_of_operation = ""
+            raw_hours = store["services"][0]["openingTimes"]
+            for raw_hour in raw_hours:
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + raw_hour["dayOfWeek"]
+                    + " "
+                    + raw_hour["from"]
+                    + "-"
+                    + raw_hour["to"]
+                ).strip()
+
+            if "SUNDAY" not in hours_of_operation.upper():
+                hours_of_operation = hours_of_operation + " SUNDAY CLOSED"
 
         data.append(
             [

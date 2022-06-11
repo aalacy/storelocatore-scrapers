@@ -1,6 +1,4 @@
 import csv
-import re
-
 from sgrequests import SgRequests
 
 
@@ -33,63 +31,60 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_ids():
-    session = SgRequests()
-    regex = r'"id":(\d+)'
-    r = session.get("https://locations.pret.com/")
-    ids = re.findall(regex, r.text)
-    return "%2C".join(ids)
-
-
 def fetch_data():
     out = []
-    locator_domain = "https://pret.com/"
-    headers = {"x-api-key": "iOr0sBW7MGBg8BDTPjmBOYdCthN3PdaJ"}
-    api_url = f"https://gannett-production.apigee.net/store-locator-next/M78JLF3A0MDjQ1ZsZRvNe8912xnGUF/locations-details?locale=en_US&ids={get_ids()}&clientId=5beb07cbf29c525b0c76bc6c&cname=locations.pret.com"
+    locator_domain = "https://www.pret.com/"
+    api_url = "https://api1.pret.com/v1/shops/"
+
     session = SgRequests()
-    r = session.get(api_url, headers=headers)
-    js = r.json()["features"]
+    r = session.get(api_url)
+    js = r.json()["shops"]
 
     for j in js:
-        g = j["geometry"]["coordinates"]
-        j = j["properties"]
-        page_url = f"https://locations.pret.com/{j.get('slug')}"
-        location_name = j.get("name") or "<MISSING>"
-        street_address = (
-            f"{j.get('addressLine1')} {j.get('addressLine2') or ''}" or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("province") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("branch") or "<MISSING>"
-        phone = j.get("phoneLabel") or "<MISSING>"
-        if g:
-            latitude = g[1]
-            longitude = g[0]
-        else:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        a = j.get("address")
+        street_address = a.get("streetNumber") or "<MISSING>"
+        city = a.get("city") or "<MISSING>"
+        state = a.get("region") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        if postal.find(" ") != -1:
+            postal = postal.split()[-1]
+
+        country_code = j.get("countryCode") or "<MISSING>"
+        if country_code != "US":
+            continue
+
+        store_number = j.get("shopNumber") or "<MISSING>"
+        page_url = "https://www.pret.com/en-US/shop-finder"
+        location_name = j.get("name")
+        phone = j.get("contact").get("phone") or "<MISSING>"
+        loc = j.get("location")
+        latitude = loc.get("lat") or "<MISSING>"
+        longitude = loc.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
 
-        hours = j.get("hoursOfOperation") or "<MISSING>"
-        if hours == "<MISSING>":
-            hours_of_operation = hours
-        else:
-            _tmp = []
-            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            for d in days:
-                if hours.get(d):
-                    start = hours.get(d)[0][0]
-                    close = hours.get(d)[0][1]
-                    _tmp.append(f"{d}: {start} - {close}")
-                else:
-                    _tmp.append(f"{d}: Closed")
+        _tmp = []
+        days = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        ]
+        hours = j.get("tradingHours") or []
+        cnt = 0
+        for h in hours:
+            start = h[0]
+            close = h[-1]
+            day = days[cnt]
+            if start != close:
+                _tmp.append(f"{day}: {start} - {close}")
+            else:
+                _tmp.append(f"{day}: Closed")
+            cnt += 1
 
-            hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-            if hours_of_operation.count("Closed") == 7:
-                hours_of_operation = "Closed"
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
 
         row = [
             locator_domain,
@@ -107,7 +102,6 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-
         out.append(row)
 
     return out

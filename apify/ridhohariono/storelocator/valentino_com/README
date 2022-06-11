@@ -1,0 +1,5 @@
+--ignore CountryCodeFillRateChecker (Caused by GB/UK country)
+--ignore StreetAddressHasStateName (Confiermed scrape correctly) 
+Please check: 
+https://boutiques.valentino.com/united-states/valentino-crystals-las-vegas-usa
+https://boutiques.valentino.com/united-states/valentino-design-district-miami-usa

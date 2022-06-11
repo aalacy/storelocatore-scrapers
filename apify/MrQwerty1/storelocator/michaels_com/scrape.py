@@ -1,96 +1,113 @@
-import csv
 import json
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_js(param):
-    session = SgRequests()
-    data = {"request": {
-        "appkey": "6E3ECEB6-B58F-11E6-9AC3-9C37D1784D66",
-        "formdata": {
-            "dataview": "store_default",
-            "limit": 5000,
-            "geolocs": {"geoloc": [{"addressline": param['addressline'], "country": "", "latitude": "", "longitude": ""}]},
-            "searchradius": "3000", 'where': {'country': {'eq': param['country']}}}}}
+    data = {
+        "request": {
+            "appkey": "6E3ECEB6-B58F-11E6-9AC3-9C37D1784D66",
+            "formdata": {
+                "dataview": "store_default",
+                "limit": 5000,
+                "geolocs": {
+                    "geoloc": [
+                        {
+                            "addressline": param["addressline"],
+                            "country": "",
+                            "latitude": "",
+                            "longitude": "",
+                        }
+                    ]
+                },
+                "searchradius": "3000",
+                "where": {"country": {"eq": param["country"]}},
+            },
+        }
+    }
 
-    r = session.post('https://hosted.where2getit.com/michaels/rest/locatorsearch', data=json.dumps(data))
-    js = r.json()['response']['collection']
+    r = session.post(
+        "https://hosted.where2getit.com/michaels/rest/locatorsearch",
+        data=json.dumps(data),
+    )
+    js = r.json()["response"]["collection"]
     return js
 
 
-def fetch_data():
-    out = []
-    s = set()
-    url = 'https://www.michaels.com/store-locator'
+def fetch_data(sgw: SgWriter):
     params = [
-        {'addressline': 'T9H 4G9', 'country': 'CA'},
-        {'addressline': '99507', 'country': 'US'},
-        {'addressline': '30313', 'country': 'US'},
-        {'addressline': '84602', 'country': 'US'}
+        {"addressline": "T9H 4G9", "country": "CA"},
+        {"addressline": "99507", "country": "US"},
+        {"addressline": "30313", "country": "US"},
+        {"addressline": "84602", "country": "US"},
     ]
 
     for p in params:
         js = get_js(p)
+
         for j in js:
-            locator_domain = url
+            location_type = SgRecord.MISSING
+            if j.get("comingsoon"):
+                location_type = "Coming Soon"
             location_name = f"Michaels, {j.get('name')}"
-            street_address = j.get('address1') or '<MISSING>'
-            city = j.get('city') or '<MISSING>'
-            postal = j.get('postalcode') or '<MISSING>'
-            country_code = j.get('country') or '<MISSING>'
-            if country_code == 'CA':
-                state = j.get('province') or '<MISSING>'
+            street_address = j.get("address1")
+            city = j.get("city")
+            postal = j.get("postalcode")
+            country_code = j.get("country")
+            if country_code == "CA":
+                state = j.get("province")
             else:
-                state = j.get('state') or '<MISSING>'
-            store_number = j.get('clientkey')
-            if store_number in s:
-                continue
-
-            s.add(store_number)
-            phone = j.get('phone') or '<MISSING>'
-            latitude = j.get('latitude') or '<MISSING>'
-            longitude = j.get('longitude') or '<MISSING>'
+                state = j.get("state")
+            store_number = j.get("clientkey")
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
             page_url = f"http://locations.michaels.com/{state.lower()}/{city.lower()}/{store_number}/"
-            location_type = '<MISSING>'
 
-            days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
             _tmp = []
             for day in days:
-                line = j.get(f'{day[:3]}_hrs_special')
+                line = j.get(f"{day[:3]}_hrs_special")
                 _tmp.append(f"{day.capitalize()}: {line}")
-            if _tmp:
-                hours_of_operation = ';'.join(_tmp)
-    
-                if hours_of_operation.count('None') == 7:
-                    hours_of_operation = 'Temporarily Closed'
-            else:
-                hours_of_operation = '<MISSING>'
 
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+            hours_of_operation = ";".join(_tmp)
 
-            out.append(row)
+            if hours_of_operation.count("None") == 7:
+                hours_of_operation = "Temporarily Closed"
 
-    return out
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.michaels.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

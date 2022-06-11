@@ -1,69 +1,99 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('elevatetrampolinepark_com')
-
-
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "elevatetrampolinepark_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+DOMAIN = "https://elevatetrampolinepark.com/"
+MISSING = SgRecord.MISSING
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://elevatetrampolinepark.com/"
-    r = session.get(base_url)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for location in soup.find_all('a', {'class': re.compile(r'et_pb_button et_pb_button.+')}):
-        link = location['href']
-        # logger.info(link)
-        location_request = session.get(link)
-        location_soup = BeautifulSoup(location_request.text,"lxml")
-        if location_soup.find("h4") == None:
+    r = session.get(DOMAIN)
+    soup = BeautifulSoup(r.text, "lxml")
+    for location in soup.find_all(
+        "a", {"class": re.compile(r"et_pb_button et_pb_button_.+")}
+    ):
+        page_url = location["href"]
+        log.info(page_url)
+        location_request = session.get(page_url)
+        location_soup = BeautifulSoup(location_request.text, "lxml")
+        location_name = location_soup.title.text.replace(
+            "is the premier extreme recreation park!", ""
+        ).strip()
+        if location_soup.find("h4") is None:
             continue
-        name = location_soup.title.text.replace("is the premier extreme recreation park!","").strip()
-        if location_soup.find('div',{"class":'textwidget'}) == None:
+        if location_soup.find("div", {"class": "textwidget"}) is None:
             continue
-        location_address = list(location_soup.find('div',{"class":'textwidget'}).stripped_strings)
-        phone = location_soup.find(class_="phone").text.strip()
+        address = list(
+            location_soup.find("div", {"class": "textwidget"}).stripped_strings
+        )
+        phone = address[-2]
+        if "info" in phone:
+            phone = address[-3]
+        street_address = address[0]
+        address = address[1].split(",")
+        city = address[0]
+        address = address[1].split()
+        state = address[0]
+        zip_postal = address[1]
+        country_code = "US"
         try:
-            geo_location = location_soup.find("iframe",{"data-src":re.compile("/maps/")})['data-src']
+            geo_location = location_soup.find(
+                "iframe", {"data-src": re.compile("/maps/")}
+            )["data-src"]
         except:
-            geo_location = location_soup.find("iframe",{"src":re.compile("/maps/")})['src']
-        hours = list(location_soup.find_all('div',{"class":"textwidget"})[-1].stripped_strings)
-        store = []
-        store.append("https://elevatetrampolinepark.com")
-        store.append(link)
-        store.append(name)
-        store.append(location_address[0])
-        store.append(location_address[1].split(",")[0])
-        store.append(location_address[1].split(" ")[-2])
-        store.append(location_address[1].split(" ")[-1])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(geo_location.split("!3d")[1].split("!")[0])
-        store.append(geo_location.split("!2d")[1].split("!")[0])
-        store.append(" ".join(hours).replace("–",'-'))
-        return_main_object.append(store)
-    return return_main_object
+            geo_location = location_soup.find("iframe", {"src": re.compile("/maps/")})[
+                "src"
+            ]
+        latitude = geo_location.split("!3d")[1].split("!")[0]
+        longitude = geo_location.split("!2d")[1].split("!")[0]
+        hours_of_operation = (
+            location_soup.find_all("div", {"class": "textwidget"})[-1]
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

@@ -1,46 +1,15 @@
-import csv
 import json
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "goldsgym.com"
+    domain = "goldsgym.com"
 
     start_url = "https://www.goldsgym.com/api/gyms/locate?country={}"
     all_countries = ["US", "CA"]
@@ -49,31 +18,22 @@ def fetch_data():
         data = json.loads(response.text)
 
         for poi in data["gyms"]:
+            if poi["gym_status"] == "presale":
+                continue
             store_url = poi["siteurl"]
             location_name = poi["gym_name"]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address"]
             if poi["address_2"]:
                 street_address += " " + street_address
-            street_address = street_address if street_address else "<MISSING>"
             city = poi["city"]
-            city = city if city else "<MISSING>"
             state = poi["state"]
-            state = state if state else "<MISSING>"
             zip_code = poi["postal_code"]
-            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["country"]
-            country_code = country_code if country_code else "<MISSING>"
             store_number = poi["id"]
-            store_number = store_number if store_number else "<MISSING>"
             phone = poi["gym_settings"]["phone"]
-            phone = phone if phone else "<MISSING>"
             location_type = poi["gym_type"]
-            location_type = location_type if location_type else "<MISSING>"
             latitude = poi["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
             longitude = poi["longitude"]
-            longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
             for day, hours in poi["gym_settings"]["business_hours_this_week"].items():
                 if hours["closedAllDay"]:
@@ -83,36 +43,43 @@ def fetch_data():
                     close_h = hours["close"]["date"].split()[-1].split(".")[0]
                     hours_of_operation.append("{} {} - {}".format(day, open_h, close_h))
             hours_of_operation = (
-                ", ".join(hours_of_operation).replace("00:00:00 - 00:00:00", "closed")
+                ", ".join(hours_of_operation).replace("00:00:00 - 00:00:00", "24h")
                 if hours_of_operation
                 else "<MISSING>"
             )
+            if "Tu - closed, We - closed" in hours_of_operation:
+                continue
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

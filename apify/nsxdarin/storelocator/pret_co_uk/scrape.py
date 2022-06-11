@@ -1,155 +1,134 @@
-import csv
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 logger = SgLogSetup().get_logger("pret_co_uk")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.BRITAIN],
-    max_radius_miles=None,
-    max_search_results=20,
-)
-
-session = SgRequests()
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36",
-    "Cookie": "statePreference=; statePreference=; preferredLocal=city=&countrycode=UK, GB&latitude=0&longitude=0; PretAManger-UK_Language=en-gb; _ga=GA1.3.682867871.1588958973; _gid=GA1.3.711697636.1588958973; _fbp=fb.2.1588958973219.1726351087; _y2=1%3AeyJjIjp7IjEyNDc2NiI6LTE0NzM5ODQwMDAsIjEyNTIxOCI6LTE0NzM5ODQwMDAsIjEyOTQ4NiI6LTE0NzM5ODQwMDAsIjEzMDIxNiI6LTE0NzM5ODQwMDAsIjEzMTc5NCI6LTE0NzM5ODQwMDAsIjEzMjUwOSI6LTE0NzM5ODQwMDAsIm8iOi0xNDczOTg0MDAwfX0%3D%3ALTE0NzEzNjMxNjg%3D%3A99; newsletterPageReferrer=https://www.pret.co.uk/en-gb/find-a-pret/London; OptanonConsent=isIABGlobal=false&datestamp=Fri+May+08+2020+12%3A30%3A37+GMT-0500+(Central+Daylight+Time)&version=5.9.0&landingPath=NotLandingPage&groups=1%3A1%2C2%3A1%2C3%3A1%2C4%3A1%2C0_48371%3A1%2C0_48370%3A1%2C0_94508%3A1%2C0_94507%3A1%2C0_48372%3A1%2C0_48365%3A1%2C0_48367%3A1%2C0_48366%3A1%2C0_48369%3A1%2C0_48368%3A1%2C8%3A0&AwaitingReconsent=false; newsletterAction=dwell; newsletterDwellTime=56; _yi=1%3AeyJsaSI6bnVsbCwic2UiOnsiYyI6MSwibGEiOjE1ODg5NTkxMjEzNzgsInAiOjUsInNjIjoxMjN9LCJ1Ijp7ImlkIjoiZDA1MDIzNTctZWYxZC00OTlhLThmODAtOWIxMmI5MzVkYmVjIiwiZmwiOiIwIn19%3ALTE0MzE4NDYxMTI%3D%3A99; lastTimestamp=1588959122; preferredLocal=city=&countrycode=UK, GB&latitude=0&longitude=0; PretAManger-UK_Language=en-gb",
-}
-
-
 def fetch_data():
-    ids = []
-    for zipcode in search:
-        logger.info(("Pulling Postal Code %s..." % zipcode))
-        url = (
-            "https://www.pret.co.uk/api/stores/by-address?address="
-            + zipcode
-            + "&market=UK"
-        )
-        r = session.get(url, headers=headers)
-        try:
-            for item in json.loads(r.content):
-                website = "pret.co.uk"
-                loc = "<MISSING>"
-                country = "GB"
-                store = item["id"]
-                name = item["name"]
-                lat = item["location"]["lat"]
-                lng = item["location"]["lng"]
-                add = item["address"]["streetNumber"]
-                try:
-                    add = add + " " + item["address"]["streetName"]
-                except:
-                    pass
-                city = item["address"]["city"]
+    locs = []
+    cities = []
+    url = "https://locations.pret.co.uk/"
+    r = session.get(url, headers=headers)
+    website = "pret.co.uk"
+    typ = "<MISSING>"
+    country = "GB"
+    logger.info("Pulling Stores")
+    for line in r.iter_lines():
+        if '<a class="Directory-listLink" href="' in line:
+            items = line.split('<a class="Directory-listLink" href="')
+            for item in items:
+                if 'data-count="(' in item:
+                    count = item.split('data-count="(')[1].split(")")[0]
+                    if count == "1":
+                        locs.append(
+                            "https://locations.pret.co.uk/"
+                            + item.split('"')[0].replace("&#39;", "'")
+                        )
+                    else:
+                        cities.append(
+                            "https://locations.pret.co.uk/"
+                            + item.split('"')[0].replace("&#39;", "'")
+                        )
+    for city in cities:
+        logger.info(city)
+        r2 = session.get(city, headers=headers)
+        for line2 in r2.iter_lines():
+            if '="Teaser-titleLink" href="' in line2:
+                items = line2.split('="Teaser-titleLink" href="')
+                for item in items:
+                    if 'data-ya-track="businessname">' in item:
+                        locs.append(
+                            "https://locations.pret.co.uk/"
+                            + item.split('"')[0].replace("&#39;", "'")
+                        )
+    for loc in locs:
+        logger.info(loc)
+        name = ""
+        add = ""
+        city = ""
+        state = "<MISSING>"
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            if 'class="Hero-locationName" itemprop="name">' in line2:
+                name = line2.split('class="Hero-locationName" itemprop="name">')[
+                    1
+                ].split("<")[0]
+            if 'itemprop="latitude" content="' in line2:
+                lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
+                lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
+            if 'itemprop="streetAddress" content="' in line2:
+                add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
+            if '<span class="c-address-city">' in line2 and city == "":
+                city = line2.split('<span class="c-address-city">')[1].split("<")[0]
                 state = "<MISSING>"
-                zc = item["address"]["postalCode"]
-                phone = item["contact"]["phone"]
-                typ = item["features"]["storeType"]
-                hours = (
-                    "Sun: "
-                    + str(item["tradingHours"][0][0])
-                    + "-"
-                    + str(item["tradingHours"][0][1])
+            if 'itemprop="postalCode">' in line2:
+                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if '="telephone" id="phone-main">' in line2:
+                phone = line2.split('="telephone" id="phone-main">')[1].split("<")[0]
+            if "js-hours-table\"  data-days='[" in line2:
+                days = (
+                    line2.split("js-hours-table\"  data-days='[")[1]
+                    .split("]' data-utc")[0]
+                    .split('"day":"')
                 )
-                hours = (
-                    hours
-                    + "; Mon: "
-                    + str(item["tradingHours"][1][0])
-                    + "-"
-                    + str(item["tradingHours"][1][1])
-                )
-                hours = (
-                    hours
-                    + "; Tue: "
-                    + str(item["tradingHours"][2][0])
-                    + "-"
-                    + str(item["tradingHours"][2][1])
-                )
-                hours = (
-                    hours
-                    + "; Wed: "
-                    + str(item["tradingHours"][3][0])
-                    + "-"
-                    + str(item["tradingHours"][3][1])
-                )
-                hours = (
-                    hours
-                    + "; Thu: "
-                    + str(item["tradingHours"][4][0])
-                    + "-"
-                    + str(item["tradingHours"][4][1])
-                )
-                hours = (
-                    hours
-                    + "; Fri: "
-                    + str(item["tradingHours"][5][0])
-                    + "-"
-                    + str(item["tradingHours"][5][1])
-                )
-                hours = (
-                    hours
-                    + "; Sat: "
-                    + str(item["tradingHours"][6][0])
-                    + "-"
-                    + str(item["tradingHours"][6][1])
-                )
-                hours = hours.replace("00:00-00:00", "Closed")
-                if store not in ids:
-                    ids.append(store)
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-        except:
-            pass
+                for day in days:
+                    if '"intervals"' in day:
+                        if '"isClosed":true' in day:
+                            hrs = day.split('"')[0] + ": Closed"
+                        else:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"start":')[1].split("}")[0]
+                                + "-"
+                                + day.split('"end":')[1].split(",")[0]
+                            )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+        if phone == "":
+            phone = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

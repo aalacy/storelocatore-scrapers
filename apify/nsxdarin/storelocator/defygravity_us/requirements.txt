@@ -1,2 +1,1 @@
-sgrequests
-sglogging
+sgrequests==0.1.4

@@ -1,4 +1,5 @@
 import csv
+import re
 
 from lxml import html
 from sgrequests import SgRequests
@@ -31,6 +32,31 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
+
+
+def get_phone(url):
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Cache-Control": "max-age=0",
+    }
+
+    r = session.get(url, headers=headers)
+    tree = html.fromstring(r.text)
+    line = tree.xpath("//p[@class='locdesc']/text()")
+    phone = "<MISSING>"
+    for l in line:
+        if l.find("RETAIL") != -1:
+            try:
+                phone = re.findall(r"\d{3}-\d{3}-\d{4}", l)[0]
+                break
+            except IndexError:
+                pass
+    return phone
 
 
 def fetch_data():
@@ -76,6 +102,8 @@ def fetch_data():
             "".join(d.xpath(".//div[@class='locwidget-phone']/a/text()")).strip()
             or "<MISSING>"
         )
+        if phone == "<MISSING>":
+            phone = get_phone(page_url)
         latitude, longitude = "".join(
             d.xpath(".//div[@class='locwidget-latlong']/text()")
         ).split(",")

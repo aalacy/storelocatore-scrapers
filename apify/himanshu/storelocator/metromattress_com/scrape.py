@@ -1,80 +1,119 @@
-import csv
-from sgrequests import SgRequests
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-session = SgRequests()
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+session = SgRequests()
+website = "metromattress.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
+
+
 def fetch_data():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
-    return_main_object =[]
-    addressess =[]
+    name_list = []
     for q in range(11):
-        base_url= "https://www.metromattress.com/locationsmain/"+str(q)+"/"
-        r = session.get(base_url,headers=headers)
-        soup= BeautifulSoup(r.text,"lxml")
-        loc = (soup.find_all("h2",{"class":"wppl-h2"}))
-        for i in loc:
-            tem_var=[]
-            r1 = session.get(i.a['href'],headers=headers)
-            name = (i.a.text.split(")")[1].strip())
-            soup1= BeautifulSoup(r1.text,"lxml")
-            if "Metro Mattress Batavia" in name:
-                addr = list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[0]
-                address = addr.split("\n")[0]
-                city = addr.split("\n")[1].split(",")[0]
-                state = addr.split("\n")[1].split(",")[1].strip().split(" ")[0]
-                zip1 = addr.split("\n")[1].split(",")[1].strip().split(" ")[1]
-                phone = addr.split("\n")[1].split(",")[1].strip().split("  ")[1]
-                hours = ( " ".join(list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[6:18]))
-            else:
-                address = list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[0]
-                city = list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[1].split(',')[0]
-                full_add = list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[1].split(',')[1]
-                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_add))
-                if us_zip_list:
-                    zip1 = us_zip_list[-1]
-                else:
-                    zip1 = ''
-                state = (full_add.replace(zip1,""))
-                phone = list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[2]
-                hours = ( " ".join(list(soup1.find("div",{"class":"black-line-wrap clearfix"}).stripped_strings)[6:20]))
-            lat = soup1.find_all("iframe")[2]['src'].split("!2d")[-1].split("!3d")[0]
-            lng = soup1.find_all("iframe")[2]['src'].split("!2d")[-1].split("!3d")[1].split("!")[0]
-            tem_var.append("https://www.metromattress.com/")
-            tem_var.append(name.strip())
-            tem_var.append(address.strip())
-            tem_var.append(city.strip())
-            tem_var.append(state.strip())
-            tem_var.append(zip1.strip() if zip1 else "14150")
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone.replace("Call ","").strip())
-            tem_var.append("<MISSING>")
-            tem_var.append(lat)
-            tem_var.append(lng)
-            tem_var.append(hours.replace("HOURS","").strip())
-            tem_var.append(i.a['href'])
-            if tem_var[2] in addressess:
+        base_url = "https://www.metromattress.com/locationsmain/" + str(q) + "/"
+        r = session.get(base_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("h2", {"class": "wppl-h2"})
+        for loc in loclist:
+            page_url = loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text
+            if location_name in name_list:
                 continue
-            addressess.append(tem_var[2])
-            return_main_object.append(tem_var)
-    return return_main_object
+            name_list.append(location_name)
+            temp = soup.find("div", {"class": "medium-3 columns"})
+            hours_of_operation = temp.text.split("HOURS")[1]
+            temp = temp.find("p")
+            address = temp.get_text(separator="|", strip=True).split("|")
+            if len(address) < 3:
+                address = temp.text.split("\n")
+                phone = address[1].split("(")
+                address = address[0] + " " + phone[0].strip()
+                phone = "(" + phone[1].replace("Call", "")
+            else:
+                if len(address) > 3:
+                    address = address[:-1]
+                phone = address[-1].replace("Call", "")
+                address = address[0] + " " + address[1].strip()
+                address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            longitude = (
+                soup.find_all("iframe")[2]["src"].split("!2d")[-1].split("!3d")[0]
+            )
+            latitude = (
+                soup.find_all("iframe")[2]["src"]
+                .split("!2d")[-1]
+                .split("!3d")[1]
+                .split("!")[0]
+            )
+            yield SgRecord(
+                locator_domain="https://www.metromattress.com/",
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code="US",
+                store_number="<MISSING>",
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=latitude.strip(),
+                longitude=longitude.strip(),
+                hours_of_operation=hours_of_operation.strip(),
+            )
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
+if __name__ == "__main__":
+    scrape()

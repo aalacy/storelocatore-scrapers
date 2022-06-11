@@ -15,7 +15,6 @@ def fetch_data():
 
     session = SgRequests()
     search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
-    identities = set()
     for zipcode in search:
         logzilla.info(f"{zipcode} | remaining: {search.items_remaining()}")
         cont = True
@@ -31,15 +30,10 @@ def fetch_data():
                     + "&productCode=",
                     headers=headers,
                 ).json()
-                new_coordinates = []
                 if results["total"] > 0:
                     for i in results["data"]:
                         try:
-                            pair = (
-                                i["latitude"],
-                                i["longitude"],
-                            )
-                            new_coordinates.append(pair)
+                            pair = (i["latitude"], i["longitude"])
                         except Exception:
                             try:
                                 pair = (
@@ -51,32 +45,16 @@ def fetch_data():
                                 )
                             except Exception:
                                 pair = ""
-                        if (
-                            str(
-                                str(i["displayName"])
-                                + str(i["line1"])
-                                + str(i["line2"])
-                                + str(i["town"])
-                                + str(i["postalCode"])
-                            )
-                            not in identities
-                        ):
-                            identities.add(
-                                str(
-                                    str(i["displayName"])
-                                    + str(i["line1"])
-                                    + str(i["line2"])
-                                    + str(i["town"])
-                                    + str(i["postalCode"])
-                                )
-                            )
-                            try:
-                                i["openings"] = i["openings"]
-                            except Exception:
-                                i["openings"] = []
-                            yield i
+                        try:
+                            search.found_location_at(pair[0], pair[1])
+                        except:
+                            pass
 
-                search.mark_found(new_coordinates)
+                        try:
+                            i["openings"] = i["openings"]
+                        except Exception:
+                            i["openings"] = []
+                        yield i
             except Exception:
                 cont = False
 

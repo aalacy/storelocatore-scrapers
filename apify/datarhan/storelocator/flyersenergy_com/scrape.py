@@ -1,10 +1,9 @@
 import re
-import json
 import csv
-from time import sleep
+import json
 from lxml import etree
 
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -39,33 +38,22 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests()
 
     items = []
 
     DOMAIN = "flyersenergy.com"
     start_url = "https://www.flyersenergy.com/locations/"
 
-    with SgChrome() as driver:
-        passed = False
-        while not passed:
-            driver.get(start_url)
-            if driver.page_source == "<html><head></head><body></body></html>":
-                passed = False
-                continue
-            else:
-                passed = True
-
-            element = driver.find_element_by_xpath(
-                '//button[@class="mgbutton moove-gdpr-infobar-allow-all"]'
-            )
-            driver.execute_script("arguments[0].click();", element)
-            driver.find_element_by_xpath(
-                '//button[@class="wpgmza-api-consent"]'
-            ).click()
-            sleep(60)
-            dom = etree.HTML(driver.page_source)
-            data = dom.xpath('//script[contains(text(), "marker_data")]/text()')[0]
-            data = json.loads(re.findall(r"marker_data = (.+?);", data)[0])
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    data = dom.xpath(
+        '//script[contains(text(), "wpgmaps_localize_marker_data")]/text()'
+    )[0]
+    data = re.findall("wpgmaps_localize_marker_data = (.+?);", data.replace("\n", ""))[
+        0
+    ]
+    data = json.loads(data)
 
     for poi in data["1"].values():
         store_url = "https://www.flyersenergy.com/locations/"

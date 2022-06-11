@@ -1,84 +1,63 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('lolasmexicancuisine_com')
+from sgrequests import SgRequests
 
-
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
-        "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
-    base_url= "https://www.lolasmexicancuisine.com"
-    r = session.get(base_url,headers =headers)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    
-    # logger.info(soup)
-    # k = (soup.find_all("div",{"class":"tabs-content"}))
-    k = (soup.find_all("div",{"class":"wpb_text_column wpb_content_element rollover-details"}))
+    base_url = "https://lolasmexicancuisine.com/"
+    r = session.get(base_url, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    k = soup.find_all(
+        class_="relative menu-item menu-item-type-post_type menu-item-object-locations"
+    )
 
     for i in k:
-        tem_var=[]
-        if "View Details" in i.a.text:
-            r = session.get(i.a['href'],headers =headers)
-            soup1= BeautifulSoup(r.text,"lxml")
-            v= soup1.find("div",{"class":"wpb_text_column wpb_content_element address-pannel"})
-            name  = list(v.stripped_strings)[0].replace("Address","")
-            st = list(v.stripped_strings)[1]
-            city = list(v.stripped_strings)[2].split(',')[0]
-            state = list(v.stripped_strings)[2].split(',')[1].split( )[0]
-            zip1  = list(v.stripped_strings)[2].split(',')[1].split( )[1]
-            phone = list(v.stripped_strings)[4:][-1]
-            housr = " ".join(list(v.stripped_strings)[4:][:-1])
-            # logger.info(" ".join(list(v.stripped_strings)[4:][:-1]))
-  
-            tem_var.append("https://www.lolasmexicancuisine.com")
-            tem_var.append(name)
-            tem_var.append(st)
-            tem_var.append(city)
-            tem_var.append(state.strip())
-            tem_var.append(zip1.strip())
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("lolasmexicancuisine")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append(housr)
-            return_main_object.append(tem_var)
-    return return_main_object
-   
+        link = i.a["href"]
+        r = session.get(link, headers=headers)
+        soup1 = BeautifulSoup(r.text, "lxml")
+        v = soup1.find("div", {"class": "col-span-12 md:col-span-6"})
+        name = list(v.stripped_strings)[0].replace("Address", "")
+        st = list(v.stripped_strings)[1].strip()
+        city = list(v.stripped_strings)[2].split(",")[0].strip()
+        state = list(v.stripped_strings)[2].split(",")[1].strip()
+        zip1 = list(v.stripped_strings)[2].split(",")[-1].strip()
+        phone = list(v.stripped_strings)[3]
+        hours = " ".join(list(v.stripped_strings)[4:])
+        store_number = ""
+        location_type = ""
+        latitude = ""
+        longitude = ""
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url=link,
+                location_name=name,
+                street_address=st,
+                city=city,
+                state=state,
+                zip_postal=zip1,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours,
+            )
+        )
 
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
-
-
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

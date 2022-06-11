@@ -1,130 +1,103 @@
-import csv
+# -*- coding: utf-8 -*-
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import sgzip
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-logger = SgLogSetup().get_logger('theupsstore_com')
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url,headers=headers)
-                return r
-                break
-            except:
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url,headers=headers,data=data)
-                else:
-                    r = session.post(url,headers=headers)
-                return r
-                break
-            except:
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
 
 def fetch_data():
-    return_main_object = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+    session = SgRequests()
+
+    start_url = "https://locations.theupsstore.com/"
+    domain = "theupsstore.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    hour_headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-    }
-    base_url = "https://www.theupsstore.com"
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 30
-    MAX_DISTANCE = 350.0
-    zip = search.next_zip()
-    while zip:
-        result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        # logger.info('Pulling zip %s...' % (str(zip)))
-        data = "ctl01%24SearchBy=rbLocation&ctl01%24tbSearchText=" + str(zip) + "&ctl01%24tbSearchTextByStore=" + str(zip) + "&ctl01%24hdLatLon=&hdEmailThankYouRedirect=&__EVENTTARGET=ctl01%24btnSearch&__ASYNCPOST=true"
-        # logger.info(data)
-        r = request_wrapper("https://www.theupsstore.com/tools/find-a-store","post",headers=headers,data=data)
-        if r == None:
-            logger.info("failed to load " + str(data))
-            zip = search.next_zip()
-            continue
-        soup = BeautifulSoup(r.text,"lxml")
-        data = json.loads(soup.find("input",{"id":"MapPointData"})["value"])
-        # logger.info("stop")
-        for store_data in data:
-            lat = store_data["Latitude"]
-            lng = store_data["Longitude"]
-            result_coords.append((lat, lng))
-            store = []
-            store.append("https://www.theupsstore.com")
-            store.append("<MISSING>")
-            store.append(store_data["Address"])
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(store_data["City"])
-            store.append(store_data["State"])
-            store.append(store_data["Zip"])
-            store.append("US")
-            store.append(store_data["StoreNum"])
-            store.append(store_data["Phone"] if "Phone" in store_data and store_data["Phone"] else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(lng)
-            hours = " ".join(list(BeautifulSoup(store_data["Hours"],"lxml").stripped_strings))
-            store.append(hours.replace("  "," ") if hours else "<MISSING>")
-            store.append(store_data["StoreURL"])
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.strip() if type(x) == str else x for x in store]
-            # logger.info(store)
-            yield store
-        if len(data) < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(data) == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//a[@data-ya-track="dir_link"]/@href')
+    all_cities = []
+    all_locations = []
+    for url in all_states:
+        if len(url) > 2:
+            all_cities.append(url)
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip = search.next_zip()
+            url = urljoin(start_url, url)
+            response = session.get(url)
+            dom = etree.HTML(response.text)
+            all_cities = dom.xpath('//a[@data-ya-track="dir_link"]/@href')
+            for url in all_cities:
+                if len(url.split("/")) == 2:
+                    url = urljoin(start_url, url)
+                    response = session.get(url)
+                    dom = etree.HTML(response.text)
+                    all_locations += dom.xpath('//a[@data-ya-track="viewpage"]/@href')
+                else:
+                    all_locations.append(url)
+
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        if loc_dom.xpath('//div[contains(text(), "Coming Soon")]'):
+            continue
+        if loc_dom.xpath('//div[contains(text(), "STORE PERMANENTLY CLOSED")]'):
+            continue
+        location_name = loc_dom.xpath(
+            '//h1[@id="location-name"]/span[@class="LocationName"]/span/text()'
+        )
+        location_name = " ".join(location_name)
+        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
+        city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]
+        state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else ""
+        country_code = loc_dom.xpath("//@data-country")[0]
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
+        hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[3:]
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        store_number = loc_dom.xpath('//li[contains(text(), "Store #")]/text()')[
+            0
+        ].split("#")[-1]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

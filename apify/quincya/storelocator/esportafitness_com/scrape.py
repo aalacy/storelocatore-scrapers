@@ -1,145 +1,85 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import time
-import re
-from random import randint
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('esportafitness_com')
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("esportafitness_com")
 
 
+def fetch_data(sgw: SgWriter):
+
+    base_link = "https://esportafitness.com/Pages/GetClubLocations.aspx/GetClubLocation"
+
+    headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "accept": "*/*",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+
+    session = SgRequests()
+
+    stores = session.post(base_link, headers=headers).json()["d"]
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    for store in stores:
+
+        locator_domain = "esportafitness.com"
+
+        city = store["City"]
+        state = store["State"]
+        country_code = "US"
+        store_number = store["ClubID"]
+        location_type = ""
+        latitude = store["Latitude"]
+        longitude = store["Longitude"]
+
+        link = "https://esportafitness.com/Pages/" + store["ClubHomeURL"]
+        logger.info(link)
+
+        final_req = session.get(link, headers=headers)
+        item = BeautifulSoup(final_req.text, "lxml")
+
+        location_name = item.h1.text.strip()
+        street_address = item.find(id="ctl00_MainContent_lblClubAddress").text
+        zip_code = item.find(id="ctl00_MainContent_lblZipCode").text
+        phone = item.find(id="ctl00_MainContent_lblClubPhone").text.split("Reg")[0]
+
+        hours_of_operation = (
+            item.find(id="divClubHourPanel")
+            .get_text(" ")
+            .replace("pm", "pm ")
+            .replace("CLUB HOURS", "")
+            .strip()
+        )
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def get_driver():
-	options = Options() 
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36")
-	options.add_argument('--disable-dev-shm-usage')
-	options.add_argument('--window-size=1920,1080')
-	return webdriver.Chrome('chromedriver', chrome_options=options)
-
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
-
-def fetch_data():
-	
-	base_link = "https://www.esportafitness.com/Pages/FindClub.aspx"
-
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
-
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-
-	states = base.find(id="ctl00_MainContent_FindAClub1_cboSelState").find_all("option")[1:]
-
-	driver = get_driver()
-	time.sleep(2)
-
-	final_links = []
-	for raw_state in states:
-		state = raw_state['value']
-		main_link = "https://www.esportafitness.com/Pages/findclubresultszip.aspx?state=" + state
-		logger.info(main_link)
-
-		driver.get(main_link)
-		time.sleep(randint(2,4))
-
-		try:
-			element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-				(By.CSS_SELECTOR, ".TextDataColumn")))
-			time.sleep(randint(2,4))
-		except:
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-
-		count = 0
-		while True and count < 5:
-			base = BeautifulSoup(driver.page_source,"lxml")
-			main_items = base.find_all(class_='TextDataColumn')
-			for main_item in main_items:
-				main_link = "https://www.esportafitness.com/Pages/" + main_item.a['href']
-				final_links.append(main_link)
-			try:
-				driver.find_element_by_id("ctl00_MainContent_lnkNextTop").click()
-				time.sleep(randint(4,6))
-				count += 1
-			except:
-				break
-
-	data = []
-	total_links = len(final_links)
-	for i, final_link in enumerate(final_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
-		logger.info(final_link)
-		final_req = session.get(final_link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(final_req.text,"lxml")
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-
-		locator_domain = "esportafitness.com"
-
-		location_name = item.h1.text.strip()
-		# logger.info(location_name)
-
-		try:
-			street_address = item.find(id="ctl00_MainContent_lblClubAddress").text
-		except:
-			continue
-		city = item.find(id="ctl00_MainContent_lblClubCity").text
-		state = item.find(id="ctl00_MainContent_lblClubState").text
-		zip_code = item.find(id="ctl00_MainContent_lblZipCode").text
-		country_code = "US"
-		store_number = re.findall('clubid=[0-9]+',final_link)[0].split("=")[1].strip()
-		location_type = "<MISSING>"
-		phone = item.find(id="ctl00_MainContent_lblClubPhone").text
-		if "Reg" in phone:
-			phone = phone[:phone.find("Reg")].strip()
-		latitude = "<MISSING>"
-		longitude = "<MISSING>"
-
-		hours_of_operation = item.find(id="divClubHourPanel").text.replace("pm","pm ").replace("CLUB HOURS","").strip()
-
-		data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	try:
-		driver.close()
-	except:
-		pass
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

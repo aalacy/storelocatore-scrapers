@@ -1,125 +1,78 @@
-import csv
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get(
-        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_abc.aspx?"
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=40
     )
-    tree = html.fromstring(r.content)
-    return tree.xpath("//a[@class='popup']/@href")
+    for lat, lng in search:
 
+        api = f"https://client.schwab.com/public/branchlocator/Locator.ashx?lat={lat}&lang={lng}&brnchtype=undefined"
+        r = session.get(api, headers=headers)
+        js = r.json()["BranchesOutForMap"]
+        if js is None:
+            continue
 
-def get_data(page_url):
-    session = SgRequests()
+        for j in js:
+            street_address = j.get("BranchAddr") or ""
+            if "coming" in street_address.lower():
+                continue
+            city = j.get("City")
+            state = j.get("State")
+            postal = j.get("Zipcode")
+            country_code = "US"
+            store_number = j.get("BranchID")
+            location_name = j.get("BranchName")
+            page_url = f"https://client.schwab.com/public/branchlocator/branchdetails.aspx?branchid={store_number}"
+            location_type = j.get("Type")
+            phone = j.get("GeneralAppointmentPhone")
+            latitude = j.get("Latitude")
+            longitude = j.get("Longitude")
 
-    locator_domain = "https://www.schwab.com/"
+            _tmp = []
+            hours = j.get("WeeklyBranchTimes") or []
+            for h in hours:
+                day = h.get("Day")
+                start = h.get("Open")
+                end = h.get("Close")
+                _tmp.append(f"{day}: {start}-{end}")
 
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    location_name = "".join(
-        tree.xpath(
-            "//h2[@id='ctl00_wpMngr_BranchDetail_BranchDetails_dynPageTitle']/text()"
-        )
-    ).strip()
-    line = tree.xpath(
-        "//p[@id='ctl00_wpMngr_BranchDetail_BranchDetails_brAddress']/text()"
-    )
-    line = list(filter(None, [l.strip() for l in line]))
-    street_address = line[0]
-    line = line[1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line[:2].strip()
-    postal = line[2:].strip()
-    country_code = "US"
-    store_number = page_url.split("=")[-1]
-    phone = tree.xpath("//span[@data-active='mobile']/text()")[0].strip()
-    location_type = "Branch"
-    latitude, longitude = "<MISSING>", "<MISSING>"
+            hours_of_operation = ";".join(_tmp)
 
-    _tmp = []
-    tr = tree.xpath("//div[@id='hours-furl-content']/table[@class='hours']//tr")
-    for t in tr:
-        _tmp.append(" ".join(t.xpath("./td/text()")).strip())
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                location_type=location_type,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.count("Closed") == 7:
-        return
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-    return row
-
-
-def fetch_data():
-    out = []
-    threads = []
-    urls = get_urls()
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for url in urls:
-            threads.append(executor.submit(get_data, url))
-
-    for task in as_completed(threads):
-        row = task.result()
-        if row:
-            out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.schwab.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

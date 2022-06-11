@@ -1,119 +1,138 @@
-import csv
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_usa
 import re
-import json
+
+DOMAIN = "genisyscu.org"
+BASE_URL = "https://www.genisyscu.org"
+LOCATION_URL = "https://www.genisyscu.org/locations"
+HEADERS = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
 session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+
+MISSING = "<MISSING>"
+
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    HEADERS["Referer"] = url
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def get_latlong(url):
+    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
+    if not longlat:
+        return MISSING, MISSING
+    return longlat.group(2), longlat.group(1)
+
+
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = locator_domain = "https://www.genisyscu.org"
-    country_code = "US"
-    store_number = "<MISSING>"
-    r = session.get("https://www.genisyscu.org/locations",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    address = []
-    for location in soup.find("section",{'class':"inside"}).find_all('ul'):
-        for li in location.find_all('li'):
-            if li.find("a")!= None:
-                data_new =  (li.find("a")['href'])
-                page_url= base_url + data_new
-                location_name = li.find("a").text.strip()
-                location_type = "Genisys Branch"
-                r1 = session.get(page_url,headers=headers)
-                soup1 = BeautifulSoup(r1.text,"lxml")
-                try:
-                    location_name = soup1.find("h1").text.replace("Genisys Credit Union - ","")
-                    address = soup1.find('p',{'class':'largesub'})
-                    city = (address.text.split("<br />")[0].split("\r\n")[-1].split(",")[0])
-                    zipp = (address.text.split("<br />")[0].split("\r\n")[-1].split(",")[1].split(" ")[-1])
-                    state = (address.text.split("<br />")[0].split("\r\n")[-1].split(",")[1].split(" ")[1])
-                    street_address = " ".join(address.text.split("<br />")[0].split("\r\n")[:-1]).replace(",","").replace(".","")
-                    phone1 = soup1.find_all('p',{'class':'largesub'})[1]
-                    phone = (phone1.text.split("<br />")[0].split("\r\n")[0].replace("Call: ","").replace("Call or Text: ",""))
-                    data8 = (soup1.find_all("p")[-6].find("iframe")['src'].split("!2d")[1].split("!2m")[0].split("!3d"))
-                    latitude = data8[1].split("!3m")[0]
-                    longitude = data8[0]
-                    hours_of_operation = (" ".join(soup1.find('div',{'class':'column col-100'}).text.split(" ")[0:]).replace("\n","")).replace("Hours","Hours ").replace("PM","PM ") 
-                except:
-                    city = "<MISSING>"
-                    zipp = "<MISSING>"
-                    state = "<MISSING>"
-                    street_address = "<MISSING>"
-                    phone = "800-521-8440"
-                    location_name = "Grand Rapids Area"
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
-                store = []
-                store.append(base_url if base_url else "<MISSING>")
-                store.append(location_name if location_name else "<MISSING>") 
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append("<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append(location_type if location_type else "<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(hours_of_operation.replace('Branch Hours ','') if hours_of_operation else "<MISSING>")
-                store.append(page_url if page_url else "<MISSING>")
-                # if store[2] in address :
-                #     continue
-                # address.append(store[2])
-                yield store 
-    r1 = session.get("https://www.genisyscu.org/atmbranch-locator?street=&search=&state=&radius=50&options%5B%5D=atms#",headers=headers)
-    soup1 = BeautifulSoup(r1.text,"lxml")
-    data7 = (soup1.find_all("div",{"class":"loc_list"}))
-    for i in data7:
-        data8 = (i.find_all("div",{"class":"listbox"}))
-        for j in data8:
-            data9 = (j.find_all("p")[-1])
-            street_address = str(data9).split("<br/>")[0].replace('<p>',"").replace(".","").replace("Points Dr","Point Dr")
-            state = data9.text.split(",")[1].split(" ")[1]
-            zipp = data9.text.split(",")[1].split(" ")[-1]
-            city = str(data9).split("<br/>")[1].split(",")[0]
-            location_name = j.find("a").text.strip()
-            phone = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            page_url = "https://www.genisyscu.org/atmbranch-locator?street=&search=&state=&radius=50&options%5B%5D=atms#"
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append("US")
-            store.append("<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
-            store.append("ATM Location")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[2] in address :
-                continue
-            address.append(store[2])
-            yield store 
-          
-    
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("section.inside ul li a")
+    for row in contents:
+        if "grand-rapids-area" in row["href"]:
+            continue
+        page_url = BASE_URL + row["href"]
+        store = pull_content(page_url)
+        info = store.select_one("article div.row")
+        location_name = row.text.strip()
+        addr = info.find_all("p", {"class": "largesub"})
+        try:
+            raw_address = addr[0].get_text(strip=True, separator=",")
+            phone = (
+                addr[1]
+                .get_text(strip=True, separator=",")
+                .replace("Call or Text:", "")
+                .split(",")[0]
+                .split("x")[0]
+                .replace("Call:", "")
+                .strip()
+            )
+            hours_of_operation = (
+                info.find("span", {"class": "day"})
+                .parent.get_text(strip=True, separator=" ")
+                .replace("*", "")
+            )
+        except:
+            addr = row.parent.get_text(strip=True, separator="@@").split("@@")
+            raw_address = ", ".join(addr[:-2]).strip()
+            phone = addr[-2].strip()
+            hours_of_operation = MISSING
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        country_code = "US"
+        latitude = MISSING
+        longitude = MISSING
+        store_number = MISSING
+        location_type = "BRANCH"
+        map_link = store.find("iframe", {"src": re.compile(r"maps\/embed.*")})["src"]
+        latitude, longitude = get_latlong(map_link)
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

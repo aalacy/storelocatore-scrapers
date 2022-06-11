@@ -1,156 +1,66 @@
-import csv
-import json
-import time
-
 from bs4 import BeautifulSoup
 
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.select import Select
-from selenium.webdriver.support.ui import WebDriverWait
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sglogging import SgLogSetup
-
-from sgselenium import SgChrome
-
-log = SgLogSetup().get_logger("pacsun.com")
+from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    session = SgRequests()
 
+    base_link = "https://www.pacsun.com/on/demandware.store/Sites-pacsun-Site/default/Stores-FindStores?showMap=false&radius=5000&findInStore=false&postalCode=43240"
 
-def fetch_data():
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    base_link = "https://www.pacsun.com/stores"
+    stores = session.get(base_link, headers=headers).json()["stores"]
 
-    driver = SgChrome().chrome()
-    time.sleep(2)
+    locator_domain = "pacsun.com"
 
-    data = []
-
-    for i in range(1, 60):
-
-        driver.get(base_link)
-        WebDriverWait(driver, 30).until(
-            ec.presence_of_element_located((By.ID, "dwfrm_storelocator_state"))
-        )
-        time.sleep(2)
-
-        state_list = Select(driver.find_element_by_name("dwfrm_storelocator_state"))
+    for store in stores:
+        location_type = "<MISSING>"
+        location_name = store["name"]
+        if "CLOSED" in location_name.upper():
+            location_type = "Closed"
         try:
-            state_list.select_by_index(i)
-        except NoSuchElementException:
-            break
+            street_address = (store["address1"] + " " + store["address2"]).strip()
+        except:
+            street_address = store["address1"]
+        city = store["city"]
+        state = store["stateCode"]
+        zip_code = store["postalCode"]
+        country_code = store["countryCode"]
+        phone = store["phone"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        store_number = store["ID"]
+        hours_of_operation = BeautifulSoup(store["storeHours"], "lxml").get_text(" ")
 
-        log.info(state_list.options[i].text)
-        time.sleep(1)
-        search = driver.find_element_by_name("dwfrm_storelocator_findbystate")
-        driver.execute_script("arguments[0].click();", search)
+        link = "https://www.pacsun.com/store?id=" + str(store_number)
 
-        time.sleep(1)
-        base = BeautifulSoup(driver.page_source, "lxml")
-        stores = base.find_all(class_="sl-store")
-
-        if not stores:
-            continue
-
-        locator_domain = "pacsun.com"
-
-        all_scripts = base.find_all("script")
-        for script in all_scripts:
-            if "storeList" in str(script):
-                script = str(script)
-                break
-        js = script.split("=")[1].split("}]")[0] + "}]"
-        store_json = json.loads(js)
-
-        for store in stores:
-            location_name = store.h2.text.strip()
-            if "CLOSED" in location_name.upper():
-                continue
-
-            link = "<MISSING>"
-
-            phone = store.find(class_="phone-number").text.strip()
-
-            street_address = store.find(class_="address-phone-info").div.text.strip()
-            city_line = (
-                store.find(class_="address-phone-info")
-                .find_all("div")[1]
-                .text.strip()
-                .replace("\t", "")
-                .split("\n")
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-            city = city_line[0].replace(",", "")
-            state = city_line[1]
-            zip_code = city_line[2]
-            country_code = "US"
-            store_number = store["id"]
-            location_type = "<MISSING>"
-
-            hours_of_operation = store.find(class_="storehours").get_text(" ").strip()
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-            for j in store_json:
-                if j["ID"] == store_number:
-                    latitude = j["lat"]
-                    longitude = j["long"]
-                    break
-
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-    driver.close()
-    return data
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

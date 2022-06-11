@@ -1,124 +1,140 @@
-import csv
-import requests
-from bs4 import BeautifulSoup
-import re
-import json
-import time
-from random import choice
-import html5lib
-from sglogging import SgLogSetup
+# -*- coding: utf-8 -*-
+from typing import Iterable, Tuple, Callable
+from sgrequests import SgRequests, SgRequestError
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.dynamic import SearchableCountries
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
-logger = SgLogSetup().get_logger('weedmaps_com')
-
-
-
-
-def get_proxy():
-    url = "https://www.sslproxies.org/"
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, "html5lib")
-    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
-
-    
-def proxy_request(request_type, url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            # logger.info("Using Proxy {}".format(proxy))
-            r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
-            break
-        except:
-            pass
-    return r
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+website = "weedmaps.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
+}
 
 
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
 
-def fetch_data():
-    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
-    addresses = []
-    page = 1
-    base_url = "https://weedmaps.com/"
-    while True:
-        
-        r1 = proxy_request('get',"https://api-g.weedmaps.com/discovery/v1/listings?page_size=150&page="+str(page)+"&filter%5Bany_retailer_services%5D%5B%5D=storefront&filter%5Bbounding_box%5D=-4.089616869799286%2C-166.57642364501956%2C67.35440609528173%2C-56.97681427001954", headers=headers)
-        if r1 == None:
-            continue
-        try:
-            location_list = r1.json()["data"]["listings"]
-        except:
-            continue
-        
-        if location_list == []:
-            break
-        for weed in location_list:
-            #logger.info("page number is=========="+str(page))
-            location_name = weed['name'].strip()
-            if "Coming Soon" in location_name:
-                continue
-            street_address = weed['address']
-            city = weed['city']
-            state = weed['state']
-            zipp = weed['zip_code']
-            if len(zipp) == 5:
-                country_code = "US"
-            else:
-                country_code = "CA"
-            store_number = weed['id']
-            latitude = weed['latitude']
-            longitude = weed['longitude']
-            location_type = weed['type']
-            page_url = weed['web_url']+"/about"
-            r = requests.request('get',page_url, headers=headers)
-            if r == None:
-                continue
-            soup = BeautifulSoup(r.text, "lxml")
-            if soup.find("div",{"class":re.compile("components__OpenHours")}):
-                hours = " ".join(list(soup.find("div",{"class":re.compile("components__OpenHours")}).stripped_strings)).replace("Closed Now","")
-            else:
-                hours = "<MISSING>"
-            
-            if soup.find("div",{"class":"src__Box-sc-1sbtrzs-0 styled-components__DetailGridItem-d53rlt-0 styled-components__PhoneNumber-d53rlt-8 cMfVkr"}):
-                phone = soup.find("div",{"class":"src__Box-sc-1sbtrzs-0 styled-components__DetailGridItem-d53rlt-0 styled-components__PhoneNumber-d53rlt-8 cMfVkr"}).text.replace("-STOP ","-").replace("Coming Soon","<MISSING>")
-            else:
-                phone = "<MISSING>"
-            store = []
-            store.append(base_url)
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code)
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours)
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            #logger.info("data ======="+str(store))
-            yield store
-        
-        page += 1
-    
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+
+        lat = coord[0]
+        lng = coord[1]
+        log.info(f"coord:{lat},{lng}")
+        search_url = "https://api-g.weedmaps.com/discovery/v2/listings?&filter%5Bbounding_radius%5D=75mi&filter%5Bbounding_latlng%5D={},{}&latlng={},{}&page_size=150&page={}"
+        page_no = 1
+        while True:
+
+            try:
+                jd = self.__http.get(
+                    search_url.format(lat, lng, lat, lng, page_no), headers=headers
+                )
+                if isinstance(jd, SgRequestError):
+                    break
+
+                jd = jd.json()
+                page_no += 1
+                loc_list = jd["data"]["listings"]
+                if len(loc_list) <= 0:
+                    break
+                for loc in loc_list:
+                    locator_domain = website
+                    location_name = loc["name"] if loc["name"] else "<MISSING>"
+                    street_address = loc["address"] if loc["address"] else "<MISSING>"
+                    city = loc["city"] if loc["city"] else "<MISSING>"
+                    state = loc["state"] if loc["state"] else "<MISSING>"
+                    zip = loc["zip_code"] if loc["zip_code"] else "<MISSING>"
+                    country_code = loc.get("country", "<MISSING>")
+                    store_number = loc["id"]
+                    phone = loc["phone_number"] if loc["phone_number"] else "<MISSING>"
+                    location_type = loc["type"] if loc["type"] else "<MISSING>"
+                    latitude = loc["latitude"] if loc["latitude"] else "<MISSING>"
+                    longitude = loc["longitude"] if loc["longitude"] else "<MISSING>"
+                    hours_list = []
+
+                    try:
+                        days = loc["business_hours"].keys()
+                        for day in days:
+                            time = (
+                                loc["business_hours"][day]["open"]
+                                + "-"
+                                + loc["business_hours"][day]["close"]
+                            )
+                            hours_list.append(day + ": " + time)
+
+                    except:
+                        pass
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    page_url = loc["web_url"] if loc["web_url"] else "<MISSING>"
+
+                    found_location_at(latitude, longitude)
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+
+            except:
+                raise
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        expected_search_radius_miles=100,
+    )
 
-scrape()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        countries = SearchableCountries.ALL
+        with SgRequests(dont_retry_status_codes=([404, 422])) as http:
+            for country in countries:
+                search_iter = _SearchIteration(http=http)
+                par_search = ParallelDynamicSearch(
+                    search_maker=search_maker,
+                    search_iteration=search_iter,
+                    country_codes=[country],
+                )
+
+                for rec in par_search.run():
+                    writer.write_row(rec)
+
+
+if __name__ == "__main__":
+    scrape()

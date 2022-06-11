@@ -1,131 +1,95 @@
-import csv
-import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "idealimage.com"
+    start_url = "https://www.idealimage.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang="
 
-    items = []
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-    DOMAIN = "callitspring.com"
-    start_url = "https://www.callitspring.com/api/stores?allStores=true&countryCode=CA&lat=45.62838199999999&lng=-73.5512572"
-    headers = {
-        "accept": "*/*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "x-aldo-api-version": "2",
-        "x-aldo-brand": "callitspring",
-        "x-aldo-lang": "en",
-        "x-aldo-region": "ca",
-        "x-aldo-ssr-request-id": "",
-        "x-forwarded-akamai-edgescape": "undefined",
-    }
-    all_locations = []
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
-    all_locations += data["stores"]
-
-    start_url = "https://www.callitspring.com/api/stores?allStores=true&countryCode=US&lat=45.62838199999999&lng=-73.5512572"
-    headers["x-aldo-region"] = "us"
-    response = session.get(start_url, headers=headers)
-    data = json.loads(response.text)
-    all_locations += data["stores"]
-
-    for poi in all_locations:
-        poi_name = poi["name"]
-        poi_url = "https://www.callitspring.com/ca/en/store-locator/store/{}".format(
-            poi_name
+    all_locations = dom.xpath("//store/item")
+    for poi_html in all_locations:
+        store_url = poi_html.xpath(".//exturl/text()")[0]
+        store_url = urljoin("https://www.idealimage.com", store_url)
+        loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
+        loc_dom = etree.HTML(loc_response.text)
+        location_name = poi_html.xpath(".//location/text()")
+        location_name = (
+            location_name[0].replace("amp;", "") if location_name else "<MISSING>"
         )
-        poi_name = poi_name if poi_name else "<MISSING>"
-        street = poi["address"]["line1"]
-        street = street if street else "<MISSING>"
-        city = poi["address"]["town"]
+        addr = parse_address_intl(poi_html.xpath(".//address/text()")[0])
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        if not street_address:
+            addr = parse_address_intl(
+                " ".join(loc_dom.xpath('//div[@class="centeraddress"]//text()')[1:3])
+            )
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+        street_address = street_address if street_address else "<MISSING>"
+        city = addr.city
         city = city if city else "<MISSING>"
-        state = poi["address"]["region"]["isocodeShort"]
+        state = addr.state
         state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
+        zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["region"]["countryIso"]
-        country_code = country_code if country_code else "<MISSING>"
-        poi_number = poi_name
-        poi_number = poi_number if poi_number else "<MISSING>"
-        phone = poi["address"]["phone"]
-        phone = phone if phone else "<MISSING>"
-        poi_type = poi["storeType"]
-        poi_type = poi_type if poi_type else "<MISSING>"
-        latitude = poi["geoPoint"]["latitude"]
-        longitude = poi["geoPoint"]["longitude"]
-        hoo = []
-        for elem in poi["openingHours"]["weekDayOpeningList"]:
-            if elem.get("openingTime"):
-                day = elem["weekDay"]
-                opens = elem["openingTime"]["formattedHour"]
-                closes = elem["closingTime"]["formattedHour"]
-                hoo.append(f"{day} {opens} - {closes}")
-            else:
-                hoo.append(f"{day} closed")
-        hoo = " ".join(hoo) if hoo else "<MISSING>"
+        country_code = "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')
+        phone = phone[0].split(":")[-1].strip() if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        store_number = poi_html.xpath(".//storeid/text()")[0]
+        latitude = poi_html.xpath(".//latitude/text()")
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = poi_html.xpath(".//longitude/text()")
+        longitude = longitude[0] if longitude else "<MISSING>"
+        hoo = loc_dom.xpath('//table[@class="tbl-hours"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            DOMAIN,
-            poi_url,
-            poi_name,
-            street,
-            city,
-            state,
-            zip_code,
-            country_code,
-            poi_number,
-            phone,
-            poi_type,
-            latitude,
-            longitude,
-            hoo,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

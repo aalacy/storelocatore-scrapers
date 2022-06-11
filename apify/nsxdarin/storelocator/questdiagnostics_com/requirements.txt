@@ -2,3 +2,4 @@ sgrequests
 requests_toolbelt
 sglogging
 sgzip==0.1.0
+tenacity

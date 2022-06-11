@@ -1,98 +1,90 @@
-import csv
-import requests
-from bs4 import BeautifulSoup as bs
 import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dylanscandybar_com')
-
-
-
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def fetch_data():
-    return_main_object = []
-    base_url = "https://www.dylanscandybar.com/pages/visit"
-    r = requests.get('https://www.dylanscandybar.com/pages/visit')
-    soup =bs(r.text,'lxml')
-    data = soup.find_all("div",{"class":"map-section-content-wrapper desktop-3 tablet-2 mobile-3"})
-    for i in data:
-        add= list(i.stripped_strings)[-2].split(",")
-        if "Phase IV" in add or "127 S. Ocean Road" in add:
-            continue
-        if "Canada" in  add[-1]:
-            del add[-1]
-        name = " ".join(list(i.find("h2").stripped_strings))
-        phone="<MISSING>"
-        hours_of_operation="<MISSING>"
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(i.text))
-        if phone_list:
-            phone =  phone_list[-1]
-        # hours_of_operation = soup.find(lambda tag: (tag.name == "strong" ) and "Hours:" in tag.text.strip()).nextSibling
-        # logger.info(hours_of_operation)
-        state = add[-1].strip().split()[0].replace("New",'NY')
-        zipp = " ".join(add[-1].strip().split()[1:]).replace(" - Terminal B",'').replace("York ",'')
-        city = add[-2].replace("11000 Terminal Access Rd.",'').replace("6301 Silver Dart Dr",'').replace("Space #SR2",'').strip()
-        street_address = " ".join(add).replace(state,'').replace(zipp,'').replace(city,'').replace(",",' ').replace("      ",'')
-        # logger.info("~~~~~~~~~~~~~~~~")
-    
-        lat="<MISSING>"
-        lng = "<MISSING>"
-        store = []
-        store.append("https://www.dylanscandybar.com/")
-        store.append(name.replace('|','').strip())
-        if "52 Main Street" in street_address:
-            hours_of_operation ="Mon-Thur: 12pm - 6pm Fri-Sun: 11am - 7pm"
-        
-        if "231 Hudson Street" in street_address:
-            hours_of_operation ="Open 24 hours a day, 7 days a week"
-        if "127 S. Ocean Road" in street_address:
-            hours_of_operation = "Mon - Sun: 10am - 6pm"
-        if "5501 Josh Birmingham Pkwy" in street_address:
-             hours_of_operation = "Mon - Sun: 7am - 8pm"
-        store.append(street_address.strip().replace("- Terminal B",''))
-        store.append(city.strip())
-        store.append(state.strip())
-        store.append(zipp)
-        if "6301 Silver Dart Dr" in street_address:
-            store.append("CA")
-        else:
-            
-            store.append("US")
-        store.append("<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(lat.strip() if lat.strip() else "<MISSING>" )
-        store.append(lng.strip() if lng.strip() else "<MISSING>")
-        store.append( hours_of_operation)
-        store.append("<MISSING>")
-        # store = [x.replace("–", "-") if type(x) ==
-        #          str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode(
-            'ascii').strip() if type(x) == str else x for x in store]
-        # logger.info("data ===" + str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        yield store
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.dylanscandybar.com/"
+    page_url = "https://www.dylanscandybar.com/pages/visit"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="map-section-content"]')
+    for d in div:
+
+        location_name = "".join(d.xpath("./h2[1]//text()"))
+        ad = "".join(d.xpath("./p[last()]/text()")).replace(".", "").strip()
+        if ad.find("Located") != -1:
+            ad = ad.split("Located")[0].strip()
+        if ad.find("-") != -1:
+            ad = ad.split("-")[0].strip()
+
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        if ad.find("Bahamas") != -1:
+            country_code = "Bahamas"
+        city = a.city or "<MISSING>"
+        adr = " ".join(d.xpath(".//*//text()")).replace("\n", "").strip()
+        adr = " ".join(adr.split())
+        ph = re.findall(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?", adr) or "<MISSING>"
+        phone = "".join(ph)
+        hours_of_operation = (
+            " ".join(
+                d.xpath(
+                    './/strong[contains(text(), "Hours:")]/following-sibling::text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        cls = "".join(d.xpath('.//strong[contains(text(), "Closed due")]/text()'))
+        if cls:
+            hours_of_operation = "Closed"
+        if hours_of_operation.find("Opening for") != -1:
+            hours_of_operation = "Coming Soon"
+        if hours_of_operation.find("Opening") != -1:
+            hours_of_operation = hours_of_operation.split("13th")[1].strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

@@ -1,2 +1,3 @@
-lxml==4.3.4
-sgrequests
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.2.6
+sgrequests==0.2.9

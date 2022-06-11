@@ -1,156 +1,124 @@
-
-
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('abercrombie_com')
-
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent import futures
 
 
-session = SgRequests()
-
-
-def fetch_data():
+def get_urls():
+    session = SgRequests()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept': 'application/json, text/javascript, */*; q=0.01',
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
+    r = session.get(
+        "https://www.abercrombie.com/shop/ViewAllStoresDisplayView?storeId=11203&catalogId=10901&langId=-1",
+        headers=headers,
+    )
+    tree = html.fromstring(r.text)
+    return tree.xpath('//ul[@class="link-list-arrow"]/li/a/@href')
 
-    addresses = []
-    base_url = "https://www.abercrombie.com"
 
-    r = session.get("https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=US&radius=10000",
-                    headers=headers)
-    json_data = r.json()
+def get_data(url, sgw: SgWriter):
+    locator_domain = "https://www.abercrombie.com"
+    page_url = f"https://www.abercrombie.com{url}"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+    }
+    r = session.get(page_url, headers=headers)
 
-    return_main_object = []
+    tree = html.fromstring(r.text)
 
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "US"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    raw_address = ""
+    street_address = (
+        "".join(tree.xpath('//meta[@itemprop="streetAddress"]/@content')) or "<MISSING>"
+    )
+    city = (
+        "".join(tree.xpath('//meta[@itemprop="addressLocality"]/@content'))
+        or "<MISSING>"
+    )
+    state = (
+        "".join(tree.xpath('//meta[@itemprop="addressRegion"]/@content')) or "<MISSING>"
+    )
+    postal = (
+        "".join(tree.xpath('//meta[@itemprop="postalCode"]/@content')) or "<MISSING>"
+    )
+    if postal == "-" or postal == "0000":
+        postal = "<MISSING>"
+    country_code = (
+        "".join(tree.xpath('//meta[@itemprop="addressCountry"]/@content'))
+        or "<MISSING>"
+    )
+    location_name = (
+        "".join(tree.xpath('//meta[@itemprop="name"]/@content')) or "<MISSING>"
+    )
+    phone = "".join(tree.xpath('//meta[@itemprop="telephone"]/@content')) or "<MISSING>"
     hours_of_operation = ""
-    page_url = ""
+    latitude = "".join(tree.xpath("//main/@data-latitude"))
+    longitude = "".join(tree.xpath("//main/@data-longitude"))
+    store_number = page_url.split("/")[-1].strip()
+    js_block = (
+        "".join(tree.xpath('//script[contains(text(), "physicalStore")]/text()'))
+        .split("physicalStore',")[1]
+        .split(");")[0]
+        .strip()
+    )
+    js = json.loads(js_block)
+    types = js["physicalStoreAttribute"]
+    location_type = ""
+    for typ in types:
+        if typ["name"] == "Brand":
+            location_type = typ["value"]
+            break
 
-    # logger.info("soup  ==== " + str(json_data))
+    location_type = location_type.replace("ACF", "abercrombie and fitch").replace(
+        "KID", "abercrombie and fitch Kids"
+    )
+    index = 0
+    days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ]
+    for time_period in js["physicalStoreAttribute"][-1]["value"].split(","):
+        hours_of_operation += days[index] + " " + time_period.replace("|", " - ") + " "
+        index += 1
 
-    for location in json_data["physicalStores"]:
-        # logger.info("location ==== " + str(location))
-        location_type = location['physicalStoreAttribute'][7]['value'].replace("ACF","abercrombie and fitch").replace("KID","abercrombie and fitch Kids")
-        store_number = location["storeNumber"]
-        location_name = location["name"]
-        city = location["city"]
-        state = location["stateOrProvinceName"]
-        zipp = location["postalCode"]
-        country_code = location["country"]
-        latitude = str(location["latitude"])
-        longitude = str(location["longitude"])
-        phone = location["telephone"]
-        street_address = ", ".join(location["addressLine"])
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
-        hours_of_operation = ""
-        index = 0
-        days = ["Sunday", "Monday", "Tuesday",
-                "Wednesday", "Thursday", "Friday", "Saturday"]
-        for time_period in location["physicalStoreAttribute"][-1]["value"].split(","):
-            hours_of_operation += days[index] + " " + \
-                time_period.replace("|", " - ") + " "
-            index += 1
-        page_url = "https://www.abercrombie.com/shop/wd/clothing-stores/US/" + \
-            "".join(city.split()) + "/" + state + "/" + store_number
-        # logger.info("phone === "+ str(hours_of_operation))
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-        # if str(store[2]) in addresses:
-        #     continue
-        # addresses.append(store[2])
-
-        # store = [x if x else "<MISSING>" for x in store]
-        store = [x.encode('ascii', 'ignore').decode(
-            'ascii').strip() if x else "<MISSING>" for x in store]
-
-        # logger.info("data = " + str(store))
-        # logger.info(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        yield store
-    r = session.get("https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=CA&radius=10000",
-                    headers=headers)
-    json_data = r.json()
-    for location in json_data["physicalStores"]:
-        # logger.info("location ==== " + str(location))
-        location_type = location['physicalStoreAttribute'][7]['value'].replace("ACF","abercrombie and fitch").replace("KID","abercrombie and fitch Kids")
-        store_number = location["storeNumber"]
-        location_name = location["name"]
-        city = location["city"]
-        state = location["stateOrProvinceName"]
-        zipp = location["postalCode"]
-        country_code = location["country"]
-        latitude = str(location["latitude"])
-        longitude = str(location["longitude"])
-        phone = location["telephone"]
-        street_address = ", ".join(location["addressLine"])
-
-        hours_of_operation = ""
-        index = 0
-        days = ["Sunday", "Monday", "Tuesday",
-                "Wednesday", "Thursday", "Friday", "Saturday"]
-        for time_period in location["physicalStoreAttribute"][-1]["value"].split(","):
-            hours_of_operation += days[index] + " " + \
-                time_period.replace("|", " - ") + " "
-            index += 1
-
-        page_url = "https://www.abercrombie.com/shop/wd/clothing-stores/CA/" + \
-            "".join(city.split()) + "/" + state + "/" + store_number
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-        # if store[2] in addresses:
-        #     continue
-        # addresses.append(store[2])
-
-        # store = [x if x else "<MISSING>" for x in store]
-        store = [x.encode('ascii', 'ignore').decode(
-            'ascii').strip() if x else "<MISSING>" for x in store]
-
-        # logger.info("data = " + str(store))
-        # logger.info(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        yield store
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

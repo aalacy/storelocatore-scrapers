@@ -1,6 +1,6 @@
 import csv
+import usaddress
 
-from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
 
@@ -34,86 +34,100 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.petpeople.com/locations/")
-    tree = html.fromstring(r.text)
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-    return tree.xpath("//a[@class='view-details']/@href")
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+    if street_address == "None":
+        street_address = "<MISSING>"
+    city = a.get("city") or "<MISSING>"
+    state = a.get("state") or "<MISSING>"
+    postal = a.get("postal") or "<MISSING>"
 
-
-def get_data(page_url):
-    locator_domain = "https://www.petpeople.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = (
-        "".join(tree.xpath("//h5[./*[contains(text(), 'Address')]]/text()"))
-        .strip()
-        .split(",")
-    )
-
-    street_address = ", ".join(line[:-2]).strip()
-    city = line[-2].strip()
-    line = line[-1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//h5/a[contains(@href, 'tel')]/text()")).strip()
-        or "<MISSING>"
-    )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    hours = tree.xpath("//aside[@class='secondary-info']/h5")
-
-    for h in hours:
-        text = "".join(h.xpath(".//text()")).replace("\n", "").strip()
-        _tmp.append(text)
-        if text.find("Sun") != -1:
-            break
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if location_name.lower().find("soon") != -1:
-        hours_of_operation = "Coming Soon"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return street_address, city, state, postal
 
 
 def fetch_data():
     out = []
-    urls = get_urls()
+    locator_domain = "https://www.petpeople.com/"
+    api_url = (
+        "https://www.petpeople.com/wp-content/uploads/ssf-wp-uploads/ssf-data.json"
+    )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+    session = SgRequests()
+    r = session.get(api_url)
+    js = r.json()["item"]
+
+    for j in js:
+        line = j.get("address")
+        street_address, city, state, postal = get_address(line)
+        country_code = "US"
+        store_number = j.get("storeId") or "<MISSING>"
+        page_url = j.get("exturl") or "<MISSING>"
+        location_name = j.get("location")
+        phone = j.get("telephone") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        location_type = "<MISSING>"
+
+        _tmp = []
+        source = j.get("operatingHours") or "<html></html>"
+        tree = html.fromstring(source)
+        days = tree.xpath("//div[@id='left']//text()")
+        days = list(filter(None, [d.strip() for d in days]))
+        times = tree.xpath("//div[@id='right']//text()")
+        times = list(filter(None, [t.strip() for t in times]))
+
+        for d, t in zip(days, times):
+            _tmp.append(f"{d.strip()} {t.strip()}")
+
+        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+        row = [
+            locator_domain,
+            page_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            postal,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+        out.append(row)
 
     return out
 

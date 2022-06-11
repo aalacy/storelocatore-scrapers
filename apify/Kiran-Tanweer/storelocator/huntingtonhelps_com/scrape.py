@@ -1,160 +1,119 @@
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
-import time
-import csv
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import json
 
-
-logger = SgLogSetup().get_logger("huntingtonhelps_com")
 
 session = SgRequests()
+website = "huntingtonhelps_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.huntingtonhelps.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    statelist = [
-        "AL",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DE",
-        "FL",
-        "GA",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "SC",
-        "TN",
-        "TX",
-        "UT",
-        "VA",
-        "WA",
-        "WI",
-    ]
-    url = "https://huntingtonhelps.com/location/state-list"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.find("div", {"id": "centerListing"})
-    for state in statelist:
-        subdivlist = divlist.find("div", {"id": state})
-        location = subdivlist.findAll("div", {"class": "listing__item"})
-        for loc in location:
-            title = loc.find("h3").text
-            address = loc.findAll("div", {"class": "address"})
-            street = address[0].text
-            address2 = address[1].text
-            city, address2 = address2.split(",")
-            city = city.lstrip()
-            city = city.rstrip()
-            address2 = address2.lstrip()
-            address2 = address2.rstrip()
-            state, zipcode = address2.split(" ")
-            state = state.lstrip()
-            state = state.rstrip()
-            zipcode = zipcode.lstrip()
-            zipcode = zipcode.rstrip()
-            phone = loc.find("div", {"class": "phone"}).text
-            loclink = loc.find("h3").find("a")["href"]
-            loclink = "https://huntingtonhelps.com" + loclink
-            link = session.get(loclink, headers=headers, verify=False)
-            soup = BeautifulSoup(link.text, "html.parser")
-            hour = soup.find("div", {"class": "hours col-sm-6"})
-            li = hour.findAll("li")
-            hours = ""
-            for ele in li:
-                hr = ele.text
-                hours = hours + " " + hr
-            hours = hours.lstrip()
-            hours = hours.rstrip()
-            directions = soup.findAll("div", {"class": "col-md-6"})[1]
-            imgs = directions.find("img", {"class": "img-responsive"})['src']
-            coord = imgs.split('H%7C')[1]
-            coord = coord.split('&')[0]
-            lat, longt = coord.split(',')
-
-
-            data.append(
-                [
-                    "https://huntingtonhelps.com/",
-                    loclink,
-                    title,
-                    street,
-                    city,
-                    state,
-                    zipcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+    if True:
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        )
+        for lat, lng in search:
+            search_url = (
+                "https://huntingtonhelps.com/location/list-centers?lat="
+                + str(lat)
+                + "&lng="
+                + str(lng)
+                + "&limit=200&radius=50"
             )
-    return data
+            stores_req = session.get(search_url, headers=headers)
+            soup = BeautifulSoup(stores_req.text, "html.parser")
+            locations = soup.find("script")
+            locations = str(locations)
+            locations = (
+                locations.split("centersInRange = ")[1]
+                .split("updateMarkers")[0]
+                .strip()
+            )
+            locations = locations.rstrip(";").strip()
+            locations = json.loads(locations)
+            if locations == []:
+                continue
+            else:
+                for loc in locations:
+                    title = loc["center"]["name"]
+                    storeid = loc["center"]["id"]
+                    url = (
+                        "https://huntingtonhelps.com/center/"
+                        + loc["center"]["code_url"]
+                    )
+                    address = loc["location"]
+                    phones = loc["phones"]
+                    hours = loc["hours"]
+                    street = address["address"]
+                    city = address["city"]
+                    state = address["state"]
+                    pcode = address["zipcode"]
+                    lat = address["latitude"]
+                    lng = address["longitude"]
+                    ph = phones["phone_main"]
+                    hoo = ""
+                    for time in hours:
+                        try:
+                            days = time["day_of_week"]
+                            start = time["open_time"]
+                            end = time["close_time"]
+                            day = days + " " + start + " - " + end + " "
+                            hoo = hoo + day
+                        except TypeError:
+                            days = hours[time]["day_of_week"]
+                            start = hours[time]["open_time"]
+                            end = hours[time]["close_time"]
+                            day = days + " " + start + " - " + end + " "
+                            hoo = hoo + day
+                    hoo = hoo.strip()
+
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=url,
+                        location_name=title,
+                        street_address=street.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=pcode,
+                        country_code="US",
+                        store_number=storeid,
+                        phone=ph,
+                        location_type=MISSING,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hoo.strip(),
+                    )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    deduper = SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
+    )
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
-
+if __name__ == "__main__":
+    scrape()

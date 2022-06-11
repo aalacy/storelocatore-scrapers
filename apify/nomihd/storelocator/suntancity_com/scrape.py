@@ -1,158 +1,155 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
-import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "suntancity.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 headers = {
-    "Connection": "keep-alive",
-    "Accept": "*/*",
-    "X-Requested-With": "XMLHttpRequest",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/86.0.4240.198 Safari/537.36",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "Origin": "https://www.suntancity.com",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Referer": "https://www.suntancity.com/tanning-salon-locations/",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
-    data = "search="
-    stores_req = session.post(
-        "https://www.suntancity.com/get-locations.php", data=data, headers=headers
-    )
-
-    stores = json.loads(stores_req.text)["locations"]
-
-    for store in stores:
+    search_url = "https://www.suntancity.com/find-a-salon"
+    stores_req = session.get(search_url, headers=headers)
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//a[@class="city-link"]/@href')
+    for store_url in stores:
         locator_domain = website
-        page_url = "https://www.suntancity.com/tanning-salon-locations/" + store["slug"]
-
-        location_name = store["name"]
-        street_address = store["address"]
-        city = store["city"]
-        state = store["state"]
-        zip = store["zip"]
-
-        if street_address == "":
-            street_address = "<MISSING>"
-
-        if city == "":
-            city = "<MISSING>"
-
-        if state == "":
-            state = "<MISSING>"
-
-        if zip == "" or zip.isdigit() is False:
-            zip = "<MISSING>"
-
-        country_code = "<MISSING>"
-        if us.states.lookup(state):
-            country_code = "US"
-
-        store_number = store["id"]
-        phone = store["phone"]
-        location_type = "<MISSING>"
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-
+        page_url = "https://www.suntancity.com" + store_url
+        log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
-
-        hours_of_operation = " ".join(
-            store_sel.xpath(
-                '//article[@class="widget location_details"]/div/p[3]/text()'
+        if len("".join(store_sel.xpath('//h1[@class="h3"]/text()')).strip()) <= 0:
+            sub_stores = store_sel.xpath(
+                '//div[@class="stc-content-line-content "]//a[contains(text(),"Details & Pricing")]/@href'
             )
-        ).strip()
+            for sub in sub_stores:
+                page_url = "https://www.suntancity.com" + sub
+                log.info(page_url)
+                store_req = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_req.text)
+                if (
+                    len("".join(store_sel.xpath('//h1[@class="h3"]/text()')).strip())
+                    > 0
+                ):
 
-        if phone == "":
-            phone = "<MISSING>"
+                    location_name = "".join(
+                        store_sel.xpath('//h1[@class="h3"]/text()')
+                    ).strip()
+                    address = "".join(
+                        store_sel.xpath('//div[@class="salon-address"]/text()')
+                    ).strip()
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+                    street_address = ", ".join(address.split(",")[:-2]).strip()
+                    city = address.rsplit(",")[-2].strip()
+                    state = address.rsplit(",")[-1].strip().split(" ")[0].strip()
+                    zip = address.rsplit(",")[-1].strip().split(" ")[-1].strip()
 
-        loc_list.append(curr_list)
-        # break
+                    if zip.isdigit() is False:
+                        zip = "<MISSING>"
 
-    return loc_list
+                    country_code = "US"
+
+                    store_number = "<MISSING>"
+                    phone = "".join(
+                        store_sel.xpath('//div[@class="salon-phonenumber"]/a/text()')
+                    ).strip()
+                    location_type = "<MISSING>"
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+
+                    hours_of_operation = "; ".join(
+                        store_sel.xpath(
+                            '//div[@class="salon-hours font-body1"]/div/text()'
+                        )
+                    ).strip()
+
+                    if phone == "":
+                        phone = "<MISSING>"
+
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+        else:
+            location_name = "".join(store_sel.xpath('//h1[@class="h3"]/text()')).strip()
+            address = "".join(
+                store_sel.xpath('//div[@class="salon-address"]/text()')
+            ).strip()
+
+            street_address = ", ".join(address.split(",")[:-2]).strip()
+            city = address.rsplit(",")[-2].strip()
+            state = address.rsplit(",")[-1].strip().split(" ")[0].strip()
+            zip = address.rsplit(",")[-1].strip().split(" ")[-1].strip()
+
+            if zip.isdigit() is False:
+                zip = "<MISSING>"
+
+            country_code = "US"
+            store_number = "<MISSING>"
+            phone = "".join(
+                store_sel.xpath('//div[@class="salon-phonenumber"]/a/text()')
+            ).strip()
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+            hours_of_operation = "; ".join(
+                store_sel.xpath('//div[@class="salon-hours font-body1"]/div/text()')
+            ).strip()
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

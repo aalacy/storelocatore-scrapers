@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,33 +13,6 @@ headers = {
 logger = SgLogSetup().get_logger("basspro_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
     url = "https://stores.basspro.com/"
@@ -44,23 +20,17 @@ def fetch_data():
     website = "basspro.com"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if ',"type":"main","url":"' in line:
-            items = line.split(',"type":"main","url":"')
+        if '<a class="location-card-title-link" href="' in line:
+            items = line.split('<a class="location-card-title-link" href="')
             for item in items:
-                if '"website":"' in item:
-                    lurl = item.split('"website":"')[1].split('"')[0]
-                    if "stores." in lurl:
-                        if '"location-name-brand-inline">Cabela' in item:
-                            locs.append(lurl + "|Cabelas")
-                        else:
-                            locs.append(lurl + "|Bass Pro")
-
+                if '<h2 class="location-card-title">' in item:
+                    locs.append(item.split('"')[0])
     for loc in locs:
-        lurl = loc.split("|")[0]
-        typ = loc.split("|")[1]
+        typ = "Bass Pro"
+        if "cabelas." in loc:
+            typ = "Cabela's"
         country = "US"
-        logger.info(lurl)
+        logger.info(loc)
         name = ""
         add = ""
         city = ""
@@ -71,11 +41,54 @@ def fetch_data():
         lat = ""
         lng = ""
         hours = ""
-        if ".com/ca" in lurl:
+        if ".ca" in loc:
             country = "CA"
-        r2 = session.get(lurl, headers=headers)
+        r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            if '<h1 class="heading heading-largest">' in line2:
+                name = line2.split('<h1 class="heading heading-largest">')[1].split(
+                    "<"
+                )[0]
+            if '<span itemprop="telephone">' in line2:
+                phone = line2.split('<span itemprop="telephone">')[1].split("<")[0]
+            if '<span><span itemprop="addressLocality">' in line2:
+                city = line2.split('<span><span itemprop="addressLocality">')[1].split(
+                    "<"
+                )[0]
+            if '<span itemprop="addressRegion">' in line2:
+                state = line2.split('<span itemprop="addressRegion">')[1].split("<")[0]
+                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if '<span itemprop="streetAddress"><strong>' in line2:
+                add = (
+                    line2.split('<span itemprop="streetAddress"><strong>')[1]
+                    .split("<")[0]
+                    .strip()
+                )
+            if 'content="https://www.google.com/maps/place/' in line2:
+                try:
+                    lat = line2.split("@")[1].split(",")[0]
+                    lng = line2.split("@")[1].split(",")[1]
+                except:
+                    pass
+            if 'itemprop="openingHours" content="' in line2:
+                ditems = line2.split('itemprop="openingHours" content="')
+                for ditem in ditems:
+                    if "'dimension1'" not in ditem:
+                        hrs = (
+                            ditem.split('"')[0]
+                            .replace("<p ; ", "")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .strip()
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
                 name = name.split(" |")[0]
@@ -108,187 +121,34 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        yield [
-            website,
-            lurl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Calgary",
-        "851-64th Avenue Northeast",
-        "Calgary",
-        "AB",
-        "T2E 3B8",
-        "CA",
-        "<MISSING>",
-        "(403) 910-0200",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Edmonton",
-        "15320 37 Street Northwest",
-        "Edmonton",
-        "AB",
-        "T5Y 0S5",
-        "CA",
-        "<MISSING>",
-        "(780) 670-6100",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Edmonton",
-        "6150 Currents Drive Northwest",
-        "Edmonton",
-        "AB",
-        "T6W 0L7",
-        "CA",
-        "<MISSING>",
-        "(780) 628-9200",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Nanaimo",
-        "6902 Island Highway North",
-        "Nanaimo",
-        "BC",
-        "V9V 1P6",
-        "CA",
-        "<MISSING>",
-        "(250) 390-7800",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Abbotsford",
-        "6150 Currents Drive Northwest",
-        "Abbotsford",
-        "BC",
-        "V4M0B3",
-        "CA",
-        "<MISSING>",
-        "(604) 948-6200",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Winnipeg",
-        "580 Sterling Lyon Parkway",
-        "Winnipeg",
-        "MB",
-        "R3P 1E9",
-        "CA",
-        "<MISSING>",
-        "(204) 786-8966",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Barrie",
-        "Park Place Center 50 Concert Way",
-        "Barrie",
-        "ON",
-        "L4N 6N5",
-        "CA",
-        "<MISSING>",
-        "(705) 735-8900",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Ottawa",
-        "3065 Palladium Drive",
-        "Ottawa",
-        "ON",
-        "K2T 0N2",
-        "CA",
-        "<MISSING>",
-        "(613) 319-8600",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Regina",
-        "4901 Gordon Road",
-        "Regina",
-        "SK",
-        "S4W 0B7",
-        "CA",
-        "<MISSING>",
-        "(306) 523-5900",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
-    yield [
-        website,
-        "<MISSING>",
-        "Cabela's Saskatoon",
-        "1714 Preston Avenue North",
-        "Saskatoon",
-        "SK",
-        "S7N 4Y1",
-        "CA",
-        "<MISSING>",
-        "(306) 343-4868",
-        "Cabelas",
-        "<MISSING>",
-        "<MISSING>",
-        "<MISSING>",
-    ]
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
+        hours = hours.replace("<p;", "").replace(" ;", ";").replace("; ", ";")
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

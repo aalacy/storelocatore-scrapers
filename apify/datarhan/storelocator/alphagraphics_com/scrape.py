@@ -1,136 +1,82 @@
-import csv
 import json
 from lxml import etree
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries, DynamicZipAndGeoSearch
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=3, backoff_factor=0.3)
-
-    items = []
+    session = SgRequests()
+    domain = "alphagraphics.com"
+    start_url = "https://www.alphagraphics.com/agmapapi/AGLocationFinder/AGLocationSearch?ParentSiteIds%5B%5D=e5792715-7cfc-40ef-8fdc-8b7188a178f8&ParentSiteIds%5B%5D=759afee9-1554-4283-aa6c-b1e5c4a2b1de&MetroAreaName=&SearchLocation={}&Latitude={}&Longitude={}&Radius=200"
     scraped_items = []
-
-    DOMAIN = "alphagraphics.com"
-    start_url = "https://printing-services-near-me.alphagraphics.com/search.html?q={}"
-
-    all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=200,
-        max_search_results=None,
+    all_coords = DynamicZipAndGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
-    for code in all_codes:
-        response = session.get(start_url.format(code))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath(
-            '//ol[@class="ResultList"]//a[@data-ya-track="website_cta"]/@href'
-        )
-
-    for store_url in list(set(all_locations)):
-        if not store_url.strip():
-            continue
-        if "html" in store_url:
-            store_url = (
-                "/".join(store_url.split("/")[:-1])
-                + "/"
-                + store_url.split("/")[-1].replace(".", "").replace("html", ".html")
-            )
-        if "www.alphagraphics.com" not in store_url:
-            continue
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        poi_data = store_dom.xpath('//script[@type="application/ld+json"]/text()')
-        poi_data = json.loads(poi_data[0])
-        if type(poi_data) != list:
+    for code, coord in all_coords:
+        lat, lng = coord
+        response = session.get(start_url.format(code, lat, lng))
+        data = json.loads(response.text)
+        if not data.get("results"):
             continue
 
-        location_name = poi_data[0].get("name")
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi_data[0]["address"]["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi_data[0]["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = poi_data[0]["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = poi_data[0]["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi_data[0]["address"]["addressCountry"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi_data[0]["telephone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = poi_data[0]["@type"]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi_data[0].get("hasMap"):
-            latitude = poi_data[0]["hasMap"].split("/")[-1].split(",")[0]
-            longitude = poi_data[0]["hasMap"].split("/")[-1].split(",")[-1]
-        hours_of_operation = "<MISSING>"
-        if poi_data[0].get("openingHours"):
-            hours_of_operation = poi_data[0]["openingHours"]
+        all_locations = data["results"]
+        for poi in all_locations:
+            store_url = poi["url"]
+            location_name = poi["title"]
+            street_address = poi["addressLine1"]
+            city = poi["city"]
+            state = poi["state"]
+            zip_code = poi["zip"]
+            store_number = poi["extCode"]
+            phone = poi["phone"]
+            latitude = poi.get("lat")
+            longitude = poi.get("long")
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = "{} {}".format(location_name, street_address)
-        if check not in scraped_items:
+            check = "{} {}".format(location_name, street_address)
+            if check in scraped_items:
+                continue
             scraped_items.append(check)
-            items.append(item)
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath('//div[@class="location-content--time"]//text()')
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else ""
 
-    return items
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code="",
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

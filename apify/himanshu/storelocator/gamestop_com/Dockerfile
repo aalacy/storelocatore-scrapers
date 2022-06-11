@@ -1,8 +1,8 @@
-FROM safegraph/apify-python3:latest
-
-COPY . ./
+FROM safegraph/apify-python3:3.7.0
 
 USER root
+
+COPY . ./
 
 RUN pip3 install -r requirements.txt
 

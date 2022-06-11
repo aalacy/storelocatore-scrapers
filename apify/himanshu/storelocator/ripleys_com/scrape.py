@@ -1,43 +1,21 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("ripleys_com")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
@@ -48,9 +26,7 @@ def fetch_data():
     r = session.get("https://www.ripleys.com/attractions/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    for location_img_tag in soup.find_all("div", {"class": "row vwpc-row"})[1].find_all(
-        "li"
-    ):
+    for location_img_tag in soup.find(id="tabpanel1").find_all("li"):
 
         location_tag = location_img_tag.find("a")
         locator_domain = base_url
@@ -77,6 +53,7 @@ def fetch_data():
                 "https://www.ripleys.com/williamsburg/",
             )
         )
+        logger.info(page_url)
         location_name = location_tag.text
         r_location = session.get(page_url, headers=headers)
         if r_location is None:
@@ -161,10 +138,25 @@ def fetch_data():
                 ).stripped_strings
             )
             addr = full_address_list[-4].replace("\xa0", " ").split(",")
-            street_address = addr[0]
+            if len(addr[0]) < 5:
+                addr = (
+                    soup_location.find(id="address-1")
+                    .text.replace("Click here to view location", "")
+                    .split(",")
+                )
+                map_str = soup_location.find(class_="contact-info-row address").a[
+                    "href"
+                ]
+                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
+                    0
+                ].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+
+            street_address = addr[0].strip()
             city = addr[1].strip()
-            state = addr[2].strip().split(" ")[0]
-            zipp = addr[2].strip().split(" ")[1]
+            state = addr[2].strip().split()[0]
+            zipp = addr[2].strip().split()[1]
 
             hours_tag = soup_location.find(
                 lambda tag: (tag.name == "strong")
@@ -173,8 +165,15 @@ def fetch_data():
             try:
                 hours_list = list(hours_tag.parent.parent.stripped_strings)
             except:
-                hours_list = ""
+                hours_list = []
             hours_of_operation = " ".join(hours_list)
+
+            if not hours_of_operation:
+                hours_of_operation = " ".join(
+                    list(
+                        soup_location.find(class_="hours-of-operation").stripped_strings
+                    )
+                )
         elif soup_location.find("div", {"id": "text-2"}):
 
             full_address_list = list(
@@ -257,12 +256,55 @@ def fetch_data():
                 .find_all("p")[6]
                 .stripped_strings
             )[0]
+        elif len(soup_location.find_all(id="footer-address-first")) > 1:
+            locs = soup_location.find_all(id="footer-address-first")
+            for loc in locs:
+                full_address_list = list(loc.stripped_strings)
+                location_name = full_address_list[0]
+                street_address = full_address_list[1].split(",")[0]
+                city_line = full_address_list[2].split(",")
+                city = city_line[0]
+                state = city_line[1].split()[0]
+                zipp = city_line[1].split()[1]
+                phone = full_address_list[-1]
+
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zipp,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+                )
+            continue
+        elif soup_location.find(id="custom_html-3"):
+            full_address_list = list(
+                soup_location.find(id="custom_html-3").stripped_strings
+            )[1:]
+            full_address_list[0] = full_address_list[0].replace(" Blvd.", " Blvd,")
+            street_address = full_address_list[0].split(",")[0]
+            if "," not in full_address_list[1]:
+                city = full_address_list[0].split(",")[1].strip()
+            else:
+                city = full_address_list[1].split(",")[0].strip()
         else:
             continue
 
         phone_list = re.findall(
             re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
-            str(full_address_list).replace("\xa0", " "),
+            str(full_address_list)
+            .replace("\xa0", " ")
+            .replace("-FISH (3474)", "-3474"),
         )
         ca_zip_list = re.findall(
             r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
@@ -388,65 +430,68 @@ def fetch_data():
                     "",
                 )
             )
-
-        if "Mon - Sun" in street_address:
-            street_address = "115 Broadway"
-            zipp = "53965"
-            hours_of_operation = "Mon - Sun	Closed"
         if "Niagara Falls" in city:
             state = "ON"
-        if "1735 Richmond Road" in street_address:
-            hours_of_operation = "Sundays - Thursdays: 10:00 am to 7:00 pm, Fridays and Saturdays: 10:00 am to 10:00 pm"
-        if "TEMPORARILY CLOSED" in hours_of_operation:
-            hours_of_operation = "<MISSING>"
         hours_of_operation = (
             hours_of_operation.replace(
                 "CLOSED FOR THE SEASON We cannot wait to welcome you back next year!",
-                "<MISSING>",
+                "CLOSED FOR THE SEASON",
             )
             .replace("Hours Ripley’s Believe It or Not!", "")
             .replace(
                 "Hours Nights of Lights Nightly from November 14th through January 31st. A timed reservation is required. Ripley's Believe It or Not!",
                 "",
             )
+            .split(" *Last ticket")[0]
+            .strip()
         )
-        hours_of_operation = hours_of_operation.replace(
-            "HOURS NOW OPEN! *Hours are subject to change – Please call to verify hours before visiting: (865) 436-5096 Ripley’s Believe It or Not!",
-            "",
-        ).replace(
-            "Weather Permitting PRICES Buy discounted and combo tickets online! TICKETS & PRICING GROUPS We offer special rates for groups of 10 or more. To get in touch directly, please call (888) 240-1358, ext. 2156 or email our Groups Department . MORE GROUP INFO",
-            "",
+        hours_of_operation = (
+            hours_of_operation.replace(
+                "HOURS NOW OPEN! *Hours are subject to change – Please call to verify hours before visiting: (865) 436-5096 Ripley’s Believe It or Not!",
+                "",
+            )
+            .replace(
+                "Weather Permitting PRICES Buy discounted and combo tickets online! TICKETS & PRICING GROUPS We offer special rates for groups of 10 or more. To get in touch directly, please call (888) 240-1358, ext. 2156 or email our Groups Department . MORE GROUP INFO",
+                "",
+            )
+            .split("*last")[0]
+            .strip()
         )
 
-        store = [
-            locator_domain,
-            location_name,
-            street_address.replace("•", "").strip(","),
-            city,
-            state,
-            zipp,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation.replace("\t", ""),
-            page_url,
-        ]
+        if not hours_of_operation:
+            hours_of_operation = ""
 
-        if str(store[2]) not in addresses and country_code:
-            addresses.append(str(store[2]))
-            store = [x.replace("–", "-") if type(x) == str else x for x in store]
-            store = [x.replace("’", "'") if type(x) == str else x for x in store]
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
+        street_address = (
+            street_address.replace("•", "")
+            .replace("Pier Building on the Boardwalk,", "")
+            .strip()
+        )
 
-            yield store
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+
+        if street_address not in addresses and country_code:
+            addresses.append(street_address)
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

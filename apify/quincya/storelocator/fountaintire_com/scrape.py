@@ -1,101 +1,81 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
 import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('fountaintire_com')
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.fountaintire.com/umbraco/api/locations/get"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
+    session = SgRequests()
+    # Request post
+    payload = {
+        "latitude": "51.253775",
+        "longitude": "-85.323214",
+        "radius": "5000",
+        "services": "",
+    }
 
-	base_link = "https://www.fountaintire.com/umbraco/api/locations/get"
+    req = session.post(base_link, headers=headers, data=payload)
+    base = BeautifulSoup(req.text, "lxml")
+    js = base.text
+    store_data = json.loads(js)
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    for store in store_data:
+        final_link = "https://www.fountaintire.com/stores/details/" + store["id"]
+        locator_domain = "fountaintire.com"
 
-	session = SgRequests()
-	# Request post
-	payload = {'latitude': '51.253775',
-				'longitude': '-85.323214',
-				'radius': '5000',
-				'services':''}
+        location_name = store["branchName"]
+        street_address = store["address"]
+        city = store["city"].upper()
+        state = store["province"]
+        zip_code = store["postalCode"]
+        country_code = "CA"
+        store_number = store["id"]
+        location_type = "<MISSING>"
+        phone = store["phoneNumber"]
 
-	req = session.post(base_link,headers=HEADERS,data=payload)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+        hours_of_operation = ""
+        raw_hours = store["deserializedHours"]
+        days = ["Mon:", "Tue:", "Wed:", "Thu:", "Fri:", "Sat:", "Sun:"]
 
-	js = base.text
-	store_data = json.loads(js)
+        for i, hours in enumerate(raw_hours):
+            hours_of_operation = (
+                hours_of_operation + " " + days[i] + " " + hours
+            ).strip()
 
-	ids = []
-	for store in store_data:
-		ids.append(store["id"])
-	
-	data = []
-	for id_num in ids:
-		final_link = "https://www.fountaintire.com/stores/details/" + id_num
-		logger.info(final_link)
-		req = session.get(final_link, headers = HEADERS)
-		try:
-			base = BeautifulSoup(req.text,"lxml")
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-			
-		locator_domain = "fountaintire.com"
+        latitude = store["lat"]
+        longitude = store["lng"]
 
-		script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').replace("\r","").strip()
-		store = json.loads(script)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		location_name = store['name']
-		street_address = store['address']['streetAddress']
-		city = store['address']['addressLocality']
-		state = store['address']['addressRegion']
-		zip_code = store['address']['postalCode']
-		country_code = "CA"
-		store_number = final_link.split("/")[-1]
-		location_type = base.find(id="tab-features").text.strip().replace("\n",",")
-		phone = store['telephone']
 
-		hours_of_operation = ""
-		raw_hours = store['openingHoursSpecification']
-		for hours in raw_hours:
-			day = hours['dayOfWeek']
-			if len(day[0]) != 1:
-				day = ' '.join(hours['dayOfWeek'])
-			opens = hours['opens']
-			closes = hours['closes']
-			if opens != "" and closes != "":
-				clean_hours = day + " " + opens + "-" + closes
-				hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
-
-		latitude = store['geo']['latitude']
-		longitude = store['geo']['longitude']
-		page_url = store["url"]
-		data.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

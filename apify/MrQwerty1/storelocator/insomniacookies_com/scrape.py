@@ -1,188 +1,123 @@
-import csv
-import html as h
-
-from concurrent import futures
-from lxml import html
+import json
+import usaddress
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
-def get_input(state):
-    lines = []
-    data = {"state": state}
-    session = SgRequests()
-    r = session.post("https://insomniacookies.com/locations/searchStores", data=data)
-    js = r.json()["stores"]
-    for j in js:
-        j = j.get("store_info")
-        _tmp = {
-            "store_number": j.get("id") or "<MISSING>",
-            "location_name": j.get("name") or "<MISSING>",
-            "city": j.get("city") or "<MISSING>",
-            "state": j.get("state") or "<MISSING>",
-            "postal": j.get("zip") or "<MISSING>",
-            "street_address": j.get("address") or "<MISSING>",
-            "country": "US",
-            "lat": j.get("store_lat") or "<MISSING>",
-            "lon": j.get("store_lon") or "<MISSING>",
-            "phone": j.get("phone") or "<MISSING>",
-            "locator_domain": "https://insomniacookies.com/",
-            "page_url": f"https://insomniacookies.com/locations/store/{j.get('id')}/ajax?",
-            "location_type": "<MISSING>",
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
+    )
+    for lat, lng in search:
+        data = {
+            "operationName": "stores",
+            "variables": {
+                "externalId": None,
+                "customerId": None,
+                "lat": lat,
+                "lng": lng,
+            },
+            "query": "query stores($lat: Float, $lng: Float, $externalId: String, $customerId: ID, $orderTypeId: ID) {  storeSearch(data: {lat: $lat, lng: $lng, externalId: $externalId, customerId: $customerId, orderTypeId: $orderTypeId}) {    lat    lng    address {      address1      city      state      postcode      lat      lng      __typename    }    stores {      id      name      address      distanceToStore      phone      storefrontImage      lat      lng      inDeliveryRange      boundary      status      note      storeType      isPickupOpen      isDeliveryOpen      hours {        type        days {          day          hour          __typename        }        __typename      }      __typename    }    __typename  }}",
         }
-        lines.append(_tmp)
 
-    return lines
+        api = "https://api.insomniacookies.com/graphql"
+        r = session.post(api, headers=headers, data=json.dumps(data))
+        js = r.json()["data"]["storeSearch"]["stores"]
 
+        for j in js:
+            location_name = j.get("name")
+            raw_address = j.get("address")
+            street_address, city, state, postal = get_address(raw_address)
+            store_number = j.get("id")
+            page_url = f"https://insomniacookies.com/locations/store/{store_number}"
+            phone = j.get("phone")
+            latitude = j.get("lat")
+            longitude = j.get("lng")
 
-def get_data(line):
-    session = SgRequests()
+            _tmp = []
+            days = []
+            hours = j.get("hours")
+            for h in hours:
+                _type = h.get("type") or ""
+                if "Retail" in _type:
+                    days = h.get("days")
+                    break
 
-    page_url = line.get("page_url")
-    r = session.get(page_url)
-    text = r.json()["html"]
-    tree = html.fromstring(h.unescape(text))
+            for d in days:
+                day = d.get("day")
+                hour = d.get("hour")
+                if hour.count("Closed") == 2:
+                    hour = "Closed"
+                _tmp.append(f"{day}: {hour}")
 
-    _tmp = []
-    tr = tree.xpath("//table")[0].xpath("//tr")
-    a = False
-    for t in tr:
-        day = "".join(t.xpath("./td[1]/text()")).strip()
-        if day == "Sunday" and a:
-            break
-        if day == "Sunday" and not a:
-            a = True
-        time = "".join(t.xpath("./td[2]/text()")).strip()
-        _tmp.append(f"{day}: {time}")
+            hours_of_operation = ";".join(_tmp)
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
-    row = [
-        line.get("locator_domain"),
-        line.get("page_url").replace("/ajax?", ""),
-        line.get("location_name"),
-        line.get("street_address"),
-        line.get("city"),
-        line.get("state"),
-        line.get("postal"),
-        line.get("country"),
-        line.get("store_number"),
-        line.get("phone"),
-        line.get("location_type"),
-        line.get("lat"),
-        line.get("lon"),
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    inputs = []
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "ME",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "RI",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WA",
-        "WV",
-        "WI",
-        "WY",
-    ]
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_input, state): state for state in states}
-        for future in futures.as_completed(future_to_url):
-            lines = future.result()
-            for line in lines:
-                inputs.append(line)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, inp): inp for inp in inputs}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://insomniacookies.com/"
+    headers = {"content-type": "application/json"}
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

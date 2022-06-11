@@ -1,122 +1,88 @@
-import re
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf-8') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = 'peopleready.com'
-
-    start_url = 'https://www.peopleready.com/api/location/getnearestbranches'
-    body = '{"Latitude":53.77450934032745,"Longitude":-121.70410083292569,"DiameterToSearch":60000,"Skip":0}'
-    headers = {
-        'authority': 'www.peopleready.com',
-        'accept': 'application/json, text/plain, */*',
-        'content-type': 'application/json;charset=UTF-8',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36'
+    domain = "peopleready.com"
+    start_url = "https://www.peopleready.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=25&search_radius=100&autoload=1"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    
-    response = session.post(start_url, data=body, headers=headers)
-    all_poi = json.loads(response.text)
 
-    for poi in all_poi:
-        store_url = 'https://www.peopleready.com/locations' + poi['Url']
-        location_name = poi['Title']
-        location_name = location_name if location_name else '<MISSING>'
-        street_address = poi['Address']['Street']
-        street_address = street_address if street_address else '<MISSING>'
-        city = poi['Address']['City']
-        city = city if city else '<MISSING>'
-        state = poi['Address']['StateCode']
-        state = state if state else '<MISSING>'
-        zip_code = poi['Address']['Zip']
-        zip_code = zip_code if zip_code else '<MISSING>'
-        country_code = poi['Address']['CountryCode']
-        country_code = country_code if country_code else '<MISSING>'
-        store_number = poi['BranchNumber']
-        store_number = store_number if store_number else '<MISSING>'
-        phone = poi['PhoneNumber']
-        phone = phone if phone else '<MISSING>'
-        location_type = ''
-        location_type = location_type if location_type else '<MISSING>'
-        latitude = poi['Address']['Latitude']
-        latitude = latitude if latitude else '<MISSING>'
-        longitude = poi['Address']['Longitude']
-        longitude = longitude if longitude else '<MISSING>'
-        hours_of_operation = []
-        hours = {}
-        for key, value in poi.items():
-            if key.endswith('Close'):
-                day = key.replace('Close', '')
-                if hours.get(day):
-                    hours[day]['close'] = value
-                    if not value.strip():
-                        hours[day] = {'close': 'closed'}
-                else:
-                    hours[day] = {'close': value}
-                    if not value.strip():
-                        hours[day] = {'close': 'closed'}
-            if key.endswith('Open'):
-                day = key.replace('Open', '')
-                if hours.get(day):
-                    hours[day]['open'] = value
-                    if not value.strip():
-                        hours[day] = {'open': 'closed'}
-                else:
-                    hours[day] = {'open': value}
-                    if not value.strip():
-                        hours[day] = {'open': 'closed'}
-        for day, hours in hours.items():
-            if not hours.get('open'):
-                hours_of_operation.append('{} - closed'.format(day))
-            else:
-                hours_of_operation.append('{} {} - {}'.format(day, hours['open'], hours['close']))
-        hours_of_operation = ', '.join(hours_of_operation) if hours_of_operation else '<MISSING>'
-        
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation
-        ]
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        expected_search_radius_miles=100,
+    )
 
-        items.append(item)
-        
-    return items
+    for lat, lng in all_coords:
+        response = session.get(start_url.format(lat, lng), headers=hdr)
+        if not response.text:
+            continue
+        all_poi = json.loads(response.text)
+
+        for poi in all_poi:
+            page_url = poi["permalink"]
+            loc_response = session.get(page_url, headers=hdr)
+            loc_dom = etree.HTML(loc_response.text)
+
+            location_name = poi["store"]
+            street_address = poi["address"]
+            if poi["address2"]:
+                street_address += " " + poi["address2"]
+            city = poi["city"]
+            state = poi["state"]
+            zip_code = poi["zip"]
+            country_code = poi["country"]
+            store_number = poi["branch_number"].split("-")[0].split("&")[0]
+            phone = poi["phone"]
+            latitude = poi["lat"]
+            longitude = poi["lng"]
+            hours_of_operation = loc_dom.xpath(
+                '//table[@class="wpsl-opening-hours"]//text()'
+            )
+            hours_of_operation = (
+                ", ".join(hours_of_operation) if hours_of_operation else ""
+            )
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
