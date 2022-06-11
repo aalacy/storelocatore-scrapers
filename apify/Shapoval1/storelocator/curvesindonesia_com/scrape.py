@@ -57,7 +57,7 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             postal = a.postcode or "<MISSING>"
-            country_code = "IN"
+            country_code = "ID"
             city = a.city or "<MISSING>"
             latitude = "".join(tree.xpath("//div/@data-lat")) or "<MISSING>"
             longitude = "".join(tree.xpath("//div/@data-lng")) or "<MISSING>"
