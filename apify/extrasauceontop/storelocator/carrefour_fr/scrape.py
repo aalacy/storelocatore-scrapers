@@ -73,6 +73,7 @@ def get_data():
                     driver.get(sub_url)
                     response = driver.page_source
                     json_objects = extract_json(response)
+                    json_objects[1]["search"]["data"]["stores"]
                 except Exception:
                     driver.get(sub_url)
                     response = driver.page_source
