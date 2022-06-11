@@ -27,7 +27,7 @@ def fetch_data():
         expected_search_radius_miles=200,
     )
     for lat, long in search:
-        log.info(f"Coordinates remaining: {search.items_remaining()})")
+        log.info(f"Location found at: {found_location_at(lat, long)})")
         url = (
             "https://www.stewartsshops.com/wp-admin/admin-ajax.php?action=store_search&distance_unit=mi&lat="
             + str(lat)
