@@ -46,7 +46,7 @@ def get_country_by_code(code=""):
         return "<MISSING>"
 
 
-@retry(stop=stop_after_attempt(5), wait=wait_random(min=2, max=6))
+@retry(stop=stop_after_attempt(7), wait=wait_random(min=10, max=30))
 def _info(_):
     hours = []
     _addr = []
