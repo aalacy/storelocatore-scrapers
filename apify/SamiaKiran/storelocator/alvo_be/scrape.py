@@ -28,27 +28,29 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        url = "https://www.alvo.be/nl/winkels"
+        url = "https://alvo.be/winkels"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("table").findAll("tr")[1:]
+        loclist = soup.findAll("div", {"class": "location-content"})
         for loc in loclist:
             temp = loc.find("h2")
             page_url = DOMAIN + temp.find("a")["href"]
             location_name = temp.text
             log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
             street_address = strip_accents(
-                loc.find("div", {"class": "thoroughfare"}).text
+                soup.find("span", {"class": "address-line1"}).text
             )
-            city = strip_accents(loc.find("span", {"class": "locality"}).text)
-            zip_postal = loc.find("span", {"class": "postal-code"}).text
+            city = strip_accents(soup.find("span", {"class": "locality"}).text)
+            zip_postal = soup.find("span", {"class": "postal-code"}).text
             state = MISSING
             country_code = strip_accents(
-                loc.find("span", {"class": "country"}).text.replace("«", "")
+                soup.find("span", {"class": "country"}).text.replace("«", "")
             )
-            phone = loc.find("span", {"class": "phone-number"}).text
+            phone = soup.select_one("a[href*=tel]").text
             hours_of_operation = (
-                loc.find("div", {"class": "field-shop-hours-opening"})
+                soup.find("table", {"class": "office-hours__table"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
