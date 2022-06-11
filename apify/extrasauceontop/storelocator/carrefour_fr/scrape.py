@@ -54,11 +54,8 @@ def get_data():
             )
         ]
 
-    for url in region_urls:
-        log.info("url: " + url)
-        with SgFirefox(
-            block_third_parties=True, proxy_country="fr", is_headless=True
-        ) as driver:
+        for url in region_urls:
+            log.info("url: " + url)
             driver.get(url)
             response = driver.page_source
             soup = bs(response, "html.parser")
@@ -97,8 +94,11 @@ def get_data():
                     store_number = location["storeId"]
                     address = location["address"]["address1"].strip()
 
-                    if address[-1] == "0":
-                        address = address[:-2]
+                    try:
+                        if address[-1] == "0":
+                            address = address[:-2]
+                    except Exception:
+                        address = "<MISSING>"
 
                     state = "<MISSING>"
                     zipp = location["address"]["postalCode"]
@@ -165,7 +165,6 @@ def get_data():
 
 
 def scrape():
-
     try:
         proxy_pass = os.environ["PROXY_PASSWORD"]
 
