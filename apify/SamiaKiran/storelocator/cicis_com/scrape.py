@@ -82,7 +82,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             .replace("|", " ")
         )
         street_address = soup.find("span", {"class": "c-address-street-1"}).text
-        city = soup.find("span", {"class": "c-address-city"}).text
+        city = soup.find("span", {"class": "c-address-city"}).text.replace(",", "")
         state = soup.find("span", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
         country_code = "US"
