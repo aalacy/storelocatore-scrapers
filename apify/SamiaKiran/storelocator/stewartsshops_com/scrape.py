@@ -39,6 +39,7 @@ def fetch_data():
         if loclist:
             for loc in loclist:
                 location_name = html.unescape(loc["store"])
+                page_url = loc["permalink"]
                 log.info(location_name)
                 store_number = location_name.split("#", 1)[1].replace("-", "")
                 if store_number.split():
@@ -59,7 +60,7 @@ def fetch_data():
                 )
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url="https://www.stewartsshops.com/find-a-shop/",
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
