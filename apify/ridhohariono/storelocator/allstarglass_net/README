@@ -1,0 +1,13 @@
+--ignore StreetAddressHasNumber (Some page doesn't have store address)
+Found 5 concerning rows. Examples:
+   street_address              REASON  rowNumber
+13      <MISSING>  ADDR_HAS_NO_NUMBER         13
+15      <MISSING>  ADDR_HAS_NO_NUMBER         15
+16      <MISSING>  ADDR_HAS_NO_NUMBER         16
+17      <MISSING>  ADDR_HAS_NO_NUMBER         17
+21      <MISSING>  ADDR_HAS_NO_NUMBER         21
+
+--ignore LatLngDuplicationValidator  (Confirmed scrape correctly)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+      latitude     longitude                                     street_address  num_addrs
+17  36.8021673  -119.7932619  {317 West Victoria St., 4645 No. Blackstone Av...          2

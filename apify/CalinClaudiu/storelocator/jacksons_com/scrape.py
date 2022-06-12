@@ -2,7 +2,6 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MissingField
-from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
@@ -11,7 +10,8 @@ import json
 def fetch_data():
 
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.jacksons.com/js/data/locations.json"
+    url = "https://jacksons.com/js/data/locations.js"
+    # https://www.jacksons.com/js/data/locations.json
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"  # noqa
     }
@@ -19,7 +19,7 @@ def fetch_data():
     session = SgRequests()
     son = session.get(url, headers=headers)
     son = son.text
-    son = "{" + str(son).split("data = {", 1)[1].rsplit(";")[0]
+    son = '{"locs" :' + str(son).split("locations = ", 1)[1].rsplit(";")[0] + "}"
     son = json.loads(son)
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
@@ -53,14 +53,19 @@ def scrape():
         locator_domain=ConstantField(url),
         page_url=MissingField(),
         location_name=MappingField(
-            mapping=["name"], value_transform=lambda x: x.replace("None", "<MISSING>")
+            mapping=["site_name"],
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
-        latitude=MappingField(mapping=["latitude"]),
-        longitude=MappingField(mapping=["longitude"]),
-        street_address=MultiMappingField(
-            mapping=[["address_line_1"], ["address_line_2"]],
-            multi_mapping_concat_with=", ",
-            value_transform=fix_comma,
+        latitude=MappingField(
+            mapping=["latitude"],
+            part_of_record_identity=True,
+        ),
+        longitude=MappingField(
+            mapping=["longitude"],
+            part_of_record_identity=True,
+        ),
+        street_address=MappingField(
+            mapping=["street"],
             part_of_record_identity=True,
         ),
         city=MappingField(
@@ -76,21 +81,16 @@ def scrape():
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        country_code=MappingField(
-            mapping=["country_code"],
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
-            is_required=False,
-        ),
+        country_code=MissingField(),
         phone=MappingField(
             mapping=["main_phone"],
             value_transform=lambda x: x.replace("None", "<MISSING>"),
             is_required=False,
         ),
-        store_number=MappingField(mapping=["store_number"]),
+        store_number=MissingField(),
         hours_of_operation=MissingField(),
         location_type=MappingField(
-            mapping=["categories"],
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            mapping=["amenities_list"],
             is_required=False,
         ),
     )

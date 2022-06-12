@@ -1,151 +1,118 @@
-import requests
+import json
+import unicodedata
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-import usaddress
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('inglotcosmetics_com')
+session = SgRequests()
+website = "inglotcosmetics_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://inglotcosmetics.com/"
+MISSING = SgRecord.MISSING
 
 
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    chrome_path = '/Users/Dell/local/chromedriver'
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def strip_accents(text):
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+    return str(text)
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    url = 'https://inglotcosmetics.com/stores'
-   # page = requests.get(url)
-    driver = get_driver()
-    driver.get(url)
-    time.sleep(4)
-    hreflist = driver.find_element_by_xpath("/html/body/div[2]/div/div/div[2]/div/div[2]/ul")
-    hrefs = hreflist.find_elements_by_tag_name('li')
-
-    logger.info(len(hrefs))
-    for n in range(0,len(hrefs)):
+    url = "https://inglotcosmetics.com/index.php?option=com_ajax&plugin=istorelocator&tmpl=component&format=json&lat=0&lng=0&maxdistance=123456&limit=123456&source=com_contactenhanced&file=&category=12"
+    loclist = session.get(url, headers=headers).json()["data"][0]["list"]
+    soup = BeautifulSoup(str(loclist), "html.parser")
+    divlist = soup.findAll("li")
+    for div in divlist:
+        content = json.loads(div["data-gmapping"])
+        latitude = content["lat"]
+        longitude = content["lng"]
+        store_number = content["id"]
+        country_code = div.find("span", {"class": "loc-country"}).text
+        location_name = strip_accents(div.find("div", {"class": "loc-name"}).text)
+        log.info(location_name)
         try:
-            ccode = str(hrefs[n].find_element_by_class_name('loc-country').text)
-            #logger.info(ccode)
+            street_address = strip_accents(
+                div.find("span", {"class": "loc-address"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         except:
-            ccode = "None"
-        if ccode.find("USA") > -1:
-            gmap = hrefs[n].get_attribute("data-gmapping")[0:110]
-            #logger.info(gmap)
-            start = 0
-            start = gmap.find("id")
-            start = gmap.find(":", start) + 2
-            end = gmap.find('"', start)
-            store = gmap[start:end]
-            #logger.info(start)
-            start = gmap.find("lat")
-            start = gmap.find(":", start) + 2
-            end = gmap.find('"', start)
-            lat = gmap[start:end]
-            start = gmap.find("lng")
-            start = gmap.find(":", start) + 2
-            end = gmap.find('"', start)
-            longt = gmap[start:end]
-            title = hrefs[n].find_element_by_class_name('loc-name').text
-            address = hrefs[n].find_element_by_class_name('loc-addr').text
-            address = address.replace("\n", " ")
-            address = usaddress.parse(address)
-            logger.info(address)
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                        temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                        "USPSBoxID") != -1:
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
+            pass
+        try:
+            city = strip_accents(
+                div.find("span", {"class": "loc-city"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            pass
+        try:
+            zip_postal = strip_accents(
+                div.find("span", {"class": "loc-postcode"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            pass
+        raw_address = (
+            street_address.strip() + " " + city.strip() + " " + zip_postal.strip()
+        )
+        raw_address = raw_address.replace(",", " ")
+        pa = parse_address_intl(raw_address)
 
-            if len(state) < 2 and len(city) < 3 and len(pcode) < 3:
-                street = "<MISSING>"
-                temp = address[0]
-                city = temp[0]
-                temp = address[1] + address[2]
-                state = temp[0]
-                temp = address[3]
-                pcode = temp[0]
-            street = street.lstrip()
-            city = city.lstrip()
-            state = state.lstrip()
-            pcode = pcode.lstrip()
-            pcode = pcode.replace(",", "")
-            logger.info(store)
-            logger.info(title)
-            logger.info(street)
-            logger.info(city)
-            logger.info(state)
-            logger.info(pcode)
-            logger.info(ccode)
-            logger.info(lat)
-            logger.info(longt)
+        street_address = pa.street_address_1
+        street_address = street_address if street_address else MISSING
 
-            if len(state) < 2 and city.find("Washington") > -1:
-                state = "WA"
-                city = "<MISSING>"
-            if len(state) < 2:
-                state = "<MISSING>"
+        city = pa.city
+        city = city.strip() if city else MISSING
 
-            logger.info(".....................")
+        state = pa.state
+        state = state.strip() if state else MISSING
 
-            data.append([
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    "<MISSING>",
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    "<MISSING>"
-            ])
-
-
-
-    driver.quit()
-    return data
+        zip_postal = pa.postcode
+        zip_postal = zip_postal.strip() if zip_postal else MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url="https://inglotcosmetics.com/stores",
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=MISSING,
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=MISSING,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,28 +1,45 @@
 import csv
-import re
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgselenium import SgSelenium
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('houlihans_com')
-
+logger = SgLogSetup().get_logger("houlihans_com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 driver = SgSelenium().chrome()
 session = SgRequests()
+
 
 def fetch_data():
     # Your scraper here
@@ -30,30 +47,24 @@ def fetch_data():
     street = []
     states = []
     cities = []
-    types = []
     phones = []
     zips = []
-    long = []
-    lat = []
     timing = []
-    ids = []
     page_url = []
-    urls=[]
-    #res = requests.get("https://houlihans.com/find-a-location")
-    #soup = BeautifulSoup(res.text, 'html.parser')
+    urls = []
+
     driver.get("https://houlihans.com/find-a-location")
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    lis = soup.find('div', {'class': 'sf_cols'}).find_all('a')
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    lis = soup.find("div", {"class": "sf_cols"}).find_all("a")
     logger.info(len(lis))
 
     for li in lis:
 
-        u = li.get('href')
+        u = li.get("href")
 
         if "www.houlihans.com" not in u:
 
             if "//bit.ly" not in u:
-
                 urls.append("https://houlihans.com" + u)
                 locs.append(li.text)
         else:
@@ -61,81 +72,69 @@ def fetch_data():
             locs.append(li.text)
             urls.append(u)
 
-    
     for url in urls:
         logger.info(url)
-        if url=='https://houlihans.comeats-and-drinks/richfield':
-            url= 'https://houlihans.com/eats-and-drinks/richfield'
+        if url == "https://houlihans.comeats-and-drinks/richfield":
+            url = "https://houlihans.com/eats-and-drinks/richfield"
         try:
             res = session.get(url)
-            soup = BeautifulSoup(res.text, 'html.parser')
+            soup = BeautifulSoup(res.text, "html.parser")
 
         except:
             try:
                 driver.get(url)
-                soup = BeautifulSoup(driver.page_source, 'html.parser')
+                soup = BeautifulSoup(driver.page_source, "html.parser")
             except:
 
-                del locs[urls.index(url)]
                 continue
         page_url.append(url)
+        addr = soup.find("p", {"class": "loc-address"}).text.strip().split("\r\n")
+        street.append(addr[0].strip())
+        csz = addr[-1].strip().split(",")
+        cities.append(csz[0])
+        csz = csz[-1].strip().split(" ")
+        states.append(csz[0])
+        zips.append(csz[-1])
 
-
-        street.append(soup.find('span', {'class': 'd_address1'}).text.strip())
-        cities.append(soup.find('span', {'class': 'd_city'}).text.strip())
-        states.append(soup.find('span', {'class': 'd_state'}).text.strip())
-        zips.append(soup.find('span', {'class': 'd_zip'}).text.strip())
-        ph = soup.find('span', {'class': 'd_phone'}).text.strip()
+        ph = soup.find("p", {"class": "loc-phone"}).text.strip()
         if ph != "":
             phones.append(ph)
         else:
             phones.append("<MISSING>")
 
-
-
-        tim=re.sub(r'[ ]+',' ',soup.find('span', {'class': 'd_hours'}).prettify().replace('&amp;','-').replace('<span class="d_hours">','').replace('</span>','').replace('<br/>','').replace('\n\n','\n').replace('\n',' ').strip())
+        tim = (
+            soup.find("p", {"class": "loc-hours"})
+            .text.strip()
+            .replace("\r\n", ", ")
+            .replace("\n", ", ")
+        )
         timing.append(tim)
-        try:
-            coord = soup.find('a', {'id': 'MainContent_hlDirections'}).get('href')
-            lat.append(re.findall(r'q=(-?[\d\.]*)', coord)[0])
-            long.append(re.findall(r'q=[-?\d\.]*\,([-?\d\.]*)', coord)[0])
-        except:
-            lat.append('<MISSING>')
-            long.append('<MISSING>')
-        try:
-            ids.append(soup.find('input', {'id': 'hidStoreNumber'}).get('value'))
-        except:
-            ids.append('<MISSING>')
-
-        try:
-            types.append(re.findall(r'<div itemscope="" itemtype="http://schema\.org/([^"]*)">', str(soup), re.DOTALL)[0])
-        except:
-            types.append('<MISSING>')
-
 
     all = []
     for i in range(0, len(locs)):
         row = []
         row.append("https://houlihans.com")
-        row.append(locs[i])
+        row.append(locs[urls.index(page_url[i])])
         row.append(street[i])
         row.append(cities[i])
         row.append(states[i])
         row.append(zips[i])
         row.append("US")
-        row.append(ids[i])  # store #
+        row.append("<MISSING>")  # store #
         row.append(phones[i])  # phone
-        row.append(types[i])  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
+        row.append("<MISSING>")  # type
+        row.append("<MISSING>")  # lat
+        row.append("<MISSING>")  # long
         row.append(timing[i])  # timing
         row.append(page_url[i])  # page url
 
         all.append(row)
     return all
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

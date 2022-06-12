@@ -1,107 +1,142 @@
 import csv
+
+from concurrent import futures
+from lxml import html
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sgselenium import SgSelenium
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+
         for row in data:
             writer.writerow(row)
 
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
 
-def fetch_data():
-    driver = SgSelenium().chrome()
+def get_urls():
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(
+        "https://www.molliestones.com/StoreLocator/State/?State=CA", headers=headers
+    )
+    tree = html.fromstring(r.text)
+
+    return tree.xpath("//a[text()='View']/@href")
+
+
+def get_data(page_url):
+    locator_domain = "https://www.molliestones.com/"
 
     session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
 
-    locator_domain = 'https://www.molliestones.com/' 
-    ext = 'StoreLocator/State/?State=CA'
-    r = session.get(locator_domain + ext, headers = HEADERS)
+    location_name = "".join(
+        tree.xpath("//div[@class='row']/following-sibling::h3/text()")
+    ).strip()
+    line = tree.xpath("//p[@class='Address']/text()")
+    line = list(filter(None, [l.strip() for l in line]))
 
-    soup = BeautifulSoup(r.content, 'html.parser')
-    links = soup.find('div', {'id': 'StoreLocator'}).find_all('td', {'align': 'right'})
-    link_list = []
-    for l in links:
-        if l.text.strip() == 'View':
-            link_list.append(l.find('a')['href'])
+    street_address = line[0]
+    line = line[1]
+    city = line.split(",")[0].strip()
+    line = line.split(",")[1].strip()
+    state = line.split()[0]
+    postal = line.split()[1]
+    country_code = "US"
+    store_number = page_url.split("L=")[1].split("&")[0]
+    phone = (
+        "".join(tree.xpath("//p[@class='PhoneNumber']/a/text()")).strip() or "<MISSING>"
+    )
 
-    all_store_data = []
-    for link in link_list:
-        r = session.get(link, headers = HEADERS)
-        soup = BeautifulSoup(r.content, 'html.parser')
+    text = "".join(tree.xpath("//script[contains(text(), 'initializeMap(')]/text()"))
+    try:
+        latitude, longitude = (
+            text.split("initializeMap(")[1].split(");")[0].replace('"', "").split(",")
+        )
+    except IndexError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
+    location_type = "<MISSING>"
 
-        driver.get(link)
-        lat, longit = '', ''
-        source = str(driver.page_source)
-        for line in source.splitlines():
-            if 'initializeMap(' in line:                
-                coords = line.strip().split('(')[1].split(')')[0].replace('"', '').strip().split(',')
-                lat = coords[0]
-                longit = coords[1]
-                
-        if lat == '':
-            lat = '<MISSING>'
-            longit = '<MISSING>'
-        
-        location_name = soup.find('h3').text
+    _tmp = []
+    hours = tree.xpath(
+        "//dt[text()='Hours of Operation:']/following-sibling::dd[1]/text()"
+    )
 
-        addy = soup.find('p', {'class': 'Address'}).prettify().split('\n')
-        r_addy = []
-        for a in addy:
-            if '<' in a:
-                continue
-            if 'Store Address' in a:
-                continue
-                
-            r_addy.append(a.strip())
-            
-        street_address = r_addy[0]
-        city, state, zip_code = addy_ext(r_addy[1])
-        
-        phone_number = soup.find('p', {'class': 'PhoneNumber'}).find('a').text
-        
-        hours_raw = soup.find('table', {'id': 'hours_info-BS'}).prettify().split('\n')
-        hours = ''
-        for h in hours_raw:
-            if '<' in h:
-                continue
-            if 'Hours of Operation:' in h:
-                continue
-            if 'Store Services:' in h:
-                break
-            
-            if 'Departments:' in h:
-                break
-                
-            hours += h.strip().replace('&amp;', '&') + ' '
+    for h in hours:
+        if not h.strip() or "*" in h:
+            continue
+        if "Our" in h or "Special" in h:
+            break
 
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-   
-        page_url = link
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+        _tmp.append(h.replace("Normal Business Hours:", "").strip())
 
-        all_store_data.append(store_data)
-        
-    return all_store_data
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+    row = [
+        locator_domain,
+        page_url,
+        location_name,
+        street_address,
+        city,
+        state,
+        postal,
+        country_code,
+        store_number,
+        phone,
+        location_type,
+        latitude,
+        longitude,
+        hours_of_operation,
+    ]
+
+    return row
+
+
+def fetch_data():
+    out = []
+    urls = get_urls()
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            row = future.result()
+            if row:
+                out.append(row)
+
+    return out
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

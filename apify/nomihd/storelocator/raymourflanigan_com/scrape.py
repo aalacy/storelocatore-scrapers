@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
-import csv
+from typing import Iterable, Tuple, Callable
+from datetime import datetime as dt
 from sgrequests import SgRequests
 from sglogging import sglog
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from tenacity import retry, stop_after_attempt
 
 website = "raymourflanigan.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -14,152 +22,148 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
+def retry_error_callback(retry_state):
+    postal = retry_state.args[0]
+    log.error(f"Failure to fetch locations for: {postal}")
+    return []
 
 
-def fetch_data():
-    # Your scraper here
-    loc_list = []
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
-    search_url = (
-        "https://www.raymourflanigan.com/api/custom/location-search"
-        "?postalCode=11236&distance=100000&includeShowroom"
-        "Locations=true&includeOutletLocations=true&include"
-        "ClearanceLocations=true&includeAppointments=true"
-    )
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
 
-    stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(stores_req.text)["locations"]
-    for store_json in stores:
-        page_url = "https://www.raymourflanigan.com" + store_json["url"]
-        locator_domain = website
-        location_name = store_json["displayName"]
-        street_address = store_json["addressLine1"]
-        city = store_json["city"]
-        state = store_json["stateProvince"]
-        zip = store_json["postalCode"]
-        country_code = ""
+    @retry(retry_error_callback=retry_error_callback, stop=stop_after_attempt(5))
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
-        if street_address == "":
-            street_address = "<MISSING>"
+        if len(zipcode) == 1:
+            zipcode = "0000" + zipcode
+        if len(zipcode) == 2:
+            zipcode = "000" + zipcode
+        if len(zipcode) == 3:
+            zipcode = "00" + zipcode
+        if len(zipcode) == 4:
+            zipcode = "0" + zipcode
 
-        if city == "":
-            city = "<MISSING>"
-
-        if state == "":
-            state = "<MISSING>"
-
-        if zip == "":
-            zip = "<MISSING>"
-
-        if country_code == "":
-            country_code = "<MISSING>"
-
-        store_number = store_json["businessUnitCode"]
-        phone = store_json["phoneNumber"]
-
-        location_type = "<MISSING>"
-        hours_of_operation = ""
-        hours = store_json["hours"]
-        for day, hour in hours.items():
-            if (
-                hours[day] is not None
-                and hours[day]["open"] is not None
-                and hours[day]["close"] is not None
-            ):
-                hours_of_operation = (
-                    hours_of_operation
-                    + day
-                    + ":"
-                    + hours[day]["open"]
-                    + "-"
-                    + hours[day]["close"]
-                    + ""
-                )
-        hours_of_operation = hours_of_operation.strip()
-
-        latitude = store_json["latitude"]
-        longitude = store_json["longitude"]
-
-        if latitude == "":
-            latitude = "<MISSING>"
-        if longitude == "":
-            longitude = "<MISSING>"
-
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
+        log.info(f"pulling data for zipcode: {zipcode}")
+        url = "https://www.raymourflanigan.com/api/custom/location-search"
+        params = {
+            "postalCode": zipcode,
+            "distance": 100,
+            "includeShowroomLocations": True,
+            "includeOutletLocations": True,
+            "includeClearanceLocations": True,
+            "includeAppointments": True,
+        }
+        stores = self.__http.get(url, params=params, headers=headers).json()[
+            "locations"
         ]
-        loc_list.append(curr_list)
 
-        # break
-    return loc_list
+        for store in stores:
+            page_url = "https://www.raymourflanigan.com" + store["url"]
+            log.info(page_url)
+            locator_domain = website
+            location_name = store["displayName"]
+            street_address = store["addressLine1"]
+            if (
+                "addressLine2" in store
+                and store["addressLine2"] is not None
+                and len(store["addressLine2"]) > 0
+            ):
+                street_address = street_address + ", " + store["addressLine2"]
+
+            city = store["city"]
+            state = store["stateProvince"]
+            zip = store["postalCode"]
+            country_code = "US"
+
+            store_number = store["businessUnitCode"]
+            phone = store["phoneNumber"]
+
+            location_type = "Showroom"
+            if store["clearanceCenter"] is True:
+                location_type = "Clearance Center"
+            if store["outlet"] is True:
+                location_type = "Outlet"
+
+            location_name = "Raymour & Flanigan " + location_type
+            hours_of_operation = ""
+            hours = store["hours"]
+            hours_list = []
+            for key, hour in hours.items():
+                if isinstance(hours[key], dict):
+                    if hours[key] and hours[key]["open"] and hours[key]["close"]:
+                        day = key
+                        if day != "today":
+                            hours_list.append(
+                                day
+                                + ":"
+                                + hours[key]["open"]
+                                + "-"
+                                + hours[key]["close"]
+                            )
+            hours_of_operation = "; ".join(hours_list).strip()
+
+            latitude = store["latitude"]
+            longitude = store["longitude"]
+            found_location_at(latitude, longitude)
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(search_type="DynamicZipSearch")
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        with SgRequests(dont_retry_status_codes=([404])) as http:
+            search_iter = _SearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[SearchableCountries.USA],
+            )
+
+            for rec in par_search.run():
+                writer.write_row(rec)
+
     log.info("Finished")
 
 
 if __name__ == "__main__":
+    start = dt.now()
     scrape()
+    log.info(f"duration: {dt.now() - start}")

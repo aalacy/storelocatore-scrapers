@@ -1,104 +1,115 @@
-import csv
-import requests
-from bs4 import BeautifulSoup
-import re
 import json
-import time
-from datetime import datetime
-from sglogging import SgLogSetup
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('hollisterco_com')
+session = SgRequests()
+website = "hollisterco_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://www.hollisterco.com"
+MISSING = SgRecord.MISSING
 
 
+def fetch_locations(base_url, session):
+    location_url = f"{base_url}/shop/ViewAllStoresDisplayView?storeId=11205&catalogId=10201&langId=-1"
 
-def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    session.get(base_url, headers=headers)
+    res = session.get(location_url, headers=headers)
+    res.raise_for_status()
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+    soup = BeautifulSoup(res.text, "lxml")
+    links = soup.find("main", {"class": "all-stores"}).findAll("li")
+    return [link.a["href"] for link in links]
+
+
+def fetch_location(url, session):
+
+    res = session.get(url, headers=headers)
+    if res.status_code == 404:
+        return None
+
+    soup = BeautifulSoup(res.text, "lxml")
+
+    return extract_data(soup)
+
+
+def extract_data(soup):
+    scripts = soup.find_all("script")
+
+    for script in scripts:
+        if script.string and "geoNodeUniqueId" in script.string:
+            data = json.loads(
+                script.string.split("try {digitalData.set('physicalStore',")[1].split(
+                    ");}"
+                )[0]
+            )
+
+            return data
 
 
 def fetch_data():
-    addresses = []
-   
-    base_url= "https://www.hollisterco.com"
+    requests = SgRequests()
+    links = fetch_locations(DOMAIN, requests)
+    for link in links:
+        page_url = f"{DOMAIN}{link}"
+        log.info(page_url)
+        data = fetch_location(page_url, requests)
+        if not data:
+            continue
+        location_name = data["name"]
+        street_address = data["addressLine"][0]
+        city = data["city"]
+        state = data["stateOrProvinceName"]
+        zip_postal = data["postalCode"]
+        if zip_postal == "-":
+            zip_postal = MISSING
+        country_code = data["country"]
+        store_number = data["storeNumber"]
+        phone = data["telephone"]
+        latitude = data["latitude"]
+        longitude = data["longitude"]
+        hours_of_operation = "<INACCESSIBLE>"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    
-    headers = {          
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-        'accept': 'application/json'
-    }
-    r = requests.get("https://www.hollisterco.com/shop/ViewAllStoresDisplayView?storeId=11205&catalogId=10201&langId=-1", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    data = soup.find_all("li",{"class":"view-all-stores__store"})
-    for link in data:
-        
-        if "/shop/wd/clothing-stores/CA/" in link.find("a")['href'] or "/shop/wd/clothing-stores/US/"in link.find("a")['href']:
-            page_url = base_url+link.find("a")['href']
-            r = requests.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "lxml")
-            if soup.find(lambda tag: (tag.name == "script") and "geoNodeUniqueId" in tag.text) == None:
-                continue
-            json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "geoNodeUniqueId" in tag.text).text.split("try {digitalData.set('physicalStore',")[1].split(");}")[0])
-            location_name = json_data['name']
-            street_address = json_data['addressLine'][0] #.replace("['",'').replace("']",'')
-            city = json_data['city']
-            state = json_data['stateOrProvinceName']
-            zipp = json_data['postalCode']
-            country_code = json_data['country']
-            store_number = json_data['storeNumber']
-            phone = json_data['telephone']
-            location_type = "clothing-stores"
-            latitude = json_data['latitude']
-            longitude = json_data['longitude']
-            for j in json_data['physicalStoreAttribute']:
-                if "hours-Week1" in j['name']:
-                    hours = ''
-                    day = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-                    for l in range(0,7):
-                        start = datetime.strptime(str(j['value'].split(',')[l].split("|")[0]), "%H:%M")
-                        start_value=start.strftime("%I:%M %p")
-                        end = datetime.strptime(str(j['value'].split(',')[l].split("|")[1].replace("M","")), "%H:%M")
-                        end_value = end.strftime("%I:%M %p")
-                        hours+= " "+day[l]+" "+start_value+" - "+end_value
-                    hours_of_operation = hours
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append(country_code)
-            store.append(store_number)
-            store.append(phone )
-            store.append(location_type)
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours_of_operation)
-            store.append(page_url)
-            # if store[2] in addresses:
-            #     continue
-            # addresses.append(store[2])
-            # logger.info("data =="+str(store))
-            # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            yield store
-        else:
-            pass # another country location
-       
 
-        
-
-       
-        
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,5 +1,4 @@
 import csv
-import json
 import usaddress
 
 from lxml import html
@@ -40,6 +39,7 @@ def fetch_data():
     s = set()
     locator_domain = "http://www.doublequick.com/"
     page_url = "http://www.doublequick.com/store-locator/"
+    api = "http://www.doublequick.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
     tag = {
         "Recipient": "recipient",
@@ -71,23 +71,12 @@ def fetch_data():
     }
 
     session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    text = "".join(
-        tree.xpath(
-            "//script[contains(text(), 'var wpgmaps_localize_marker_data = ')]/text()"
-        )
-    )
-    text = (
-        text.split("var wpgmaps_localize_marker_data = ")[1]
-        .split("var wpgmaps_localize_cat_ids")[0]
-        .strip()[:-1]
-    )
-    js = json.loads(text)["1"]
+    r = session.get(api)
+    js = r.json()["markers"]
 
-    for j in js.values():
-        location_name = j.get("title")
-        source = j.get("desc") or "<html></html>"
+    for j in js:
+        location_name = j.get("title").replace("\\", "")
+        source = j.get("description") or "<html></html>"
         root = html.fromstring(source)
         line = "".join(root.xpath("//p/text()"))
         a = usaddress.tag(line, tag_mapping=tag)[0]

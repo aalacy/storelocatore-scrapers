@@ -1,162 +1,85 @@
-#
-import requests
-from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
+import re
+import ssl
 
-logger = SgLogSetup().get_logger('abcsupply_com')
+ssl._create_default_https_context = ssl._create_unverified_context
+from sgselenium import SgSelenium
 
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
+driver = SgSelenium().chrome()
 
 
 def fetch_data():
-    # Your scraper here
 
-    data = []
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.abcsupply.com/locations/"
+    driver.get(url)
+    code = driver.page_source.split('"nonce":"', 1)[1].split('"', 1)[0]
+    url = (
+        "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce="
+        + str(code)
+    )
+    driver.get(url)
+    divlist = json.loads(re.sub(cleanr, "", driver.page_source))
+    for div in divlist:
+        loclist = div["locations"]
+        for loc in loclist:
 
-    pattern = re.compile(r'\s\s+')
-    states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
-          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+            store = loc["branchNumber"]
+            street = loc["address1"] + str(loc["address2"])
+            street = street.replace("None", "")
+            city = loc["city"]
+            state = loc["state"]
+            pcode = loc["postalCode"]
+            lat = loc["latitude"]
+            longt = loc["longitude"]
+            try:
+                phone = loc["phoneNumber"].strip()
+            except:
+                phone = "<MISSING>"
 
-    total = 0
-    for i in range(0,len(states)):
-        p = 0
-        url = 'https://www.abcsupply.com/locations/location-results'
-        #logger.info(states[i])
-        result = requests.get(url, data={'State': states[i]})
-        #time.sleep(1)
-        soup = BeautifulSoup(result.text,"html.parser")
-        hoursd = soup.findAll('ul',{'class':'dropdown-menu'})
-        links = soup.findAll('div',{'class':'location-name'})
-        #logger.info(result.text)
-        result = result.text
-        start = 0
-        
-        flag = True
-        try:
-            counr = soup.find('div',{'class':'rcount'}).find('strong').text
-            total = total + int(counr)
-            #logger.info(states[i],counr, total)
-        except:
-            pass
-        
-        
-        while flag:
-            start = result.find(" var marker = new google.maps.Marker",start)
-            if start == -1:
-                flag = False
-            else:
-                start = result.find("lat:", start)
-                start = result.find(":", start)+2
-                end = result.find(",", start)
-                lat = result[start:end]
-                start = end
-                start = result.find("lng:", start)
-                start = result.find(":", start) + 2
-                end = result.find("}", start)
-                longt = result[start:end]
+            try:
+                hourslist = loc["seasonalHours"][0]["hourDetails"][0]
+                hours = (
+                    hourslist["hoursText"]
+                    + " "
+                    + hourslist["openTime"]
+                    + " - "
+                    + hourslist["closeTime"]
+                )
+            except:
+                hours = "<MISSING>"
+            link = "https://www.abcsupply.com/locations/location/?id=" + str(store)
+            title = "ABC Supply - " + city + ", " + state
+            yield SgRecord(
+                locator_domain="https://www.abcsupply.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
-                link = links[p].find('a')
-                link = "https://www.abcsupply.com" +link['href']
-                start = result.find("BranchNumber", end)
-                start = result.find("=", start) +1
-                end = result.find('"', start)
-                store = result[start:end]
-                start = result.find(">", end)+1
-                end = result.find("<", start)
-                title = result[start:end]
-                start = result.find("location-address",end)
-                start = result.find("+", start) + 1
-                start = result.find("'", start) + 1
-                end = result.find('<', start)
-                street = result[start:end]
-                start = result.find("+", end) + 1
-                start = result.find("'", start) + 1
-                end = result.find('<', start)
-                address = result[start:end]
-                city,address = address.split(", ")
-                state,pcode = address.split(" ")
-                start = result.find("tel", end) + 1
-                start = result.find(">", start) + 2
-                end = result.find('<', start)
-                phone = result[start:end]
-                start = end
-                hours = hoursd[p].text
-                hours = re.sub(pattern," ",hours)
-                hours = hours.replace('Branch Hours','')
-                hours = hours.lstrip()
-                if len(hours) < 3:
-                    hours = "<MISSING>"
-                logger.info([
-                    'https://www.abcsupply.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                ])
-                data.append([
-                    'https://www.abcsupply.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                ])
-                p+=1
-                
-        
-        
-
-
-
-        logger.info("............................")
-    logger.info(total)
-    return data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
-

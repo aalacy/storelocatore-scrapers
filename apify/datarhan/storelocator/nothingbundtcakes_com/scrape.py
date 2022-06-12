@@ -6,7 +6,7 @@ from sgrequests import SgRequests
 
 
 def write_output(data):
-    with open("data.csv", mode="w", encoding='utf-8') as output_file:
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -75,7 +75,7 @@ def fetch_data():
         )
         location_name = poi_html.xpath('.//div[@class="name"]/div/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        if 'Coming Soon' in location_name:
+        if "Coming Soon" in location_name:
             continue
         street_address = poi_html.xpath('.//p[@class="line1 line"]/text()')
         street_address = street_address[0] if street_address else "<MISSING>"
@@ -104,13 +104,14 @@ def fetch_data():
             latitude = latitude[0].split(",")[0] if latitude else "<MISSING>"
             longitude = re.findall(r"/@(.+)/data", geo_data)
             longitude = longitude[0].split(",")[0] if longitude else "<MISSING>"
+        hours_of_operation = poi_html.xpath('//div[@class="hours"]//text()')
         hours_of_operation = [
-            elem.strip()
-            for elem in poi_html.xpath('.//div[@class="hours"]//text()')
-            if elem.strip()
+            elem.strip() for elem in hours_of_operation if elem.strip()
         ]
         hours_of_operation = (
-            ", ".join(hours_of_operation).split("*, ")[1].split(', *')[0] if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation[1:]).split("*")[0].strip()
+            if hours_of_operation
+            else "<MISSING>"
         )
 
         item = [

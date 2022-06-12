@@ -1,51 +1,32 @@
-import csv
+import ssl
 
+from tenacity import retry, stop_after_attempt
 from sglogging import sglog
-
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgselenium.sgselenium import SgChrome
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 log = sglog.SgLogSetup().get_logger(logger_name="morganstanley.com")
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
+@retry(stop=stop_after_attempt(3))
+def fetch_locations(url, headers, session):
+    return session.get(url, headers=headers).json()
 
-    driver = SgChrome().chrome(
-        user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    )
+
+def fetch_data(sgw: SgWriter):
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    driver = SgChrome(user_agent=user_agent).driver()
 
     base_link = "https://advisor.morganstanley.com/search?profile=16348&q=19125&r=2500"
 
@@ -63,7 +44,6 @@ def fetch_data():
 
     session = SgRequests()
 
-    data = []
     found_poi = []
 
     locator_domain = "morganstanley.com"
@@ -73,7 +53,8 @@ def fetch_data():
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
         max_search_results=max_results,
     )
 
@@ -99,7 +80,7 @@ def fetch_data():
         }
 
         log.info(base_link)
-        req = session.get(base_link, headers=headers).json()
+        req = fetch_locations(base_link, headers, session)
         stores = req["response"]["entities"]
         count = req["response"]["count"]
 
@@ -140,40 +121,35 @@ def fetch_data():
                 if not link:
                     link = "<MISSING>"
 
-                search.mark_found([latitude, longitude])
+                search.found_location_at(latitude, longitude)
 
-                data.append(
-                    [
-                        locator_domain,
-                        link,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
                 )
 
             offset = page_num * 10
             next_link = base_link + "&offset=" + str(offset)
             log.info(next_link)
-            stores = session.get(next_link, headers=headers).json()["response"][
+            stores = fetch_locations(next_link, headers, session)["response"][
                 "entities"
             ]
     driver.close()
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

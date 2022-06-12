@@ -49,6 +49,9 @@ def fetch_data():
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "X-Requested-With": "XMLHttpRequest",
     }
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
+    }
     formadata = {
         "Page": "0",
         "Page": "0",
@@ -74,18 +77,25 @@ def fetch_data():
     for poi in all_poi:
         store_url = poi.xpath('.//h3[@class="search-result-name"]/a/@href')
         store_url = store_url[0] if store_url else "<MISSING>"
+        loc_response = session.get(store_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
         location_name = poi.xpath('.//h3[@class="search-result-name"]/a/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
-        address_raw = poi.xpath(
-            './/h3[@class="search-result-name"]/following-sibling::div[1]//text()'
-        )
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        if not address_raw:
+        raw_address = loc_dom.xpath('//div[@class="address"]/text()')
+        if not raw_address:
+            raw_address = loc_dom.xpath('//p[@class="facility-p"]/text()')
+        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
+        if not raw_address:
             continue
-        street_address = address_raw[0]
-        city = address_raw[-1].split(",")[0]
-        state = address_raw[-1].split(",")[-1].strip().split()[0]
-        zip_code = address_raw[-1].split(",")[-1].strip().split()[-1]
+        if len(raw_address) == 3:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+        street_address = raw_address[0]
+        city = raw_address[-1].split(", ")[0]
+        state = raw_address[-1].split(", ")[-1].split()[0]
+        if state == "Oklahoma":
+            city = " ".join(city.split()[:2])
+        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         phone = poi.xpath('.//div[@class="search-result-phone-location"]/a/text()')
@@ -99,7 +109,13 @@ def fetch_data():
         latitude = latitude[0] if latitude else "<MISSING>"
         longitude = poi.xpath(".//div/@data-lon")
         longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath(
+            '//div[@class="page-summary-group component-hours"]//text()'
+        )
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        if hoo and "Hours" in hoo[0]:
+            hoo = hoo[1:-1]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

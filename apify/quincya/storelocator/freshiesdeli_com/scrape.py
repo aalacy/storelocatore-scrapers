@@ -1,120 +1,115 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
 import re
 
-from random import randint
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('freshiesdeli_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("freshiesdeli_com")
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://freshiesdeli.com/locations"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-	
-	base_link = "https://freshiesdeli.com/locations"
+    session = SgRequests()
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    all_links = []
 
-	session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base_str = str(BeautifulSoup(req.text, "lxml"))
 
-	all_links = []
-	data = []
+    all_links = re.findall(
+        r"https://www.freshiesdeli.com/storelocations/[a-z]+", base_str
+    )
+    geos = re.findall(r"LatLng\([0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\);", base_str)[1:]
+    for i, link in enumerate(all_links):
+        if link == "https://www.freshiesdeli.com/storelocations/machiasfreshies":
+            link = "https://freshiesdeli.com/storelocations/machaisfreshies"
+        logger.info(link)
 
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(2,4))
+        req = session.get(link, headers=headers)
+        item = BeautifulSoup(req.text, "lxml")
 
-	try:
-		base = str(BeautifulSoup(req.text,"lxml"))
-		logger.info("Got main page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+        locator_domain = "freshiesdeli.com"
 
-	all_links = re.findall( r"https://www.freshiesdeli.com/storelocations/[a-z]+",base)
+        location_name = item.find("meta", attrs={"property": "og:title"})[
+            "content"
+        ].replace("—", "-")
+        phone = item.find("meta", attrs={"itemprop": "description"})["content"][
+            -15:
+        ].strip()
+        if "(" not in phone:
+            phone = item.find("meta", attrs={"itemprop": "description"})["content"][
+                3:18
+            ].strip()
+            raw_address = (
+                item.find("meta", attrs={"itemprop": "description"})["content"][20:]
+                .replace("St ", "St. ")
+                .replace("Trail ", "Trail. ")
+                .replace("", "")
+                .strip()
+            )
+        else:
+            raw_address = (
+                item.find("meta", attrs={"itemprop": "description"})["content"][3:-18]
+                .replace("St ", "St. ")
+                .replace("Trail ", "Trail. ")
+                .replace("", "")
+                .strip()
+            )
+        street_address = raw_address[: raw_address.find(".")]
+        city = raw_address[raw_address.find(".") + 1 : raw_address.find(",")].strip()
+        state = raw_address[-3:].strip()
+        zip_code = "<MISSING>"
 
-	total_links = len(all_links)
-	for i, link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
+        country_code = "US"
+        store_number = "<MISSING>"
 
-		req = session.get(link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        location_type = ""
+        raw_types = item.find(
+            class_="summary-item-list-container sqs-gallery-container"
+        ).find_all(class_="summary-item")
+        for row in raw_types:
+            location_type = location_type + ", " + row.img["alt"]
+        location_type = location_type[1:].strip()
 
-		locator_domain = "freshiesdeli.com"
+        if "24 Hours" in location_type:
+            hours_of_operation = "Open 24 Hours"
+        else:
+            hours_of_operation = ""
 
-		location_name = item.find('meta', attrs={'property': "og:title"})['content'].replace("—","-")
-		if location_name == "Freshies Deli" and link == "https://www.freshiesdeli.com/storelocations/machiasfreshies":
-			link = "https://freshiesdeli.com/storelocations/machaisfreshies"
-			req = session.get(link, headers = HEADERS)
-			time.sleep(randint(1,2))
-			try:
-				item = BeautifulSoup(req.text,"lxml")
-				location_name = item.find('meta', attrs={'property': "og:title"})['content'].replace("—","-")
-			except (BaseException):
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
+        latitude = geos[i].split("(")[1].split(",")[0]
+        longitude = geos[i].split(",")[1][:-2]
 
-		logger.info(location_name)
-		
-		phone = item.find('meta', attrs={'itemprop': "description"})['content'][-15:].strip()
-		if "(" not in phone:
-			phone = item.find('meta', attrs={'itemprop': "description"})['content'][3:18].strip()
-			raw_address = item.find('meta', attrs={'itemprop': "description"})['content'][20:].replace("St ","St. ").replace("Trail ","Trail. ").replace("","").strip()
-		else:
-			raw_address = item.find('meta', attrs={'itemprop': "description"})['content'][3:-18].replace("St ","St. ").replace("Trail ","Trail. ").replace("","").strip()
-		street_address = raw_address[:raw_address.find(".")]
-		city = raw_address[raw_address.find(".")+1:raw_address.find(",")].strip()
-		state = raw_address[-3:].strip()
-		zip_code = "<MISSING>"
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
 
-		hours_of_operation = ""
-		raw_hours = item.find_all(class_="sqs-block-content")[3].find_all("tr")[1:]
-		if not raw_hours:
-			raw_hours = item.find_all(class_="sqs-block-content")[2].find_all("tr")[1:]
-		for raw_hour in raw_hours:
-			day = raw_hour.td.text
-			hours = raw_hour.find_all("td")[2].text
-			hours_of_operation = hours_of_operation + " " + day + " " + hours
-		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-		if not hours_of_operation:
-			hours_of_operation = "<MISSING>"
-
-		all_scripts = item.find_all('script')
-		for script in all_scripts:
-			if "LatLng" in str(script):
-				script = str(script)
-				lat_pos = script.find('LatLng') + 7
-				latitude = script[lat_pos:script.find(',',lat_pos)-1]
-				longitude = script[script.find(',',lat_pos)+1:script.find(')',lat_pos)]
-				break
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

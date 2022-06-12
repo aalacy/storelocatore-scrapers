@@ -50,14 +50,13 @@ def fetch_data():
     session = SgRequests()
 
     found_poi = []
-    data = []
 
     max_results = 50
     max_distance = 200
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
         max_search_results=max_results,
     )
 
@@ -80,17 +79,26 @@ def fetch_data():
 
             try:
                 page_url = store["landingPageUrl"]
+                store_number = page_url.split("-")[-1]
             except:
-                page_url = "<MISSING>"
+                page_url = "https://locations.cfsc.com/"
+                try:
+                    store_number = store["c_alternateLanguageLandingPage"].split("-")[
+                        -1
+                    ]
+                except:
+                    store_number = "<MISSING>"
+
+            phone = store["mainPhone"]
+
+            if phone not in found_poi:
+                found_poi.append(phone)
+            else:
+                continue
 
             try:
                 location_name = store["name"]
             except:
-                continue
-
-            if location_name not in found_poi:
-                found_poi.append(location_name)
-            else:
                 continue
 
             street_address = store["address"]["line1"]
@@ -98,12 +106,10 @@ def fetch_data():
             state = store["address"]["region"]
             zip_code = store["address"]["postalCode"]
             country_code = store["address"]["countryCode"]
-            store_number = page_url.split("-")[-1]
             try:
                 location_type = ",".join(store["services"])
             except:
                 location_type = "<MISSING>"
-            phone = store["mainPhone"]
             try:
                 raw_hours = store["hours"]
                 hours_of_operation = ""
@@ -133,28 +139,24 @@ def fetch_data():
                 geo = store["yextDisplayCoordinate"]
             latitude = geo["latitude"]
             longitude = geo["longitude"]
-            search.mark_found([latitude, longitude])
+            search.found_location_at(latitude, longitude)
 
-            data.append(
-                [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-    return data
+            yield [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
 
 
 def scrape():

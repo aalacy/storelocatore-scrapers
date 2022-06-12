@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator (Confirmed scraper worked correctly)
+--ignore StreetAddressHasNumber (Confirmed scraper worked correctly)

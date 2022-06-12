@@ -1,3 +1,2 @@
---ignore StreetAddressHasStateName (Confrimed scraped correctly)
 --ignore StreetAddressHasNumber (Las Vegas street name missing)
---ignore CountValidator --ignore StateLevelCountValidator (Site has 35 POI, validation expected 24)
+--ignore CountValidator --ignore StateLevelCountValidator (Site has 46 POI, validation expected 24)

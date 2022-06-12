@@ -1,48 +1,32 @@
-import csv
 import re
+import ssl
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 from sgselenium import SgChrome
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 logger = SgLogSetup().get_logger("whitscustard_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://whitscustard.com/findyourwhits"
 
@@ -66,7 +50,7 @@ def fetch_data():
             req = session.get(main_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
         else:
-            driver = SgChrome().chrome()
+            driver = SgChrome().driver()
             driver.get(main_link)
             base = BeautifulSoup(driver.page_source, "lxml")
             driver.close()
@@ -75,7 +59,6 @@ def fetch_data():
             if "Opening%2Bsoon" not in str(i):
                 final_links.append("https://whitscustard.com" + i["href"])
 
-    data = []
     locator_domain = "whitscustard.com"
 
     for link in final_links:
@@ -83,16 +66,9 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        if "Opening%2Bsoon" in str(base):
+        if "Opening%2Bsoon" in str(base) or "Coming Soon Website Little" in str(base):
             continue
-        location_name = (
-            base.find(class_="entry-title")
-            .text.encode("ascii", "replace")
-            .decode()
-            .replace("?", "-")
-            .replace("  ", "")
-            .strip()
-        )
+        location_name = base.find(class_="entry-title").text.strip()
 
         raw_address = (
             str(base.address)
@@ -100,19 +76,25 @@ def fetch_data():
             .replace("</address>", "")
             .replace("SUITE 101,", "SUITE 101<br/>")
             .replace("HWY HENDER", "HWY<br/>HENDER")
+            .replace("#43, Welling", "#43<br/>Welling")
             .replace("\nSUITE", " SUITE")
+            .replace("\nSuite", " SUITE")
             .replace("RD.\n", "RD. ")
             .replace("WEST, \n", "WEST, ")
             .split("<br/>")
         )
 
         street_address = raw_address[0].strip()
-        if street_address == "None":
+        if street_address == "None" or not street_address:
             try:
                 raw_address = list(base.find(id="address").stripped_strings)
             except:
                 try:
                     raw_address = list(base.find(class_="pslAddress").stripped_strings)
+                    if "\n" in raw_address[0]:
+                        raw_address = (
+                            raw_address[0].replace("\n", "<br/>").split("<br/>")
+                        )
                 except:
                     raw_address = base.h3.text.replace("NUE ZAN", "NUE<br/>ZAN").split(
                         "<br/>"
@@ -143,6 +125,9 @@ def fetch_data():
         else:
             raise
 
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
@@ -151,6 +136,7 @@ def fetch_data():
             phone = (
                 base.find("a", {"href": re.compile(r"tel")})["href"]
                 .replace("tel:", "")
+                .replace("telto:", "")
                 .strip()
             )
         except:
@@ -158,19 +144,22 @@ def fetch_data():
         if not phone:
             phone = "<MISSING>"
 
+        try:
+            hours_of_operation = base.find_all(class_="col sqs-col-3 span-3")[
+                -1
+            ].text.replace("Hours", "")
+        except:
+            hours_of_operation = base.h2.find_next("p").text
+
         hours_of_operation = (
-            base.find_all(class_="col sqs-col-3 span-3")[-1]
-            .text.replace("Hours", "")
-            .replace("PM", "PM ")
+            hours_of_operation.replace("PM", "PM ")
             .replace("Drive-thru only", "")
             .replace("losed", "losed ")
             .replace("LOSED", "LOSED ")
             .replace("HOURS", "")
             .strip()
         )
-        hours_of_operation = (
-            hours_of_operation.encode("ascii", "replace").decode().replace("?", "-")
-        )
+
         if "holiday hours" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("holiday hours")[1].strip()
         hours_of_operation = hours_of_operation.split("(")[0].split("Due to")[0].strip()
@@ -178,6 +167,10 @@ def fetch_data():
 
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
+
+        if "Drive through only" in hours_of_operation:
+            hours_of_operation = hours_of_operation.replace("Drive through only", "")
+            location_type = "Drive Through Only"
 
         map_link = ""
         maps = base.find_all("a")
@@ -206,35 +199,32 @@ def fetch_data():
         if "11362 SAN JOSE BLVD" in street_address.upper():
             latitude = "30.1677275"
             longitude = "-81.6349426"
-        if not longitude:
+        if "200 NE 2nd Avenue" in street_address:
+            latitude = "26.4661678"
+            longitude = "-80.0735354"
+        if not longitude or not latitude[:2].isdigit():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

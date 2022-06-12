@@ -1,59 +1,95 @@
-import csv
-from sgrequests import SgRequests
+from lxml import etree
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
+website = "vasafitness_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://vasafitness.com/"
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://vasafitness.com"
-    r = session.get("https://vasafitness.com/locations/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for location in soup.find_all("div",{'class':"marker"}):
-        location_request = session.get(location.find("a")["href"],headers=headers)
-        location_soup = BeautifulSoup(location_request.text,"lxml")
-        if location_soup.find("h4",text=re.compile("Coming Soon")):
-            continue
-        address = list(location_soup.find("div",{'class':"loc-address"}).stripped_strings)
-        hours = " ".join(list(location_soup.find("div",{'id':"loc-accordion"}).stripped_strings))
-        if location_soup.find("a",{'href':re.compile("tel:")}) == None:
-            phone = "<MISSING>"
-        else:
-            phone = location_soup.find("a",{'href':re.compile("tel:")})["href"].replace("tel: ","")
-        name = address[1].split(",")[-1].split(" ")[-2].upper()
-        name1 = location_soup.find("h1",{"class":"text-uppercase"}).text
-        store = []
-        store.append("https://vasafitness.com")
-        store.append(name1)
-        store.append(address[0])
-        store.append(address[1].split(",")[-2].strip())
-        store.append(address[1].split(",")[-1].split(" ")[-2])
-        store.append(address[1].split(",")[-1].split(" ")[-1])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone.strip())
-        store.append("<MISSING>")
-        store.append(location["data-latt"])
-        store.append(location["data-lngg"])
-        store.append(hours)
-        # if store[-1].count("Closed") > 6:
-        #     continue
-        store.append(location.find("a")["href"])
-        yield store
+    start_url = "https://vasafitness.com/locations/"
+    response = session.get(start_url, headers=headers)
+    dom = etree.HTML(response.text)
+    all_locations = []
+    all_states = dom.xpath('//div[@class="list-item"]/a/@href')
+    for state_url in all_states:
+        response = session.get(state_url)
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//a[contains(text(), "View Location")]/@href')
+    for page_url in all_locations:
+        log.info(page_url)
+        loc_response = session.get(page_url)
+        soup = BeautifulSoup(loc_response.text, "html.parser")
+        location_name = soup.find("h1").text
+        try:
+            phone = soup.select_one("a[href*=tel]").text
+        except:
+            phone = MISSING
+        address = soup.find("div", {"class": "loc-address"}).text.split(",")
+        street_address = address[0]
+        city = address[1]
+        address = address[2].split()
+        state = address[0]
+        zip_postal = address[1]
+        country_code = "USA"
+        latitude = MISSING
+        longitude = MISSING
+        try:
+            hours_of_operation = (
+                soup.find("div", {"class": "hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            hours_of_operation = MISSING
+        coords = soup.find("div", {"class": "marker"})
+        latitude = coords["data-latt"]
+        longitude = coords["data-lngg"]
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

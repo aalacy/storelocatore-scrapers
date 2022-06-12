@@ -1,51 +1,23 @@
-import csv
 import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "aerotek.com"
+    domain = "aerotek.com"
     start_urls = [
-        "https://www.aerotek.com/en-ca/locations/canada",
+        "https://www.aerotek.com/en/locations/canada",
         "https://aerotek.com/en/locations/united-states",
+        "https://www.aerotek.com/en-gb/locations/emea/united-kingdom",
+        "https://www.aerotek.com/en-au/locations/apac/china",
+        "https://www.aerotek.com/en-au/locations/apac/australia",
     ]
 
     for url in start_urls:
@@ -53,12 +25,11 @@ def fetch_data():
         dom = etree.HTML(response.text)
         country_urls = dom.xpath('//div[@id="location-title"]/a/@href')
         for poi_url in country_urls:
-            store_url = "https://aerotek.com" + poi_url
-            strore_response = session.get(store_url)
-            store_dom = etree.HTML(strore_response.text)
+            page_url = urljoin(url, poi_url)
+            store_response = session.get(page_url)
+            store_dom = etree.HTML(store_response.text)
 
             location_name = store_dom.xpath('//div[@id="location-title"]/a/text()')[0]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = store_dom.xpath(
                 '//span[@class="acs-location-address"]/text()'
             )[0]
@@ -67,11 +38,15 @@ def fetch_data():
             )
             if street_address_2:
                 street_address += ", " + street_address_2
-            street_address = street_address if street_address else "<MISSING>"
-            city = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(",")[0]
-            city = city if city else "<MISSING>"
-            country_code = store_dom.xpath('//span[@class="acs-country"]/text()')[0]
-            country_code = country_code if country_code else "<MISSING>"
+            city = (
+                store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                .split(",")[0]
+                .strip()
+            )
+            country_code = store_dom.xpath('//span[@class="acs-country"]/text()')
+            country_code = country_code[0] if country_code else ""
+            if country_code == "<MISSING>" and "united-kingdom" in url:
+                country_code = "United Kingdom"
             if country_code == "Canada":
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
@@ -79,14 +54,21 @@ def fetch_data():
                     .strip()
                     .split()[:-2]
                 )
-                state = " ".join(state) if state else "<MISSING>"
+                state = " ".join(state) if state else ""
                 zip_code = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
                     .split(",")[-1]
                     .strip()
                     .split()[-2:]
                 )
-                zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
+                zip_code = " ".join(zip_code) if zip_code else ""
+            elif country_code == "United Kingdom":
+                state = "<MISSING>"
+                zip_code = (
+                    store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                    .split(",")[-1]
+                    .strip()
+                )
             else:
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
@@ -101,20 +83,15 @@ def fetch_data():
                         .split(",")[1]
                         .strip()
                     )
-                state = state if state else "<MISSING>"
                 zip_code = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
                     .split(",")[-1]
                     .strip()
                     .split()[-1:]
                 )
-                zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
-            store_number = ""
-            store_number = store_number if store_number else "<MISSING>"
-            phone = store_dom.xpath('//span[@class="acs-location-phone"]/a/text()')[0]
-            phone = phone if phone else "<MISSING>"
-            location_type = ""
-            location_type = location_type if location_type else "<MISSING>"
+                zip_code = " ".join(zip_code) if zip_code else ""
+            phone = store_dom.xpath('//span[@class="acs-location-phone"]/a/text()')
+            phone = phone[0] if phone else ""
 
             store_data = store_dom.xpath(
                 '//*[contains(@data-ux-args, "Lat")]/@data-ux-args'
@@ -130,8 +107,6 @@ def fetch_data():
                 longitude = store_dom.xpath(
                     '//div[@id="location-title"]/@data-mappoint'
                 )[0].split(",")[1]
-            latitude = latitude if latitude else "<MISSING>"
-            longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = store_dom.xpath(
                 '//div[@class="score-content-spot aerotek-location-hours"]//text()'
             )
@@ -141,38 +116,53 @@ def fetch_data():
             hours_of_operation = (
                 ", ".join(hours_of_operation).replace("Office Hours:,", "").strip()
             )
-            hours_of_operation = (
-                hours_of_operation if hours_of_operation else "<MISSING>"
+            if not hours_of_operation:
+                hours_of_operation = store_dom.xpath(
+                    '//p[contains(text(), "Office Hours:")]/following-sibling::p/text()'
+                )
+                hours_of_operation = (
+                    " ".join(hours_of_operation) if hours_of_operation else ""
+                )
+            hours_of_operation = hours_of_operation if hours_of_operation else ""
+            if phone:
+                phone = phone.split("/")[0]
+            if not country_code and "china" in page_url:
+                country_code = "China"
+            if not country_code and "australia" in page_url:
+                country_code = "Australia"
+            if not country_code and "united-states" in page_url:
+                country_code = "United States"
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            check = "{} {}".format(location_name, street_address)
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

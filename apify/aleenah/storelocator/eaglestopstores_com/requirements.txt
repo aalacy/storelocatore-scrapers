@@ -1,2 +1,5 @@
-requests==2.22.0
-sglogging
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+usaddress==0.5.10
+sgrequests==0.1.13
+sglogging==0.0.4
+sgscrape==0.1.13

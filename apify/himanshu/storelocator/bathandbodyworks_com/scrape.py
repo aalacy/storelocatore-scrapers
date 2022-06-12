@@ -1,85 +1,99 @@
-import csv
+# -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-  
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-  
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    addresses = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    session = SgRequests()
+
+    start_url = "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=39.4923&longitude=-0.4046&countryCode=US&distanceUnit=mi&maxdistance=50000&BBW=1"
+    domain = "bathandbodyworks.com"
+    hdr = {
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "accept-encoding": "gzip, deflate, br",
+        "cookie": "_pxhd=A20RvZIXctJCBmUD1vmZRC6c4Iej1W/FHIHN48Im5jKK4HGE7gueulI/uB9bDaze0XGOcoJ7DzS3IsEmqHB1Uw==:vjLQwFfy8ZkI1aTfr8x0w2AtjcGpgmQ7ReOcLFr9sB0Uu1pVGTQW0XUAu4roZbBrW0V/DvgQx85EF/W74Ob21ttBs2y2FcuIk/EvwLa0pj8=; dwac_8ad49cb0e424b64ecf842fb2a5=SyzDJGCPg3_KQ6yfqKzt2ViJs9PhCSW4SBw%3D|dw-only|||USD|false|US%2FEastern|true; cqcid=abxc5qSH4FlK7HzC1LcdCgHXhm; cquid=||; sid=SyzDJGCPg3_KQ6yfqKzt2ViJs9PhCSW4SBw; dwanonymous_3ca1c1eaa8cb6f7cdb78c17b8163592f=abxc5qSH4FlK7HzC1LcdCgHXhm; __cq_dnt=0; dw_dnt=0; dwsid=T9rKprjsT5mutqHJCLnphlx_ulE5auleLOkOH037QTfgXdkMXWCxja0XAyrlSGLh_YnGspmyFvK3p_mKPujzcA==; optimizelyEndUserId=oeu1654081828598r0.7657302277775213; pxcts=71a6ece5-e19b-11ec-a7cd-6652656e4f65; _pxvid=6fc1e85c-e19b-11ec-983d-756c75534873; EmailSignupModalDismissal=true; collapsibleState=true; utag_main=v_id:01811ef5bf43000d7674663ba5ea05079002e07100838$_sn:1$_ss:1$_st:1654083630728$ses_id:1654081830728%3Bexp-session$_pn:1%3Bexp-session; CONSENTMGR=consent:false%7Cts:1654081831053; __cq_uuid=adad1c70-4b6b-11ec-be7f-a5d87894805b; __cq_seg=0~0.00!1~0.00!2~0.00!3~0.00!4~0.00!5~0.00!6~0.00!7~0.00!8~0.00!9~0.00; cmTPSet=Y; _px3=29ee5f81d947a1fd2d9f20c915353eab3434f9ce1adc86150b6087f6956d5932:XRL/ENVpRM5K9VvoSGVG4XtJe8w3PpgZJ0CMpCwBsZYNb94sfZsuBrwnnphlgmRx7hlZoQcyRODeIAbxORLwCg==:1000:P6a3suU7WMcd58kKzbsaTYepIVY1x4DVO9mxdqO6DUtFqxauecSO5ckk45OypkhgHIc3aTrXsHtT871VpD0V4MdsXWDVQpGgujYea0ox0Tu9qr7TlS8SGRDmumdzqymOEdjUHOz93n/tckO4Wl4fcIaiDSd+UfNW9gGvoqLVRRyASotnGq1OduWVrt6LEIt8eKGVgfY5ubUaa82Gvv0c2g==",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
     }
-    base_url=  "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"   
-    r = session.get(base_url)
-    soup = BeautifulSoup(r.text,"lxml")
-    data = soup.find("div",{"class":"store-location-container clearfix"}).find_all("div",{"class":"store-location"})
-    for i in data :
-        data2 = i.find("p",{"class":"location"})
-        state = (data2.text.split(",")[-1].strip())
-        city = (data2.text.split(",")[0].strip())
-        location_name =  (i.find("p").text)
-        data3 = i.find("p",{"class":"title"})
-        phone = (data3.find_next_sibling().text)
-        store = []
-        store.append("https://www.bathandbodyworks.com/")
-        store.append(location_name if location_name else "<MISSING>")
-        if store[-1] in addresses:
-            continue
-        addresses.append(store[-1])
-        store.append("<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append("<MISSING>")
-        store.append("CA")
-        store.append("<MISSING>") 
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(base_url)
-        yield store
-    base_url = "https://www.bathandbodyworks.com"
-    r = session.get("https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1",headers=headers)
-    location_data = r.json()['stores']
-    addresses = []
-    for key in location_data:
-        store_data = location_data[key]
-        store = []
-        store.append("https://www.bathandbodyworks.com")
-        store.append(store_data["name"])
-        store.append(store_data["address1"] + " " + store_data["address2"])
-        if store[-1] in addresses:
-            continue
-        addresses.append(store[-1])
-        store.append(store_data["city"])
-        store.append(store_data["stateCode"])
-        store.append(store_data["postalCode"])
-        store.append(store_data["countryCode"])
-        store.append(key)
-        store.append(store_data["phone"])
-        store.append("<MISSING>")
-        store.append(store_data["latitude"])
-        store.append(store_data["longitude"])
-        store.append(" ".join(list(BeautifulSoup(store_data['storeHours'],"lxml").stripped_strings)))
-        store.append("https://www.bathandbodyworks.com/store-locator")
-        
-        yield store
+    data = session.get(start_url, headers=hdr).json()
+    for store_number, poi in data["stores"].items():
+        street_address = poi["address1"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
+        hoo = ""
+        if poi["storeHours"]:
+            hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.bathandbodyworks.com/store-locator",
+            location_name=poi["name"],
+            street_address=street_address,
+            city=poi["city"],
+            state=poi["stateCode"],
+            zip_postal=poi["postalCode"],
+            country_code=poi["countryCode"],
+            store_number=store_number,
+            phone=poi["phone"],
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=hoo,
+        )
+
+        yield item
+
+    start_url = (
+        "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
+    )
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+
+    all_locations = dom.xpath('//div[@class="store-location"]')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath('.//p[@class="store-name"]/text()')[0]
+        raw_address = poi_html.xpath('.//p[@class="location"]/text()')[0].split(", ")
+        phone = poi_html.xpath("./p[4]/text()")[0]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address="",
+            city=raw_address[0],
+            state=raw_address[1],
+            zip_postal="",
+            country_code="CA",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
+        )
+
+        yield item
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
+
+
+if __name__ == "__main__":
+    scrape()

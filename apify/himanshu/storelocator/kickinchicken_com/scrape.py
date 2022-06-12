@@ -1,61 +1,99 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
+website = "kickinchicken_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+DOMAIN = "https://www.kickinchicken.com/"
+MISSING = "<MISSING>"
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "http://www.kickinchicken.com/"
-    r = session.get(base_url+"/locations/")
-    soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
-    main=soup.find('div',{"class":"locations"}).find_all('a')
-    for atag in main:
-        if atag['href'].startswith('/locations/'):
-            r1 = session.get(base_url+atag['href'])
-            soup1=BeautifulSoup(r1.text,'lxml')
-            loc=list(soup1.find('div',{'class':'s-locations'}).stripped_strings)
-            if len(loc) > 15:
-                name=loc[1]
-                address=loc[2]
-                ct=loc[3].split(',')
-                city=ct[0].strip()
-                state=ct[1].strip().split(' ')[0].strip()
-                zip=ct[1].strip().split(' ')[1].strip()
-                phone=loc[4]
-                hour=' '.join(list(soup1.find('div',{'class':'hours'}).stripped_strings))
-                store = []
-                store.append(base_url)
-                store.append(name)
-                store.append(address)
-                store.append(city)
-                store.append(state)
-                store.append(zip)
-                store.append('US')
-                store.append("<MISSING>")
-                store.append(phone)
-                store.append("kickinchicken")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append(hour)
-                return_main_object.append(store)
-    return return_main_object
+    if True:
+        url = "https://www.kickinchicken.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll(class_="location-content")
+        for loc in loclist:
+            page_url = "https://www.kickinchicken.com" + loc.find_all("a")[-1]["href"]
+            log.info(page_url)
+            if "food-truck" in page_url:
+                continue
+            if "/locations/" in page_url:
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                address = (
+                    soup.find("div", {"class": "address"})
+                    .get_text(separator="|", strip=True)
+                    .split("|")
+                )
+                location_name = soup.find("h1").text
+                hours_of_operation = (
+                    soup.find("div", {"class": "widget hours loc-hour"})
+                    .find("p")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("-ish", "")
+                )
+            else:
+                page_url = url
+                location_name = loc.find(class_="title").text
+                address = (
+                    loc.find("div", {"class": "address"})
+                    .get_text(separator="|", strip=True)
+                    .replace("Charleston ", "Charleston, ")
+                    .split("|")
+                )
+                hours_of_operation = MISSING
+            street_address = address[0].replace(",", "")
+            phone = address[-1]
+            if "," in phone:
+                phone = MISSING
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

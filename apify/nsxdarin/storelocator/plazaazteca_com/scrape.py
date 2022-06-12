@@ -1,141 +1,124 @@
-import csv
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
+    base_link = "https://plazaazteca.com/locations/"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 
-def fetch_data():
-    locs = []
-    url = 'https://plazaazteca.com/locations/'
-    r = session.get(url, headers=headers)
-    website = 'plazaazteca.com'
-    country = 'US'
-    for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
-        if '<h2 class="elementor-heading-title elementor-size-default"><a href="' in line:
-            lurl = line.split('<h2 class="elementor-heading-title elementor-size-default"><a href="')[1].split('"')[0]
-            if lurl not in locs:
-                locs.append(lurl)
-    for loc in locs:
-        store = '<MISSING>'
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        phone = ''
-        lat = '<MISSING>'
-        lng = '<MISSING>'
-        hours = ''
-        typ = '<MISSING>'
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode('utf-8'))
-            if '<title>' in line2:
-                name = line2.split('<title>')[1].split('&')[0].strip()
-            if '<div class="elementor-text-editor elementor-clearfix"><p' in line2 and 'At Plaza' not in line2 and 'We invite' not in line2 and 'Welcome to the' not in line2:
-                if '2835 Lehigh St' in line2:
-                    add = '2835 Lehigh St'
-                    city = 'Allentown'
-                    state = 'Pennsylvania'
-                    zc = '18103'
-                    phone = '(484) 656 7277'
-                elif '153 S Gulph Rd' in line2:
-                    add = '153 S Gulph Rd'
-                    city = 'King of Prussia'
-                    state = 'Pennsylvania'
-                    zc = '19406'
-                    phone = '(610) 265-1170'
-                elif '821 W Lancaster Ave' in line2:
-                    add = '821 W Lancaster Ave'
-                    city = 'Wayne'
-                    state = 'Pennsylvania'
-                    zc = '19087'
-                    phone = '484-580-6369'
-                elif '6623 W Broad St' in line2:
-                    add = '6623 W Broad St'
-                    city = 'Richmond'
-                    state = 'Virginia'
-                    zc = '23230'
-                    phone = '804-888-9984'
-                else:
-                    add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p')[1].split(',')[0]
-                    city = line2.split('</p><p>')[1].split(',')[0]
-                    state = line2.split('</p><p>')[1].split(',')[1].strip()
-                    zc = line2.split('</p><p>')[1].split(',')[2].strip()
-                    phone = line2.split('</p><p>')[2].split('<')[0]
-            if '<div class="elementor-text-editor elementor-clearfix"><p class="p1">' in line2:
-                add = line2.split('<div class="elementor-text-editor elementor-clearfix"><p class="p1">')[1].split('<')[0]
-                if '15px;">' not in line2:
-                    g = next(lines)
-                    g = str(g.decode('utf-8'))
-                city = g.split('15px;">')[1].split(',')[0]
-                state = g.split('15px;">')[2].split(',')[0]
-                zc = g.split('15px;">')[3].split('<')[0]
-            if '<span >' in line2 and '<span ><' not in line2 and '</span>' in line2:
-                g = next(lines)
-                g = str(g.decode('utf-8'))
-                if '<p' not in g:
-                    g = next(lines)
-                    g = str(g.decode('utf-8'))
-                if 'font-weight: 500;">' in g:
-                    hinfo = g.split('font-weight: 500;">')[1].split('<')[0]
-                else:
-                    hinfo = g.split('">')[1].split('<')[0]
-                hrs = line2.split('<span >')[1].split('<')[0] + ': ' + hinfo
-                if hours == '':
-                    hours = hrs
-                else:
-                    hours = hours + '; ' + hrs
-            if '<p class="p1">(' in line2:
-                phone = line2.split('<p class="p1">(')[1].split('<')[0]
-            if '</p' in add:
-                add = add.split('<')[0]
-            if '1467 N Main St' in add:
-                city = 'Suffolk'
-                state = 'Virginia'
-                zc = '23434'
-                phone = '(757) 925-1222'
-            if '12428 Warwick Blvd' in add:
-                city = 'Newport News'
-                state = 'Virginia'
-                zc = '23606'
-                phone = '(757) 599-6727'
-            if 'greenville' in loc:
-                add = '400 Greenville Blvd SW'
-                city = 'Greenville'
-                state = 'North Carolina'
-                zc = '27834'
-                phone = '(252) 321-8008'
-            if 'newington' in loc:
-                add = '3260 Berlin Tpke'
-                city = 'Newington'
-                state = 'Connecticut'
-                zc = '06111'
-                phone = '860-436-9708'
-            if 'www.toroazteca.com' in loc:
-                add = '194 Buckland Hills Drive Suite 1052'
-                city = 'Manchester'
-                state = 'Connecticut'
-                zc = '06042'
-                phone = '860-648-4454'
-                hours = 'Monday - Thursday: 11am - 10pm (Bar Open Late); Friday - Saturday: 11am - 11pm (Bar Open Late); Sunday: 11:30am - 10pm (Bar Open Late)'
-            if '<' in name:
-                name = name.split('<')[0]
-        if 'Coming Soon' not in name:
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    headers = {"User-Agent": user_agent}
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-scrape()
+    items = base.find_all(class_="elementor-heading-title")
+
+    locator_domain = "https://plazaazteca.com"
+
+    for item in items:
+        try:
+            link = item.a["href"]
+        except:
+            continue
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        location_name = item.text.strip()
+        try:
+            raw_address = base.find_all(class_="elementor-text-editor")[-1].find_all(
+                "p"
+            )
+            street_address = raw_address[0].text.strip()
+            city_line = raw_address[1].text.split(",")
+            city = city_line[0].strip()
+            state = city_line[1].strip()
+            if not state.isdigit():
+                zip_code = city_line[2].strip()
+            else:
+                zip_code = state
+                state = city
+                city = street_address.split(",")[1].strip()
+                street_address = street_address.split(",")[0].strip()
+            phone = raw_address[-1].text.strip()
+            if "," in phone:
+                phone = list(item.a.find_next().stripped_strings)[-1].strip()
+        except:
+            raw_address = list(item.a.find_next().stripped_strings)
+            street_address = raw_address[0].strip()
+            city_line = raw_address[1].strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[1].strip()
+            zip_code = city_line[2].strip()
+            phone = raw_address[-1].strip()
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+        if "York" in state:
+            city = "York"
+            state = state.replace("York", "").strip()
+        country_code = "US"
+        store_number = ""
+        location_type = ""
+        phone = phone.split("·")[0].strip()
+        if "TEMPORARY CLOSED" in location_name.upper():
+            hours_of_operation = "TEMPORARY CLOSED".title()
+            phone = ""
+        else:
+            try:
+                hours_of_operation = " ".join(
+                    list(
+                        base.find(class_="elementor-icon-box-wrapper")
+                        .find_previous(class_="elementor-widget-wrap")
+                        .stripped_strings
+                    )
+                )
+            except:
+                try:
+                    hours_of_operation = " ".join(
+                        list(
+                            base.find(class_="hours-of-operation").div.stripped_strings
+                        )
+                    )
+                except:
+                    hours_of_operation = ""
+        if "," in phone:
+            phone = (
+                base.find_all(class_="elementor-text-editor")[-1]
+                .find_all("p")[-1]
+                .text.strip()
+            )
+        hours_of_operation = hours_of_operation.replace(
+            " (Late night menu available - Bar open late 1am)", ""
+        )
+        latitude = ""
+        longitude = ""
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -1,79 +1,201 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
-logger = SgLogSetup().get_logger('hotelindigo_com')
-
-
+logger = SgLogSetup().get_logger("hotelindigo_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    alllocs = []
-    urls = ['https://www.ihg.com/hotelindigo/destinations/us/en/united-states-hotels']
-    for url in urls:
-        states = []
-        r = session.get(url, headers=headers)
-        if r.encoding is None: r.encoding = 'utf-8'
-        for line in r.iter_lines(decode_unicode=True):
-            if 'Hotels</span></a>' in line:
-                states.append(line.split('href="')[1].split('"')[0])
-        for state in states:
-            cities = []
-            logger.info(('Pulling State %s...' % state))
-            r2 = session.get(state, headers=headers)
-            if r2.encoding is None: r2.encoding = 'utf-8'
-            for line2 in r2.iter_lines(decode_unicode=True):
-                if 'Hotels</span></a>' in line2:
-                    cities.append(line2.split('href="')[1].split('"')[0])
-            for city in cities:
-                logger.info(('Pulling City %s...' % city))
-                r3 = session.get(city, headers=headers)
-                if r3.encoding is None: r3.encoding = 'utf-8'
-                for line3 in r3.iter_lines(decode_unicode=True):
-                    if 'https://www.ihg.com/hotelindigo/hotels/' in line3 and '{"@context":"https://www.schema.org"' in line3:
-                        lurl = line3.split('"url":"')[1].split('"')[0]
-                        if lurl not in alllocs:
-                            alllocs.append(lurl)
-                            website = 'hotelindigo.com'
-                            typ = 'Hotel'
-                            hours = '<MISSING>'
-                            name = line3.split('"name":"')[1].split('"')[0]
-                            add = line3.split('"streetAddress":"')[1].split('"')[0]
-                            city = line3.split('"addressLocality":"')[1].split('"')[0]
-                            try:
-                                state = line3.split('"addressRegion":"')[1].split('"')[0]
-                            except:
-                                state = '<MISSING>'
-                            zc = line3.split('"postalCode":"')[1].split('"')[0]
-                            if 'canada-hotels' in url:
-                                country = 'CA'
-                            else:
-                                country = 'US'
-                            try:
-                                phone = line3.split('"telephone":"')[1].split('"')[0]
-                            except:
-                                phone = '<MISSING>'
-                            lat = line3.split(',"latitude":')[1].split(',')[0]
-                            lng = line3.split('"longitude":')[1].split('}')[0]
-                            store = lurl.replace('/hoteldetail','').rsplit('/',1)[1]
-                            if store == 'pdxvc' or store == 'omasd' or store == 'nycfq' or store == 'hougo':
-                                hours = ''
-                            else:
-                                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    locs = []
+    url = "https://www.ihg.com/bin/sitemapindex.xml"
+    r = session.get(url, headers=headers)
+    brand = "hotelindigo"
+    brand_string = brand + ".en.hoteldetail.xml"
+    smurl = ""
+    for line in r.iter_lines():
+        if brand_string in line:
+            smurl = line.split("<loc>")[1].split("<")[0]
+    r = session.get(smurl, headers=headers)
+    for line in r.iter_lines():
+        if 'hreflang="en" rel="alternate">' in line:
+            lurl = line.split('href="')[1].split('"')[0]
+            if lurl not in locs:
+                locs.append(lurl)
+    for loc in locs:
+        time.sleep(5)
+        logger.info(loc)
+        r2 = session.get(loc, headers=headers)
+        website = "hotelindigo.com"
+        name = ""
+        city = ""
+        state = ""
+        country = ""
+        add = ""
+        zc = ""
+        typ = "Hotel"
+        phone = ""
+        hours = "<MISSING>"
+        lat = ""
+        lng = ""
+        add2 = ""
+        city2 = ""
+        zc2 = ""
+        state2 = ""
+        phone2 = ""
+        country2 = ""
+        lat2 = ""
+        lng2 = ""
+        store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
+        for line2 in r2.iter_lines():
+            if 'property="og:title" content="' in line2 and name == "":
+                name = line2.split('property="og:title" content="')[1].split('"')[0]
+            if '"name" : "' in line2 and name == "":
+                name = line2.split('"name" : "')[1].split('"')[0]
+            if '"streetAddress": "' in line2 and add == "":
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '<span itemprop="streetAddress">' in line2 and add == "":
+                add = (
+                    line2.split('<span itemprop="streetAddress">')[1]
+                    .split("</span>")[0]
+                    .strip()
+                    .replace("<p>", "")
+                    .replace("</p>", "")
+                    .strip()
+                )
+                city = (
+                    line2.split('<span itemprop="addressLocality">')[1]
+                    .split("<")[0]
+                    .strip()
+                )
+                try:
+                    state = line2.split('<span itemprop="addressRegion">')[1].split(
+                        "<"
+                    )[0]
+                except:
+                    state = "<MISSING>"
+                try:
+                    zc = line2.split('<span itemprop="postalCode">')[1].split("<")[0]
+                except:
+                    zc = "<MISSING>"
+                try:
+                    country = line2.split('<span itemprop="addressCountry">')[1].split(
+                        "<"
+                    )[0]
+                except:
+                    country = "<MISSING>"
+            if '"addressLocality": "' in line2 and city == "":
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if lat == "" and '<meta itemprop="latitude" content="' in line2:
+                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[
+                    0
+                ]
+            if lng == "" and '<meta itemprop="longitude" content="' in line2:
+                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[
+                    0
+                ]
+            if '"addressRegion": "' in line2 and state == "":
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
+            if phone == "" and 'itemprop="telephone">' in line2:
+                phone = line2.split('itemprop="telephone">')[1].split("<")[0]
+            if '"addressCountry": "' in line2 and country == "":
+                country = line2.split('"addressCountry": "')[1].split('"')[0]
+            if '"latitude": "' in line2 and lat == "":
+                lat = line2.split('"latitude": "')[1].split('"')[0]
+            if '"longitude": "' in line2 and lng == "":
+                lng = line2.split('"longitude": "')[1].split('"')[0]
+            if '"telephone": "' in line2 and phone == "":
+                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if 'itemprop="streetAddress">' in line2:
+                add2 = line2.split('itemprop="streetAddress">')[1].split("<")[0]
+            if 'itemprop="addressRegion">' in line2:
+                state2 = line2.split('itemprop="addressRegion">')[1].split("<")[0]
+            if 'itemprop="addressLocality">' in line2:
+                city2 = line2.split('itemprop="addressLocality">')[1].split("<")[0]
+            if 'itemprop="postalCode">' in line2:
+                zc2 = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if '<meta itemprop="latitude" content="' in line2:
+                lat2 = line2.split('<meta itemprop="latitude" content="')[1].split('"')[
+                    0
+                ]
+            if '<meta itemprop="longitude" content="' in line2:
+                lng2 = line2.split('<meta itemprop="longitude" content="')[1].split(
+                    '"'
+                )[0]
+            if 'itemprop="telephone">' in line2:
+                phone2 = line2.split('itemprop="telephone">')[1].split("<")[0]
+            if 'itemprop="addressCountry">' in line2:
+                country2 = line2.split('itemprop="addressCountry">')[1].split("<")[0]
+        if add == "":
+            add = add2
+        if city == "":
+            city = city2
+        if state == "":
+            state = state2
+        if zc == "":
+            zc = zc2
+        if lat == "":
+            lat = lat2
+        if lng == "":
+            lng = lng2
+        if country == "":
+            country = country2
+        if phone == "":
+            phone = phone2
+        if "null" in phone or phone == "":
+            phone = "<MISSING>"
+        if state == "":
+            state = "<MISSING>"
+        if add == "":
+            add = "<MISSING>"
+        if lat == "":
+            lat = "<MISSING>"
+        if lng == "":
+            lng = "<MISSING>"
+        if zc == "":
+            zc = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
+        if city == "":
+            city = "<MISSING>"
+        phone = phone.replace("-|", "")
+        if "|" in phone:
+            phone = phone.split("|")[0].strip()
+        phone = phone.strip()
+        state = state.replace("&nbsp;", "")
+        city = city.replace("&nbsp;", "")
+        if " Hotels" not in name and name != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

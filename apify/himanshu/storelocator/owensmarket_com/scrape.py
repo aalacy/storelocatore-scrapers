@@ -86,7 +86,6 @@ def fetch_data():
                     location_type = "store"
                 latitude = key["latitude"]
                 longitude = key["longitude"]
-                zip_codes.mark_found((latitude, longitude))
                 hours_of_operation = ""
                 if key["ungroupedFormattedHours"]:
                     for hr in key["ungroupedFormattedHours"]:

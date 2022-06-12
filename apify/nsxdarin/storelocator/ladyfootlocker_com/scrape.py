@@ -50,11 +50,9 @@ def fetch_data():
         if (
             'rel="alternate" hreflang="en" href="https://stores.ladyfootlocker.com/'
             in line
-            and 'rel="alternate" hreflang="en" href="https://stores.ladyfootlocker.com/us/'
-            not in line
         ):
             lurl = line.split('href="')[1].split('"')[0]
-            if lurl.count("/") == 5 and "-" in lurl.rsplit("/", 1)[1]:
+            if lurl.count("/") == 6 and "-" in lurl.rsplit("/", 1)[1]:
                 locs.append(lurl)
     for loc in locs:
         logger.info(loc)
@@ -71,20 +69,28 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '<span class="location-name-geo">' in line2:
-                name = line2.split('<span class="location-name-geo">')[1].split("<")[0]
+            if '<span class="LocationName-geo">' in line2 and name == "":
+                name = line2.split('<span class="LocationName-geo">')[1].split("<")[0]
+            if '<meta itemprop="addressLocality" content="' in line2:
+                city = line2.split('<meta itemprop="addressLocality" content="')[
+                    1
+                ].split('"')[0]
             if 'itemprop="streetAddress" content="' in line2:
                 add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
-                city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
+                try:
+                    city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
+                except:
+                    pass
                 try:
                     state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
                 except:
                     state = "PR"
                 zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if '<a class="Phone-link" href="tel:' in line2:
                 phone = (
-                    line2.split('main-number-link" href="tel:')[1]
+                    line2.split('<a class="Phone-link" href="tel:')[1]
                     .split('"')[0]
-                    .replace("+1-", "")
+                    .replace("+1", "")
                 )
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
@@ -104,6 +110,10 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
+        if "elmhurst/90-15-queens-blvd" in loc:
+            hours = "Closed"
         yield [
             website,
             loc,

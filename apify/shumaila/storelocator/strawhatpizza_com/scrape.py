@@ -71,15 +71,18 @@ def fetch_data():
         link = "https://www.strawhatpizza.com" + div.find("h3").find("a")["href"]
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        hours = (
-            soup.find("div", {"id": "hours"})
-            .text.replace("Hours", "")
-            .replace("pm", "pm ")
-            .replace("day", "day ")
-            .replace("\r", " ")
-            .replace("-", " - ")
-            .strip()
-        )
+        try:
+            hours = (
+                soup.find("div", {"id": "hours"})
+                .text.replace("Hours", "")
+                .replace("pm", "pm ")
+                .replace("day", "day ")
+                .replace("\r", " ")
+                .replace("-", " - ")
+                .strip()
+            )
+        except:
+            hours = "<MISSING>"
         lat, longt = (
             soup.find("div", {"id": "storeMap"})
             .find("img")["src"]
@@ -132,7 +135,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                hours,
+                hours.replace("\n", " ").strip(),
             ]
         )
 

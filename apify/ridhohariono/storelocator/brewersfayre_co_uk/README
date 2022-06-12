@@ -1,0 +1,4 @@
+--ignore CountryCodeFillRateChecker (Country code not US or CA)
+--ignore StreetAddressHasNumber     (Confirmed scrape correctly: https://www.brewersfayre.co.uk/en-gb/locations/cheshire/widnes)
+--ignore GeoConsistencyValidator    (Confirmed scrape correctly: https://www.brewersfayre.co.uk/en-gb/locations/cheshire/widnes)
+--ignore CountryValidator           (Confirmed scrape correctly: https://www.brewersfayre.co.uk/en-gb/locations/cheshire/widnes)

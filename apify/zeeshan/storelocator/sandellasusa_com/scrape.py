@@ -123,7 +123,7 @@ def fetch_data():
     data = []
 
     session = SgRequests()
-    session.session.headers.update(
+    session.get_session().headers.update(
         {
             "authority": "sandellasusa.com",
             "method": "GET",

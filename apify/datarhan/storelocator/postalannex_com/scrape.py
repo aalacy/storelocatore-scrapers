@@ -1,129 +1,105 @@
-import csv
-from lxml import etree
+from lxml import html
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "postalannex.com"
-
+    domain = "postalannex.com"
     start_url = "https://www.postalannex.com/locations"
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
 
-    all_poi_html = dom.xpath('//div[@id="filtered-locations"]')
-    for poi_html in all_poi_html:
-        store_url = "https://www.postalannex.com" + poi_html.xpath(".//a/@href")[0]
+    headers = {
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+    }
+    response = session.get(start_url, headers=headers)
+    dom = html.fromstring(response.text)
+    all_locations = dom.xpath('//div[@class=" blockish address-list"]')
+    for poi_html in all_locations:
+        url = poi_html.xpath(".//a/@href")[0]
+        store_url = urljoin(start_url, url)
+        r_loc = session.get(store_url, headers=headers)
+        if r_loc.status_code != 200:
+            continue
+        loc_dom = html.fromstring(r_loc.text, "lxml")
+        if loc_dom.xpath('//div[contains(text(), "Coming Soon")]'):
+            continue
         location_name = poi_html.xpath('.//div[@class="storename"]/a/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = poi_html.xpath('.//div[@class="loc-sub"]/a/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = poi_html.xpath('.//div[@class="loc-sub"]/text()')[0].split(",")
-        city = city[0] if city else "<MISSING>"
-        state = (
-            poi_html.xpath('.//div[@class="loc-sub"]/text()')[0]
-            .split(",")[-1]
-            .strip()
-            .split()
-        )
-        state = state[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//div[@class="loc-sub"]/text()')
-        zip_code = (
-            zip_code[0].split(",")[-1].strip().split()[-1] if zip_code else "<MISSING>"
-        )
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
+        location_name = location_name[0] if location_name else ""
+        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
+        street_address = " ".join(street_address) if street_address else ""
+        if not street_address:
+            street_address = poi_html.xpath('.//div[@class="loc-sub"]/a/text()')[0]
+        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
+        city = city[0] if city else ""
+        if not city:
+            city = poi_html.xpath('.//div[@class="loc-sub"]/text()')[0].split(", ")[0]
+        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
+        state = state[0] if state else ""
+        if not state:
+            state = (
+                poi_html.xpath('.//div[@class="loc-sub"]/text()')[0]
+                .split(", ")[-1]
+                .split()[0]
+            )
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
+        zip_code = zip_code[1] if zip_code else ""
+        if not zip_code:
+            zip_code = (
+                poi_html.xpath('.//div[@class="loc-sub"]/text()')[0]
+                .split(", ")[-1]
+                .split()[-1]
+            )
         store_number = store_url.split("/")[-1]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
+        phone = loc_dom.xpath('//a[@id="phone"]/text()')
+        phone = phone[0] if phone else ""
+        if not phone:
+            phone = poi_html.xpath('.//div[@class="loc-sub"]/a/text()')[-1]
+        geo = loc_dom.xpath('//meta[@name="geo.position"]/@content')
+        if geo:
+            geo = geo[0].split(";")
+            latitude = geo[0]
+            longitude = geo[1]
+        hoo = loc_dom.xpath('//div[@id="block-store-hours-block"]/div/div/text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else ""
 
-        poi_response = session.get(store_url)
-        poi_dom = etree.HTML(poi_response.text)
-        street_address_raw = poi_dom.xpath(
-            '//div[@itemscope="itemscope"]/div/span[@itemprop="streetAddress"]/text()'
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="",
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-        if len(street_address_raw) == 3:
-            street_address += ", " + street_address_raw[-1]
-        latitude = poi_dom.xpath('//meta[@name="geo.position"]/@content')
-        latitude = latitude[0].split(";")[0] if latitude else "<MISSING>"
-        longitude = poi_dom.xpath('//meta[@name="geo.position"]/@content')
-        longitude = longitude[0].split(";")[-1] if longitude else "<MISSING>"
-        hours_of_operation = poi_dom.xpath(
-            '//div[contains(@class, "store-hours")]//text()'
-        )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ][1:]
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

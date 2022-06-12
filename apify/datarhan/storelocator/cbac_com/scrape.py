@@ -76,17 +76,11 @@ def fetch_data():
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
 
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        hours_of_operation = store_dom.xpath(
-            '//ul[@id="LocalMapAreaOpenHourBanner2"]//text()'
-        )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath('//ul[@class="hours ui-repeater"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
         if hours_of_operation == "<MISSING>":
             location_type = "Coming Soon"
 

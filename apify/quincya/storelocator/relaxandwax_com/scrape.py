@@ -1,63 +1,93 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
 import json
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from bs4 import BeautifulSoup
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def fetch_data():
-	
-	base_link = "https://www.relaxandwax.com/JS/salons.js"
+from sgrequests import SgRequests
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+def fetch_data(sgw: SgWriter):
 
-	data = []
+    base_link = "https://www.relaxandwax.com/JS/salons.js"
 
-	js = base.text[14:].strip().replace("//","")
-	stores = json.loads(js)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	locator_domain = "relaxandwax.com"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	for store in stores:
-		location_name = store['name']
-		street_address = store['address'].replace("\r\n"," ")
-		city = store['city']
-		state = store['state']
-		zip_code = store['zip']
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		phone = store['tel']
-		hours_of_operation = ""
-		raw_hours = store['hours']
-		for row in raw_hours:
-			hours = row['day'] + " " + row['hours']
-			hours_of_operation = (hours_of_operation + " " + hours).strip()
-		latitude = store['lat']
-		longitude = store['lon']
-		if street_address == "2824 Cole Avenue":
-			latitude = "32.8015449"
-			longitude = "-96.8374904"
-		link = "https://www.relaxandwax.com/" + store['url']
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+    js = (
+        base.text.split("= ")[1]
+        .strip()
+        .replace("\n", "")
+        .replace("// hold", "")
+        .replace("//hold", "")
+        .replace(" // ", "")
+        .replace("\\r\\n", " ")
+        .replace("Georgia ", "")
+        .replace("Texas ", "")
+        .replace("Idaho ", "")
+        .replace("Florida ", "")
+        .replace("// ", "")
+        .replace("\\", "")
+    )
+    stores = json.loads(js)
 
-	return data
+    locator_domain = "relaxandwax.com"
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+    for store in stores:
+        location_name = store["name"]
+        if (
+            "Johns Creek" in location_name
+            and '//   "short":"Johns Creek"' in base.text.split("= ")[1]
+        ):
+            continue
+        street_address = store["address"].replace("\r\n", " ")
+        if not street_address:
+            continue
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["zip"]
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = store["tel"]
+        hours_of_operation = ""
+        raw_hours = store["hours"]
+        for row in raw_hours:
+            hours = row["day"] + " " + row["hours"]
+            hours_of_operation = (hours_of_operation + " " + hours).strip()
+        latitude = store["lat"]
+        longitude = store["lon"]
+        if street_address == "2013 Lucille Street":
+            latitude = "32.8015855"
+            longitude = "-96.8044824"
+        link = "https://www.relaxandwax.com/" + store["url"]
 
-scrape()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

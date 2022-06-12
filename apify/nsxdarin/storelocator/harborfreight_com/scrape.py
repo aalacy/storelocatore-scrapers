@@ -1,65 +1,95 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sglogging import SgLogSetup
+import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+logger = SgLogSetup().get_logger("harborfreight_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=50,
+    max_search_results=None,
+)
+
 
 def fetch_data():
-    locs = []
-    states = ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
-              'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MI',
-              'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV',
-              'NY', 'OH', 'OK', 'OR', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UM',
-              'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
-    
-    url = 'https://shop.harborfreight.com/storelocator/location/map'
-    for state in states:
-        url2 = 'https://shop.harborfreight.com/storelocator/location/state?lat=&lng=&state=' + state + '&radius=3000&justState=true&stateValue=' + state
-        r2 = session.get(url2, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if 'store_num="' in line2:
-                items = line2.split('store_num="')
-                for item in items:
-                    if 'title="' in item:
-                        website = 'harborfreight.com'
-                        typ = '<MISSING>'
-                        store = item.split('"')[0]
-                        name = item.split('title="')[1].split('"')[0]
-                        add = item.split('address="')[1].split('"')[0]
-                        city = item.split('city="')[1].split('"')[0]
-                        hours = ''
-                        try:
-                            hours = 'M-F: ' + item.split('store_hours_mf="')[1].split('"')[0]
-                            hours = hours + '; Sat: ' + item.split('store_hours_sat="')[1].split('"')[0]
-                            hours = hours + '; Sun: ' + item.split('store_hours_sun="')[1].split('"')[0]
-                        except:
-                            pass
-                        country = 'US'
-                        state = item.split('state="')[1].split('"')[0]
-                        zc = item.split('zip="')[1].split('"')[0]
-                        lat = item.split('latitude="')[1].split('"')[0]
-                        lng = item.split('longitude="')[1].split('"')[0]
-                        phone = item.split('phone="')[1].split('"')[0]
-                        loc = '<MISSING>'
-                        if phone == '':
-                            phone = '<MISSING>'
-                        if hours == '':
-                            hours = '<MISSING>'
-                        if 'CLOSED' not in name:
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    typ = "<MISSING>"
+    website = "harborfreight.com"
+    for clat, clng in search:
+        try:
+            logger.info(str(clat) + "-" + str(clng))
+            url = (
+                "https://api.harborfreight.com/graphql?operationName=FindStoresNearCoordinates&variables=%7B%22filter%22%3A%7B%22status%22%3A%22OPEN%22%7D%2C%22latitude%22%3A"
+                + str(clat)
+                + "%2C%22longitude%22%3A"
+                + str(clng)
+                + "%2C%22withDistance%22%3Atrue%7D&extensions=%7B%22persistedQuery%22%3A%7B%22sha256Hash%22%3A%22de67488071fd8519ed17e17001d8aaf81efa1521%22%7D%7D"
+            )
+            r = session.get(url, headers=headers)
+            for item in json.loads(r.content)["data"]["findStoresNearCoordinates"][
+                "stores"
+            ]:
+                store = item["store_number"]
+                loc = "https://www.harborfreight.com/storelocator/store?number=" + store
+                name = item["title"]
+                country = "US"
+                add = item["address"]
+                city = item["city"]
+                state = item["state"]
+                zc = item["postcode"]
+                phone = item["telephone"]
+                lat = item["latitude"]
+                lng = item["longitude"]
+                hours = (
+                    "Mon-Fri: "
+                    + item["store_hours_mf"]
+                    + "; Sat: "
+                    + item["store_hours_sat"]
+                    + "; Sun: "
+                    + item["store_hours_sun"]
+                )
+                status = item["status"]
+                if status == "NEW" or status == "OPEN":
+                    if add == "":
+                        add = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

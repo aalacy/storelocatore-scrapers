@@ -1,3 +1,5 @@
-sgrequests
-sglogging 
-datetime
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgscrape==0.2.9
+sglogging==0.0.4
+sgrequests==0.3.3
+beautifulsoup4==4.11.1

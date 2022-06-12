@@ -1,80 +1,68 @@
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import re
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def fetch_data():
-	
-	base_link = "https://chebahut.com/locations/"
+    base_link = "https://chebahut.com/modules/multilocation/?near_location=Wisconsin&threshold=4000&relevancy_filter=places_city_match&distance_unit=miles&limit=100&services__in=&language_code=en-us&published=1&within_business=true"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    session = SgRequests()
+    store_data = session.get(base_link, headers=headers).json()["objects"]
 
-	data = []
-	all_links = []
+    locator_domain = "https://chebahut.com"
 
-	items = base.find_all('h2', {'class': re.compile(r'title-heading.+')})
-	raw_links = base.find_all(class_="fusion-column-inner-bg hover-type-none")
-	for raw_link in raw_links:
-		all_links.append(raw_link.a["href"])
+    for store in store_data:
+        location_name = store["location_name"]
+        street_address = store["street"]
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["postal_code"]
+        country_code = "US"
+        store_number = store["id"]
+        try:
+            phone = store["phonemap"]["phone"]
+        except:
+            phone = ""
+        location_type = ""
+        latitude = store["lat"]
+        longitude = store["lon"]
 
-	locator_domain = "chebahut.com"
+        rows = store["formatted_hours"]["primary"]["grouped_days"]
+        hours_of_operation = ""
 
-	for i, link in enumerate(all_links):
+        for row in rows:
+            hours_of_operation = (
+                hours_of_operation + " " + row["label_abbr"] + " " + row["content"]
+            ).strip()
 
-		raw_address = items[i].text.split(",")
-		street_address = raw_address[0].strip()
-		city = raw_address[1].strip()
-		state = raw_address[-1].strip()
-		zip_code = "<MISSING>"
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
+        link = store["location_url"]
 
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		location_name = "CHEBA HUT - " + base.h1.text.encode("ascii", "replace").decode().replace("?","-").strip()
-		if location_name == "CHEBA HUT - ":
-			location_name = "CHEBA HUT - " + city
 
-		raw_data = list(base.find(class_="content-container").stripped_strings)
-
-		phone = raw_data[1]
-		hours_of_operation = " ".join(raw_data[4:]).encode("ascii", "replace").decode().replace("?","-")
-
-		if not hours_of_operation:
-			continue
-			
-		all_scripts = base.find_all('script')
-		for script in all_scripts:
-			if "var wpgmaps_localize =" in str(script):
-				script = str(script)
-				break
-
-		latitude = script.split('map_start_lat":"')[1].split('",')[0]
-		longitude = script.split('map_start_lng":"')[1].split('",')[0]
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

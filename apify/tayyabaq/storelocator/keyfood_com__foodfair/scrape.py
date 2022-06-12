@@ -1,73 +1,102 @@
-import csv
-import requests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-import time
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            if row:
-                writer.writerow(row)
+website = "keyfoodstores_keyfood_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://keyfoodstores.keyfood.com/store/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data=[];hours_of_operation=[]; latitude=[];longitude=[];zipcode=[];location_name=[];city=[];street_address=[]; state=[]; phone=[];country=[];store_no=[]
-    headers = {
-        "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-    }
     page = 0
     while True:
-        r = requests.get("https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=11756&page=" + str(page) + "&radius=5000000000&all=true",headers=headers)
-        try:
-	        store_data = r.json()["data"]
-        except ValueError:
-	        break
-        for content in store_data:
-            location_name.append(content["displayName"])
-            if content["line2"]:
-                street_address.append(content["line1"] + " " + content["line2"])
-            else:
-                street_address.append(content["line1"])
-            city.append(content["town"])
-            state.append(content["state"])
-            zipcode.append(content["postalCode"])
-            country.append("US")
-            store_no.append(content["name"])
-            phone.append(content["phone"] if content["phone"] else "<MISSING>")
-            latitude.append(content["latitude"])
-            longitude.append(content["longitude"])
-            hours=""
-            for hour in content["openings"]:
-                hours = hours + " " + hour + " " + content["openings"][hour]
-            hours_of_operation.append(hours if hours else "<MISSING>")
+        data = session.get(
+            "https://www.keyfood.com/store/keyFood/en/store-locator?q=11756&page="
+            + str(page)
+            + "&radius=5000000000&all=true",
+            headers=headers,
+        ).json()["data"]
+        for store_data in data:
+            store_number = store_data["name"]
+            location_name = store_data["displayName"]
+            try:
+                street = store_data["line1"] + " " + store_data["line2"]
+            except:
+                store_data["line1"]
+            zip_code = store_data["postalCode"]
+            if "10305" in street:
+                street.replace("10305", "").strip()
+                zip_code = "10305"
+            street_address = street
+            city = store_data["town"]
+            state = store_data["state"]
+            zip_postal = zip_code
+            country_code = "US"
+            phone = store_data["phone"] if store_data["phone"] else "<MISSING>"
+            page_url = store_data["siteUrl"] + store_data["url"].split("?")[0]
+            latitude = store_data["latitude"]
+            longitude = store_data["longitude"]
+            req = session.get(page_url, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            try:
+                location_type = base.find(class_="banner__component simple-banner").img[
+                    "title"
+                ]
+            except:
+                location_type = MISSING
+            try:
+                hours = ""
+                for hour in store_data["openings"]:
+                    hours = hours + " " + hour + " " + store_data["openings"][hour]
+            except:
+                hours = "<MISSING>"
+            hours_of_operation = hours.strip() if hours else "<MISSING>"
+            log.info(page_url)
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        if len(data) < 250:
+            break
         page = page + 1
-    for n in range(0,len(location_name)): 
-        data.append([
-            'http://keyfood.com/#foodfair',
-            '<MISSING>',
-            location_name[n],
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
-            store_no[n],
-            phone[n],
-            '<MISSING>',
-            latitude[n],
-            longitude[n],
-            hours_of_operation[n]
-        ])
-    return data
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
