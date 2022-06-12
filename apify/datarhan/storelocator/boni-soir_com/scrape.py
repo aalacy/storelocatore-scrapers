@@ -25,7 +25,6 @@ def fetch_data():
         while poi_data.status_code != 200:
             session = SgRequests()
             poi_data = session.get(poi_data_url, headers=hdr)
-            print("!!!!", poi)
         poi_data = poi_data.json()
         street_address = poi_data["store_details"]["location_address_address_1"]
         street_address_2 = poi_data["store_details"]["location_address_address_2"]
