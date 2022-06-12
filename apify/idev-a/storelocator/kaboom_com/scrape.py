@@ -5,6 +5,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from sglogging import SgLogSetup
+from sgpostal.sgpostal import parse_address_intl
+import us
 
 logger = SgLogSetup().get_logger("")
 
@@ -13,6 +15,22 @@ base_url = "https://www.kaboom.com/locations"
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
 }
 
 
@@ -40,6 +58,15 @@ def _url(locs, ID):
             return locator_domain + loc["route"]
 
 
+def get_country_by_code(code=""):
+    if us.states.lookup(code):
+        return "US"
+    elif code in ca_provinces_codes:
+        return "CA"
+    else:
+        return "<MISSING>"
+
+
 def fetch_data():
     with SgRequests() as session:
         data = json.loads(
@@ -54,7 +81,6 @@ def fetch_data():
         ]["content"]["cells"]
         for loc in locations[1:]:
             _ = loc["content"]["properties"]["repeatables"][0]
-            addr = []
             phone = []
             if type(_["text"]["content"]) == str:
                 continue
@@ -69,7 +95,7 @@ def fetch_data():
                     no_loc = True
                     break
                 if x < len(blocks) - 2 and "(" not in tt:
-                    addr.append(tt)
+                    pass
                 else:
                     phone.append(tt)
 
@@ -116,16 +142,29 @@ def fetch_data():
                 longitude = loc_info["lng"]
             except:
                 latitude = longitude = ""
+
+            addr = parse_address_intl(loc_info["formatted_address"])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+
+            city = addr.city
+            state = addr.state
+            zip_postal = addr.postcode
+            if city and city == "Toronto On M1L":
+                city = "Toronto"
+                state = "ON"
+                zip_postal = "M1L"
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["title"]["content"]["quill"]["ops"][0][
                     "insert"
                 ].strip(),
-                street_address=" ".join(addr[:-1]),
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split()[0].strip(),
-                zip_postal=" ".join(addr[-1].split(",")[1].strip().split()[1:]),
-                country_code="CA",
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=get_country_by_code(state),
                 latitude=latitude,
                 longitude=longitude,
                 location_type=location_type,

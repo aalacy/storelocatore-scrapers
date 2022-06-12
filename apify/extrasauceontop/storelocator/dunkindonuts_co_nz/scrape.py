@@ -38,125 +38,140 @@ def get_data():
     start_of_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId="
     end_of_url = ".json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
 
-    session = SgRequests()
+    session = SgRequests(dont_retry_status_codes=[500])
     url = "https://www.dunkindonuts.co.nz/locations"
     response = session.get(url).text
 
-    json_objects = extract_json(response)
+    json_objects = extract_json(response.split("wix-viewer-model")[1])
+
     loc_dict = json_objects[0]["siteFeaturesConfigs"]["router"]["pagesMap"]
+    with open("file.txt", "w", encoding="utf-8") as output:
+        json.dump(loc_dict, output, indent=4)
 
     for location_id in loc_dict.keys():
-        json_page_name = loc_dict[location_id]["pageJsonFileName"]
-        page_url = start_of_url + json_page_name + end_of_url
-        store_number = loc_dict[location_id]["pageId"]
-
-        response = session.get(page_url).json()
-        for key in response["props"]["render"]["compProps"].keys():
-            needed_id = key
-            break
-
         try:
-            if "CLOSED" not in str(response["props"]["render"]["compProps"]):
-                response["props"]["render"]["compProps"][needed_id]["mapData"][
-                    "locations"
-                ][0]["title"]
-            else:
+            json_page_name = loc_dict[location_id]["pageJsonFileName"]
+            if json_page_name == "ce4f87_1717371afb20141b9f4d108e95c775c6_497":
                 continue
+
+            elif json_page_name == "ce4f87_59dff8703c2bc62e338bdf66da7d9193_498":
+                page_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.SearchBoxSuggestionsFacelift%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.FilterResponsiveEditorMasterPageTpas%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue&contentType=application%2Fjson&deviceType=Desktop&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=04e2d7e3.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId=ce4f87_59dff8703c2bc62e338bdf66da7d9193_498.json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.8787.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.8787.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.233.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=501&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
+            elif json_page_name == "ce4f87_2a18988dc0ece17c0cb2d391e17e5a78_492":
+                page_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.oneCellGridMinMax%3Atrue%2Cspecs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue&contentType=application%2Fjson&deviceType=Desktop&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=16bb10a3.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId=ce4f87_2a18988dc0ece17c0cb2d391e17e5a78_492.json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.8168.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.8168.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=497&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
+            else:
+                page_url = start_of_url + json_page_name + end_of_url
+            store_number = loc_dict[location_id]["pageId"]
+
+            response = session.get(page_url).json()
+
+            for key in response["props"]["render"]["compProps"].keys():
+                needed_id = key
+                break
+
+            try:
+                if "CLOSED" not in str(response["props"]["render"]["compProps"]):
+                    response["props"]["render"]["compProps"][needed_id]["mapData"][
+                        "locations"
+                    ][0]["title"]
+                else:
+                    continue
+            except Exception:
+                continue
+
+            locator_domain = "dunkindonuts.co.nz"
+            location_name = response["props"]["render"]["compProps"][needed_id][
+                "mapData"
+            ]["locations"][0]["title"]
+            latitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
+                "locations"
+            ][0]["latitude"]
+            longitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
+                "locations"
+            ][0]["longitude"]
+
+            full_address = response["props"]["render"]["compProps"][needed_id][
+                "mapData"
+            ]["locations"][0]["address"]
+            addr = parse_address_intl(full_address)
+
+            city = addr.city
+            if city is None:
+                city = "<MISSING>"
+
+            address_1 = addr.street_address_1
+            address_2 = addr.street_address_2
+
+            if address_1 is None and address_2 is None:
+                address = "<MISSING>"
+            else:
+                address = (
+                    (str(address_1) + " " + str(address_2)).strip().replace(" None", "")
+                )
+
+            state = addr.state
+            if state is None:
+                state = "<MISSING>"
+
+            zipp = addr.postcode
+            if zipp is None:
+                zipp = "<MISSING>"
+
+            country_code = addr.country
+            if country_code is None:
+                country_code = "<MISSING>"
+
+            location_type = "<MISSING>"
+
+            for key in response["props"]["render"]["compProps"].keys():
+                part_check = response["props"]["render"]["compProps"][key]
+                for sub_key in part_check.keys():
+                    if sub_key == "html":
+                        phone_check = part_check[sub_key]
+                        if (
+                            city.lower() in phone_check.lower()
+                            or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial'
+                            in phone_check.lower()
+                        ):
+                            phone = unescape(
+                                phone_check.replace("\n", "")
+                                .replace("</span></span>", "</span>")
+                                .split("</span>")[-2]
+                                .split(">")[-1]
+                                .strip()
+                            ).replace("Phone ", "")
+
+            hours_soup = bs(phone_check, "html.parser")
+            hours_text = hours_soup.text.strip()
+
+            hours = (
+                hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
+            ).strip()
+
+            if hours[-3] == ",":
+                hours = hours[:-3]
+
+            if "opening hours" in hours.lower():
+                hours = "Temporarily Closed"
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+
         except Exception:
-            continue
-        with open("file.txt", "w", encoding="utf-8") as output:
-            json.dump(response, output, indent=4)
-        locator_domain = "dunkindonuts.co.nz"
-        location_name = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["title"]
-        latitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["latitude"]
-        longitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["longitude"]
-
-        full_address = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["address"]
-        addr = parse_address_intl(full_address)
-
-        city = addr.city
-        if city is None:
-            city = "<MISSING>"
-
-        address_1 = addr.street_address_1
-        address_2 = addr.street_address_2
-
-        if address_1 is None and address_2 is None:
-            address = "<MISSING>"
-        else:
-            address = (
-                (str(address_1) + " " + str(address_2)).strip().replace(" None", "")
-            )
-
-        state = addr.state
-        if state is None:
-            state = "<MISSING>"
-
-        zipp = addr.postcode
-        if zipp is None:
-            zipp = "<MISSING>"
-
-        country_code = addr.country
-        if country_code is None:
-            country_code = "<MISSING>"
-
-        location_type = "<MISSING>"
-
-        for key in response["props"]["render"]["compProps"].keys():
-            part_check = response["props"]["render"]["compProps"][key]
-            for sub_key in part_check.keys():
-                if sub_key == "html":
-                    phone_check = part_check[sub_key]
-                    if (
-                        city.lower() in phone_check.lower()
-                        or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial'
-                        in phone_check.lower()
-                    ):
-                        phone = unescape(
-                            phone_check.replace("\n", "")
-                            .replace("</span></span>", "</span>")
-                            .split("</span>")[-2]
-                            .split(">")[-1]
-                            .strip()
-                        ).replace("Phone ", "")
-
-        hours_soup = bs(phone_check, "html.parser")
-        hours_text = hours_soup.text.strip()
-
-        hours = (
-            hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
-        ).strip()
-
-        if hours[-3] == ",":
-            hours = hours[:-3]
-
-        if "opening hours" in hours.lower():
-            hours = "Temporarily Closed"
-
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+            pass
 
 
 def scrape():

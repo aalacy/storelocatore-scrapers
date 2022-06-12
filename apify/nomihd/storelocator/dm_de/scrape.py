@@ -129,6 +129,8 @@ def scrape():
                     SgRecord.Headers.COUNTRY_CODE,
                     SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
                 }
             ),
             duplicate_streak_failure_factor=-1,

@@ -1,4 +1,3 @@
-import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -11,49 +10,38 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "nautica.com"
-    start_url = "https://www.nautica.com/on/demandware.store/Sites-nau-Site/default/Stores-AllStores"
+    start_url = "https://www.nautica.com/stores"
 
+    url = "https://www.nautica.com/on/demandware.store/Sites-nau-Site/default/Stores-GetNearestStores?countryCode={}&onlyCountry=true"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_regions = dom.xpath('//div[@class="listname"]/a/@href')
-    for url in list(set(all_regions)):
-        response = session.get(url)
-        dom = etree.HTML(response.text)
-        all_locations = dom.xpath('//a[@class="store-item"]/@href')
-        for page_url in all_locations:
-            loc_response = session.get(page_url)
-            loc_dom = etree.HTML(loc_response.text)
-
-            poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
-            poi = json.loads(poi)
-            hoo = loc_dom.xpath('//div[@class="storehours"]/p/text()')
-            hoo = " ".join(hoo)
-            if "this is not goodbye" in hoo.lower():
-                continue
-            state = poi["address"]["addressRegion"]
-            state = state if state != "null" else ""
-            zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code != "null" else ""
-            phone = poi["telephone"]
-            phone = phone.split("&")[0] if phone != "null" else ""
-            street_address = poi["address"]["streetAddress"]
-            if street_address and street_address.endswith(","):
-                street_address = street_address[:-1]
+    all_countries = dom.xpath(
+        '//select[@id="dwfrm_storelocator_country"]/option/@value'
+    )
+    for code in all_countries:
+        all_locations = session.get(url.format(code)).json()
+        for poi in all_locations.values():
+            page_url = f"https://www.nautica.com/stores?storeid={poi['storeID']}"
+            hoo = ""
+            if poi["storeHours"]:
+                hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
+            if hoo:
+                hoo = " ".join(" ".join(hoo).split())
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["name"],
-                street_address=street_address,
-                city=poi["address"]["addressLocality"],
-                state=state,
-                zip_postal=zip_code,
-                country_code=poi["address"]["addressCountry"],
-                store_number=poi["@id"].split("=")[-1],
-                phone=phone,
-                location_type=poi["@type"],
-                latitude=poi["geo"]["latitude"],
-                longitude=poi["geo"]["longitude"],
+                street_address=poi["address1"],
+                city=poi["city"],
+                state=poi["stateCode"],
+                zip_postal=poi["postalCode"],
+                country_code=poi["countryCode"],
+                store_number=poi["storeID"],
+                phone=poi["phone"],
+                location_type=poi["department"],
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
                 hours_of_operation=hoo,
             )
 

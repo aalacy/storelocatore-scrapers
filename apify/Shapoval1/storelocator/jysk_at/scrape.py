@@ -22,8 +22,6 @@ def fetch_data(sgw: SgWriter):
         country_url = "".join(d.xpath(".//@href"))
         if country_url == "https://jysk.ru/":
             continue
-        if country_url == "https://jysk.ua/":
-            continue
         country_code = "".join(d.xpath(".//text()"))
         r = session.get(country_url)
         tree = html.fromstring(r.text)

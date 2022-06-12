@@ -30,10 +30,21 @@ def fetch_data():
         phone = loc_dom.xpath(
             '//div[svg[@class="w-5 h-5 text-primary-500"]]/span/text()'
         )[-1].split(" - ")[0]
-        if phone in street_address:
-            street_address = ""
         if "Sector" in phone:
             phone = ""
+        if street_address.isnumeric():
+            street_address = ""
+        latitude = ""
+        longitude = ""
+        geo = (
+            loc_dom.xpath("//iframe/@src")[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
+        if len(geo) == 2:
+            latitude = geo[0]
+            longitude = geo[1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -47,8 +58,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation="",
         )
 

@@ -37,6 +37,10 @@ def fetch_data():
                     ):
                         continue
 
+                    desc = store["description"]
+                    if "coming" in desc.lower() or "opening" in desc.lower():
+                        continue
+
                     if "http" not in store["link"]:
                         page_url = "https:" + store["link"]
                     else:

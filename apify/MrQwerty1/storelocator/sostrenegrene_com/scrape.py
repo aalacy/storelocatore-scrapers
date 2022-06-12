@@ -75,9 +75,11 @@ def fetch_data(sgw: SgWriter):
                 index = h.get("dayOfWeek")
                 day = days[index]
 
-                start = h.get("opens")
+                start = h.get("opens") or ""
                 if start:
-                    end = h.get("closes")
+                    end = h.get("closes") or ""
+                    start = start.rsplit(":00", 1).pop(0)
+                    end = end.rsplit(":00", 1).pop(0)
                     _tmp.append(f"{day}: {start}-{end}")
                 else:
                     _tmp.append(f"{day}: Closed")

@@ -80,7 +80,6 @@ def fetch_data(sgw: SgWriter):
 
         country_code = "US"
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         ad = (

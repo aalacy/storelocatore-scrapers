@@ -43,16 +43,29 @@ def _d(_, country, url):
         coord = json.loads(_title["data-map-coord"])
     except:
         coord = {"latitude": "", "longitude": ""}
-    hours = ""
+    hours = []
     _hr = _.find("li", string=re.compile(r"Branch hours are"))
     if _hr:
-        hours = _hr.text.split("Branch hours are")[-1].split("(")[0].strip()
-    location_type = ["atm"]
+        hours = [_hr.text.split("Branch hours are")[-1].split("(")[0].strip()]
+    elif _.table:
+        for hh in _.table.select("table tr"):
+            if "Days" in hh.text or "Hours" in hh.text:
+                continue
+            hours.append(": ".join(hh.stripped_strings).split("(")[0].strip())
+    location_type = []
+    if _.caption:
+        caption = _.caption.text.lower().strip()
+        if "office" in caption:
+            location_type.append("office")
+        if "atm" in caption:
+            location_type.append("atm")
+    if "Corporate office only" in _.text:
+        location_type = ["corporate office"]
     if _.find("span", {"class": re.compile(r"fa-university")}):
         location_type = ["branch"]
 
     return SgRecord(
-        page_url=url,
+        page_url=f"{url}&office_id={_title['data-id']}",
         store_number=_title["data-id"],
         location_name=_title.text.strip(),
         street_address=street_address,
@@ -65,7 +78,7 @@ def _d(_, country, url):
         latitude=coord["latitude"],
         longitude=coord["longitude"],
         locator_domain=locator_domain,
-        hours_of_operation=hours,
+        hours_of_operation="; ".join(hours),
         raw_address=raw_address,
     )
 

@@ -3,7 +3,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 import json
@@ -26,9 +25,10 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 MISSING = SgRecord.MISSING
-DOMAIN = "ritzcarlton.com"
+MAX_WORKERS = 6
+DOMAIN = "marriott.com/gaylord-hotels/travel.mi"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
-logger = SgLogSetup().get_logger("ritzcarlton_com")
+logger = SgLogSetup().get_logger("marriott_com__gaylord-hotels__travel_mi")
 headers_api = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
@@ -104,18 +104,15 @@ def get__regions_submit_search_urls():
 def fetch_data_for_non_api_based_child_brands():
     # This scrapes the Data for Edition Hotels across the world
     total = 0
+    items = []
     regions_submit_search_urls = get__regions_submit_search_urls()
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
-        driver.get("https://www.marriott.com/search/findHotels.mi")
-        time.sleep(random.randint(20, 40))
+    with SgChrome() as driver:
         for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
             page_number_second = 1
             url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
             logger.info(f"[{idx}] Pulling the data from >> : {url_base_city_state} ")
             driver.get(url_base_city_state)
-            time.sleep(random.randint(15, 40))
+            time.sleep(random.randint(15, 30))
             pgsrc = driver.page_source
             search_list_records_total = re.findall(
                 r"search_list_records_total\":\s\d+,", pgsrc
@@ -135,7 +132,7 @@ def fetch_data_for_non_api_based_child_brands():
                     rrns_int = rrns_int + 2
                     max_page_num = rrns_int
                     logger.info(
-                        "Search list records found to be more than 40 => {max_page_num}, pagination required!"
+                        "Search list records found to be more than 40, pagination required!!!"
                     )
 
                     for i in range(page_number_second, max_page_num):
@@ -206,9 +203,7 @@ def fetch_data_for_non_api_based_child_brands():
                                 logger.info(
                                     f"[{idx}] Latitude: {latitude} | Longitude: {longitude}"
                                 )
-                                hours_of_operation = (
-                                    data_property["propMarkerBedLabel"] or ""
-                                )
+                                hours_of_operation = MISSING
                                 raw_address = location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/text()'
                                 )[0]
@@ -233,7 +228,7 @@ def fetch_data_for_non_api_based_child_brands():
                                     hours_of_operation=hours_of_operation,
                                     raw_address=raw_address,
                                 )
-                                yield rec
+                                items.append(rec.as_dict())
 
                         if i > 1:
                             url_base_findHotels_custom = (
@@ -306,9 +301,7 @@ def fetch_data_for_non_api_based_child_brands():
                                 logger.info(
                                     f"Latitude: {latitude} | Longitude: {longitude}"
                                 )
-                                hours_of_operation = (
-                                    data_property["propMarkerBedLabel"] or ""
-                                )
+                                hours_of_operation = MISSING
                                 raw_address = location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/text()'
                                 )[0]
@@ -333,7 +326,7 @@ def fetch_data_for_non_api_based_child_brands():
                                     hours_of_operation=hours_of_operation,
                                     raw_address=raw_address,
                                 )
-                                yield rec
+                                items.append(rec.as_dict())
 
                 else:
                     # No need to update referer
@@ -404,7 +397,7 @@ def fetch_data_for_non_api_based_child_brands():
                             f"[{idx}] Latitude: {latitude} | Longitude: {longitude}"
                         )
 
-                        hours_of_operation = data_property["propMarkerBedLabel"] or ""
+                        hours_of_operation = MISSING
                         raw_address = location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/text()'
                         )[0]
@@ -429,14 +422,66 @@ def fetch_data_for_non_api_based_child_brands():
                             hours_of_operation=hours_of_operation,
                             raw_address=raw_address,
                         )
-                        yield rec
+                        items.append(rec.as_dict())
         logger.info(f"Records Found per Country or State: {total}")
     logger.info(f"Total Records: {total}")
+    return items
+
+
+def scrape_until_all_stores_fetched():
+    logger.info("Started")
+    results = fetch_data_for_non_api_based_child_brands()
+    logger.info("=====================Results=====================")
+    logger.info(f"List of Results: \n{results}")
+    if not results:
+        logger.info(f"Results is Empty | List of Results: {results}")
+        logger.info("Attempting 2nd Round!!")
+        results = fetch_data_for_non_api_based_child_brands()
+        if not results:
+            logger.info("3rd Attempt!")
+            results = fetch_data_for_non_api_based_child_brands()
+            if not results:
+                return results
+            else:
+                logger.info("3rd Attempt SUCCEDED OK!")
+                return results
+        else:
+            logger.info("2nd Attempt SUCCEDED OK!")
+            return results
+    else:
+        logger.info("1st Attempt SUCCEDED OK!")
+        return results
+
+    logger.info(f"No of records being processed: {len(results)}")
+    logger.info("Finished")
+
+
+def fetch_data(sgw: SgWriter):
+    data = scrape_until_all_stores_fetched()
+    for item in data:
+        rec = SgRecord(
+            locator_domain=item["locator_domain"],
+            page_url=item["page_url"],
+            location_name=item["location_name"],
+            street_address=item["street_address"],
+            city=item["city"],
+            state=item["state"],
+            zip_postal=item["zip"],
+            country_code=item["country_code"],
+            store_number=item["store_number"],
+            phone=item["phone"],
+            location_type=item["location_type"],
+            latitude=item["latitude"],
+            longitude=item["longitude"],
+            hours_of_operation=item["hours_of_operation"],
+            raw_address=item["raw_address"],
+        )
+
+        sgw.write_row(rec)
 
 
 def scrape():
     logger.info("Started")
-    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -451,13 +496,7 @@ def scrape():
             )
         )
     ) as writer:
-        results = fetch_data_for_non_api_based_child_brands()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+        fetch_data(writer)
 
 
 if __name__ == "__main__":

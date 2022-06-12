@@ -35,11 +35,6 @@ def fetch_data():
         checklist.append(link)
         r = session.get(link, headers=headers)
 
-        state = r.text.split('"businesLocationsState":"', 1)[1].split('"', 1)[0]
-        city = r.text.split('"businessLocationCity"', 1)[1].split('"', 1)[0]
-        street = r.text.split('"businesLocationsStreet":"', 1)[1].split('"', 1)[0]
-        pcode = r.text.split('"businessPostalCode":"44312"', 1)[1].split('"', 1)[0]
-
         ltype = "<MISSING>"
         soup = BeautifulSoup(r.text, "html.parser")
         content = re.sub(pattern, "\n", soup.text)
@@ -100,6 +95,8 @@ def fetch_data():
                     )
             except:
                 hours = "<MISSING>"
+        if len(address) < 4:
+            address = soup.find("div", {"id": "comp-j3w0h1ql"}).text.split("\n", 1)[0]
         address = usaddress.parse(address.strip())
 
         i = 0

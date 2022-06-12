@@ -19,7 +19,7 @@ MISSING = SgRecord.MISSING
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
+    max_search_distance_miles=100,
     max_search_results=15,
 )
 
@@ -99,7 +99,8 @@ def scrape():
     deduper = SgRecordDeduper(
         SgRecordID(
             {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        ),
+        duplicate_streak_failure_factor=-1,
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

@@ -73,6 +73,7 @@ class ExampleSearchIteration(SearchIteration):
                     location_type = location["RetailOutlet"]
                     latitude = location["Latitude"]
                     longitude = location["Longitude"]
+                    found_location_at(latitude, longitude)
                     hours = "<MISSING>"
                     rec_count = self.__state.get_misc_value(
                         current_country, default_factory=lambda: 0

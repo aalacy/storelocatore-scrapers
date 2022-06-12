@@ -48,6 +48,8 @@ def fetch_data(sgw: SgWriter):
     logger.info("Found " + str(len(stores)) + " stores ..")
     for store in stores:
         location_name = store["Description"]
+        if "esporta" in location_name.lower():
+            continue
         raw_address = store["Address"].split("<br />")
         street_address = raw_address[0].strip()
         city_line = raw_address[1].strip().split(",")

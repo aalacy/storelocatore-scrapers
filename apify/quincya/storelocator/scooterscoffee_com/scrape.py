@@ -69,6 +69,7 @@ def fetch_data(sgw: SgWriter):
                     .replace("{", "")
                     .replace("}", " ")
                     .replace("|", " ")
+                    .replace(" C", " Closed")
                     .strip()
                 )
             except:

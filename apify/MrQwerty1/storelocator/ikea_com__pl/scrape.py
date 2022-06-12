@@ -5,19 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
-from sgscrape.sgpostal import parse_address, International_Parser
-
-
-def get_international(line):
-    adr = parse_address(International_Parser(), line)
-    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-        "None", ""
-    ).strip()
-    city = adr.city
-    state = adr.state
-    postal = adr.postcode
-
-    return street_address, city, state, postal
 
 
 def get_children(page_url):
@@ -49,12 +36,22 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//h1[contains(@class, 'pub__h1')]/text()")
     ).strip()
 
-    raw_address = ", ".join(
-        tree.xpath(
-            "//p[./strong[contains(text(), 'Adres')]]/text()|//p[./strong[contains(text(), 'Adres')] and not(./preceding-sibling::h2)]/following-sibling::p[1]/text()|//h3[text()='Adres']/following-sibling::p/text()"
-        )
-    ).strip()
-    street_address, city, state, postal = get_international(raw_address)
+    line = tree.xpath("//*[contains(text(), 'Adres')][1]/following::*[1]/text()")
+    line = list(filter(None, [li.strip() for li in line]))
+    if "IKEA" in line[0]:
+        line.pop(0)
+    if len(line) > 4:
+        line = line[:2]
+    if line[0][-1].isalpha() and "ul." not in line[0]:
+        line.pop(0)
+
+    raw_address = ", ".join(line)
+    street_address = line.pop(0)
+    zc = line.pop()
+    postal = zc.split()[0]
+    city = zc.replace(postal, "").strip()
+    if not city:
+        city = location_name.replace("IKEA", "").strip()
 
     text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
     try:
@@ -75,6 +72,15 @@ def get_data(page_url, sgw: SgWriter):
             _tmp.append(h)
         check += h
 
+    if not _tmp:
+        hours = tree.xpath(
+            "//h2[text()='Sklep']/following-sibling::dl//text()|//h3[./strong[contains(text(), 'otwarcia')]]/following-sibling::p//text()"
+        )
+        hours = list(filter(None, [h.strip() for h in hours]))
+
+        for day, inter in zip(hours[::2], hours[1::2]):
+            _tmp.append(f"{day}: {inter}")
+
     hours_of_operation = ";".join(_tmp).replace("*", "")
 
     row = SgRecord(
@@ -82,15 +88,12 @@ def get_data(page_url, sgw: SgWriter):
         location_name=location_name,
         street_address=street_address,
         city=city,
-        state=state,
         zip_postal=postal,
         country_code="PL",
-        store_number=SgRecord.MISSING,
-        phone=SgRecord.MISSING,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
+        raw_address=raw_address,
         hours_of_operation=hours_of_operation,
     )
 
@@ -100,7 +103,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=13) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

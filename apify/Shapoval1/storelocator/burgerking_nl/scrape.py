@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.burgerking.nl/"
     api_url = (
-        "https://www.burgerking.nl/getgeopoints?filter=&restrictToCountry=0&country=nl"
+        "https://www.burgerking.nl/getgeopoints?filter=&restrictToCountry=1&country=nl"
     )
     session = SgRequests()
     headers = {
