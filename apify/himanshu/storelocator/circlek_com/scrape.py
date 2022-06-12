@@ -1,186 +1,284 @@
-import csv
-import sys
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-from shapely.prepared import prep
-from shapely.geometry import Point
-from shapely.geometry import mapping, shape
-import phonenumbers
+import threading
+import lxml.html
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('circlek_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests, SgRequestError
+from sgpostal.sgpostal import parse_address_intl
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import Retrying, stop_after_attempt
+from time import sleep
+from typing import List
+from random import randint
+
+logger = SgLogSetup().get_logger("circlek_com")
+
+local = threading.local()
 
 
-                    
+def get_session(reset):
+    if not hasattr(local, "session") or local.count > 5 or reset:
+        local.session = SgRequests()
+        local.count = 0
+
+    local.count += 1
+    sleep(randint(2, 5))
+    return local.session
 
 
-session = SgRequests()
-
-countries = {}
-   
-
-def getcountrygeo():
-    data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
-
-    for feature in data["features"]:
-        geom = feature["geometry"]
-        country = feature["properties"]["ADMIN"]
-        countries[country] = prep(shape(geom))
-
-
-def getplace(lat, lon):
-    if lon != "" and lat != "":
-        point = Point(float(lon), float(lat))
-    else:
-        point = Point(0, 0)
-        # logger.info("lat == ",lat,"lng == ",lon)
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    
-    for country, geom in countries.items():
-        if geom.contains(point):
-            return country
-
-    return "unknown"
+headers = {
+    "authority": "www.circlek.com",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+}
 
 
-
-def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    getcountrygeo()
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+def fetch_page(page, session):
+    url = "https://www.circlek.com/stores_new.php"
+    params = {
+        "lat": 20.2386,
+        "lng": -155.8312,
+        "distance": 9999999999,
+        "services": "",
+        "region": "global",
+        "page": page,
     }
-    base_url = "https://www.circlek.com"
+    logger.info(f"{url} page={page}")
+    try:
+        response = SgRequests.raise_on_err(
+            session.get(url, headers=headers, params=params)
+        )
+        data = response.json()["stores"]
+        stores = data.items() if isinstance(data, dict) else data
+        return stores
+    except SgRequestError as e:
+        logger.error(f"failure to fetch data >>> {e.status_code}")
+        return []
 
-    addresses = []
-    result_coords = []
-    locator_domain = base_url
+
+def fetch_locations(tracker, session, locations=[], page=0):
+    stores = fetch_page(page, session)
+    for id, store in stores:
+        if id in tracker:
+            continue
+        tracker.append(id)
+        locations.append(store)
+    if len(stores) == 0:
+        logger.info(f"last page was {page}")
+        return locations
+    else:
+        return fetch_locations(tracker, session, locations, page + 1)
+
+
+retryer = Retrying(stop=stop_after_attempt(3), reraise=True)
+
+
+def fetch_details(tup, retry=False):
+    store, session = tup
+    locator_domain = "https://www.circlek.com"
     location_name = ""
     street_address = ""
     city = ""
     state = ""
     zipp = ""
     country_code = ""
-    store_number = ""
+    store_number = store["cost_center"]
     phone = ""
     location_type = ""
     latitude = ""
     longitude = ""
-    raw_address = ""
     hours_of_operation = ""
-    # logger.info("start")
-    location_url = "https://www.circlek.com/stores_new.php?lat=40.8&lng=-73.65&distance=100000&services=&region=global"
-    r = session.get(location_url, headers=headers).json()
-    for key, value in r["stores"].items():
-        latitude = value["latitude"]
-        longitude = value["longitude"]
-        country_name = getplace(latitude, longitude)
+    page_url = "https://www.circlek.com" + store["url"]
+    if (
+        store["country"].upper() in ["US", "CA", "CANADA"]
+        and store["op_status"] != "Planned"
+    ):
+        logger.info(page_url)
+        try:
+            store_req = SgRequests.raise_on_err(
+                session.get(
+                    page_url,
+                    headers=headers,
+                )
+            )
 
-        # logger.info("lat == ",latitude,"lng == ", longitude,"country =======  ",country_name)
-        # logger.info(type(latitude),type(longitude))
-        if country_name in ["unknown", "United States of America","Canada"]:
-            if "unknown" == country_name and str(value["country"]) not in ["US","CA","Canada"]:
-                continue
-            
-        
-            street_address = value["address"]
-            store_number = value["cost_center"]
-            city = value["city"]
-            location_name = city
-            location_type = value["display_brand"]
-            page_url = "https://www.circlek.com" + value["url"]
-            # logger.info(page_url)
-            # logger.info(value["country"])
-            r_loc = session.get(page_url, headers=headers)
-            soup_loc = BeautifulSoup(r_loc.text, "lxml")
-            try:
-                csz = list(soup_loc.find(
-                    "h2", class_="heading-small").stripped_strings)
-                csz = [el.replace('\n', '') for el in csz]
-                # logger.info(csz)
-                if len(csz) < 4:
-                    state = "<MISSING>"
-                else:
-                    state = csz[-3].strip()
-                zipp = csz[-1].strip()
-                # logger.info(zipp)
-                # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~")
-                # if len(zipp) == 6 or len(zipp) ==7:
+            if store_req.status_code not in (500, 404, 200):
+                logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
+                return retryer(fetch_details, (store, get_session(1)), True)
+
+            if '"streetAddress":' not in store_req.text:
+                logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
+                return retryer(fetch_details, (store, get_session(1)), True)
+
+            store_sel = lxml.html.fromstring(store_req.text)
+            json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            for js in json_list:
+                if "address" in js:
+                    try:
+                        store_json = json.loads(js)
+                    except:
+                        continue
+
+                    location_name = (
+                        store_json.get("description").split(",")[0]
+                        or store.get("display_brand")
+                        or store.get("store_brand")
+                        or store.get("name")
+                        or "<MISSING>"
+                    )
+                    location_name = (
+                        location_name.replace("&#039;", "'").replace("amp;", "").strip()
+                    )
+
+                    if location_name == "Circle K at":
+                        location_name = "Circle K"
+
+                    try:
+                        location_type = ""
+                        raw_types = store_json["hasOfferCatalog"]["itemListElement"]
+                        for raw_type in raw_types:
+                            if location_type:
+                                location_type = (
+                                    location_type
+                                    + ", "
+                                    + raw_type["itemOffered"]["name"]
+                                )
+                            else:
+                                location_type = raw_type["itemOffered"]["name"]
+
+                        if not location_type:
+                            location_type = "<MISSING>"
+                    except:
+                        location_type = "<MISSING>"
+
+                    phone = store_json["telephone"]
+                    street_address = (
+                        store_json["address"]["streetAddress"]
+                        .replace("  ", " ")
+                        .replace("&#039;", "'")
+                        .replace("&amp;", "&")
+                        .strip()
+                    )
+                    if street_address[-1:] == ",":
+                        street_address = street_address[:-1]
+                    city = (
+                        store_json["address"]["addressLocality"]
+                        .replace("&#039;", "'")
+                        .strip()
+                    )
+
+                    state = ""
+                    zipp = store_json["address"]["postalCode"].strip()
+                    country_code = store["country"]
+                    latitude = store_json["geo"]["latitude"].replace(",", ".")
+                    longitude = store_json["geo"]["longitude"].replace(",", ".")
+                    store_number = store["cost_center"]
+                    raw_address = (
+                        "".join(store_sel.xpath('//h1[@class="heading-big"]//text()'))
+                        .strip()
+                        .replace("Circle K,", "")
+                        .strip()
+                        + ","
+                        + "".join(
+                            store_sel.xpath('//h2[@class="heading-small"]//text()')
+                        ).strip()
+                    )
+                    formatted_addr = parse_address_intl(raw_address)
+                    state = formatted_addr.state
+                    if state:
+                        state = state.replace("Mills", "").replace("Est", "").strip()
+                    if country_code.lower()[:2] == "ca" and state == "CA":
+                        state = ""
+                    if state == "ON":
+                        country_code = "Canada"
+
+                    hours = store_sel.xpath(
+                        '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
+                    )
+                    hours_list = []
+                    for hour in hours:
+                        day = "".join(hour.xpath("span[1]/text()")).strip()
+                        time = "".join(hour.xpath("span[2]/text()")).strip()
+                        hours_list.append(day + ":" + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    break
+
+        except SgRequestError as e:
+            logger.error(f"failure >>> {e.status_code}")
+
+        if len(location_name) <= 0:
+            street_address = store["address"]
+            location_name = "Circle K at " + street_address
+            city = store["city"]
+            country_code = store["country"]
+
+            latitude = store["latitude"]
+            longitude = store["longitude"]
+
+        return [
+            locator_domain,
+            location_name.replace("Visit your local", "").strip(),
+            street_address,
+            city,
+            state,
+            zipp,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+            page_url,
+        ]
 
 
+def fetch_data(sgw: SgWriter):
+    with ThreadPoolExecutor() as executor, SgRequests() as session:
+        tracker: List[str] = []
+        locations = fetch_locations(tracker, session)
+        futures = [
+            executor.submit(fetch_details, (location, session))
+            for location in locations
+        ]
+        for future in as_completed(futures):
+            poi = future.result()
 
-                ca_zip_list = re.findall(
-                    r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
-                us_zip_list = re.findall(re.compile(
-                    r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
-
-                # logger.info("~us_zip_list~~~~~~~~~~~~~~~~~~~~~~",us_zip_list,"~~~~~~~~~~~~~~~ca_zip_list~~~~~~~",ca_zip_list)
-                if ca_zip_list:
-                    zipp = ca_zip_list[-1]
-                    country_code = "CA"
-                
-
-                elif us_zip_list:
-                    zipp = us_zip_list[-1]
-                    country_code = "US"
-                else:
-                    zipp = "<MISSING>"
-                    if "Canada" in country_name:
-                        country_code = "CA"
-                    else:
-                        country_code = "US"
-                # logger.info(zipp,country_code)
-            
-                phone_tag = soup_loc.find(
-                    "a", {"itemprop": "telephone"}).text.strip()
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
-                if phone_list:
-                    phone = phone_list[0]
-                    phone = phonenumbers.format_number(phonenumbers.parse(phone, 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-                    # logger.info(phone)
-                else:
-                    phone = "<MISSING>"
-               
-                hours_of_operation = " ".join(list(soup_loc.find(
-                    "div", class_="columns large-12 middle hours-wrapper").stripped_strings)).replace("hours", "").strip()
-            except:
-                zipp = "<MISSING>"
-                state = "<MISSING>"
-                hours_of_operation = "<MISSING>"
-                phone = "<MISSING>"
-            # logger.info(phone)
-            if "."==street_address.strip():
-                street_address = "<MISSING>"
-            if "PEI" in state:
-                state= "Prince Edward Island"
-            store = [locator_domain, location_name.strip(), street_address.strip(), city.strip(), state.strip(), zipp.strip(), country_code,
-                        store_number, phone.strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").strip(), page_url]
-
-            if str(store[2]) not in addresses:
-                addresses.append(str(store[2]))
-                store = [x if x else "<MISSING>" for x in store]
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+            if poi:
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=poi[0],
+                        location_name=poi[1],
+                        street_address=poi[2],
+                        city=poi[3],
+                        state=poi[4],
+                        zip_postal=poi[5],
+                        country_code=poi[6],
+                        store_number=poi[7],
+                        phone=poi[8],
+                        location_type=poi[9],
+                        latitude=poi[10],
+                        longitude=poi[11],
+                        hours_of_operation=poi[12],
+                        page_url=poi[13],
+                    )
+                )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

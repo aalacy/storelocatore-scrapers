@@ -1,0 +1,11 @@
+# Validation issues - the following checks ignored
+- --ignore CountryCodeFillRateChecker
+- --ignore CentroidValidator
+- --ignore StreetAddressHasNumber
+- --ignore StreetAddressHasStateName
+- --ignore GeoConsistencyValidator
+- --ignore CountryValidator
+- --ignore StoreNumberColumnValidator
+- --ignore CountValidator
+- --ignore StateLevelCountValidator
+- --ignore LatLngDuplicationValidator

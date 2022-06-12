@@ -42,7 +42,6 @@ def fetch_data():
     states = []
     cities = []
     locs = []
-    allstores = []
     website = "carquest.ca"
     typ = "<MISSING>"
     country = "<MISSING>"
@@ -51,19 +50,19 @@ def fetch_data():
         if r.encoding is None:
             r.encoding = "utf-8"
         for line in r.iter_lines(decode_unicode=True):
-            if '<a class="Directory-listLink" href="../' in line:
-                items = line.split('<a class="Directory-listLink" href="../')
+            if '<a class="Directory-listLink" href="' in line:
+                items = line.split('<a class="Directory-listLink" href="')
                 for item in items:
                     if 'data-ya-track="todirectory"' in item:
                         count = item.split('data-count="(')[1].split(")")[0]
                         if count != "1":
                             states.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0].replace("..", "")
                             )
                         else:
                             locs.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0]
                                 .replace("..", "")
                                 .replace("&#39;", "'")
@@ -81,12 +80,12 @@ def fetch_data():
                         count = item.split('data-count="(')[1].split(")")[0]
                         if count != "1":
                             cities.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0].replace("..", "")
                             )
                         else:
                             locs.append(
-                                "https://www.carquest.com/"
+                                "https://www.carquest.com/stores/"
                                 + item.split('"')[0]
                                 .replace("..", "")
                                 .replace("&#39;", "'")
@@ -103,7 +102,7 @@ def fetch_data():
                 for item in items:
                     if "Store Details" in item:
                         locs.append(
-                            "https://www.carquest.com/"
+                            "https://www.carquest.com/stores"
                             + item.split('"')[0].replace("&#39;", "'")
                         )
     for loc in locs:
@@ -158,10 +157,11 @@ def fetch_data():
                             + line.split('"day":"SUNDAY"')[1]
                             .split('"start":')[1]
                             .split("}")[0]
-                            + "-"
+                            + "AM-"
                             + line.split('"day":"SUNDAY"')[1]
                             .split('"end":')[1]
                             .split(",")[0]
+                            + "PM"
                         )
                     hours = (
                         hours
@@ -170,10 +170,11 @@ def fetch_data():
                         + line.split('{"day":"MONDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"MONDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -182,10 +183,11 @@ def fetch_data():
                         + line.split('{"day":"TUESDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"TUESDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -194,10 +196,11 @@ def fetch_data():
                         + line.split('{"day":"WEDNESDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"WEDNESDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -206,10 +209,11 @@ def fetch_data():
                         + line.split('{"day":"THURSDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"THURSDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -218,10 +222,11 @@ def fetch_data():
                         + line.split('{"day":"FRIDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"FRIDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                     hours = (
                         hours
@@ -230,33 +235,41 @@ def fetch_data():
                         + line.split('{"day":"SATURDAY"')[1]
                         .split('"start":')[1]
                         .split("}")[0]
-                        + "-"
+                        + "AM-"
                         + line.split('{"day":"SATURDAY"')[1]
                         .split('{"end":')[1]
                         .split(",")[0]
+                        + "PM"
                     )
                 except:
                     hours = "Sun-Sat: Closed"
-        if store not in allstores:
-            allstores.append(store)
-            if state == "":
-                state = "PR"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        if state == "":
+            state = "PR"
+        name = name.replace("\\u0026#39;", "'")
+        hours = (
+            hours.replace("00", ":00")
+            .replace("30", ":30")
+            .replace("1:000AM", "10:00AM")
+            .replace("2:000PM", "20:00PM")
+        )
+        if store == "":
+            store = loc.rsplit("/", 1)[1]
+        yield [
+            website,
+            loc,
+            name,
+            add,
+            city,
+            state,
+            zc,
+            country,
+            store,
+            phone,
+            typ,
+            lat,
+            lng,
+            hours,
+        ]
 
 
 def scrape():

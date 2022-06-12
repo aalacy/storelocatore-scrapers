@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
+        # Header
         writer.writerow(
             [
                 "locator_domain",
@@ -30,26 +30,43 @@ def write_output(data):
                 "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    addresses = []
     base_url = "https://www.raymondjames.com/"
+    addresses = []
     headers = {
         "Accept": "* / *",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
 
-    for page in range(1, 391):
-        logger.info(page)
-        json_data = session.get(
-            "https://www.raymondjames.com/dotcom/api/searchbranches/?page="
-            + str(page)
-            + "&radius=999999&location=96734",
+    params = {"radius": 99999, "location": 96734}
+
+    result = session.get(
+        "https://www.raymondjames.com/dotcom/api/searchbranches",
+        params=params,
+        headers=headers,
+    ).json()
+
+    page = result["page"]
+    total_pages = result["totalPages"]
+
+    while page <= total_pages:
+        logger.info(f"{page}/{total_pages}")
+        params["page"] = page
+
+        result = session.get(
+            "https://www.raymondjames.com/dotcom/api/searchbranches",
+            params=params,
             headers=headers,
-        ).json()["results"]
+        ).json()
+
+        page += 1
+        json_data = result["results"]
+
         for result in json_data:
             location_name = result["header"]
             if result["subHeaders"] is None:
@@ -111,6 +128,7 @@ def fetch_data():
                 phone = "<MISSING>"
             else:
                 phone = result["phone"]
+
             hours_of_operation = "<MISSING>"
             store = []
             store.append(base_url)

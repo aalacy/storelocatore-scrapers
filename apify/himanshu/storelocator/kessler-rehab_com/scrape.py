@@ -1,55 +1,81 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "kessler-rehab_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+DOMAIN = "https://www.kessler-rehab.com"
+MISSING = SgRecord.MISSING
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://www.kessler-rehab.com/company/locations/Default.aspx"
-    r = session.get(base_url)
-    soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
-    main=soup.find_all('dl',{"class":"contact-info"})
-    for atag in main:
-        name=atag.find_parent('div').find_parent('div').find('h2').text
-        loc=list(atag.stripped_strings)
-        address=loc[1].strip()
-        city=loc[2].split(',')[0].strip()
-        state=loc[2].split(',')[1].strip().split(' ')[0]
-        zip=loc[2].split(',')[1].strip().split(' ')[1]
-        phone=loc[4]
-        store=[]
-        store.append("https://www.kessler-rehab.com")
-        store.append(name)
-        store.append(address)
-        store.append(city)
-        store.append(state)
-        store.append(zip)
-        store.append('US')  
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("Kessler Rehab")
-        store.append('<MISSING>')
-        store.append('<MISSING>')
-        store.append('<MISSING>')
-        return_main_object.append(store)
-    return return_main_object
+    start_url = "https://www.kessler-rehab.com//sxa/search/results/?s={75078478-6727-4E71-8FC2-BED8FAD1B00B}&itemid={AF08CF64-F629-40A6-81AA-0B56D5A0185A}&sig=locations-cards&o=Title%2CAscending&p=20&v=%7BDD817789-9335-4441-B604-DC2901221E22%7D"
+    stores = session.get(start_url, headers=headers).json()["Results"]
+    for store in stores:
+        soup = BeautifulSoup(store["Html"], "html.parser")
+        page_url = DOMAIN + soup.find("a", string=re.compile("details"))["href"]
+        log.info(page_url)
+        location_name = soup.find("h3", {"class": "loc-result-card-name"}).text
+        address = soup.findAll("a")[1].get_text(separator="|", strip=True).split("|")
+        street_address = address[0]
+        address = address[1].split(",")
+        city = address[0]
+        address = address[1].split()
+        state = address[0]
+        zip_postal = address[1]
+        phone = soup.select_one("a[href*=tel]").text
+        latitude, longitude = soup.find("img", {"class": "lazy"})["data-latlong"].split(
+            "|"
+        )
+        hours_of_operation = (
+            soup.find("div", {"class": "hours-table"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

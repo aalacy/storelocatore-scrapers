@@ -50,6 +50,7 @@ def fetch_data():
 
     session = SgRequests()
 
+    found_poi = []
     all_links = []
 
     for i in range(5):
@@ -70,10 +71,7 @@ def fetch_data():
     locator_domain = "stamfordhealth.org"
 
     for raw_link in all_links:
-        link = (
-            "https://www.stamfordhealth.org/locations"
-            + raw_link["href"].split("..")[-1]
-        )
+        link = "https://www.stamfordhealth.org" + raw_link["href"].split("&")[0]
         log.info(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -93,21 +91,18 @@ def fetch_data():
 
             final_link = store["url"]
 
-            location_name = (
-                store["name"].encode("ascii", "replace").decode().replace("?", "")
-            )
-            street_address = (
-                store["address"]["streetAddress"]
-                .encode("ascii", "replace")
-                .decode()
-                .replace("?", " ")
-            )
+            location_name = store["name"].strip()
+            street_address = store["address"]["streetAddress"].strip()
             street_address = (
                 street_address.replace("Orthopedic and Spine Institute,", "")
                 .replace("Stamford Health Tully Health Center,", "")
                 .replace("Tully Health Center,", "")
                 .strip()
             )
+
+            if street_address + location_name in found_poi:
+                continue
+            found_poi.append(street_address + location_name)
 
             city = store["address"]["addressLocality"]
             try:
@@ -119,13 +114,8 @@ def fetch_data():
 
             store_number = link.split("id=")[-1]
             try:
-                location_type = (
-                    base.find(class_="facetce9349e11bda4c59af2fe2dedcc42790")
-                    .text.replace("Service Line", "")
-                    .strip()
-                    .replace("\r\n\t\n\n", ",")
-                    .replace("\n", ",")
-                    .strip()
+                location_type = ", ".join(
+                    list(base.find(class_="facetServiceLine").ul.stripped_strings)
                 )
             except:
                 location_type = "<MISSING>"
@@ -145,8 +135,22 @@ def fetch_data():
                         hours_of_operation = (
                             hours_of_operation + " " + clean_hours
                         ).strip()
+
+                days = [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                for day in days:
+                    if day.lower() not in hours_of_operation.lower():
+                        hours_of_operation = hours_of_operation + " " + day + " Closed"
             except:
                 hours_of_operation = "<MISSING>"
+
             try:
                 latitude = store["geo"]["latitude"]
                 longitude = store["geo"]["longitude"]

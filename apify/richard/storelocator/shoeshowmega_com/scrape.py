@@ -58,7 +58,6 @@ def fetch_data():
     hours = []
     countries = []
     found_poi = []
-    data = []
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -134,7 +133,7 @@ def fetch_data():
             lon = store["longitude"]
 
             try:
-                search.mark_found([lat, lon])
+                search.found_location_at(lat, lon)
             except:
                 pass
 
@@ -182,8 +181,7 @@ def fetch_data():
         locations_ids,
         countries,
     ):
-        data.append(
-            [
+        yield [
                 URL,
                 "https://www.shoeshowmega.com/stores",
                 locations_title,
@@ -199,10 +197,6 @@ def fetch_data():
                 longitude,
                 hour,
             ]
-        )
-
-    return data
-
 
 def scrape():
     data = fetch_data()

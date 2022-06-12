@@ -1,7 +1,9 @@
 import csv
+import re
 import usaddress
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
 
 DOMAIN = "checkcity.com"
 BASE_URL = "https://www.checkcity.com/"
@@ -10,6 +12,7 @@ HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
@@ -43,7 +46,7 @@ def write_output(data):
 
 
 def pull_content(url):
-    soup = bs(session.get(url, headers=HEADERS).content, "html.parser")
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
 
@@ -74,9 +77,13 @@ def fetch_link(link_url, tag, div_class, tag_link, tag_p):
 
 def fetch_store_urls():
     store_urls = []
-    state_links = fetch_link(
-        LOCATION_URL, "table", {"class": "servicesTable"}, "a", False
+    soup = pull_content(LOCATION_URL)
+    menu_location = (
+        soup.find("ul", {"id": "menu-main_menu-1"})
+        .find("a", {"href": re.compile(r"\/locations\/")})
+        .find_next("ul")
     )
+    state_links = [x["href"] for x in menu_location.find_all("a")]
     for state_link in state_links:
         store_links = fetch_link(
             state_link, "table", {"class": "locationlink"}, "a", True
@@ -84,8 +91,9 @@ def fetch_store_urls():
         for store_link in store_links:
             if state_link not in store_link:
                 store_link = state_link + store_link
-            store_urls.append(store_link)
-
+            if "sandy-2" not in store_link:
+                store_urls.append(store_link)
+    log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
 
@@ -128,9 +136,12 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hours_content = content[1].find_all("td")[1]
-            hours_of_operation = handle_missing(
-                hours_content.get_text(strip=True, separator=",")
+            hours_of_operation = (
+                handle_missing(hours_content.get_text(strip=True, separator=","))
+                .strip()
+                .replace("\r\n", ",")
             )
+            log.info("Append {} => {}".format(location_name, street_address))
             locations.append(
                 [
                     locator_domain,
@@ -153,8 +164,11 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
 
 
 scrape()

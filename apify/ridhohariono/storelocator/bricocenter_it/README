@@ -1,0 +1,7 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+
+--ignore StreetAddressHasStateName (No state name)
+
+--ignore GeoConsistencyValidator (Not US zip code)
+
+--ignore CountryValidator (Not US phone)

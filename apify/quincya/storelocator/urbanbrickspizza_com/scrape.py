@@ -1,94 +1,93 @@
-import csv
-import json
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('urbanbrickspizza_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
-
-    base_link = "https://urbanbrickspizza.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.71289&max_results=100&search_radius=200&autoload=1"
+    base_link = "https://mobile.incentivio.com/incentivio-mobile-api/locations?count=10000&latitude=0&longitude=0&page=0&radius=11029160&sortby=title&sortdirection=DESC&langCode=en&iscatering=false"
 
     session = SgRequests()
-    req = session.get(base_link, headers = HEADERS)
 
-    base = BeautifulSoup(req.text,"lxml")
-    stores = json.loads(base.text.strip())
+    headers = {
+        "authority": "mobile.incentivio.com",
+        "method": "GET",
+        "path": "/incentivio-mobile-api/locations?count=10000&latitude=0&longitude=0&page=0&radius=11029160&sortby=title&sortdirection=DESC&langCode=en&iscatering=false",
+        "scheme": "https",
+        "accept": "application/json, text/plain, */*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "clientid": "d5aa1ae6-68f4-4823-a5f0-9c9c2044ae93",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    }
 
-    data = []
-    locator_domain = "urbanbrickspizza.com"
+    stores = session.get(base_link, headers=headers).json()["stores"]
+
+    locator_domain = "urbanbrickskitchen.com"
 
     for store in stores:
-        location_name = "Urban Bricks - " + store["store"]
-        street_address = (store["address"] + " " + store["address2"]).strip()
-        if "Coming Soon" in street_address:
-            continue
-        city = store['city']
-        state = store["state"]
-        if not state:
-            state = "<MISSING>"
-        zip_code = store["zip"]
-        if zip_code == "3009":
-            zip_code = "30097"
-        country_code = store['country']
-        if "States" not in country_code and "Rico" not in country_code:
-            continue
-        store_number = store["id"]
+        location_name = store["title"]
+        try:
+            street_address = (
+                store["address"]["streetAddress1"]
+                + " "
+                + store["address"]["streetAddress2"]
+            ).strip()
+        except:
+            street_address = store["address"]["streetAddress1"]
+        city = store["address"]["city"]
+        state = store["address"]["region"]
+        if city == "San Antonio":
+            state = "Texas"
+        zip_code = store["address"]["postalCode"]
+        country_code = store["address"]["country"]
+        store_number = store["storeCode"].replace("STR:", "")
         location_type = "<MISSING>"
-        phone = store['phone']
-        if not phone:
-            phone = "<MISSING>"
-        latitude = store['lat']
-        longitude = store['lng']
-        link = store["url"]
-        # logger.info(link)
-        req = session.get(link, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
+        phone = store["phoneNumber"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        link = "https://order.incentivio.com/c/urbanbrickspizza/"
 
-        try:
-            hours_of_operation = ""
-            hours = base.find(id="intro").find_all("p")[1:]
-            for hour in hours:
-                if "day" in hour.text or "pm" in hour.text.lower() or "-" in hour.text.lower() or "closed" in hour.text.lower():
-                    hours_of_operation = (hours_of_operation + " " + hour.text.replace("\xa0"," ")).strip()
-            if not hours_of_operation:
-                try:
-                    hours_of_operation = store["hours"].replace("day", "day ").replace("PM", "PM ").strip()
-                except:
-                    hours_of_operation = "<MISSING>"
-        except:
-            try:
-                hours_of_operation = store["hours"]
-            except:
-                hours_of_operation = "<MISSING>"
-        try:
-            hours_of_operation = hours_of_operation.replace("day", "day ").replace("PM", "PM ").replace("AM", "AM ").replace("Thurs","Thurs ").replace("Thurs day","Thursday")\
-            .replace("Please note that all delivery charges are non-refundable once driver leaves the store.","").replace("Sat","Sat ").replace("Sat urday","Saturday").strip()
-            hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-        except:
-            hours_of_operation = "<MISSING>"
-            
-        # Store data
-        data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-    
-    return data
+        hours_of_operation = ""
+        raw_hours = store["pickupOrderHours"]
+        for hours in raw_hours:
+            day = hours["dayOfWeek"]
+            if len(day[0]) != 1:
+                day = " ".join(hours["dayOfWeek"])
+            opens = hours["startTime"]
+            closes = hours["endTime"]
+            if opens != "" and closes != "":
+                clean_hours = day + " " + opens + "-" + closes
+                hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-scrape()
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

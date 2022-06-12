@@ -1,101 +1,272 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
+import json
 
-logger = SgLogSetup().get_logger('tagheuer_com')
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "X-Algolia-API-Key": "8cf40864df513111d39148923f754024",
+    "X-Algolia-Application-Id": "6OBGA4VJKI",
+}
 
+logger = SgLogSetup().get_logger("tagheuer_com")
 
-
-session = SgRequests()
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    url = 'https://store.tagheuer.com/us'
-    locs = []
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines(decode_unicode=True):
-        if '{"id":' in line:
-            items = line.split('{"id":')
-            for item in items:
-                if 'var allPosMarker' not in item:
-                    lid = item.split(',')[0]
-                    llat = item.split('"latitude":"')[1].split('"')[0]
-                    llng = item.split('"longitude":"')[1].split('"')[0]
-                    ltyp = item.split('"point_of_sale_type_name":')[1].split('}')[0].replace('"','')
-                    if ltyp == 'null':
-                        ltyp = '<MISSING>'
-                    locs.append(lid + '|US|' + llat + '|' + llng + '|' + ltyp)
-    url = 'https://store.tagheuer.com/ca'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines(decode_unicode=True):
-        if '{"id":' in line:
-            items = line.split('{"id":')
-            for item in items:
-                if 'var allPosMarker' not in item:
-                    lid = item.split(',')[0]
-                    llat = item.split('"latitude":"')[1].split('"')[0]
-                    llng = item.split('"longitude":"')[1].split('"')[0]
-                    ltyp = item.split('"point_of_sale_type_name":')[1].split('}')[0].replace('"','')
-                    if ltyp == 'null':
-                        ltyp = '<MISSING>'
-                    locs.append(lid + '|CA|' + llat + '|' + llng + '|' + ltyp)
-    for loc in locs:
-        logger.info(('Pulling Location %s...' % loc.split('|')[0]))
-        website = 'tagheuer.com'
-        country = loc.split('|')[1]
-        lat = loc.split('|')[2]
-        lng = loc.split('|')[3]
-        typ = loc.split('|')[4]
-        store = loc.split('|')[0]
-        lurl = 'https://store.tagheuer.com/' + store
-        r2 = session.get(lurl, headers=headers)
-        lines = r2.iter_lines(decode_unicode=True)
-        hours = '<MISSING>'
-        phone = '<MISSING>'
-        zc = '<MISSING>'
-        city = '<MISSING>'
-        add = '<MISSING>'
-        for line2 in lines:
-            if '<span class="components-outlet-item-name-basic__title__span">' in line2:
-                name = next(lines).replace('\r','').replace('\t','').replace('\n','').strip()
-            if '"streetAddress":"' in line2:
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-            if '"addressLocality":"' in line2:
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-            if '"postalCode":"' in line2:
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-            if '"telephone":"' in line2:
-                phone = line2.split('"telephone":"')[1].split('"')[0]
-            if '"openingHours":"' in line2:
-                hours = line2.split('"openingHours":"')[1].split('"')[0]
-            if country == 'CA' and 'href="/ca/' in line2:
-                next(lines)
-                state = next(lines).split('"label":"')[1].split('"')[0]
-            if country == 'US' and 'href="/us/' in line2:
-                next(lines)
-                state = next(lines).split('"label":"')[1].split('"')[0]
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        if zc == '0':
-            zc = '<MISSING>'
-        if ',' in city:
-            state = city.split(',')[1].strip()
-            city = city.split(',')[0].strip()
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    countries = [
+        "ad",
+        "ag",
+        "am",
+        "ao",
+        "aw",
+        "az",
+        "ba",
+        "bb",
+        "bd",
+        "bg",
+        "bh",
+        "bi",
+        "bl",
+        "bm",
+        "bn",
+        "bo",
+        "bs",
+        "by",
+        "bz",
+        "ci",
+        "cl",
+        "cr",
+        "cw",
+        "cy",
+        "do",
+        "ec",
+        "ee",
+        "eg",
+        "et",
+        "fj",
+        "gd",
+        "ge",
+        "gg",
+        "gi",
+        "gp",
+        "gt",
+        "gu",
+        "hn",
+        "hu",
+        "ie",
+        "im",
+        "iq",
+        "is",
+        "je",
+        "jm",
+        "jo",
+        "kh",
+        "kn",
+        "kw",
+        "ky",
+        "kz",
+        "lb",
+        "lc",
+        "li",
+        "lk",
+        "lu",
+        "lv",
+        "ma",
+        "mf",
+        "mg",
+        "mk",
+        "mn",
+        "mo",
+        "mp",
+        "mq",
+        "mt",
+        "mu",
+        "mv",
+        "mz",
+        "nc",
+        "ng",
+        "np",
+        "nz",
+        "om",
+        "pa",
+        "pe",
+        "ph",
+        "pk",
+        "pr",
+        "py",
+        "qa",
+        "re",
+        "ro",
+        "rs",
+        "sc",
+        "si",
+        "sk",
+        "sm",
+        "sv",
+        "sx",
+        "tc",
+        "th",
+        "tn",
+        "ua",
+        "uy",
+        "uz",
+        "ve",
+        "vg",
+        "vi",
+        "ye",
+        "ae",
+        "al",
+        "ar",
+        "at",
+        "au",
+        "be",
+        "br",
+        "ca",
+        "ch",
+        "cn",
+        "co",
+        "cz",
+        "de",
+        "dk",
+        "dz",
+        "es",
+        "fi",
+        "fr",
+        "gb",
+        "gr",
+        "hk",
+        "hr",
+        "id",
+        "il",
+        "in",
+        "it",
+        "jp",
+        "kr",
+        "mx",
+        "my",
+        "nl",
+        "no",
+        "pl",
+        "pt",
+        "ru",
+        "sa",
+        "se",
+        "sg",
+        "tr",
+        "tw",
+        "us",
+        "za",
+    ]
+
+    for cc in countries:
+        session = SgRequests()
+        time.sleep(3)
+        url = "https://6obga4vjki-dsn.algolia.net/1/indexes/stores/query"
+        payload = {
+            "params": "filters=country:"
+            + cc
+            + "&attributesToRetrieve=address,Latitude,zip,country,phone,type,id,image,address2,email,name,description,services,payments,city,openingHours,exceptionalHours,contactUsForm,_geoloc,i18nAddress,specialProducts,image1,image2,image3,timezone,sfccUrl,getRankingInfo:1",
+            "aroundRadius": "15000",
+            "hitsPerPage": "1000",
+            "getRankingInfo": "1",
+            "attributesToRetrieve": "address,Latitude,zip,country,phone,type,id,image,address2,email,name,description,services,payments,city,openingHours,exceptionalHours,contactUsForm,_geoloc,i18nAddress,specialProducts,image1,image2,image3,timezone,sfccUrl",
+            "attributesToHighlight": "name",
+        }
+        r = session.post(url, headers=headers, data=json.dumps(payload))
+        website = "tagheuer.com"
+        country = cc.upper()
+        logger.info("Pulling %s..." % cc)
+        for item in json.loads(r.content)["hits"]:
+            add = item["address"]
+            name = item["name"]
+            zc = item["zip"]
+            city = item["city"]
+            phone = item["phone"]
+            state = "<MISSING>"
+            typ = item["type"]
+            loc = "https://www.tagheuer.com/us/en/" + item["sfccUrl"]
+            hrstring = str(item["openingHours"])
+            try:
+                hours = (
+                    "Sunday: "
+                    + hrstring.split("'0'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'0'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Monday: "
+                    + hrstring.split("'1'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'1'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Tuesday: "
+                    + hrstring.split("'2'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'2'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Wednesday: "
+                    + hrstring.split("'3'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'3'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Thursday: "
+                    + hrstring.split("'4'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'4'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Friday: "
+                    + hrstring.split("'5'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'5'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Saturday: "
+                    + hrstring.split("'6'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'6'")[1].split("'end': '")[1].split("'")[0]
+                )
+            except:
+                hours = "<MISSING>"
+            lat = item["_geoloc"]["lat"]
+            lng = item["_geoloc"]["lng"]
+            store = item["objectID"]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

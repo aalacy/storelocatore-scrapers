@@ -1,0 +1,3 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+--ignore CountryCodeFillRateChecker (Includes UK)
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)

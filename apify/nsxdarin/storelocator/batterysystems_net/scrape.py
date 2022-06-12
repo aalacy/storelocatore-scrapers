@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,39 +13,14 @@ headers = {
 logger = SgLogSetup().get_logger("batterysystems_net")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.batterysystems.net/pointofsale"
     r = session.get(url, headers=headers)
-    website = "batterysystems.com"
+    website = "batterysystems.net"
     typ = "<MISSING>"
     country = "US"
+    locinfo = []
+    alllocs = []
     loc = "<MISSING>"
     store = "<MISSING>"
     lat = "<MISSING>"
@@ -51,8 +29,17 @@ def fetch_data():
     lines = r.iter_lines()
     for line in lines:
         line = str(line.decode("utf-8"))
-        if '<i class="porto-icon-down-open" style=""></i>' in line:
-            name = line.split('">')[1].split("<")[0]
+        if "pointofsale.places" in line:
+            items = line.split('{"id":"')
+            for item in items:
+                if '"title":' in item:
+                    iid = item.split('"')[0]
+                    ilat = item.split('"lat":"')[1].split('"')[0]
+                    ilng = item.split('"lng":"')[1].split('"')[0]
+                    locinfo.append(iid + "|" + ilat + "|" + ilng)
+        if 'MY<span style="color:black">STORE</span></p>' in line:
+            store = line.split('id="')[1].split('"')[0]
+            name = line.split('">')[1].split("<")[0].strip().replace("\t", "")
         if 'style="display:none">' in line:
             next(lines)
             g = next(lines)
@@ -63,6 +50,16 @@ def fetch_data():
             g = next(lines)
             g = str(g.decode("utf-8"))
             csz = g.split("<")[0].strip().replace("  ", " ")
+            if (
+                "a" not in csz
+                and "e" not in csz
+                and "i" not in csz
+                and "o" not in csz
+                and "u" not in csz
+            ):
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                csz = g.split("<")[0].strip().replace("  ", " ")
             if csz.count(" ") == 2:
                 city = csz.split(" ")[0]
                 state = csz.split(" ")[1]
@@ -95,27 +92,71 @@ def fetch_data():
                 hours = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            loc = "https://www.batterysystems.net/pointofsale"
+            if "Sioux Falls South" in city:
+                city = "Sioux Falls"
+                state = "South Dakota"
+            if "Fargo North" in city:
+                city = "Fargo"
+                state = "North Dakota"
+            if "West Caldwell New" in city:
+                city = "West Caldwell"
+                state = "New Jersey"
+            if "Albuquerque New" in city:
+                city = "Albuquerque"
+                state = "New Mexico"
+            if "Charlotte North" in city or "Clayton North" in city:
+                city = city.replace(" North", "")
+                state = "North Carolina"
+            if state == "York":
+                state = "New York"
+                city = city.replace(" New", "")
+            infotext = []
+            infotext.append(website)
+            infotext.append(loc)
+            infotext.append(name)
+            infotext.append(add)
+            infotext.append(city)
+            infotext.append(state)
+            infotext.append(zc)
+            infotext.append(country)
+            infotext.append(store)
+            infotext.append(phone)
+            infotext.append(typ)
+            infotext.append(lat)
+            infotext.append(lng)
+            infotext.append(hours)
+            alllocs.append(infotext)
+    for item in alllocs:
+        for sitem in locinfo:
+            if sitem.split("|")[0] == item[8]:
+                item[11] = sitem.split("|")[1]
+                item[12] = sitem.split("|")[2]
+                yield SgRecord(
+                    locator_domain=item[0],
+                    page_url=item[1],
+                    location_name=item[2],
+                    street_address=item[3],
+                    city=item[4],
+                    state=item[5],
+                    zip_postal=item[6],
+                    country_code=item[7],
+                    store_number=item[8],
+                    phone=item[9],
+                    location_type=item[10],
+                    latitude=item[11],
+                    longitude=item[12],
+                    hours_of_operation=item[13],
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

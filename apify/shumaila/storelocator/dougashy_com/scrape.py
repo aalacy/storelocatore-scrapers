@@ -1,105 +1,87 @@
-import requests
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-import usaddress
-import json
+import re
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('dougashy_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    
-    url = 'https://dougashy.com/locations/'
-    r = session.get(url, headers=headers, verify=False)    
-    soup =BeautifulSoup(r.text, "html.parser")
-    #divlist = soup.findAll('div',{'class':'fl-rich-text'})
-    linklist = soup.find('ul',{'class':'sub-menu'}).findAll('li')
-    logger.info(len(linklist))  
-    det = r.text.split('var wpgmaps_localize_marker_data = ')[1].split('var wpgmaps_localize_global_settings =')[0]
-    det = re.sub(r'"[1-9]":', "", det)
-    det = '['+det.replace(';',']').replace('}]',']')
-    det = det.replace('[{','[')   
-    coordlist = json.loads(det)        
-    p = 0
-    #for div in divlist:
+    url = "https://dougashy.com/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.find("ul", {"class": "sub-menu"}).findAll("li")
+    maplink = "https://dougashy.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxRqlWqBQCnUQoG"
+    coordlist = session.get(maplink, headers=headers).json()["markers"]
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
     for link in linklist:
-        link = link.find('a')['href']
-        #logger.info(link)
-        r = session.get(link, headers=headers, verify=False)
-        soup =BeautifulSoup(r.text, "html.parser")
-        divlist = soup.findAll('div',{'class':'fl-rich-text'})
+        link = link.find("a")["href"]
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll("div", {"class": "fl-rich-text"})
         for div in divlist:
-            if div.text.find('Address') > -1:
-                title = div.find('h2').text
-                det = div.findAll('p')
-                address = det[0].text.splitlines()
-                street = address[1]
-                state = address[2].replace(', , ',', ')
-                #logger.info(state)
-                city,state = state.split(', ',1)
-                state = state.lstrip()
-                #logger.info(state)
-                state,pcode = state.split(' ')
-                phone = div.find('a').text
-                for mp in det:
-                    if mp.text.find('Hours') > -1:
-                        hours = mp.text.replace('\n', ' ').replace('Store Hours','').lstrip()
+            if div.text.find("Address") > -1:
+                title = div.find("h2").text
+                det = div.findAll("p")
+                address = re.sub(cleanr, "\n", str(det[0]))
+                address = re.sub(pattern, "\n", address).strip().splitlines()
 
-                lat = '<MISSING>'
-                longt = '<MISSING>'
-                for coord in coordlist:                
-                    if coord['address'].replace(',','').replace('.','').find(street.replace(',','').replace('.','')) > -1:
-                        lat = coord['lat']
-                        longt = coord['lng']
-                data.append([
-                            'https://dougashy.com/',
-                            link,                   
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            'US',
-                            '<MISSING>',
-                            phone,
-                            '<MISSING>',
-                            lat,
-                            longt,
-                            hours
-                        ])
-                #logger.info(p,data[p])
-                p += 1
-                #input()
-            
-    return data
+                street = address[1]
+                state = address[2].replace(", , ", ", ")
+                city, state = state.split(", ", 1)
+                state = state.lstrip()
+                state, pcode = state.split(" ")
+                phone = div.find("a").text
+                for mp in det:
+                    if mp.text.find("Hours") > -1:
+                        hours = (
+                            mp.text.replace("\n", " ")
+                            .replace("Store Hours", "")
+                            .lstrip()
+                        )
+                lat = SgRecord.MISSING
+                longt = SgRecord.MISSING
+                for coord in coordlist:
+                    if (
+                        pcode in coord["address"]
+                        and street.strip().split(" ")[0] in coord["address"]
+                    ):
+                        lat = coord["lat"]
+                        longt = coord["lng"]
+                        break
+                yield SgRecord(
+                    locator_domain="https://dougashy.com/",
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=SgRecord.MISSING,
+                    phone=phone.strip(),
+                    location_type=SgRecord.MISSING,
+                    latitude=lat,
+                    longitude=longt,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

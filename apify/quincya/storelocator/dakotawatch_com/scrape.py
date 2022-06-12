@@ -1,100 +1,64 @@
-import csv
-import time
+import json
 
 from bs4 import BeautifulSoup
 
-from sgselenium import SgChrome
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    base_link = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/15037/stores.js?callback=SMcallback2"
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    base_link = (
-        "https://findastore.appdevelopergroup.co/embed/27b82c6f4bd86d69ba7d77bdff9eb577"
-    )
+    locator_domain = "https://dakotawatch.com/"
 
-    driver = SgChrome().chrome()
+    stores = json.loads(base.text.split('stores":')[1].split("})")[0])
 
-    driver.get(base_link)
-    time.sleep(10)
-
-    base = BeautifulSoup(driver.page_source, "lxml")
-
-    items = base.find_all(class_="fas_list_res_i")
-
-    data = []
-    for item in items:
-        locator_domain = "dakotawatch.com"
-        location_name = item.find(class_="fas_store_name").text.strip()
-        raw_data = item.find(class_="fas_address").text.split(",")
-        street_address = raw_data[0].strip()
-        city = raw_data[1].strip()
-        state = raw_data[2].strip()
-        zip_code = raw_data[3].strip()
+    for store in stores:
+        location_name = store["name"].replace("  ", " ")
+        raw_address = store["address"].split(",")
+        street_address = raw_address[0]
+        city = raw_address[1]
+        state = raw_address[2].replace("W.", "").strip()
+        zip_code = raw_address[3]
         country_code = "US"
-        store_number = item["data-ind"]
-        phone = item.find(class_="fas_phone").text.strip()
-        location_type = "<MISSING>"
-        latitude = item["data-lat"]
-        longitude = item["data-lng"]
-        hours_of_operation = "<MISSING>"
-        link = "<MISSING>"
+        store_number = store["id"]
+        phone = store["phone"]
+        location_type = ""
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        hours_of_operation = ""
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url="https://dakotawatch.com/location-finder/",
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    driver.close()
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

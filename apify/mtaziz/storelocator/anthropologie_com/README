@@ -1,0 +1,7 @@
+# Following Validation Checks Ignored:
+
+- --ignore StreetAddressHasStateName
+- --ignore GeoConsistencyValidator
+- --ignore CountryValidator
+- --ignore StreetAddressHasNumber
+

@@ -1,100 +1,116 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import csv
-import time
-from random import randint
 import re
-import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('svsports_com')
+from bs4 import BeautifulSoup
 
+from sgrequests import SgRequests
 
 
 def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-	
-	base_link = "https://www.svsports.com/storelocator.cfm"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://www.svsports.com/pages/our-locations"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	data = []
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	items = base.find_all(class_="mapAddress")
-	locator_domain = "svsports.com"
+    data = []
 
-	for item in items:
+    items = base.find_all(class_="location-block")
+    locator_domain = "svsports.com"
 
-		raw_data = item.text.split("\n")
-		raw_address = raw_data[1].split(",")
-		city = raw_address[0].strip()
-		state = raw_address[1].strip()
+    for item in items:
 
-		street_address = raw_data[3].strip()
+        raw_address = list(item.find(class_="content-wrapper").stripped_strings)
 
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		phone = raw_data[4].strip()
-		if "Suite" in phone:
-			street_address = street_address + " " + " ".join(phone.split()[:2])
-			phone = phone.split()[-1]			
-		raw_gps = item.h4['onclick']
-		latitude = re.findall(",[0-9]{2,3}\.[0-9].+,", raw_gps)[-1].replace(",","")
-		longitude = re.findall("-[0-9]{2,3}\.[0-9].+\)", raw_gps)[-1].replace(")","")
+        location_name = raw_address[0].split(":")[1].strip()
+        street_address = raw_address[1].strip()
+        city = item.h1.text.split(",")[0].strip()
+        state = item.h1.text.split(",")[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = raw_address[-1].strip()
 
-		link = item.find_all("a")[-1]['href']
-		req = session.get(link, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			base = BeautifulSoup(req.text,"lxml")
-			logger.info(link)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        map_str = item.a["href"]
+        try:
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[0].split(
+                ","
+            )
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
 
-		script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
-		store_data = json.loads(script)
+        hours_of_operation = "<MISSING>"
 
-		location_name = base.find(class_="page-heading").text.strip()
-		zip_code = store_data['address']['postalCode']
+        if "38 N. West" in street_address:
+            latitude = "40.4445187"
+            longitude = "-75.3615462"
+            zip_code = "18951"
 
-		hours_of_operation = ""
-		raw_hours = store_data['openingHoursSpecification']
-		for hours in raw_hours:
-			day = hours['dayOfWeek']
-			if len(day[0]) != 1:
-				day = ' '.join(hours['dayOfWeek'])
-			opens = hours['opens']
-			closes = hours['closes']
-			clean_hours = day + " " + opens + "-" + closes
-			hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+        if "2913 Spooky" in street_address:
+            zip_code = "17545"
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        data.append(
+            [
+                locator_domain,
+                base_link,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
 
-	return data
+    return data
+
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
+    data = fetch_data()
+    write_output(data)
+
 
 scrape()

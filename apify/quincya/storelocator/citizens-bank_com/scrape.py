@@ -1,79 +1,98 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
 import re
+
+from bs4 import BeautifulSoup
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('citizens-bank_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("citizens-bank_com")
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.citizens-bank.com/about/locations/"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-	
-	base_link = "https://www.citizens-bank.com/about/locations/"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    items = base.find_all(
+        "div", {"class": re.compile(r"fl-col-group fl-node.+fl-col-group-nested")}
+    )
+    locator_domain = "citizens-bank.com"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    hours_of_operation = "<MISSING>"
+    hours = base.find_all("strong")
+    for hour in hours:
+        if "DAY" in hour.text:
+            hours_of_operation = (
+                hour.previous_element.get_text(" ").replace("  ", " ").strip()
+            )
+            break
 
-	data = []
+    for item in items:
+        if "fl-map" not in str(item):
+            continue
 
-	items = base.find_all('div', {'class': re.compile(r'fl-col-group fl-node.+fl-col-group-nested')})
-	locator_domain = "citizens-bank.com"
+        location_name = item.h3.text.strip()
+        logger.info(location_name)
 
-	hours = base.find_all("strong")
-	for hour in hours:
-		if "AM" in hour.text:
-			hours_of_operation = hour.text.replace("\n"," ").strip()
-			break
+        raw_address = list(
+            item.find(class_="fl-rich-text").find_all("p")[-2].stripped_strings
+        )
+        if "Citizens Bank" in raw_address[0]:
+            raw_address.pop(0)
 
-	for item in items:
-		if "fl-map" not in str(item):
-			continue
+        street_address = " ".join(raw_address[:-2]).strip()
+        city_line = raw_address[-2].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = raw_address[-1]
 
-		location_name = item.h3.text.strip()
-		# logger.info(location_name)
-		
-		raw_address = item.find(class_="fl-rich-text").find_all("p")[-2].text.split("\n")
-		if "Citizens Bank" in raw_address[0]:
-			raw_address.pop(0)
+        map_link = item.iframe["src"]
+        req = session.get(map_link, headers=headers)
+        maps = BeautifulSoup(req.text, "lxml")
+        geo = (
+            re.findall(r"\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]", str(maps))[0]
+            .replace("[", "")
+            .replace("]", "")
+            .split(",")
+        )
+        latitude = geo[0].strip()
+        longitude = geo[1].strip()
 
-		street_address = " ".join(raw_address[:-2]).strip()
-		city_line = raw_address[-2].strip().split(",")
-		city = city_line[0].strip()
-		state = city_line[-1].strip().split()[0].strip()
-		zip_code = city_line[-1].strip().split()[1].strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		phone = raw_address[-1]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=base_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		map_link = item.iframe['src']
-		req = session.get(map_link, headers = HEADERS)
-		maps = BeautifulSoup(req.text,"lxml")
-		geo = re.findall(r'\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]', str(maps))[0].replace("[","").replace("]","").split(",")
-		latitude = geo[0].strip()
-		longitude = geo[1].strip()
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

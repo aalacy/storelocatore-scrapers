@@ -1,107 +1,192 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
 import re
+
+from bs4 import BeautifulSoup
+
 from sglogging import sglog
+
+from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger(logger_name="sothebysrealty.com")
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def fetch_data():
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    session = SgRequests()
 
-	session = SgRequests()
+    states = [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+    ]
 
-	states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
-			"HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
-			"MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
-			"NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
-			"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+    found_poi = []
+    locator_domain = "sothebysrealty.com"
 
-	data = []
-	found_poi = []
+    for state in states:
+        log.info("Getting data for State: " + state)
+        page_next = True
+        base_link = (
+            "https://www.sothebysrealty.com/eng/offices/" + state.lower() + "-usa/30-pp"
+        )
 
-	locator_domain = "sothebysrealty.com"
+        while page_next:
+            req = session.get(base_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
-	for state in states:
-		log.info("Getting data for State: " + state)
-		page_next = True
-		base_link = "https://www.sothebysrealty.com/eng/offices/" + state + "-usa/30-pp"
+            items = base.find_all("li", {"id": re.compile(r"Entity_180.+")})
 
-		while page_next:
-			# print(base_link)
-			req = session.get(base_link, headers = HEADERS)
-			base = BeautifulSoup(req.text,"lxml")
+            for item in items:
+                try:
+                    link = "https://www.sothebysrealty.com" + item.a["href"]
+                    if link in found_poi:
+                        continue
+                    found_poi.append(link)
+                except:
+                    continue
 
-			links = base.find_all('link', attrs={'itemprop': 'mainEntityOfPage'})
-			names = base.find_all(class_="org url") 
-			streets = base.find_all(class_="contact-card__address adr")
-			cities = base.find_all(class_="locality city")
-			states = base.find_all(class_="region")
-			zips = base.find_all(class_="postal-code")
-			phones = base.find_all(class_="contact-card__phones")
+                location_name = item.find(
+                    class_="Entities-card__entity-name"
+                ).text.strip()
+                street_address = (
+                    item.find(class_="Entities-card__address")
+                    .text.replace("  ", " ")
+                    .strip()
+                )
+                city_line = (
+                    item.find_all(class_="Entities-card__address")[1]
+                    .text.split("United")[0]
+                    .split(",")
+                )
+                city = city_line[0].strip()
+                state = city_line[-1].strip().split()[0].strip()
+                zip_code = city_line[-1].strip().split()[1].strip()
+                try:
+                    phone = item.find(class_="h6").text.replace("O.", "").strip()
+                except:
+                    phone = "<MISSING>"
+                country_code = "US"
+                store_number = "<MISSING>"
+                location_type = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
-			# Lat/Lng
-			all_scripts = base.find_all('script')
-			for script in all_scripts:
-				if ",lng:" in str(script):
-					script = str(script)
-					break
+                req = session.get(link, headers=headers)
+                if req.status_code != 200:
+                    req = session.get(link, headers=headers)
 
-			try:
-				geos = re.findall(r'lat:[0-9]{2}\.[0-9]+,lng:-[0-9]{2,3}\.[0-9]+', script)
-			except:
-				page_next = False
-				continue
-			for i in range(len(links)):
-				link = "https://www.sothebysrealty.com" + links[i]["href"]
-				if link in found_poi:
-					continue
-				found_poi.append(link)
-				location_name = names[i].span.img["alt"].replace("&amp;","&").encode("ascii", "replace").decode().replace("?","")
+                if req.status_code == 200:
+                    page_base = BeautifulSoup(req.text, "lxml")
+                    try:
+                        map_str = page_base.find(
+                            class_="OfficeHero__content-item OfficeHero__content-item--directions"
+                        ).a["href"]
 
-				try:
-					street_address = streets[i].find(class_="street-address").text + " " + streets[i].find(class_="address").text
-				except:
-					street_address = streets[i].find(class_="street-address").text.strip()
+                        geo = re.findall(
+                            r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str
+                        )[0].split(",")
+                        latitude = geo[0]
+                        longitude = geo[1]
+                    except:
+                        pass
 
-				street_address = (re.sub(' +', ' ', street_address)).strip()
-				city = cities[i].text.strip()
-				state = states[i].text.strip()
-				zip_code = zips[i].text.strip()
-				phone = phones[i].find_all("a")[-1]["href"].replace("tel:","")
-				country_code = "US"
-				store_number = "<MISSING>"
-				location_type = "<MISSING>"
-				hours_of_operation = "<MISSING>"
-				latitude = geos[i].split(",")[0].split(":")[1]
-				longitude = geos[i].split(",")[1].split(":")[1]
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+                )
 
-				data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+            # Check for next page
+            try:
+                base_link = (
+                    "https://www.sothebysrealty.com"
+                    + base.find(class_="Entities-search__pagination").find(
+                        "a", attrs={"aria-label": "Next"}
+                    )["href"]
+                )
+                if base_link == "https://www.sothebysrealty.com#":
+                    page_next = False
+            except:
+                page_next = False
 
-			# Check for next page
-			try:
-				base_link = "https://www.sothebysrealty.com" + base.find('a', attrs={'aria-label': 'Next'})["href"]
-				if base_link == "https://www.sothebysrealty.com#":
-					page_next = False
-			except:
-				page_next = False
 
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+            }
+        )
+    )
+) as writer:
+    fetch_data(writer)

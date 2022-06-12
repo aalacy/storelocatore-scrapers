@@ -2,8 +2,7 @@ import csv
 import time
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from selenium import webdriver
-import selenium.webdriver.chrome.service as service
+from sgselenium import SgSelenium
 import re
 
 session = SgRequests()
@@ -39,13 +38,13 @@ def write_output(data):
 def fetch_data():
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
     }
     soup = bs(
         session.get(
             "https://www.worldmarkbywyndham.com/resorts/index.html", headers=headers
         ).text,
-        "lxml",
+        "html5lib",
     )
     child_selection = soup.find(
         lambda tag: (tag.name == "script")
@@ -57,27 +56,11 @@ def fetch_data():
             + str(value.split('"')[1].replace(".", "").replace("/", ""))
             + "/"
         )
-        options = webdriver.ChromeOptions()
         user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36"
-        options.add_argument(f"user-agent={user_agent}")
-        options.add_argument("no-sandbox")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=1024,600")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        capabilities = webdriver.DesiredCapabilities.CHROME.copy()
-        capabilities["acceptInsecureCerts"] = True
-        service_start = service.Service(executable_path="chromedriver")
-        service_start.start()
-        driver = webdriver.Remote(
-            service_start.service_url,
-            options=options,
-            keep_alive=True,
-            desired_capabilities=capabilities,
-        )
+        driver = SgSelenium().firefox(user_agent=user_agent)
         driver.get(page_url)
         time.sleep(5)
-        soup = bs(driver.page_source, "lxml")
+        soup = bs(driver.page_source, "html5lib")
         RightFeature = len(soup.find_all("td", {"class": "RightFeature"}))
         if RightFeature == 2:
             data = list(
@@ -85,7 +68,7 @@ def fetch_data():
                     str(soup.find_all("td", {"class": "RightFeature"})[1]).split(
                         "Credit Values"
                     )[0],
-                    "lxml",
+                    "html5lib",
                 ).stripped_strings
             )
         else:
@@ -94,7 +77,7 @@ def fetch_data():
                     str(soup.find_all("td", {"class": "RightFeature"})[2]).split(
                         "Credit Values"
                     )[0],
-                    "lxml",
+                    "html5lib",
                 ).stripped_strings
             )
         coords = soup.find("a", text=re.compile("Resort Directions"))
@@ -201,9 +184,12 @@ def fetch_data():
                 store.append(lng)
                 store.append("<MISSING>")
                 store.append(page_url)
-                store = [x.replace("–", "-") if type(x) == str else x for x in store]
-                store = [x.strip() if type(x) == str else x for x in store]
+                store = [
+                    x.replace("–", "-") if isinstance(x, str) else x for x in store
+                ]
+                store = [x.strip() if isinstance(x, str) else x for x in store]
                 yield store
+                driver.quit()
         except:
             continue
 

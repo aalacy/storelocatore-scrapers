@@ -57,25 +57,33 @@ def get_urls(states):
 def get_data(url):
     session = SgRequests()
     r = session.get(url)
-    j = r.json()
+    j = r.json()["profile"]
 
     locator_domain = "https://hollywoodfeed.com/"
     page_url = url.replace(".json", ".html")
     location_name = j.get("name") or "<MISSING>"
+    a = j.get("address")
 
-    street_address = (
-        f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-    )
-    city = j.get("city") or "<MISSING>"
-    state = j.get("state") or "<MISSING>"
-    postal = j.get("postalCode") or "<MISSING>"
-    country_code = j.get("country") or "<MISSING>"
-    store_number = j.get("corporateCode") or "<MISSING>"
-    phone = j.get("phone") or "<MISSING>"
-    latitude = j.get("latitude") or "<MISSING>"
-    longitude = j.get("longitude") or "<MISSING>"
+    street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+    city = a.get("city") or "<MISSING>"
+    state = a.get("region") or "<MISSING>"
+    postal = a.get("postalCode") or "<MISSING>"
+    country_code = a.get("countryCode") or "<MISSING>"
+    try:
+        store_number = j["meta"]["id"] or "<MISSING>"
+    except KeyError:
+        store_number = "<MISSING>"
+    try:
+        phone = j["mainPhone"]["display"]
+    except KeyError:
+        phone = "<MISSING>"
+    try:
+        latitude = j["yextDisplayCoordinate"]["lat"] or "<MISSING>"
+        longitude = j["yextDisplayCoordinate"]["long"] or "<MISSING>"
+    except KeyError:
+        latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
-    days = j.get("hours", {}).get("days") or []
+    days = j.get("hours", {}).get("normalHours") or []
 
     _tmp = []
     for d in days:
@@ -85,16 +93,15 @@ def get_data(url):
             start = str(interval.get("start"))
             end = str(interval.get("end"))
 
-            # normalize 9:30 -> 09:30
             if len(start) == 3:
                 start = f"0{start}"
 
             if len(end) == 3:
                 end = f"0{end}"
 
-            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+            line = f"{day}:  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
         except IndexError:
-            line = f"{day}  Closed"
+            line = f"{day}:  Closed"
 
         _tmp.append(line)
 

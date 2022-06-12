@@ -1,115 +1,118 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import json
 import re
-
-import time
-from random import randint
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('globalpetfoods_com')
-
+import json
+from bs4 import BeautifulSoup
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    cookie = {'PHPSESSID':'o4to3hi0sg7bf2qepj5casic44'}
+    p = 0
+    data = []
+    pattern = re.compile(r"\s\s+")
     session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-
-    all_store_data = []
-    last_seen = 0
-    for i in range(300):
-        url = 'https://globalpetfoods.com/store-locations/s/?st=' + str(i)
-        if i > 200 and (i - last_seen > 20):
-            break
-
-        locator_domain = 'https://globalpetfoods.com/'
-        r = session.get(url, headers = HEADERS, cookies=cookie)
-        soup = BeautifulSoup(r.content, 'html.parser')
-
-        location_name = soup.find('span', {'class': 'location_title'}).text.strip()
-        if location_name == '':
+    HEADERS = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
+    r = session.get(
+        "https://globalpetfoods.com/portal/store-locations-sitemap/", headers=HEADERS
+    )
+    loclist = BeautifulSoup(r.text, "html.parser").findAll("url")
+    for loc in loclist:
+        if "Soon" in loc.text:
             continue
+        link = loc.find("loc").text
+        r = session.get(link, headers=HEADERS, verify=False, timeout=10)
+        locator_domain = "https://globalpetfoods.com/"
+        soup = BeautifulSoup(r.content, "html.parser")
 
-        if 'Opening' in location_name:
+        location_name = soup.find("span", {"class": "location_title"}).text.strip()
+        if location_name == "":
             continue
-
-        logger.info(url)
-        raw_json = soup.find('script', {'type': 'application/ld+json'}).text.replace('\r\n', '').replace("\\\\\\\'", "'")
-        formatted_json = raw_json.replace("\\", "").replace('<a href="https://miramichi.globalpetfoods.com/" target="_blank">SHOP NOW!</a>',"")
-
-        loc_json = json.loads(formatted_json)
-        
-        hours = ''
-        
-        for h in loc_json['openingHours']:
-            hours += h + ' '
-            
-        hours = hours.strip()
-        
-        addy = loc_json['address']
-        city = addy['addressLocality']
-        state = addy['addressRegion']
-        zip_code = addy['postalCode']
+        if "Soon" in location_name:
+            continue
+        try:
+            content = r.text.split("type='application/ld+json'>", 1)[1].split(
+                "</script", 1
+            )[0]
+            content = re.sub(pattern, "", content)
+            content = json.loads(content)
+        except:
+            continue
+        hours = " ".join(content["openingHours"])
+        addy = content["address"]
+        city = addy["addressLocality"]
+        state = addy["addressRegion"]
+        zip_code = addy["postalCode"]
         if zip_code == "HN8 1X7":
             zip_code = "H8N 1X7"
-        street_address = addy['streetAddress']
-        phone_number = addy['telephone'].replace('=', '').replace('+1', '').strip()
-        if phone_number == '':
-            phone_number = '<MISSING>'
-        location_name = addy['name']
+        street_address = addy["streetAddress"]
+        phone_number = addy["telephone"].replace("=", "").replace("+1", "").strip()
+        if phone_number == "":
+            phone_number = "<MISSING>"
+        location_name = addy["name"]
 
-        country_code = 'CA'
-        
-        store_number = i
-        location_type = '<MISSING>'
+        country_code = "CA"
 
-        map_link = soup.find(class_="location_directions").a['href']
-        req = session.get(map_link, headers = HEADERS)
-        time.sleep(randint(1,2))
-        try:
-            maps = BeautifulSoup(req.text,"lxml")
-        except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+        store_number = link.split("=", 1)[1]
+        location_type = "<MISSING>"
 
-        try:
-            raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-            lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-            longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-        except:
-            lat = "<MISSING>"
-            longit = "<MISSING>"
+        page_url = link
+        store_data = [
+            locator_domain,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone_number,
+            location_type,
+            "<MISSING>",
+            "<MISSING>",
+            hours,
+            page_url,
+        ]
 
-        if len(lat) > 20 or not longit:
-            lat = raw_gps[raw_gps.rfind("=")+1:raw_gps.find(",")].strip()
-            longit = raw_gps[raw_gps.rfind("-"):].strip()
-        if not lat[3:5].isnumeric() or not longit[5:7].isnumeric():
-            lat = "<MISSING>"
-            longit = "<MISSING>"
+        data.append(store_data)
 
-        page_url = url
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+        p += 1
+    return data
 
-        all_store_data.append(store_data)
-        last_seen = i
-
-    return all_store_data
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

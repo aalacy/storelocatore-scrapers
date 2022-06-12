@@ -1,74 +1,97 @@
-import csv
+import re
+import json
 from sgrequests import SgRequests
+from sgzip.static import static_coordinate_list
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+
+def get_location_type(id):
+    if id == 1:
+        return "Store"
+    elif id == 3:
+        return "Locker"
+
 
 def fetch_data():
-    locs = []
-    weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-    url = 'https://consumer.tidelaundry.com/v1/servicepoints?maxLatitude=64.93218366344629&maxLongitude=-63.19580074023439&minLatitude=14.87138826455165&minLongitude=-173.33038325976564&statuses=1&statuses=2&statuses=3'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
-        line = line.replace('"address":{"id":','"address":{"ID')
-        if '{"id":' in line:
-            items = line.split('{"id":')
-            for item in items:
-                if ',"name":"' in item:
-                    website = 'tidedrycleaners.com'
-                    country = 'US'
-                    store = item.split(',')[0]
-                    loc = 'https://tidecleaners.com/en-us/locations/' + store
-                    name = item.split(',"name":"')[1].split('"')[0]
-                    lat = item.split('"latitude":')[1].split(',')[0]
-                    lng = item.split('"longitude":')[1].split(',')[0]
-                    add = item.split('streetLine1":"')[1].split('"')[0]
-                    try:
-                        add = add + ' ' + item.split('streetLine2":"')[1].split('"')[0]
-                    except:
-                        pass
-                    add = add.strip()
-                    try:
-                        city = item.split(',"city":"')[1].split('"')[0]
-                    except:
-                        city = '<MISSING>'
-                    state = item.split('"state":"')[1].split('"')[0]
-                    try:
-                        zc = item.split('"zipCode":"')[1].split('"')[0]
-                    except:
-                        zc = '<MISSING>'
-                    try:
-                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                    except:
-                        phone = '<MISSING>'
-                    typ = 'Store'
-                    hours = ''
-                    days = item.split('hoursOfOperation":[')[1].split(']')[0].split('{"weekday":')
-                    for day in days:
-                        if '"opensLocal":"' in day:
-                            daynum = day.split(',')[0]
-                            dayname = weekdays[int(daynum)]
-                            hrs = dayname + ': ' + day.split('"opensLocal":"')[1].split('"')[0] + '-' + day.split('"closesLocal":"')[1].split('"')[0]
-                            if hours == '':
-                                hours = hrs
-                            else:
-                                hours = hours + '; ' + hrs
-                    if hours == '':
-                        hours = '<MISSING>'
-                    if '"locationTypeId":1' in item:
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    search = static_coordinate_list(100)
+    for coord in search:
+        lat = float(coord[0])
+        lng = float(coord[1])
+        params = {
+            "minLatitude": lat - 10,
+            "maxLatitude": lat + 10,
+            "minLongitude": lng - 10,
+            "maxLongitude": lng + 10,
+            "statuses": [1, 2, 3],
+        }
+        url = "https://consumer.tidelaundry.com/v1/servicepoints"
+        r = session.get(url, headers=headers, params=params)
+        items = json.loads(re.sub(r'"ID\d+,', "", r.text))
+
+        for item in items:
+            locator_domain = "tidedrycleaners.com"
+            store_number = item.get("id")
+            page_url = f"https://tidecleaners.com/en-us/location/{store_number}"
+
+            location_name = item.get("name")
+            type_id = item.get("market", {}).get("typeId")
+            location_type = get_location_type(type_id)
+
+            address = item.get("address", {})
+            street_address = address.get("streetLine1")
+            if address.get("streetLine2"):
+                street_address += f', {address.get("streetLine2")}'
+
+            city = address.get("city")
+            state = address.get("state")
+            postal = address.get("zipCode")
+            country_code = "US"
+
+            latitude = address.get("latitude")
+            longitude = address.get("longitude")
+
+            phone = item.get("phoneNumber")
+            hours_of_operations = ", ".join(
+                f'{weekdays[item["weekday"]]}: {item["opensLocal"]}-{item["closesLocal"]}'
+                for item in item["hoursOfOperation"]
+            )
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                store_number=store_number,
+                location_name=location_name,
+                location_type=location_type,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                hours_of_operation=hours_of_operations,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

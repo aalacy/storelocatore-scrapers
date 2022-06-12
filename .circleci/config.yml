@@ -11,13 +11,35 @@ jobs:
             source ./.circleci/lib.sh
             check_diffs
 
+  check-required-files:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - run:
+          name: Check required files are present
+          command: |
+            source ./.circleci/lib.sh
+            check_required_files "$(get_updated_crawler)"
+
+  check-forbidden-files:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - run:
+          name: Check no forbidden files are present
+          command: |
+            source ./.circleci/lib.sh
+            check_forbidden_files "$(get_updated_crawler)"
+
   python-lint-updates:
     executor:
       name: python/default
       tag: <<parameters.python-version>>
     parameters:
       cache-prefix:
-        default: 'v1'
+        default: 'v8'
         description: Cache prefix (increment to clear)
         type: string
       python-version:
@@ -84,6 +106,36 @@ jobs:
             if [ "${#UPDATED_PYTHON_FILES[@]}" -gt 0 ]; then
                 mypy "${UPDATED_PYTHON_FILES[@]}"
             fi
+      - run:
+          name: Check all python dependencies are pinned
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_dependencies "$(get_updated_crawler)"
+      - run:
+          name: Check internal library versions are up to date
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_internal_library_versions "$(get_updated_crawler)"
+      - run:
+          name: Check script is using a sanctioned library to write to file
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_how_records_are_written_to_file "$(get_updated_crawler)"
+      - run:
+          name: Check script isn't using test proxies
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_sgrequests_uses_prod_proxies "$(get_updated_crawler)"
+      - run:
+          name: Check Dockerfile inherits from latest image
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_dockerfile_base_image_is_latest "$(get_updated_crawler)"
 
   node-lint-updates:
     executor: node/default
@@ -120,6 +172,14 @@ workflows:
   check-updates:
     jobs:
       - check-diffs:
+          filters:
+            branches:
+              ignore: master
+      - check-required-files:
+          filters:
+            branches:
+              ignore: master
+      - check-forbidden-files:
           filters:
             branches:
               ignore: master

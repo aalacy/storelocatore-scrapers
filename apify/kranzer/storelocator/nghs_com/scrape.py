@@ -1,48 +1,119 @@
-import re
-from pprint import pprint
-from string import capwords
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
 
-import base
-import requests, json
-from urllib.parse import urljoin
+DOMAIN = "nghs.com"
+BASE_URL = "https://www.nghs.com"
+LOCATION_URL = "https://www.nghs.com/our-locations"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-from w3lib.html import remove_tags
-from lxml import html
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('nghs_com')
-
-
-crawled = []
-class Scrape(base.Spider):
-
-    def crawl(self):
-        base_url = "https://www.nghs.com/our-locations"
-        sel = base.selector(base_url, headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"})
-        for href in sel['tree'].xpath('//ul[contains(@class, "hospitals")]/li/a/@href'):
-            hs = base.selector(urljoin(base_url, href), headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"})
-            i = base.Item(hs['tree'])
-            i.add_xpath('location_name', './/div[contains(@class, "page-heading-title")]/text()', base.get_first, lambda x: x.strip())
-            i.add_value('locator_domain', base_url)
-            i.add_value('page_url', hs['url'])
-            i.add_xpath('phone', '//div[@class="page-heading"]//a[@class="location-phone"]/@href', lambda x: [s for s in x if s], lambda x: base.get_first(x).replace('tel:',''))
-            i.add_xpath('street_address', '//div[contains(@class, "location-address")]/a/text()[1]', base.get_first)
-            loc = [s.replace('\n', '').replace('\r', '').strip() for s in
-                   hs['tree'].xpath('.//div[contains(@class, "location-address")]/a/text()[2]') if s.replace('\n', '').replace('\r', '').strip()]
-
-            if loc:
-                tup = re.findall(r'(.+?),?\s([A-Z]+|California),?\s(\d+)', loc[-1].replace('\r', '').strip())
-                if tup:
-                    i.add_value('city', tup[0][0])
-                    i.add_value('state', tup[0][1])
-                    i.add_value('zip', tup[0][2])
-                    i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
-            i.add_value('latitude', '<INACCESSIBLE>')
-            i.add_value('longitude', '<INACCESSIBLE>')
-            yield i
+session = SgRequests(verify_ssl=False)
 
 
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
-if __name__ == '__main__':
-    s = Scrape()
-    s.run()
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def fetch_data():
+    soup = pull_content(LOCATION_URL)
+    dep = soup.findAll("div", {"class": "wp-block-fullmedia-blocks-fm-accordion"})
+    for d in dep:
+        store = d.find("div", {"class": "accordion-item-header"})
+        location_type = store.text
+        data_list = d.findAll("div", {"class": "rounded-huge"})
+        for loc in data_list:
+            title = loc.find("div", {"class": "title"})
+            location_name = title.text.strip()
+            phone = loc.find("div", {"class": "phone mb-2"})
+            if phone:
+                phone = phone.text.strip()
+            else:
+                phone = MISSING
+            address = loc.find("div", {"class": "address-line mb-2"})
+            raw_address = address.text.strip().replace(",,", ",")
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            country_code = "US"
+            store_number = MISSING
+            hours_of_operation = MISSING
+            latitude = MISSING
+            longitude = MISSING
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=LOCATION_URL,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+
+
+def scrape():
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.LOCATION_TYPE,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+scrape()

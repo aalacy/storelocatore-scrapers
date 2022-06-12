@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator (Confirmed scraped correctly)

@@ -1,127 +1,107 @@
-import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "x-requested-with": "XMLHttpRequest",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("ymca_org")
 
 
 def fetch_data():
-    for x in range(1, 5000):
-        print(str(x))
+    locs = []
+    urls = [
+        "https://www.ymca.org/sitemap.xml?page=1",
+        "https://www.ymca.org/sitemap.xml?page=2",
+    ]
+    for url in urls:
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if "<loc>https://www.ymca.org/locations/" in line:
+                locs.append(line.split("<loc>")[1].split("<")[0])
+            if "<loc>http://national/locations/" in line:
+                lurl = (
+                    line.split("<loc>")[1]
+                    .split("<")[0]
+                    .replace("national", "www.ymca.org")
+                )
+                locs.append(lurl)
+    for loc in locs:
         try:
-            session = SgRequests()
-            url = "https://www.ymca.net/y-profile/?id=" + str(x)
-            page_text = session.get(url, headers=headers)
-            name = ""
-            add = ""
-            city = ""
-            state = ""
-            zc = ""
-            phone = ""
-            website = "ymca.net"
+            r = session.get(loc, headers=headers)
+            website = "ymca.org"
             typ = "<MISSING>"
             country = "US"
-            loc = url
-            store = str(x.decode("utf-8"))
             hours = ""
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-            AFound = False
-            for line in page_text:
-                line = str(line.decode("utf-8"))
-                if "<h1>" in line and name == "":
-                    name = line.split("<h1>")[1].split("</h1>")[0]
-                if "Set as default Y" in line:
-                    while AFound is False:
-                        g = next(page_text)
-                        g = str(g.decode("utf-8"))
-                        if "<br />" in g:
-                            AFound = True
-                            add = g.split("<")[0].strip().replace("\t", "")
-                            g = next(page_text)
-                            g = str(g.decode("utf-8"))
-                            if g.count("<br />") == 2:
-                                add = (
-                                    add
-                                    + " "
-                                    + g.split("<br />")[0].strip().replace("\t", "")
-                                )
-                                csz = g.split("<br />")[1].strip().replace("\t", "")
-                            else:
-                                csz = g.split("<br />")[0].strip().replace("\t", "")
-                            city = csz.split(",")[0]
-                            state = csz.split(",")[1].strip().split(" ")[0]
-                            zc = csz.rsplit(" ", 1)[1]
-                if "Phone:" in line:
-                    phone = line.split("Phone:")[1].split("<")[0].strip()
-                if 'data-latitude="' in line:
-                    lat = line.split('data-latitude="')[1].split('"')[0]
-                if 'data-longitude"' in line:
-                    lng = line.split('data-longitude="')[1].split('"')[0]
-                if "ay: " in line and " - " in line and "<br />" in line:
-                    hrs = line.split("<")[0].strip().replace("\t", "")
+            logger.info(loc)
+            for line in r.iter_lines():
+                if '"shortlink" href="https://www.ymca.org/node/' in line:
+                    store = line.split('"shortlink" href="https://www.ymca.org/node/')[
+                        1
+                    ].split('"')[0]
+                if '"og:title" content="' in line:
+                    name = line.split('"og:title" content="')[1].split('"')[0]
+                if 'data-lat="' in line:
+                    lat = line.split('data-lat="')[1].split('"')[0]
+                    lng = line.split('data-lng="')[1].split('"')[0]
+                if '<span class="address-line1">' in line:
+                    add = line.split('<span class="address-line1">')[1].split("<")[0]
+                if 'class="locality">' in line:
+                    city = line.split('class="locality">')[1].split("<")[0]
+                if '<span class="administrative-area">' in line:
+                    state = line.split('<span class="administrative-area">')[1].split(
+                        "<"
+                    )[0]
+                if '<span class="postal-code">' in line:
+                    zc = line.split('<span class="postal-code">')[1].split("<")[0]
+                if '><a href="tel:' in line:
+                    phone = (
+                        line.split('><a href="tel:')[1].split('"')[0].replace("+", "")
+                    )
+                if ":</td>" in line:
+                    hrs = line.split("<td>")[1].split("<")[0]
+                if "m</td>" in line:
+                    hrs = hrs + " " + line.split("<td>")[1].split("<")[0]
                     if hours == "":
                         hours = hrs
                     else:
                         hours = hours + "; " + hrs
-            if name != "":
-                if hours == "":
-                    hours = "<MISSING>"
-                if phone == "":
-                    phone = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+            if hours == "":
+                hours = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
         except:
             pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

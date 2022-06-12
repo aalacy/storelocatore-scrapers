@@ -1,82 +1,65 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('palmbeachtan_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://palmbeachtan.com/"
+    api_url = "https://palmbeachtan.com/locations/srj/40.830167,-74.1298684/5000000/1000000/geo/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
+
+        slug = j.get("salon_url")
+        location_name = j.get("salon_name") or "<MISSING>"
+        street_address = j.get("salon_address") or "<MISSING>"
+        state = j.get("salon_state") or "<MISSING>"
+        page_url = f"https://palmbeachtan.com/locations/{state}/{slug}/"
+        postal = j.get("salon_zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("salon_city") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("salon_lat") or "<MISSING>"
+        longitude = j.get("salon_lon") or "<MISSING>"
+        phone = j.get("phone_1") or "<MISSING>"
+        days = ["mon", "tue", "wen", "thu", "fri", "sat", "sun"]
+        tmp = []
+        for d in days:
+            day = str(d).capitalize()
+            opens = j.get(f"{d}_open")
+            closes = j.get(f"{d}_close")
+            line = f"{day} {opens} - {closes}"
+            tmp.append(line)
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    base_url = "https://palmbeachtan.com"
-    r = session.get(base_url+'/locations/states/')
-    soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find('div',{"class":"state-list"}).find_all('a')
-    for atag in main:
-        r1 = session.get(base_url+atag['href'])
-        soup1=BeautifulSoup(r1.text,'lxml')
-        main1=soup1.find('section',{"id":"content"}).find('div',{'class':"copy"}).find_all('a')
-        for atag1 in main1:
-            logger.info(atag['href'])
-            r2 = session.get(base_url+atag['href']+atag1['href'])
-            soup2=BeautifulSoup(r2.text,'lxml')
-            address=''
-            city=''
-            state=''
-            zip=''
-            phone=''
-            name=soup2.find('div',{'class':"location-info"}).parent.find('h1').text.strip()
-            if soup2.find('data',{"itemprop":"streetAddress"})!=None:
-                address=soup2.find('data',{"itemprop":"streetAddress"}).text.strip()
-            if soup2.find('data',{"itemprop":"addressLocality"})!=None:
-                city=soup2.find('data',{"itemprop":"addressLocality"}).text.strip()
-            if soup2.find('data',{"itemprop":"addressRegion"})!=None:
-                state=soup2.find('data',{"itemprop":"addressRegion"}).text.strip()
-            if soup2.find('data',{"itemprop":"postalCode"})!=None:
-                zip=soup2.find('data',{"itemprop":"postalCode"}).text.strip()
-            if soup2.find('data',{"itemprop":"telephone"})!=None:
-                phone=soup2.find('data',{"itemprop":"telephone"}).text.strip()
-            hour=''
-            if soup2.find('aside',{"class":"hours"})!=None:
-                  hour=' '.join(list(soup2.find('aside',{"class":"hours"}).stripped_strings)).strip()
-            lt=soup2.find('address',{"itemprop":"address"}).find('a')['href'].split('=')[-1].split(',')
-            lat=lt[0]
-            lng=lt[1]
-            storeno=''
-            country="US"
-            store=[]
-            store.append(base_url)
-            store.append(name if name else "<MISSING>")
-            store.append(address if address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zip if zip else "<MISSING>")
-            store.append(country if country else "<MISSING>")
-            store.append(storeno if storeno else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append("palmbeachtan")
-            store.append(lat if lat else "<MISSING>")
-            store.append(lng if lng else "<MISSING>")
-            store.append(hour if hour.strip() else "<MISSING>")
-            yield store
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

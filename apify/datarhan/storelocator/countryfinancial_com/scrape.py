@@ -1,137 +1,89 @@
-import csv
-import sgzip
+import json
+import demjson
 from lxml import etree
-from sgzip import SearchableCountries
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "countryfinancial.com"
-
-    all_codes = []
-    us_zips = sgzip.for_radius(radius=200, country_code=SearchableCountries.USA)
-    for zip_code in us_zips:
-        all_codes.append(zip_code)
-
-    start_url = "https://www.countryfinancial.com/services/generic-forms?configNodePath=%2Fcontent%2Fcfin%2Fen%2Fjcr%3Acontent%2FrepLocator&repSearchType=location&cfLang=en&repSearchValue={}"
+    session = SgRequests(proxy_country="us", verify_ssl=False)
+    domain = "countryfinancial.com"
+    start_url = "https://www.countryfinancial.com/services/reps.html"
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    for code in all_codes:
-        try:
-            response = session.get(start_url.format(code), headers=hdr)
-        except Exception:
-            continue
+
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//ul[@class="plain column-list-two"]/li/a/@href')
+    for url in all_states:
+        response = session.get(urljoin(start_url, url), headers=hdr)
         dom = etree.HTML(response.text)
+        all_cities = dom.xpath("//div[h1]/ul/li/a/@href")
+        for url in all_cities:
+            response = session.get(urljoin(start_url, url), headers=hdr)
+            dom = etree.HTML(response.text)
+            all_locations = dom.xpath('//p[@class="repaddress"]/a/@href')
+            for page_url in all_locations:
+                loc_response = session.get(page_url, headers=hdr)
+                loc_dom = etree.HTML(loc_response.text)
+                while not loc_dom:
+                    loc_response = session.get(page_url, headers=hdr)
+                    loc_dom = etree.HTML(loc_response.text)
+                try:
+                    poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[
+                        1
+                    ]
+                except Exception:
+                    continue
+                poi = demjson.decode(poi.replace("\n", ""))[0]
+                data = (
+                    loc_dom.xpath('//script[contains(text(), "JSContext =")]/text()')[0]
+                    .split("JSContext =")[-1]
+                    .strip()[:-1]
+                )
+                data = json.loads(data)
+                street_address = poi["address"]["streetAddress"]
+                suit = data["profile"]["address"].get("suite")
+                if suit:
+                    street_address += " " + suit
 
-        all_poi_html = dom.xpath('//div[contains(@class, "repCard")]')
-        for poi_html in all_poi_html[1:]:
-            store_url = poi_html.xpath('.//div[@class="rep-info"]/a[1]/@href')
-            store_url = (
-                [elem.strip() for elem in store_url if elem.strip()][0]
-                if store_url
-                else "<MISSING>"
-            )
-            location_name = poi_html.xpath('.//img[@class="repImg"]/@alt')
-            location_name = (
-                " ".join(location_name).replace("\n", "").strip()
-                if location_name
-                else "<MISSING>"
-            )
-            street_address = poi_html.xpath('.//span[@itemprop="streetAddress"]/text()')
-            street_address = (
-                street_address[0].replace("\n", "").strip()
-                if street_address
-                else "<MISSING>"
-            )
-            city = poi_html.xpath('.//span[@itemprop="addressLocality"]/text()')
-            city = city[0].replace("\n", "").strip() if city else "<MISSING>"
-            state = poi_html.xpath('.//span[@itemprop="addressRegion"]/text()')
-            state = state[0].replace("\n", "").strip() if state else "<MISSING>"
-            zip_code = poi_html.xpath('.//span[@itemprop="postalCode"]/text()')
-            zip_code = (
-                zip_code[0].replace("\n", "").strip() if zip_code else "<MISSING>"
-            )
-            country_code = ""
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = ""
-            store_number = store_number if store_number else "<MISSING>"
-            phone = poi_html.xpath('.//span[@itemprop="telephone"]/text()')
-            phone = phone[0].replace("\n", "").strip() if phone else "<MISSING>"
-            location_type = ""
-            location_type = location_type if location_type else "<MISSING>"
-            latitude = ""
-            longitude = ""
-            if poi_html.xpath("@data-geo"):
-                latitude = poi_html.xpath("@data-geo")[0].split(",")[0]
-                longitude = poi_html.xpath("@data-geo")[0].split(",")[-1]
-            latitude = latitude.strip() if latitude else "<MISSING>"
-            longitude = longitude.strip() if longitude else "<MISSING>"
-            hours_of_operation = "<MISSING>"
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=poi["name"],
+                    street_address=street_address,
+                    city=poi["address"]["addressLocality"],
+                    state=poi["address"]["addressRegion"],
+                    zip_postal=poi["address"]["postalCode"],
+                    country_code="",
+                    store_number="",
+                    phone=poi["contactPoint"][0]["telephone"],
+                    location_type=poi["@type"],
+                    latitude=poi["geo"]["latitude"],
+                    longitude=poi["geo"]["longitude"],
+                    hours_of_operation="",
+                )
 
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            if location_name not in scraped_items:
-                scraped_items.append(location_name)
-                items.append(item)
-
-    return items
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

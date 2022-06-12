@@ -1,85 +1,91 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
-import re
-from sgselenium import SgSelenium
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('members1st_org')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgrequests import SgRequests
 
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    base_link = "https://webapps.members1st.org/BranchLocatorApi/finder/location/40.1732512/-76.9988669/200?CrowFliesDistanceOnly=false"
 
-def fetch_data():
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	driver = SgSelenium().chrome()
-	time.sleep(2)
-	
-	base_link = "https://www.members1st.org/atm-and-locations"
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()["items"]
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    locator_domain = "https://www.members1st.org/"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    for store in stores:
+        if store["locationTypeName"] != "Branch":
+            continue
+        location_name = store["name"]
+        street_address = store["address"]
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["zip"]
+        country_code = "US"
+        store_number = ""
+        location_type = ""
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        try:
+            link = (
+                "https://www.members1st.org/atm-and-locations/"
+                + store["branchPageUrlId"]
+            )
+        except:
+            continue
 
-	items = base.find(class_="row justify-content-between").find_all("li")
-	locator_domain = "members1st.org"
+        hours_of_operation = ""
+        try:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
-	data = []
-	for item in items:
-		link = "https://www.members1st.org" + item.a["href"]
-		logger.info(link)
-		driver.get(link)
-		time.sleep(randint(2,4))
-		base = BeautifulSoup(driver.page_source,"lxml")
+            phone = (
+                base.find("span", attrs={"itemprop": "telephone"})
+                .text.replace("Phone:", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(
+                list(base.find(class_="lobby-hours").table.stripped_strings)
+            )
+        except:
+            raw_hours = store["timeframes"]
+            for row in raw_hours:
+                if row["serviceTypeName"] == "Lobby":
+                    day = row["dayName"]
+                    if row["openTime"]:
+                        hours = row["openTime"] + "-" + row["closeTime"]
+                    else:
+                        hours = "Closed"
+                    hours_of_operation = (
+                        hours_of_operation + " " + day + " " + hours
+                    ).strip()
 
-		location_name = base.h1.text.strip()
-		street_address = base.find('span', attrs={'itemprop': "streetAddress"}).text.strip()
-		city = base.find('span', attrs={'itemprop': "addressLocality"}).text.split(",")[0].strip()
-		state = base.find('span', attrs={'itemprop': "addressLocality"}).text.split(",")[1].strip()
-		zip_code = base.find('span', attrs={'itemprop': "postalCode"}).text.strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = base.find(class_="services-table").text.strip().replace("\n",",")
-		phone = base.find('span', attrs={'itemprop': "telephone"}).text.replace("Phone:","").strip()
-		hours_of_operation = base.find(class_="lobby-hours").text.replace("Lobby Hours","").strip().replace("\n", " ")
-		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-		map_frame = driver.find_element_by_class_name("b_map_img")
-		driver.switch_to.frame(map_frame)
-		time.sleep(randint(1,2))
-		try:
-			raw_gps = driver.find_element_by_tag_name("a").get_attribute("href")
-			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
-			longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
-	return data
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

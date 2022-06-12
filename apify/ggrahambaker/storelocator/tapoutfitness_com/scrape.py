@@ -1,91 +1,96 @@
-import csv
-import os
-from sgselenium import SgSelenium
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+    locator_domain = "https://tapoutfitness.com/"
+    api_url = "https://tapoutfitness.com/locations/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[./div[@class="location-info"]]')
+    for d in div:
 
-def fetch_data():
-    locator_domain = 'http://tapoutfitness.com/'
-    ext = 'locations/'
+        slug = "".join(d.xpath('.//a[@class="icon-monitor"]/@href'))
+        page_url = f"https:{slug}"
+        location_name = "".join(d.xpath(".//h3//text()"))
+        ad = (
+            " ".join(d.xpath('.//div[@class="location-info"]/div[1]/p/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        if state == "ON":
+            country_code = "CA"
+        if location_name.find("Bangladesh") != -1:
+            country_code = "Bangladesh"
+        if location_name.find("MX") != -1:
+            country_code = "MX"
+        if location_name.find("Indonesia") != -1:
+            country_code = "Indonesia"
+        if location_name.find("Philippines") != -1:
+            country_code = "Philippines"
+        if location_name.find("Singapore") != -1:
+            country_code = "Singapore"
+        phone = (
+            "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
+            .replace("P:", "")
+            .strip()
+            or "<MISSING>"
+        )
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(tree.xpath('//span[@class="map_block_hours"]/text()'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        desc = "".join(tree.xpath('//meta[@name="description"]/@content'))
+        if "24/7" in desc and hours_of_operation == "<MISSING>":
+            hours_of_operation = "24/7"
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    main = driver.find_element_by_css_selector('div.location_wrapper')
+        sgw.write_row(row)
 
-    hrefs = main.find_elements_by_css_selector('a.icon-monitor')
 
-    link_list = []
-    for h in hrefs:
-        link = h.get_attribute('href')
-
-        if 'dhaka' in link:
-            continue
-        if 'facebook' in link:
-            continue
-        if '.mx' in link:
-            continue
-
-        link_list.append(link)
-
-    all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        cont = driver.find_element_by_css_selector('p.medium').text.split('\n')
-        if 'JAKARTA' in cont[1]:
-            break
-        start_idx = link.find('//')
-        end_idx = link.find('.')
-        location_name = link[start_idx + 2: end_idx]
-
-        street_address = cont[0]
-
-        city, state, zip_code = addy_ext(cont[1])
-        hours = ''
-        for h in cont[2:]:
-            hours += h + ' '
-
-        hours = hours.strip()
-
-        if hours == '':
-            hours = '<MISSING>'
-
-        phone_number = driver.find_element_by_css_selector('a.phone-number').text
-
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        country_code = 'US'
-        page_url = link
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

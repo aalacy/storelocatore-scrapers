@@ -1,23 +1,33 @@
-import csv
 import time
 import datetime
 import re
 import threading
-import json
-import random
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup
+from tenacity import retry, stop_after_attempt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 MISSING = "<MISSING>"
-max_workers = 8
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
 }
 thread_local = threading.local()
-log = sglog.SgLogSetup().get_logger(logger_name="pauldavis.com")
+logger = sglog.SgLogSetup().get_logger(logger_name="pauldavis.com")
+
+
+def get_session():
+    if not hasattr(thread_local, "session") or thread_local.request_count > 10:
+        thread_local.session = SgRequests()
+        thread_local.request_count = 0
+
+    thread_local.request_count += 1
+
+    return thread_local.session
 
 
 def get_or_default(obj, key):
@@ -26,33 +36,11 @@ def get_or_default(obj, key):
 
 
 def write_output(data):
-    with open("data.csv", "w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "store_number",
-                "location_type",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "phone",
-                "hours_of_operation",
-            ]
-        )
-
-        for i in data:
-            if i:
-                writer.writerow(i)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        for rec in data:
+            writer.write_row(rec)
 
 
 def create_url(url):
@@ -65,14 +53,14 @@ def parse_location_urls(urls):
 
 def fetch_state_urls():
     states_url = "https://pauldavis.com/paul-davis-locations/"
-    r = session.get(states_url)
+    r = get_session().get(states_url, headers=headers)
     bs = BeautifulSoup(r.text, "html.parser")
     urls = bs.select(".content .cell a")
     return parse_location_urls(urls)
 
 
 def fetch_cities(url):
-    r = session.get(create_url(url))
+    r = get_session().get(create_url(url), headers=headers)
     bs = BeautifulSoup(r.text, "html.parser")
     urls = bs.select(".content a")
     return parse_location_urls(urls)
@@ -80,7 +68,7 @@ def fetch_cities(url):
 
 def enqueue_cities(urls):
     links = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_cities, url) for url in urls]
 
         for job in as_completed(futures):
@@ -95,27 +83,33 @@ def create_location(component):
 
     href = component.get("href")
     location_url = f"{href.rstrip('/')}/contact-us"
-    url = location_url if "https://" in location_url else f"https://{location_url}"
+    url = location_url if "pauldavis.com" in location_url else create_url(href)
+
+    if "http" not in url:
+        url = f"https://{url}"
 
     return {"name": name, "url": url}
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_locations(url):
-    r = session.get(create_url(url))
+    r = get_session().get(create_url(url), headers=headers)
     bs = BeautifulSoup(r.text, "html.parser")
-    urls = bs.select(".content a")
-    return [create_location(url) for url in urls if ".pauldavis.com" in url.get("href")]
+    links = bs.select(".main a")
+
+    return [create_location(link) for link in links if link.text]
 
 
 def enqueue_locations(urls):
     location_map = {}
     links = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_locations, url) for url in urls]
 
-        for job in as_completed(futures):
-            locations = job.result()
+        for future in as_completed(futures):
+            locations = future.result()
             for location in locations:
+
                 url = location.get("url")
                 if not location_map.get(url):
                     location_map[url] = True
@@ -132,7 +126,7 @@ def get_alt_info(bs):
         .split("\n")
     ]
 
-    if len(info) < 5:
+    if len(info) == 4:
         info.insert(0, None)
         info.insert(0, None)
 
@@ -141,7 +135,7 @@ def get_alt_info(bs):
     phone = info[3]
 
     city, state_zipcode = city_state_zipcode.split(", ")
-    state, *rest = re.split("\.?\s", state_zipcode)
+    state, *rest = re.split(r"\.?\s", state_zipcode)
     zipcode = rest[0] if len(rest) > 0 else None
 
     return {
@@ -153,23 +147,24 @@ def get_alt_info(bs):
     }
 
 
+@retry(stop=stop_after_attempt(3))
 def fetch_location_data(location):
     locator_domain = "pauldavis.com"
     page_url = location.get("url")
     location_name = location.get("name")
 
-    r = session.get(page_url)
-    bs = BeautifulSoup(r.text, "html.parser")
-
-    info = {}
     try:
+        r = get_session().get(page_url, headers=headers)
+        bs = BeautifulSoup(r.text, "html.parser")
+
+        info = {}
         address = bs.select("address .info")
         city_state_zipcode = address[1].getText().split(", ")
 
         city = city_state_zipcode.pop(0)
         state_zipcode = city_state_zipcode.pop()
 
-        state, zipcode = re.split("\.?\s", state_zipcode)
+        state, zipcode = re.split(r"\.?\s", state_zipcode)
 
         info["street_address"] = address[0].getText()
         info["city"] = city
@@ -189,56 +184,47 @@ def fetch_location_data(location):
         if not info["zipcode"]:
             info["zipcode"] = get_alt_info(bs)["zipcode"]
 
-        phones = re.split("[\/|\|or]\s", bs.select_one(".phone-icon").getText())
-        cleaned_phone = [re.sub("\D", "", phone) for phone in phones]
-        info["phone"] = "|".join(cleaned_phone)
+        phone = bs.select_one('[itemprop="telephone"]') or bs.select_one(".phone-icon")
+        cleaned_phone = re.sub(r"\D", "", phone.getText())
+        info["phone"] = cleaned_phone
 
-        store_number = MISSING
-        location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
-        hours_of_operation = MISSING
+        return SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=get_or_default(info, "street_address"),
+            city=get_or_default(info, "city"),
+            state=get_or_default(info, "state"),
+            zip_postal=get_or_default(info, "zipcode"),
+            country_code=get_or_default(info, "country_code"),
+            phone=get_or_default(info, "phone"),
+        )
 
-        return [
-            locator_domain,
-            page_url,
-            location_name,
-            store_number,
-            location_type,
-            get_or_default(info, "street_address"),
-            get_or_default(info, "city"),
-            get_or_default(info, "state"),
-            get_or_default(info, "zipcode"),
-            get_or_default(info, "country_code"),
-            latitude,
-            longitude,
-            get_or_default(info, "phone"),
-            hours_of_operation,
-        ]
     except Exception as ex:
-        print(str(ex), page_url)
+        logger.error(str(ex), page_url)
 
 
 def enqueue_locations_data(locations):
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [
             executor.submit(fetch_location_data, location) for location in locations
         ]
 
         for job in as_completed(futures):
             data = job.result()
-            yield data
+            if data:
+                yield data
 
 
 def fetch_data():
     state_urls = fetch_state_urls()
-    log.info(f"states count: {len(state_urls)}")
+    logger.info(f"states count: {len(state_urls)}")
 
     city_urls = enqueue_cities(state_urls)
-    log.info(f"cities count: {len(city_urls)}")
+    logger.info(f"cities count: {len(city_urls)}")
 
     location_urls = enqueue_locations(city_urls)
-    log.info(f"locations count: {len(location_urls)}")
+    logger.info(f"locations count: {len(location_urls)}")
 
     yield from enqueue_locations_data(location_urls)
 
@@ -252,7 +238,7 @@ def scrape():
     end = time.time()
 
     elapsed = end - start
-    log.info(f"duration: {datetime.timedelta(seconds=elapsed)}")
+    logger.info(f"duration: {datetime.timedelta(seconds=elapsed)}")
 
 
 scrape()

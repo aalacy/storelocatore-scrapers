@@ -29,7 +29,6 @@ def fetch_data():
             headers=headers,
         ).json()
         results = results["response"]
-        new_coordinates = []
         if results["count"] > 0:
             for i in results["entities"]:
                 try:
@@ -37,15 +36,20 @@ def fetch_data():
                         i["profile"]["geocodedCoordinate"]["lat"],
                         i["profile"]["geocodedCoordinate"]["long"],
                     )
-                    new_coordinates.append(pair)
                 except Exception:
                     try:
                         pair = (
                             i["profile"]["yextDisplayCoordinate"]["lat"],
-                            i["profile"]["yextDisplayCoordinate"]["long"],
+                            i["profile"]["yextDisplayCoordinate"]["long"]
                         )
                     except Exception:
                         pair = ""
+
+                try:
+                    search.found_location_at(pair[0], pair[1])
+                except:
+                    pass
+
                 if i["profile"]["c_pagesURL"] not in identities:
                     identities.add(i["profile"]["c_pagesURL"])
                     try:
@@ -83,8 +87,6 @@ def fetch_data():
                             i["profile"]["meta"] = {}
                         i["profile"]["meta"]["schemaTypes"] = []
                     yield i
-
-        search.mark_found(new_coordinates)
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 

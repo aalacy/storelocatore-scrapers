@@ -1,66 +1,89 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-# logger = SgLogSetup().get_logger('donnakaran_com')
-session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-def fetch_data():
-    base_url = "https://www.donnakaran.com"
-    r = session.get(base_url + "/store-locator/all-stores.do")
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for location in soup.find_all("div",{"class":"ml-storelocator-item-wrapper"}):
-        store = []
-        name = location.find("div",{"class":"eslStore ml-storelocator-headertext"}).text
-        try:
-            address1 = location.find("div",{"class":"eslAddress1"}).text
-            try:
-                address2 = location.find("div",{"class":"eslAddress2"}).text
-            except:
-                address2 = ""
-            street_address = address1 + address2
-        except:
-            address2 = location.find("div",{"class":"eslAddress2"}).text
-            address3 = location.find("div",{"class":"eslAddress3"}).text
-            street_address = address2 + address3
-        city = location.find("span",{"class":"eslCity"}).text.split(",")[0]
-        state = location.find("span",{"class":"eslStateCode"}).text
-        zip_code = location.find("span",{"class":"eslPostalCode"}).text
-        phone = location.find("a",{"class":"eslPhone"}).text.strip()
-        store.append("https://www.donnakaran.com")
-        store.append(name)
-        store.append(street_address.replace("Temporarily Closed",""))
-        store.append(city)
-        store.append(state.strip())
-        store.append(zip_code)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("donna karan")
-        url = location.find("div",{"class":"eslStore ml-storelocator-headertext"}).find("a")["href"]
-        location_request = session.get(base_url + url)
-        location_soup = BeautifulSoup(location_request.text,"html5lib")
-        for script in location_soup.find_all("script"):
-            if 'location":' in script.text:
-                # logger.info(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
-                store.append(script.text.split('location":')[1].split('"latitude":')[1].split(",")[0])
-                store.append(script.text.split('location":')[1].split('"longitude":')[1].split("}")[0])
-        store.append("<MISSING>")
-        store.append(base_url + url)
-        return_main_object.append(store)
-    return return_main_object
-def scrape():
-    data = fetch_data()
-    write_output(data)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-scrape()
+
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.dkny.com/"
+    for i in range(1, 10000):
+        page_url = f"https://www.dkny.com/store-locator/{i}/"
+        session = SgRequests()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        }
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            continue
+        location_name = "".join(tree.xpath("//h1//text()")).replace("\n", "").strip()
+        ad = (
+            "".join(tree.xpath("//h1/following-sibling::div[1]/p[1]//text()"))
+            .replace("\n", "")
+            .strip()
+        )
+        info = tree.xpath("//h1/following-sibling::div//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        phone = "<MISSING>"
+        for i in info:
+            if str(i).replace("-", "").strip().isdigit():
+                phone = str(i)
+        street_address = "<MISSING>"
+        state = "<MISSING>"
+        postal = ad
+        if postal.find(",") != -1:
+            postal = ad.split(",")[-1].strip()
+        country_code = "<MISSING>"
+        city = "<MISSING>"
+        if ad.find(",") != -1:
+            city = ad.split(",")[0].strip()
+        store_number = page_url.split("/")[-2].strip()
+        text = "".join(tree.xpath('//a[contains(text(), "Get Directions")]/@href'))
+        try:
+            latitude = text.split("daddr=")[1].split(",")[0].strip()
+            longitude = text.split("daddr=")[1].split(",")[1].strip()
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="schedule-list"]//ul//li//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if (
+            hours_of_operation.find(
+                "Monday - Tuesday - Wednesday - Thursday - Friday - Saturday - Sunday -"
+            )
+            != -1
+        ):
+            hours_of_operation = "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

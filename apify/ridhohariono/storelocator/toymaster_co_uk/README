@@ -1,0 +1,4 @@
+--ignore CountryCodeFillRateChecker (Country code not US or CA)
+--ignore GeoConsistencyValidator (Confirmed scrape correctly for Orkney  +44 1856 872239  KW15 1NW [line 179])
+--ignore CountryValidator (Country is now US but validation show INVALID_US_ZIP)
+--ignore LatLngDuplicationValidator (Confirmed Scrape correctly because address has multiple stores for https://www.toymaster.co.uk/shops/the-natural-world-walgherton/ and https://www.toymaster.co.uk/shops/the-natural-world-walgherton-2/)

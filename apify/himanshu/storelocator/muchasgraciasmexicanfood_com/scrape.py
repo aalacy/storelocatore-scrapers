@@ -1,111 +1,93 @@
-import csv
-from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
-import re
-import json
-import time
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
 
-    base_url = "https://www.muchasgraciasmexicanfood.com/locations/"
+    url = "https://www.muchasgraciasmexicanfood.com/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.select_one('li:-soup-contains("Locations")').findAll("li")
+    linklist = []
+    for link in divlist:
 
-    driver = SgSelenium().chrome()
-    time.sleep(2)
+        link = link.find("a")["href"]
 
-    driver.get(base_url)
-    time.sleep(8)
-
-    base = BeautifulSoup(driver.page_source,"lxml")
-
-    return_main_object = []
-
-    items = base.find_all(class_="item")
-
-    for i, location_soup in enumerate(items):
-        location_name = location_soup.find(class_="p-title").text.strip()
-        addr = location_soup.find(class_="p-area").text.replace("  ",",").strip().split(",")
-        street_address = addr[0].strip()
-        city = addr[1].strip()
-        state = addr[2].strip()
-        zipp = addr[3].strip()
-        # if len(addr.split(",")) == 2:
-        #     street_address = " ".join(addr.split(",")[0].split(" ")[:-1]).replace("Grants","").strip()
-        #     city = addr.split(",")[0].split(" ")[-1].replace("Pass","Grants Pass")
-        #     state = addr.split(",")[1].split(" ")[1]
-        #     zipp = addr.split(",")[1].split(" ")[2]
-        # else:
-        #     street_address = addr.split(",")[0]
-        #     city = addr.split(",")[1]
-        #     if len(addr.split(",")[-1].split(" ")) == 2:
-        #         state = addr.split(",")[-1].split(" ")[1]
-        #         zipp = "<MISSING>"
-        #     else:
-        #         state = addr.split(",")[-1].split(" ")[1]
-        #         zipp = addr.split(",")[-1].split(" ")[2]
-        
-        try:
-            phone = re.findall("\([\d]{3}\) [\d]{3}-[\d]{4}", location_soup.text)[0]
-        except:
-            phone = "<MISSING>"
-        
-        days = ""
-        hours = ""
-        ps = location_soup.find_all(class_="p-area")
-        for p in ps:
-            if "mon," in p.text.lower():
-                days = p.text
-            if ":00 " in p.text.lower():
-                hours = p.text.strip()
-
-        if days and hours:
-            hours_of_operation = hours + days
+        if len(link.split("locations/", 1)[1].split("/")) == 3:
+            pass
         else:
-            hours_of_operation = "<MISSING>"
+            continue
+        linklist.append(link)
+    apiurl = "https://www.muchasgraciasmexicanfood.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=dfcff1b55e&lang=&load_all=1&layout=1&stores="
+    loclist = session.get(apiurl, headers=headers).json()
+    for loc in loclist:
 
-        driver.find_elements_by_class_name("item")[i].click()
-        time.sleep(2)
-        try:
-            raw_gps = driver.find_element_by_xpath("//*[(@title='Open this area in Google Maps (opens a new window)')]").get_attribute("href")
-            latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
-            longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        store = loc["id"]
+        title = loc["title"]
+        street = loc["street"]
+        city = loc["city"]
+        state = loc["state"]
+        pcode = loc["postal_code"]
+        lat = loc["lat"]
+        longt = loc["lng"]
+        phone = loc["phone"]
+        link = ""
+        hours = (
+            loc["open_hours"]
+            .replace("'", "")
+            .replace("{", "")
+            .replace("[", "")
+            .replace('"', "")
+            .replace("}", "")
+            .replace("]", "")
+        )
+        for slug in linklist:
+            if city.lower() in slug:
+                link = slug
+                break
+        if "mon:1,tue:1,wed:1,thu:1,fri:1,sat:1,sun:1" in hours:
+            hours = "<MISSING>"
+        elif ",sat:1,sun:1" in hours:
+            hours = hours.replace(",sat:1,sun:1", "")
+        elif "sun:0" in hours:
+            if len(hours.split("sun:", 1)[1]) == 1:
+                hours = hours.replace("sun:0", "sun Closed")
+        yield SgRecord(
+            locator_domain="https://www.muchasgraciasmexicanfood.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
-        store = []
-        store.append("muchasgraciasmexicanfood.com")
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(base_url)
-        return_main_object.append(store)
-    driver.close()
-    return return_main_object
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

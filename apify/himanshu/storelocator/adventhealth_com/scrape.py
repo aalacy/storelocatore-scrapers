@@ -1,116 +1,125 @@
-import csv
-from bs4 import BeautifulSoup
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-base_url = "http://adventhealth.com/"
-session = SgRequests()
 
+def fetch_data(sgw: SgWriter):
 
-def fetch_data():
-    address = []
-    url = "https://www.adventhealth.com/find-a-location?facility=&name=&geolocation_geocoder_google_geocoding_api=&geolocation_geocoder_google_geocoding_api_state=1&latlng%5Bdistance%5D%5Bfrom%5D=-&latlng%5Bvalue%5D=&latlng%5Bcity%5D=&latlng%5Bstate%5D=&latlng%5Bprecision%5D=&service=&page="
-    for i in range(109):
-        page = session.get(url + str(i))
-        soup = BeautifulSoup(page.text, "lxml")
-        rows = soup.find_all("li", {"class": "facility-search-block__item"})
-        for r in rows:
-            try:
-                name = (
-                    r.find("span", {"class": "location-block__name-link-text"})
-                    .get_text()
+    locator_domain = "https://www.adventhealth.com/"
+    api_url = "https://www.adventhealth.com/find-a-location"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//li[@class="pager__item pager__item--last"]/a')
+    for d in div:
+        last_page = "".join(d.xpath(".//@href")).split("=")[-1].strip()
+        for i in range(0, int(last_page) + 1):
+            r = session.get(
+                f"https://www.adventhealth.com/find-a-location?facility=&name=&geolocation_geocoder_google_geocoding_api=&geolocation_geocoder_google_geocoding_api_state=1&latlng%5Bdistance%5D%5Bfrom%5D=-&latlng%5Bvalue%5D=&latlng%5Bcity%5D=&latlng%5Bstate%5D=&latlng%5Bprecision%5D=&service=&page={i}"
+            )
+            tree = html.fromstring(r.text)
+            div = tree.xpath('//li[@class="facility-search-block__item"]')
+            for d in div:
+
+                slug = "".join(d.xpath(".//h3/a/@href"))
+                page_url = f"https://www.adventhealth.com{slug}".strip()
+                if page_url.find("?") != -1:
+                    page_url = page_url.split("?")[0].strip()
+                if page_url == "https://www.adventhealth.com":
+                    page_url = "https://www.adventhealth.com/find-a-location"
+                location_name = (
+                    "".join(
+                        d.xpath('.//div[@class="location-block__headline"]/h3/a/text()')
+                    )
+                    .replace("\n", "")
                     .strip()
+                    or "<MISSING>"
                 )
-                link = r.find(
-                    "a",
-                    {"class": "location-block__name-link u-text--fw-300 notranslate"},
-                ).get("href")
-                page_url = base_url + link
-            except Exception:
-                name = r.find_all("h3")[0].get_text().strip()
-                page_url = "<MISSING>"
-
-            try:
-                phone = (
-                    r.find("a", {"class": "telephone"})
-                    .get_text()
+                if location_name == "<MISSING>":
+                    location_name = (
+                        "".join(
+                            d.xpath(
+                                './/div[@class="location-block__headline"]/h3/text()'
+                            )
+                        )
+                        .replace("\n", "")
+                        .strip()
+                        or "<MISSING>"
+                    )
+                street_address = (
+                    "".join(d.xpath('.//span[@property="streetAddress"]/text()'))
+                    .replace("\n", "")
+                    .replace("\r", "")
                     .strip()
-                    .split()[-1][2:]
+                    or "<MISSING>"
                 )
-            except Exception:
-                phone = "<MISSING>"
-
-            street = r.find("span", {"property": "streetAddress"}).get_text().strip()
-            city = r.find("span", {"property": "addressLocality"}).get_text().strip()
-            state = r.find("span", {"property": "addressRegion"}).get_text().strip()
-            pin = r.find("span", {"property": "postalCode"}).get_text().strip()
-            if len(pin) == 5:
+                state = (
+                    "".join(d.xpath('.//span[@property="addressRegion"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                postal = (
+                    "".join(d.xpath('.//span[@property="postalCode"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
                 country_code = "US"
-            else:
-                country_code = "CA"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            hours_of_operation = "<INACCESIBLE>"
-            lati = r.find("a", {"class": "address notranslate google-maps-link"}).get(
-                "data-lat"
+                city = (
+                    "".join(d.xpath('.//span[@property="addressLocality"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                latitude = "".join(d.xpath(".//*/@data-lat")) or "<MISSING>"
+                longitude = "".join(d.xpath(".//*/@data-lng")) or "<MISSING>"
+                phone = (
+                    "".join(d.xpath('.//a[@class="telephone"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=SgRecord.MISSING,
+                )
+
+                sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.PHONE,
+                }
             )
-            longi = r.find("a", {"class": "address notranslate google-maps-link"}).get(
-                "data-lng"
-            )
-
-            locations = []
-            locations.append(base_url)
-            locations.append(name)
-            locations.append(street)
-            locations.append(city)
-            locations.append(state)
-            locations.append(pin)
-            locations.append(country_code)
-            locations.append(store_number)
-            locations.append(phone)
-            locations.append(location_type)
-            locations.append(lati)
-            locations.append(longi)
-            locations.append(hours_of_operation)
-            locations.append(page_url)
-            if locations[2] in address:
-                continue
-            address.append(locations[2])
-            yield locations
-
-
-def load_data(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def scrape():
-    data = fetch_data()
-    load_data(data)
-
-
-scrape()
+    ) as writer:
+        fetch_data(writer)

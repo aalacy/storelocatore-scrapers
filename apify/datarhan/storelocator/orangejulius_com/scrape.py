@@ -1,104 +1,93 @@
-import re
-import csv
 import json
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    # Your scraper here
-    DOMAIN = "orangejulius.com"
+    domain = "orangejulius.com"
     session = SgRequests()
 
-    items = []
-    scraped_items = []
+    all_coordinates = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
+    )
+    for lat, lng in all_coordinates:
+        frm = {
+            "operationName": "NearbyStores",
+            "query": "fragment StoreDetailFields on Store {\n  id\n  storeNo\n  address3\n  city\n  stateProvince\n  postalCode\n  country\n  latitude\n  longitude\n  phone\n  conceptType\n  restaurantId\n  utcOffset\n  supportedTimeModes\n  advanceOrderDays\n  storeHours {\n    calendarType\n    ranges {\n      start\n      end\n      weekday\n      __typename\n    }\n    __typename\n  }\n  minisite {\n    webLinks {\n      isDeliveryPartner\n      description\n      url\n      __typename\n    }\n    hours {\n      calendarType\n      ranges {\n        start\n        end\n        weekday\n        __typename\n      }\n      __typename\n    }\n    amenities {\n      description\n      featureId\n      __typename\n    }\n    __typename\n  }\n  flags {\n    blizzardFanClubFlag\n    brazierFlag\n    breakfastFlag\n    cakesFlag\n    canPickup\n    comingSoonFlag\n    creditCardFlag\n    curbSideFlag\n    deliveryFlag\n    driveThruFlag\n    foodAndTreatsFlag\n    giftCardsFlag\n    isAvailableFlag\n    mobileDealsFlag\n    mobileOrderingFlag\n    mtdFlag\n    ojQuenchClubFlag\n    onlineOrderingFlag\n    ojFlag\n    temporarilyClosedFlag\n    __typename\n  }\n  labels {\n    key\n    value\n    __typename\n  }\n  __typename\n}\n\nquery NearbyStores($lat: Float!, $lng: Float!, $country: String!, $searchRadius: Int!) {\n  nearbyStores(\n    lat: $lat\n    lon: $lng\n    country: $country\n    radiusMiles: $searchRadius\n    limit: 50\n    first: 20\n    order: {distance: ASC}\n  ) {\n    pageInfo {\n      endCursor\n      hasNextPage\n      __typename\n    }\n    nodes {\n      distance\n      distanceType\n      store {\n        ...StoreDetailFields\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
+            "variables": {"country": "us", "lat": lat, "lng": lng, "searchRadius": 25},
+        }
 
-    start_url = "https://webapi.dairyqueen.com/v3/store/locator?callback=jQuery111304643188529110178_1606299141114&latitude=40.75368539999999&longitude=-73.9991637&radius=50000&mallMenu=true&conditions=dairy_queen"
-    response = session.get(start_url)
-    data = re.findall(r".+\d+\((.+)\)", response.text)[0]
-    data = json.loads(data)
+        hdr = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0",
+            "Accept": "*/*",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type,partner-platform",
+        }
+        session.request(
+            "https://prod-api.dairyqueen.com/graphql/", method="OPTIONS", headers=hdr
+        )
+        hdr = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0",
+            "Accept": "*/*",
+            "Accept-Language": "en-us",
+            "Accept-Encoding": "gzip, deflate, br",
+            "content-type": "application/json",
+            "partner-platform": "Web",
+        }
+        response = session.post(
+            "https://prod-api.dairyqueen.com/graphql/", json=frm, headers=hdr
+        )
+        data = json.loads(response.text)
+        if not data["data"]["nearbyStores"]:
+            continue
 
-    for poi in data:
-        store_url = "<MISSING>"
-        location_name = poi["address"]["store_name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["street_address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["state_province_abbr"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postal_code"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["country_abbr"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["store_no"]
-        phone = poi["phone_number"]
-        phone = phone if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["geo_data"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["geo_data"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        all_locations = data["data"]["nearbyStores"]["nodes"]
+        for poi in all_locations:
+            poi = poi["store"]
+            if not poi["flags"]["ojFlag"]:
+                continue
+            hoo = []
+            if poi["minisite"]:
+                if poi["minisite"]["hours"]:
+                    for e in poi["minisite"]["hours"][0]["ranges"]:
+                        hoo.append(f'{e["weekday"]}: {e["start"]} - {e["end"]}')
+            hoo = " ".join(hoo)
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
-            items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://www.orangejulius.com/en-us/locations/",
+                location_name=poi["address3"],
+                street_address=poi["address3"],
+                city=poi["city"],
+                state=poi["stateProvince"],
+                zip_postal=poi["postalCode"],
+                country_code=poi["country"],
+                store_number=poi["storeNo"],
+                phone=poi["phone"],
+                location_type=poi["conceptType"],
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
+                hours_of_operation=hoo,
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
