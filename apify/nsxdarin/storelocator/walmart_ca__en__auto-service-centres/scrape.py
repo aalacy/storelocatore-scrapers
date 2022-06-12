@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 logger = SgLogSetup().get_logger("walmart_ca__en__auto-service-centres")
 
@@ -13,7 +14,7 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.Canada],
+    country_codes=[SearchableCountries.CANADA],
     max_search_distance_miles=None,
     max_search_results=None,
 )
@@ -21,100 +22,93 @@ search = DynamicZipSearch(
 
 def fetch_data():
     for code in search:
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr="
-            + code.replace(" ", "")
-        )
-        website = "walmart.ca/en/auto-service-centres"
-        typ = "Walmart"
-        session = SgRequests()
-        r2 = session.get(url, headers=headers, timeout=15)
-        for line2 in r2.iter_lines():
-            if '"stores":[{"distance":' in line2:
-                items = line2.split('{"distance":')
-                for item in items:
-                    if '"address":{' in item and "TIRE_AND_LUBE_EXPRESS_CENTRE" in str(
-                        item
-                    ):
-                        hours = ""
-                        name = item.split('"displayName":"')[1].split('"')[0]
-                        store = item.split('"id":')[1].split(",")[0]
-                        loc = (
-                            "https://www.walmart.ca/en/stores-near-me/"
-                            + name.replace(" ", "-").lower()
-                            + "-"
-                            + store
+        Retry = True
+        rc = 0
+        while Retry and rc <= 5:
+            Retry = False
+            rc = rc + 1
+            try:
+                logger.info(("Pulling Zip Code %s..." % code))
+                url = (
+                    "https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr="
+                    + code.replace(" ", "")
+                )
+                website = "walmart.ca/en/auto-service-centres"
+                typ = "Walmart"
+                country = "CA"
+                session = SgRequests()
+                r2 = session.get(url, headers=headers)
+                for item in json.loads(r2.content)["payload"]["stores"]:
+                    Fuel = False
+                    try:
+                        name = item["displayName"]
+                    except:
+                        name = item["address"]["city"]
+                    store = item["id"]
+                    add = item["address"]["address1"]
+                    try:
+                        add = add + " " + item["address"]["address2"]
+                    except:
+                        pass
+                    city = item["address"]["city"]
+                    state = item["address"]["state"]
+                    zc = item["address"]["postalCode"]
+                    phone = item["phone"]
+                    lat = item["geoPoint"]["latitude"]
+                    lng = item["geoPoint"]["longitude"]
+                    hours = ""
+                    for svc in item["servicesMap"]:
+                        svcname = svc["service"]["name"]
+                        if "TIRE_AND_LUBE_EXPRESS_CENTRE" in svcname:
+                            Fuel = True
+                            for day in svc["regularHours"]:
+                                try:
+                                    hrs = (
+                                        day["day"]
+                                        + ": "
+                                        + day["start"]
+                                        + "-"
+                                        + day["end"]
+                                    )
+                                except:
+                                    hrs = day["day"] + ": Closed"
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                    loc = (
+                        "https://www.walmart.ca/en/stores-near-me/"
+                        + name.replace(" ", "-").lower()
+                        + "-"
+                        + str(store)
+                    )
+                    if "0" not in hours:
+                        hours = "<MISSING>"
+                    if "Supercentre" in name:
+                        typ = "Supercenter"
+                    if "Neighborhood Market" in name:
+                        typ = "Neighborhood Market"
+                    if hours == "":
+                        hours = "<MISSING>"
+                    if add != "" and Fuel:
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
                         )
-                        add = item.split('"address1":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        state = item.split('"state":"')[1].split('"')[0]
-                        try:
-                            phone = (
-                                item.split('"TIRE_AND_LUBE_EXPRESS_CENTRE"')[1]
-                                .split('{"service":')[0]
-                                .split('"phone":"')[1]
-                                .split('"')[0]
-                            )
-                        except:
-                            phone = "<MISSING>"
-                        lat = item.split('"latitude":')[1].split(",")[0]
-                        lng = item.split('"longitude":')[1].split("}")[0]
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        try:
-                            days = (
-                                item.split('"name":"TIRE_AND_LUBE_EXPRESS_CENTRE"')[1]
-                                .split('"regularHours":[')[1]
-                                .split("]},")[0]
-                                .split("{")
-                            )
-                            for day in days:
-                                if "openFullDay" in day:
-                                    if '"closed":true' in day:
-                                        hrs = (
-                                            day.split('"day":"')[1].split('"')[0]
-                                            + ": Closed"
-                                        )
-                                    else:
-                                        hrs = (
-                                            day.split('"day":"')[1].split('"')[0]
-                                            + ": "
-                                            + day.split('":"')[1].split('"')[0]
-                                            + "-"
-                                            + day.split('"end":"')[1].split('"')[0]
-                                        )
-                                    if hours == "":
-                                        hours = hrs
-                                    else:
-                                        hours = hours + "; " + hrs
-                        except:
-                            hours = "<MISSING>"
-                        if "0" not in hours:
-                            hours = "<MISSING>"
-                        country = "CA"
-                        if "Supercentre" in name:
-                            typ = "Supercenter"
-                        if "Neighborhood Market" in name:
-                            typ = "Neighborhood Market"
-                        if hours == "":
-                            hours = "<MISSING>"
-                        if add != "":
-                            yield SgRecord(
-                                locator_domain=website,
-                                page_url=loc,
-                                location_name=name,
-                                street_address=add,
-                                city=city,
-                                state=state,
-                                zip_postal=zc,
-                                country_code=country,
-                                phone=phone,
-                                location_type=typ,
-                                store_number=store,
-                                latitude=lat,
-                                longitude=lng,
-                                hours_of_operation=hours,
-                            )
+            except:
+                Retry = True
 
 
 def scrape():

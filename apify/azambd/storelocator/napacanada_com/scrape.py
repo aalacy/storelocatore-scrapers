@@ -1,5 +1,4 @@
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium import SgFirefox
 
 from sgscrape import simple_scraper_pipeline as sp
 from sgscrape.pause_resume import CrawlStateSingleton
@@ -8,7 +7,6 @@ import ssl
 import json
 from bs4 import BeautifulSoup
 
-
 ssl._create_default_https_context = ssl._create_unverified_context
 
 DOMAIN = "napacanada.com"
@@ -16,50 +14,29 @@ DOMAIN = "napacanada.com"
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-def get_driver(url, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-            break
-        except Exception:
-            driver.quit()
-            if x == 5:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    return driver
-
-
 def get_all_stores():
-    driver = get_driver("https://www.napacanada.com/en/auto-parts-stores-near-me")
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    provinces = [
-        "https://www.napacanada.com" + province["href"]
-        for province in soup.select("a[href*=auto-parts-stores-near-me]")[:-1]
-    ]
-    logger.info(f"Total provinces to crawl: {len(provinces)}")
-    urls = []
-    for province in provinces:
-        logger.info(f"Crawling Province: {province}")
-        driver.get(province)
+    with SgFirefox(
+        block_third_parties=False,
+    ) as driver:
+
+        driver.get_and_wait_for_request(
+            "https://www.napacanada.com/en/auto-parts-stores-near-me"
+        )
         soup = BeautifulSoup(driver.page_source, "html.parser")
-        for url in soup.select("a[href*=auto-parts-stores-near-me]")[1:-1]:
-            urls.append("https://www.napacanada.com" + url["href"])
-    return driver, urls
+        provinces = [
+            "https://www.napacanada.com" + province["href"]
+            for province in soup.select("a[href*=auto-parts-stores-near-me]")[:-1]
+        ]
+        logger.info(f"Total provinces to crawl: {len(provinces)}")
+        urls = []
+        for province in provinces:
+            logger.info(f"Crawling Province: {province}")
+            driver.get_and_wait_for_request(province)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            for url in soup.select("a[href*=auto-parts-stores-near-me]")[1:-1]:
+                urls.append("https://www.napacanada.com" + url["href"])
+
+    return urls
 
 
 def get_missed_cities(MISSED_CITIES):
@@ -67,14 +44,20 @@ def get_missed_cities(MISSED_CITIES):
     Find and get broken store links.
     """
     new_links = []
+
     for link in MISSED_CITIES:
         CITY = link.split("/")[-1].title()
-        driver = get_driver(
-            f"https://www.napacanada.com/en/store-finder?q={CITY}&page=10"
-        )
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        for store in soup.select("li.aadata-store-item"):
-            new_links.append("https://www.napacanada.com" + store.a["href"])
+        with SgFirefox(
+            block_third_parties=False,
+            user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        ) as driver:
+            driver.get_and_wait_for_request(
+                f"https://www.napacanada.com/en/store-finder?q={CITY}&page=10"
+            )
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            for store in soup.select("li.aadata-store-item"):
+                new_links.append("https://www.napacanada.com" + store.a["href"])
+
     return new_links
 
 
@@ -119,31 +102,42 @@ def parse(location):
 
 def fetch_data():
 
-    driver, urls = get_all_stores()
+    urls = get_all_stores()
     logger.info(f"Total pages to crawl: {len(urls)}")
     MISSED_CITIES = []
     for url in urls:
+        url = url.replace(" ", "%20")
+        if "châteauguay" in str(url):
+            url = "https://www.napacanada.com/en/qc/ch%c3%82teauguay/store/1004540"
         logger.info(f"Crawling {url}")
-        driver.get(url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        try:
-            location = json.loads(soup.select("script[type*=application]")[1].text)
-        except Exception as e:
-            logger.info(f"BROKEN LINK {url}: {e}")
-            MISSED_CITIES.append(url)
-            continue
-        data = parse(location)
-        yield data
+        with SgFirefox(
+            block_third_parties=False,
+            user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        ) as driver:
+            driver.get_and_wait_for_request(url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            try:
+                location = json.loads(soup.select("script[type*=application]")[1].text)
+                data = parse(location)
+                yield data
+            except Exception as e:
+                logger.info(f"BROKEN LINK {url} : {e}")
+                MISSED_CITIES.append(url)
+                continue
 
     missed_links = get_missed_cities(MISSED_CITIES)
     logger.info(f"Total broken or missed urls: {len(missed_links)}")
     for url in missed_links:
         logger.info(f"Crawling missed link: {url}")
-        driver.get(url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        location = json.loads(soup.select("script[type*=application]")[1].text)
-        data = parse(location)
-        yield data
+        with SgFirefox(
+            block_third_parties=False,
+            user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        ) as driver:
+            driver.get_and_wait_for_request(url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            location = json.loads(soup.select("script[type*=application]")[1].text)
+            data = parse(location)
+            yield data
 
 
 def scrape():

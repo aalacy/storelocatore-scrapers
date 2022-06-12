@@ -20,7 +20,7 @@ def get_urls():
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://sfr.fr/"
     page_url = url
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
@@ -94,13 +94,13 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

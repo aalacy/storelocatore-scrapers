@@ -128,6 +128,8 @@ def fetch_data():
             .replace("StreetBrooklyn", "Street, Brooklyn")
             .split(", DAILY")[0]
             .strip()
+            .split(", Weekdays")[0]
+            .strip()
         )
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
@@ -184,6 +186,9 @@ def fetch_data():
         if "843.203.6139;" in hours_of_operation:
             hours_of_operation = hours_of_operation.replace("843.203.6139;", "").strip()
             phone = "843.203.6139"
+
+        if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         map_link = "".join(
             store.xpath('div[@class="shops-contact"]//a[contains(@href,"maps")]/@href')
