@@ -10,7 +10,6 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-
     start_url = "https://www.boni-soir.com/wp-content/stores/stores.json"
     domain = "boni-soir.com"
     hdr = {
