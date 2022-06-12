@@ -7,12 +7,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 import tenacity
-from bs4 import BeautifulSoup as bs
 from lxml import html
-import json
 import ssl
 
-MAX_WORKERS = 2
 try:
     _create_unverified_https_context = (
         ssl._create_unverified_context
@@ -67,7 +64,6 @@ def get_store_urls(state_links, store_urls):
     statelink = state_links[0]
     r2 = get_response(0, statelink)
     sel2 = html.fromstring(r2.text)
-    logger.info(f"")
     if r2.status_code == 200:
         state_links.remove(statelink)
         city_hrefs = sel2.xpath('//a[contains(@class, "Directory-listLink")]/@href')
