@@ -1,71 +1,122 @@
 from bs4 import BeautifulSoup
-
 from sglogging import SgLogSetup
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
 from sgrequests import SgRequests
+from tenacity import retry, stop_after_attempt
+import tenacity
+from lxml import html
+import ssl
 
-logger = SgLogSetup().get_logger("carlsjr.com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+headers = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
+
+logger = SgLogSetup().get_logger("carlsjr_com")
+
+
+STORE_LOCATOR = "https://locations.carlsjr.com/index.html"
+headers_special = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+}
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(idx, url):
+    with SgRequests(verify_ssl=False) as http:
+        response = http.get(url, headers=headers_special)
+        if response.status_code == 200:
+            logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
+
+
+def get_state_urls():
+    r = get_response(0, STORE_LOCATOR)
+    sel = html.fromstring(r.text, "lxml")
+    state_hrefs = sel.xpath('//a[contains(@class, "Directory-listLink")]/@href')
+    state_links = ["https://locations.carlsjr.com/" + href for href in state_hrefs]
+    return state_links
+
+
+def get_store_urls(state_links, store_urls):
+
+    """
+    This returns the list of store urls. It extracts the store urls from State-based and City-based store locators in a Recursive
+    In another word, it keeps extracting store urls until state and city store locator becomes empty
+    """
+    if not state_links:
+        return
+    statelink = state_links[0]
+    r2 = get_response(0, statelink)
+    sel2 = html.fromstring(r2.text)
+    if r2.status_code == 200:
+        state_links.remove(statelink)
+        city_hrefs = sel2.xpath('//a[contains(@class, "Directory-listLink")]/@href')
+        ctalink = sel2.xpath('//a[contains(@class, "Teaser-ctaLink")]/@href')
+        if city_hrefs:
+            for i in city_hrefs:
+                if i.count("/") > 1:
+                    j = "https://locations.carlsjr.com/" + i
+                    store_urls.append(j)
+                else:
+                    j = "https://locations.carlsjr.com/" + i
+                    state_links.append(j)
+        if ctalink:
+            for i in ctalink:
+                if i.count("/") > 1:
+                    j = "https://locations.carlsjr.com/" + i.replace("../", "")
+                    store_urls.append(j)
+                else:
+                    j = "https://locations.carlsjr.com/" + i
+                    state_links.append(j)
+        get_store_urls(state_links, store_urls)
+    return store_urls
 
 
 def fetch_data(sgw: SgWriter):
-    base_link = "https://locations.carlsjr.com/index.html"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
-    session = SgRequests()
-
-    locator_domain = "https://www.carlsjr.com/"
-
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
-    main_items = base.find_all(class_="Directory-listLink")
-
-    final_links = []
-    for main_item in main_items:
-        link = "https://locations.carlsjr.com/" + main_item["href"]
-        logger.info(link)
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-        next_items = base.find_all(class_="Directory-listLink")
-        for next_item in next_items:
-            next_link = "https://locations.carlsjr.com/" + next_item["href"].replace(
-                "../", ""
-            )
-            if next_item["href"].count("/") > 1:
-                final_links.append(next_link)
-            else:
-                req = session.get(next_link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
-                last_items = base.find_all(class_="Teaser-ctaLink")
-                for last_item in last_items:
-                    last_link = "https://locations.carlsjr.com/" + last_item[
-                        "href"
-                    ].replace("../", "")
-                    final_links.append(last_link)
-
+    state_links = get_state_urls()
+    logger.info(f"StateUrls: {state_links}")
+    logger.info("PullingStoreUrls from state urls!")
+    final_links = get_store_urls(state_links, [])
     logger.info("Processing " + str(len(final_links)) + " links ...")
-    for final_link in final_links:
+    count_green_burrito = 0
+    for num, final_link in enumerate(final_links[0:10]):
+        logger.info(f"[{num}] PullingContentFrom : {final_link}")
         final_link = final_link.replace("--", "-")
-        req = session.get(final_link, headers=headers)
+        req = get_response(num, final_link)
+        logger.info(f"[{num}] HttpStatus: {req.status_code}")
         base = BeautifulSoup(req.text, "lxml")
-
+        logger.info(f"[StoreNum: {num}] | [CountGreenBurrito: {count_green_burrito}]")
+        if num == 200 and count_green_burrito < 2:
+            raise Exception(
+                "Crawler Intentionally Failed Due to Green Burrito is not available"
+            )
         try:
-            if (
-                "green burrito"
-                not in base.find(class_="Core-featuresList").text.lower()
-            ):
+            core_feature_list = base.find(class_="Core-featuresList").text.lower()
+            logger.info(f"CoreFeatureList: {core_feature_list} | {final_link}")
+            if "green burrito" in core_feature_list:
+                count_green_burrito += 1
+            else:
                 continue
         except:
             continue
 
         location_name = base.h1.text.strip()
-
         street_address = base.find(itemprop="streetAddress")["content"]
         state = base.find(itemprop="addressRegion").text.strip()
         zip_code = base.find(itemprop="postalCode").text.strip()
@@ -95,26 +146,30 @@ def fetch_data(sgw: SgWriter):
 
         latitude = base.find(itemprop="latitude")["content"]
         longitude = base.find(itemprop="longitude")["content"]
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=final_link,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        item = SgRecord(
+            locator_domain="carlsjr.com",
+            page_url=final_link,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
+        sgw.write_row(item)
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-    fetch_data(writer)
+
+def scrape():
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
+
+
+if __name__ == "__main__":
+    scrape()
