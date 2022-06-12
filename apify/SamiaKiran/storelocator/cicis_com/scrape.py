@@ -45,7 +45,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             soup = BeautifulSoup(r.text, "html.parser")
             city_list = soup.findAll("li", {"class": "c-directory-list-content-item"})
             for city in city_list:
-                count = temp_state.find("span").text
+                count = city.find("span").text
                 count = int(count.replace(")", "").replace("(", ""))
                 city_url = "https://cicis.com/locations/" + city.find("a")["href"]
                 if count > 1:
@@ -81,10 +81,18 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             .get_text(separator="|", strip=True)
             .replace("|", " ")
         )
-        street_address = soup.find("span", {"class": "c-address-street-1"}).text
-        city = soup.find("span", {"class": "c-address-city"}).text.replace(",", "")
-        state = soup.find("span", {"itemprop": "addressRegion"}).text
-        zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
+        address = soup.find("div", {"id": "address"})
+        try:
+            street_address = (
+                address.find("span", {"class": "c-address-street-1"}).text
+                + " "
+                + address.find("span", {"class": "c-address-street-2"}).text
+            )
+        except:
+            street_address = address.find("span", {"class": "c-address-street-1"}).text
+        city = address.find("span", {"class": "c-address-city"}).text.replace(",", "")
+        state = address.find("span", {"itemprop": "addressRegion"}).text
+        zip_postal = address.find("span", {"itemprop": "postalCode"}).text
         country_code = "US"
         latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", {"itemprop": "longitude"})["content"]

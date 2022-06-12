@@ -1,4 +1,4 @@
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sglogging import sglog
 from bs4 import BeautifulSoup as bs
 import ssl
@@ -13,8 +13,8 @@ log = sglog.SgLogSetup().get_logger(logger_name="wincofoods.com")
 
 
 def get_data():
-    url = "https://www.wincofoods.com/stores/?coordinates=41.20605200836969,-110.02699584999999&zoom=4"
-    with SgChrome() as driver:
+    url = "https://www.wincofoods.com/stores/?coordinates=36.10713810722304,-117.25231734999998&zoom=6"
+    with SgFirefox() as driver:
         driver.get_and_wait_for_request(url, 80)
         response = driver.page_source
 
