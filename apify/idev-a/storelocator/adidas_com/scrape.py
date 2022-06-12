@@ -120,7 +120,7 @@ def fetch_records():
                     country_code=_["country"],
                     phone=phone,
                     locator_domain=locator_domain,
-                    location_type=_["storetype"],
+                    location_type=_.get("storetype"),
                     hours_of_operation="; ".join(hours),
                 )
 

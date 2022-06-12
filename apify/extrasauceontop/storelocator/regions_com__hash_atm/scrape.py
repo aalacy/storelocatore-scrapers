@@ -47,7 +47,7 @@ def get_data():
     )
 
     for search_code in search:
-
+        search.found_nothing()
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
             + search_code
