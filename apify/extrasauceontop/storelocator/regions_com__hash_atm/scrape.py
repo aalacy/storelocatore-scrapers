@@ -47,7 +47,7 @@ def get_data():
     )
 
     for search_code in search:
-
+        search.found_nothing()
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
             + search_code
@@ -143,6 +143,8 @@ def get_data():
             page_urls.append(page_url)
             if location_type_check != "atm" and other_check != "passing":
                 continue
+
+            hours = hours.replace("<br/>", " ").strip()
 
             yield {
                 "locator_domain": locator_domain,
