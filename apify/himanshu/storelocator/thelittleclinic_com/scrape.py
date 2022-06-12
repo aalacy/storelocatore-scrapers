@@ -47,6 +47,11 @@ def fetch_data():
                 state = i["address"]["stateProvince"]
                 zip = i["address"]["postalCode"]
                 country_code = "US"
+
+                latitude = i["location"]["lat"]
+                longitude = i["location"]["lng"]
+                zip_codes.found_location_at(latitude, longitude)
+
                 store_number = i["id"]
                 if store_number in found:
                     continue
@@ -56,10 +61,6 @@ def fetch_data():
                 except:
                     phone = "<MISSING>"
                 location_type = ""
-
-                latitude = i["location"]["lat"]
-                longitude = i["location"]["lng"]
-                zip_codes.found_location_at(latitude, longitude)
                 hours_of_operation = "<INACCESSIBLE>"
 
                 id_num = str(i["id"])
@@ -99,6 +100,8 @@ def fetch_data():
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
+            if not j:
+                zip_codes.found_nothing()
 
 
 def scrape():

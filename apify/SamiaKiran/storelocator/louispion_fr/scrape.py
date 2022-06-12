@@ -37,6 +37,7 @@ def fetch_data():
             page_url = "https://boutiques.louispion.fr" + loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
             loc = r.text.split('<script type="application/ld+json">')[1].split(
                 "</script>"
             )[0]
@@ -52,15 +53,13 @@ def fetch_data():
             phone = loc["telephone"]
             latitude = loc["geo"]["latitude"]
             longitude = loc["geo"]["longitude"]
-            hour_list = loc["openingHoursSpecification"]
-            hours_of_operation = ""
-            for hour in hour_list:
-                day = hour["dayOfWeek"].replace("http://schema.org/", "")
-                opens = hour["opens"]
-                closes = hour["closes"]
-                hours_of_operation = (
-                    hours_of_operation + " " + day + " " + opens + "-" + closes
+            hours_of_operation = (
+                soup.find(
+                    "div", {"class": "em-schedules-cards__current-schedules-container"}
                 )
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
