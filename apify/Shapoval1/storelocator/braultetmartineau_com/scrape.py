@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         location_name = (
-            "".join(d.xpath(".//div[@class='store-name-label']/text()"))
+            "".join(d.xpath(".//div[@class='store-name-label']//text()"))
             .replace("\n", "")
             .strip()
         )

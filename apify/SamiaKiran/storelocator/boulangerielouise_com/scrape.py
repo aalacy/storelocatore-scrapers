@@ -58,6 +58,8 @@ def fetch_data():
                 soup.find("table").get_text(separator="|", strip=True).replace("|", " ")
             )
             raw_address = strip_accents(temp[1])
+            if raw_address == phone:
+                raw_address = MISSING
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

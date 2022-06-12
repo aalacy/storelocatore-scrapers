@@ -11,7 +11,7 @@ from concurrent import futures
 def get_data(coords, sgw: SgWriter):
     lat, long = coords
     locator_domain = "https://www.wildbillstobacco.com"
-    api_url = f"https://www.wildbillstobacco.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={long}&max_results=150&search_radius=500&search=Negaunee%2C%20MI%2049866%2C%20USA&statistics="
+    api_url = f"https://www.wildbillstobacco.com/wp-admin/admin-ajax.php?action=store_search&lat={str(lat)}&lng={str(long)}&max_results=150&search_radius=500&search=Negaunee%2C%20MI%2049866%2C%20USA&statistics="
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",

@@ -49,7 +49,7 @@ def fetch_data():
                     hours = ""
                     PFound = False
                     r2 = session.get(loc, headers=headers)
-                    time.sleep(5)
+                    time.sleep(15)
                     for line2 in r2.iter_lines():
                         if '<h2 class="sub-title">Pharmacy</h2>' in line2:
                             Pharm = True

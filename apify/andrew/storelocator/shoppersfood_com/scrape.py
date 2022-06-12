@@ -1,84 +1,85 @@
-import csv
-import requests
-from bs4 import BeautifulSoup
-import re
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
-options = Options() 
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('chromedriver', options=options)
+def fetch_data(sgw: SgWriter):
 
-BASE_URL = 'https://www.shoppersfood.com'
-MISSING = '<MISSING>'
+    locator_domain = "https://www.shoppersfood.com/"
+    api_url = "https://www.shoppersfood.com/stores/search-stores.html"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath(
+        '//h2[text()="View Store by State"]/following-sibling::div//div[./a]/a'
+    )
+    for d in div:
+        slug = "".join(d.xpath(".//@href")).split("?")[-1].strip()
+        state_page_url = f"https://www.shoppersfood.com/stores/store-search-results.html?displayCount=18&{slug}"
+        r = session.get(state_page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath("//li[@data-storeid]")
+        for d in div:
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_soup(url):
-    res = requests.get(url)
-    return BeautifulSoup(res.content, 'html.parser')
-
-def parse_google_maps_url(url):
-    return re.findall(r'll=(-?\d*.{1}\d*,-?\d*.{1}\d*)&', url)[0].split(',')
-
-def fetch_store_data(soup, url):
-    driver.get(url)
-    location_name = soup.select_one('h2.storeName').text
-    street_address = soup.select_one("span[itemProp='streetAddress']").text
-    city = soup.select_one("span[itemProp='addressLocality']").text
-    state = soup.select_one("span[itemProp='addressRegion']").text
-    zipcode = soup.select_one("span[itemProp='postalCode']").text
-    store_number = re.findall(r'.(\d*).html', url)[0]
-    phone = soup.select_one("a[itemProp='telephone']").text
-    try:
-        hours_of_operation = soup.select_one("span[itemProp='openingHours']").text
-    except:
-        hours_of_operation = MISSING
-    google_maps_url = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='ll=']"))
-    ).get_attribute('href')
-    lat, lon = parse_google_maps_url(google_maps_url)
-    return [BASE_URL, location_name, street_address, city, state, zipcode, 'US', store_number, phone, MISSING, lat, lon, hours_of_operation]
-
-def fetch_data():
-    data = []
-    soup = fetch_soup('https://www.shoppersfood.com/stores/search-stores.html')
-    state_urls = [
-        BASE_URL + a_tag['href']
-        for a_tag in soup.select('div.find-view-states a')
-    ]
-    for state_url in state_urls:
-        state_soup = fetch_soup(
-            state_url + '&displayCount=1000'
-        )
-        store_urls = [
-            BASE_URL + a_tag['href']
-            for a_tag in state_soup.select('a.store-detail')
-        ]
-        for store_url in store_urls:
-            store_soup = fetch_soup(store_url)
-            data.append(
-                fetch_store_data(store_soup, store_url)
+            slug = "".join(d.xpath('.//a[text()="See Store Details"]/@href'))
+            page_url = f"https://www.shoppersfood.com{slug}"
+            location_name = (
+                "".join(d.xpath('.//h2[@class="store-display-name h6"]/text()'))
+                or "<MISSING>"
             )
-    driver.quit()
-    return data
+            street_address = "".join(d.xpath('.//p[@class="store-address"]/text()'))
+            ad = "".join(d.xpath('.//p[@class="store-city-state-zip"]/text()'))
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
+            country_code = "US"
+            city = ad.split(",")[0].strip()
+            store_number = "".join(d.xpath("./@data-storeid")) or "<MISSING>"
+            latitude = "".join(d.xpath("./@data-storelat")) or "<MISSING>"
+            longitude = "".join(d.xpath("./@data-storelng")) or "<MISSING>"
+            phone = (
+                "".join(d.xpath('.//p[@class="store-main-phone"]/span/text()'))
+                or "<MISSING>"
+            )
+            hours_of_operation = (
+                " ".join(d.xpath('.//ul[@class="store-regular-hours"]/li//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation.split()).replace("Store Hours:", "").strip()
+                or "<MISSING>"
+            )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {ad}",
+            )
 
-scrape()
+            sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

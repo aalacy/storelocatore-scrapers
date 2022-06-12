@@ -34,7 +34,9 @@ def fetch_data(sgw: SgWriter):
         ad = b.get("formatted")
         a = parse_address(International_Parser(), ad)
         street_address = (
-            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "")
+            .replace("Auckland", "")
+            .strip()
             or "<MISSING>"
         )
         state = a.state or "<MISSING>"

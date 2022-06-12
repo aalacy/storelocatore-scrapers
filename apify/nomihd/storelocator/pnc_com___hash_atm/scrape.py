@@ -289,7 +289,7 @@ def scrape():
         for future in as_completed(futures):
             locations.extend(future.result())
 
-        with SgChrome().driver() as driver:
+        with SgChrome() as driver:
             driver.set_script_timeout(120)
             driver.get("https://pnc.com")
             for chunk in batch(locations, 5):

@@ -30,7 +30,7 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.r.bank/about/convenient-locations/"
+    search_url = "https://www.r.bank/about/hours-locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//div[@class="row row-loc"]')

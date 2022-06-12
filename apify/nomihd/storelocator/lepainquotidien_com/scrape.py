@@ -60,7 +60,11 @@ def fetch_data():
                 for store in stores:
                     try:
                         page_url = store["websiteUrl"]["url"]
-                        page_url = page_url.split("?utm_source")[0].strip()
+                        if "?utm_source" in page_url:
+                            page_url = page_url.split("?utm_source")[0].strip()
+                        if "?utm_medium" in page_url:
+                            page_url = page_url.split("?utm_medium")[0].strip()
+
                     except:
                         page_url = "<MISSING>"
                         pass

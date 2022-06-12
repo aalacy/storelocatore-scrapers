@@ -11,7 +11,6 @@ logger = SgLogSetup().get_logger("kfcturkiye")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-
 header1 = {
     "accept": "application/json, text/javascript, */*; q=0.01",
     "accept-language": "en-US,en;q=0.9",
@@ -45,8 +44,9 @@ def fetch_data():
             )
             addr = raw_address.split(",")
             hours = [
-                hh.text.strip()
+                hh.text.replace("/", "").strip()
                 for hh in sp1.select("div.working-hours-info div.hours-item")
+                if ":" in hh.text
             ]
             city = addr[-2]
             street_address = ", ".join(addr[:-2])

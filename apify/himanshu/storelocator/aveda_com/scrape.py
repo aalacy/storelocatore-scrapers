@@ -59,20 +59,24 @@ def get_data(coords, sgw: SgWriter):
         )
         location_name = j.get("ACTUAL_DOORNAME") or "<MISSING>"
         street_address = j.get("ACTUAL_ADDRESS") or "<MISSING>"
+        street_address = str(street_address).replace(",", "").strip()
         city = j.get("ACTUAL_CITY") or "<MISSING>"
         state = j.get("STATE") or "<MISSING>"
         if str(state).isdigit():
             state = "<MISSING>"
         postal = j.get("ZIP") or "<MISSING>"
-        if postal == "0":
+        if postal == "0" or postal == "0000" or postal == ".":
             postal = "<MISSING>"
         country_code = j.get("COUNTRY") or "<MISSING>"
         phone = j.get("PHONE1") or "<MISSING>"
         if phone == "-":
             phone = "<MISSING>"
+        if str(postal).find("N/A") != -1:
+            postal = "<MISSING>"
         latitude = j.get("LATITUDE") or "<MISSING>"
         longitude = j.get("LONGITUDE") or "<MISSING>"
         hours_of_operation = "<INACCESSIBLE>"
+        location_type = j.get("CLASSIFICATION") or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -85,7 +89,7 @@ def get_data(coords, sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,

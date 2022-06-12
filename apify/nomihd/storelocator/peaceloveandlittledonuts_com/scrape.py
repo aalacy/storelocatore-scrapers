@@ -56,7 +56,8 @@ def fetch_data():
                 log.info(store)
                 store_res = session.get(store, headers=headers)
                 store_sel = lxml.html.fromstring(store_res.text)
-
+                if store_sel.xpath('//div[@class="coming-soon"]'):
+                    continue
                 page_url = store
                 locator_domain = website
 

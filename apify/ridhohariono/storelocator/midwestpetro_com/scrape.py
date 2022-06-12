@@ -33,7 +33,10 @@ def fetch_data():
         hours_of_operation = row["hours"]
         if row["24hours"] == "1":
             hours_of_operation = "24 Hours"
-        location_type = MISSING
+        if row["alt_text"] == "ZX":
+            location_type = "ZEPHYR XPRESS"
+        else:
+            location_type = row["alt_text"].upper()
         store_number = row["store_number"]
         latitude = row["lat"]
         longitude = row["lng"]

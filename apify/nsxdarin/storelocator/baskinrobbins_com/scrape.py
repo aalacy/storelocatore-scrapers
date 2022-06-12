@@ -49,7 +49,7 @@ def fetch_data():
             status = item["status"]
             if "INACTIVE" in status and "TEMP" not in status:
                 name = name + " - Closed"
-            if "INACTIVE" in status and "TEMP" in status:
+            if "TEMP-INACTIVE" in status:
                 name = name + " - Temporarily Closed"
             try:
                 phone = item["phoneNumber"]

@@ -10,8 +10,10 @@ from sgscrape.sgpostal import parse_address_usa
 
 DOMAIN = "centracare.org"
 BASE_URL = "https://centracare.adventhealth.com"
-LOCATION_URL = "https://www.adventhealth.com/find-a-location?facility=&name=centra+care"
-API_URL = "https://www.adventhealth.com/views/ajax?facility=&name=centra+care&geolocation_geocoder_google_geocoding_api=&geolocation_geocoder_google_geocoding_api_state=1&latlng%5Bvalue%5D=&latlng%5Bcity%5D=&latlng%5Bstate%5D=&latlng%5Bprecision%5D=&service=&_wrapper_format=drupal_ajax"
+LOCATION_URL = (
+    "https://www.adventhealth.com/find-a-location?f%5B0%5D=facility_type%3A32"
+)
+API_URL = "https://www.adventhealth.com/views/ajax?q=/find-a-location?f%5B0%5D=facility_type%3A32&_wrapper_format=drupal_ajax"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -64,10 +66,10 @@ def fetch_data():
             "view_args": "",
             "view_path": "/node/1154",
             "view_base_path": "",
-            "view_dom_id": "bbb39c7359d93358b557bec79aca8d85bcf7c84c460ac4456abf5fcc9cd85fd0",
+            "view_dom_id": "9cd3ffc4421393775a91434a9640652a8ba14fcfa88c446e18c930af8cae403b",
             "pager_element": "0",
             "view_exposed_form_selector": '[id^="views-exposed-form-ahs-facility-search-list-map"]',
-            "name": "centra care",
+            "f[0]": "facility_type:32",
             "geolocation_geocoder_google_geocoding_api_state": "1",
             "latlng[distance][from]": "-",
             "page": num,
@@ -146,8 +148,12 @@ def fetch_data():
             location_type = "CENTRA CARE"
             store_number = MISSING
             latlong = row.find("a", {"class": "address"})
-            latitude = latlong["data-lat"]
-            longitude = latlong["data-lng"]
+            try:
+                latitude = latlong["data-lat"]
+                longitude = latlong["data-lng"]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -173,7 +179,9 @@ def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

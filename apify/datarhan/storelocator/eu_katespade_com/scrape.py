@@ -22,7 +22,7 @@ def fetch_data():
         page_url = "https://eu.katespade.com" + poi["storeURL"]
         poi_html = etree.HTML(poi["storeHours"])
         hoo = poi_html.xpath("//p/text()")[2:-1]
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("is open:")[-1]
         street_address = poi["address1"]
         if poi["address2"]:
             street_address += ", " + poi["address2"]

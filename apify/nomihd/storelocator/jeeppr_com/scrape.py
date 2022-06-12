@@ -105,11 +105,10 @@ def fetch_data():
             if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
                 hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
-            log.info(hours_of_operation)
             store_number = "<MISSING>"
 
             map_link = "".join(
-                store.xpath(".//iframe[contains(@src,'maps/embed')]//@href")
+                store.xpath(".//iframe[contains(@src,'maps/embed')]//@src")
             ).strip()
 
             latitude, longitude = get_latlng(map_link)

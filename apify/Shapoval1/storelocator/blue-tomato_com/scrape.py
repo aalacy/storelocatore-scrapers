@@ -23,8 +23,11 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
         s_page_url = f"https://www.blue-tomato.com{slug}"
         country_code = s_page_url.split("/shops/")[1].split("/")[0].capitalize()
-        r = session.get(s_page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        try:
+            r = session.get(s_page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            continue
         div = (
             "".join(tree.xpath('//script[contains(text(), "var allPos =")]/text()'))
             .split("var allPos =")[1]
@@ -70,6 +73,9 @@ def fetch_data(sgw: SgWriter):
                 cls = "".join(tree.xpath('//span[contains(text(), "closed")]/text()'))
                 if cls and hours_of_operation == "<MISSING>":
                     hours_of_operation = "Closed"
+                cms = "".join(tree.xpath('//img[contains(@src, "opening")]/@src'))
+                if cms:
+                    hours_of_operation = "Coming Soon"
             except:
 
                 location_name = j.get("shopname")

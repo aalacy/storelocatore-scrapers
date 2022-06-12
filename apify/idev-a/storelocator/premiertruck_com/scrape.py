@@ -68,13 +68,26 @@ def fetch_data():
             logger.info(page_url)
             get_url(driver, page_url)
             sp1 = bs(driver.page_source, "lxml")
-            hours = []
-            days = list(
-                sp1.select_one("div#section-hours table thead tr").stripped_strings
-            )
-            times = sp1.select("div#section-hours table tbody tr")[0].select("td")[1:]
-            for x in range(len(days)):
-                hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
+            if sp1.select("div.d-sm-none table"):
+                hours = [
+                    " ".join(hh.stripped_strings)
+                    for hh in sp1.select("div.d-sm-none table")[0].select("tr")
+                ]
+            elif sp1.select("div.d-md-none table"):
+                hours = [
+                    " ".join(hh.stripped_strings)
+                    for hh in sp1.select("div.d-md-none table")[0].select("tr")
+                ]
+            else:
+                hours = []
+                days = list(
+                    sp1.select_one("div#section-hours table thead tr").stripped_strings
+                )
+                times = sp1.select("div#section-hours table tbody tr")[0].select("td")[
+                    1:
+                ]
+                for x in range(len(days)):
+                    hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
 
             street_address = _["address"]
             if _["address2"]:
