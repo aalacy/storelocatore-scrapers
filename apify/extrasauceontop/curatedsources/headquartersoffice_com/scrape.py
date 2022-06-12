@@ -96,7 +96,6 @@ def new_map_page(driver):
             page_url = driver.current_url
             latitude = location["lat"]
             longitude = location["lng"]
-
             store_number = location["id"]
             full_address = location["address"]
 
