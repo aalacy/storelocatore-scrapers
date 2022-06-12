@@ -29,7 +29,6 @@ def fetch_data():
         states = soup.findAll("span", {"class": "field-content"})
         for statelink in states:
             statelink = "http://www.pigglywiggly.com" + statelink.find("a")["href"]
-            print(statelink)
             stores_req = session.get(statelink, headers=headers)
             bs = BeautifulSoup(stores_req.text, "html.parser")
             street = bs.findAll("div", {"class": "street-address"})
