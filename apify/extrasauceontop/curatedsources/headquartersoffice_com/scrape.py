@@ -174,7 +174,6 @@ def old_map_page(driver):
         "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
     )
 
-
     for item in test:
         if "base64" in item["name"]:
 
