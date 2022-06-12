@@ -21,20 +21,13 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        url = "https://www.gosarpinos.com/sitemap"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("ul", {"class": "sitemap__list"})[-1].findAll("li")
+        url = "https://www.gosarpinos.com/api/stores"
+        loclist = session.get(url, headers=headers).json()
         for loc in loclist:
-            page_url = loc.find("a")["href"].replace(
-                "http://gosarpinos.local.com:91", DOMAIN
-            )
+            page_url = DOMAIN + loc["storeUrl"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            try:
-                temp = json.loads(r.text.split("var data =")[1].split("};")[0] + "}")
-            except:
-                continue
+            temp = json.loads(r.text.split("var data =")[1].split("};")[0] + "}")
             store_number = temp["storeId"]
             address = temp["stores"][0]
             location_name = address["name"]
