@@ -126,7 +126,7 @@ def fetch_data():
                     store_number=_["id"],
                     location_name=_["store"].replace("&#8211;", "-"),
                     street_address=street_address,
-                    city=_["city"].replace(",", ""),
+                    city=_["city"].replace(",", "").split("/")[0],
                     state=state,
                     zip_postal=zip_postal,
                     latitude=_["lat"],
