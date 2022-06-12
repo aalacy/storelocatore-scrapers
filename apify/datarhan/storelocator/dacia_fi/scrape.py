@@ -11,13 +11,6 @@ def fetch_data():
 
     start_url = "https://www.dacia.fi/jalleenmyyjat/"
     domain = "dacia.fi"
-    hdr = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
     all_locations = session.get(
         "https://map.karttapalvelut.fi/ajax/getplaces/map_name/dacia/lang/fi"
     ).json()
