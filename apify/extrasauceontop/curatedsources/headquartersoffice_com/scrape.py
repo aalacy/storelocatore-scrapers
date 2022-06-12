@@ -173,6 +173,7 @@ def old_map_page(driver):
     test = driver.execute_script(
         "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
     )
+
     for item in test:
         if "base64" in item["name"]:
 
@@ -186,7 +187,6 @@ def old_map_page(driver):
 
             if "markers" in response.keys():
                 break
-
     try:
         if response is None:
             log.info(driver.current_url)
