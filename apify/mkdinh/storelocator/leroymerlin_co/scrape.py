@@ -118,8 +118,6 @@ def fetch_details(county, city, location, retry=0):
         if retry < 3:
             return fetch_details(county, city, location, retry + 1)
 
-        print(response)
-
 
 def fetch_data():
     with ThreadPoolExecutor() as executor:
