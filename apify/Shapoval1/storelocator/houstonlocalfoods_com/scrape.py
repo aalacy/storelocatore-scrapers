@@ -16,52 +16,55 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@id="SubMenu-2"]/ul/li/a')
+    div = tree.xpath('//div[@id="SubMenu-1"]/ul/li/a')
 
     for d in div:
         page_url = "".join(d.xpath(".//@href"))
         page_url = f"https://www.localfoodstexas.com{page_url}"
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = "".join(tree.xpath(".//h1/text()"))
-
+        location_name = "".join(tree.xpath("//title//text()")).split("|")[0].strip()
         street_address = (
             "".join(
                 tree.xpath(
-                    '//p/a[contains(@data-bb-track-category, "Address")]/text()[1]'
+                    '//section[@id="intro"]//p[./a[contains(@href, "maps")]]/a[1]/text()[1]'
                 )
             )
             .replace("\n", "")
             .replace(",", "")
             .strip()
-        )
+        ) or "<MISSING>"
         ad = (
             "".join(
                 tree.xpath(
-                    '//p/a[contains(@data-bb-track-category, "Address")]/text()[2]'
+                    '//section[@id="intro"]//p[./a[contains(@href, "maps")]]/a[1]/text()[2]'
                 )
             )
             .replace("\n", "")
             .replace(",", "")
             .strip()
         )
+
         phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+
         state = ad.split()[1].strip()
         postal = ad.split()[2].strip()
-        country_code = "US"
         city = ad.split()[0]
+        country_code = "US"
+
         ll = "".join(tree.xpath('//div[@class="gmaps"]/@data-gmaps-static-url-mobile'))
-        latitude = ll.split("center=")[1].split("%2C")[0]
-        longitude = ll.split("center=")[1].split("%2C")[1].split("&")[0]
-        hours_of_operation = "".join(tree.xpath('//div[@class="col-md-6"]/p[2]/text()'))
-        if hours_of_operation.find("Our") != -1:
-            hours_of_operation = hours_of_operation.split("Our")[0].strip()
-        if hours_of_operation.find("Be") != -1:
-            hours_of_operation = hours_of_operation.split("Be")[0].strip()
+        latitude, longitude = "<MISSING>", "<MISSING>"
+        if ll:
+            latitude = ll.split("center=")[1].split("%2C")[0]
+            longitude = ll.split("center=")[1].split("%2C")[1].split("&")[0]
+        hours_of_operation = "".join(
+            tree.xpath(
+                '//section[@id="intro"]//p[./a[contains(@href, "maps")]]/following-sibling::p[1]//text()'
+            )
+        )
         location_type = "Local Foods"
-        cms = "".join(tree.xpath('//p[contains(text(), "Coming Soon!")]/text()'))
+        cms = "".join(tree.xpath('//span[contains(text(), "COMING SOON!")]/text()'))
         if cms:
             hours_of_operation = "Coming Soon"
 
@@ -88,7 +91,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)
