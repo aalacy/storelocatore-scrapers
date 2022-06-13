@@ -305,7 +305,7 @@ def fetch_data():
                                 )
                     for recc in gen_hours(transform_types(store)):
                         yield recc
-        if fountNothing:
+        if foundNothing:
             search.found_nothing()
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
