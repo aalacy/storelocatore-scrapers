@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from sgselenium import SgFirefox
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from selenium.webdriver.common.by import By
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
