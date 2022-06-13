@@ -107,7 +107,10 @@ def ret_record(record):
         longitude = str(record["Coords"]["Lng"])
     except Exception:
         pass
-
+    if len(str(latitude)) <= 3:
+        latitude = MISSING
+    if len(str(longitude)) <= 3:
+        longitude = MISSING
     parsed = parser.parse_address_intl(raw_address)
     street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
     street_address = (
