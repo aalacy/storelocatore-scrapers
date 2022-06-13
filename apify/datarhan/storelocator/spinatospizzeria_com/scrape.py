@@ -1,8 +1,9 @@
 import os
+import ssl
 import json
 from lxml import etree
 from urllib.parse import urljoin
-import time
+from time import sleep
 
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
@@ -10,27 +11,42 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
 
 def fetch_data():
     start_url = "https://www.spinatospizzeria.com/locations-and-menus"
     domain = "spinatospizzeria.com"
 
-    with SgChrome(is_headless=True, seleniumwire_auto_config=False).driver() as driver:
+    with SgChrome(is_headless=True, seleniumwire_auto_config=False) as driver:
         driver.get(start_url)
-        time.sleep(15)
+        sleep(15)
         dom = etree.HTML(driver.page_source)
 
         data = (
             dom.xpath('//script[@id="popmenu-apollo-state"]/text()')[0]
             .split("APOLLO_STATE =")[-1]
             .strip()[:-1]
+            .split(";\n      window")[0]
         )
-        data = json.loads(data)
+        data = json.loads(data.split(";\n      window")[0])
 
         all_locations = [k for k in data.keys() if "RestaurantLocation:" in k]
         for k in all_locations:
             poi = data[k]
-            page_url = urljoin(start_url, poi["slug"])
+            poi_html = etree.HTML(poi["customLocationContent"])
+            url = poi_html.xpath('.//a[contains(text(), "Menu")]/@href')[0]
+            page_url = urljoin(start_url, url)
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
+            location_type = poi["__typename"]
+            if loc_dom.xpath('//span[contains(text(), "Temporarily Closed")]'):
+                location_type = "Temporarily Closed"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -43,7 +59,7 @@ def fetch_data():
                 country_code=poi["country"],
                 store_number=poi["id"],
                 phone=poi["displayPhone"],
-                location_type=poi["__typename"],
+                location_type=location_type,
                 latitude=poi["lat"],
                 longitude=poi["lng"],
                 hours_of_operation=" ".join(poi["schemaHours"]),

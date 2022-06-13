@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from sgselenium import SgFirefox
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from selenium.webdriver.common.by import By
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
@@ -56,17 +55,8 @@ def fetch_data():
                 )
             if "Closed-Closed" in hours_of_operation:
                 continue
-            try:
-                geo_link = driver.find_element(
-                    By.XPATH, '//div[@class="google-maps-link"]/a'
-                ).get_attribute("href")
-
-                log.info(f"GEO LINK: {geo_link}")
-                latitude = geo_link.split("ll=")[1].split(",")[0].strip()
-                longitude = geo_link.split("ll=")[1].split(",")[1].split("&")[0].strip()
-            except:
-                latitude = MISSING
-                longitude = MISSING
+            latitude = loc["geo"]["latitude"]
+            longitude = loc["geo"]["longitude"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
