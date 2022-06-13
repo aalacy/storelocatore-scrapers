@@ -1,10 +1,14 @@
 from bs4 import BeautifulSoup
 import re
+import ssl
+
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+ssl._create_default_https_context = ssl._create_unverified_context
 from sgselenium.sgselenium import SgChrome
 
 user_agent = (
