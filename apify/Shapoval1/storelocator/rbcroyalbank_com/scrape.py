@@ -27,6 +27,14 @@ def get_data(zips, sgw: SgWriter):
 
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("address") or "<MISSING>"
+        street_address = (
+            str(street_address)
+            .replace("&acirc;", "â")
+            .replace("&nbsp;", " ")
+            .replace("&amp;", "&")
+            .replace("&ocirc;", "ô")
+            .replace(",", "")
+        )
         city = j.get("city") or "<MISSING>"
         state = j.get("province") or "<MISSING>"
         postal = j.get("postalCode") or "<MISSING>"
@@ -60,13 +68,13 @@ def get_data(zips, sgw: SgWriter):
             for h in range(len(hours)):
                 day = (
                     str(h)
+                    .replace("0", "Sunday")
                     .replace("1", "Monday")
                     .replace("2", "Tuesday")
                     .replace("3", "Wednesday")
                     .replace("4", "Thursday")
                     .replace("5", "Friday")
                     .replace("6", "Saturday")
-                    .replace("0", "Sunday")
                 )
                 opens = hours[h][0]
                 closes = hours[h][1]

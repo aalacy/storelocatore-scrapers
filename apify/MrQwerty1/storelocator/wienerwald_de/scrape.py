@@ -14,16 +14,6 @@ def get_urls():
     return tree.xpath("//div[@class='col-md-6']/a/@href")
 
 
-def get_coords_from_embed(text):
-    try:
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    return latitude, longitude
-
-
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
@@ -47,9 +37,6 @@ def get_data(page_url, sgw: SgWriter):
         .strip()
     )
 
-    text = "".join(tree.xpath("//iframe/@src"))
-    latitude, longitude = get_coords_from_embed(text)
-
     hours = tree.xpath("//h3[contains(text(), 'Unsere')]/following-sibling::a/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = ";".join(hours)
@@ -61,8 +48,6 @@ def get_data(page_url, sgw: SgWriter):
         city=city,
         zip_postal=postal,
         country_code=country_code,
-        latitude=latitude,
-        longitude=longitude,
         phone=phone,
         locator_domain=locator_domain,
         raw_address=raw_address,
