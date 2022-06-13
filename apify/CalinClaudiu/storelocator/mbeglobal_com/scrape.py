@@ -107,9 +107,9 @@ def ret_record(record):
         longitude = str(record["Coords"]["Lng"])
     except Exception:
         pass
-    if len(str(latitude))<=3:
+    if len(str(latitude)) <= 3:
         latitude = MISSING
-    if len(str(longitude))<=3:
+    if len(str(longitude)) <= 3:
         longitude = MISSING
     parsed = parser.parse_address_intl(raw_address)
     country_code = parsed.country if parsed.country else MISSING
