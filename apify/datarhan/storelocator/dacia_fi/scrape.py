@@ -21,6 +21,9 @@ def fetch_data():
                 if v and v.split()[0].isdigit():
                     if len(v.split()) > 2:
                         phone = v
+        location_type = "Myynti"
+        if not poi["fieldData"]["56c9630f42145cae3f00bb74"]:
+            location_type = "Huolto"
 
         item = SgRecord(
             locator_domain=domain,
@@ -33,7 +36,7 @@ def fetch_data():
             country_code=poi["fieldData"]["Country"],
             store_number="",
             phone=phone,
-            location_type="",
+            location_type=location_type,
             latitude=poi["coords"][0],
             longitude=poi["coords"][1],
             hours_of_operation="",
