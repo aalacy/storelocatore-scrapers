@@ -19,7 +19,7 @@ def fetch_data():
         "https://www.dacia.lv/lv/dealerlocator.html": "https://dsi-dl.makolab.pl/service/dealers.svc/dealers/DACIA_LV?callback=jQuery11020861862962665902_1655058360663&_=1655058360664",
         "https://www.dacia.lt/dealerlocator.html": "https://dsi-dl.makolab.pl/service/dealers.svc/dealers/DACIA_LT?callback=jQuery110207269970262208378_1655058487198&_=1655058487199",
     }
-    domain = "renault.co.za"
+    domain = "dacia.gr"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -44,9 +44,9 @@ def fetch_data():
                 city=poi["City"],
                 state="",
                 zip_postal=poi["Postcode"],
-                country_code=poi["CountryName"],
+                country_code=page_url.split("/")[2].split(".")[-1],
                 store_number=poi["UniqueId"],
-                phone=poi["Phone"],
+                phone=poi["Phone"].split(",")[0].split("i")[0],
                 location_type="",
                 latitude=poi["Latitude"],
                 longitude=poi["Longitude"],

@@ -8,11 +8,11 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for _zip in search:
         json_data = {
-            "radius": 60,
+            "radius": 12,
             "address": "",
             "city": "",
             "state": "",

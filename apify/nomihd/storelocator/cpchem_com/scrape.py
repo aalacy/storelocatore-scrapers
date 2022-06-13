@@ -54,15 +54,24 @@ def fetch_data():
                 continue
 
             location_name = store_type
-            street_address = (
-                " ".join(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
-                .strip(",. ")
-                .strip()
-                .replace(
-                    "Chevron Phillips Global Sales FZE Dubai Airport Free Zone,", ""
+            address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath(
+                            './/span[@itemprop="streetAddress"]//text()'
+                        )
+                    ],
                 )
-                .strip()
             )
+
+            add_list = []
+            for add in address:
+                if "Chevron Phillips" not in "".join(add).strip():
+                    add_list.append("".join(add).strip())
+
+            street_address = ", ".join(add_list).strip()
             city = (
                 "".join(store.xpath('.//span[@itemprop="addressLocality"]/text()'))
                 .strip(",. ")
