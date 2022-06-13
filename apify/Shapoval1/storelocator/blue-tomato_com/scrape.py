@@ -73,6 +73,9 @@ def fetch_data(sgw: SgWriter):
                 cls = "".join(tree.xpath('//span[contains(text(), "closed")]/text()'))
                 if cls and hours_of_operation == "<MISSING>":
                     hours_of_operation = "Closed"
+                cms = "".join(tree.xpath('//img[contains(@src, "opening")]/@src'))
+                if cms:
+                    hours_of_operation = "Coming Soon"
             except:
 
                 location_name = j.get("shopname")

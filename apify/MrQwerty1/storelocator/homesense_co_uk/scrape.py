@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
 
 
 def get_international(line):
@@ -37,14 +38,17 @@ def get_urls():
 def get_data(slug, sgw: SgWriter, retry=0):
     page_url = f"https://www.homesense.com{slug}"
     r = session.get(page_url)
+    logger.info(f"{page_url}: {r}")
     tree = html.fromstring(r.text)
     try:
         d = tree.xpath("//div[@class='store-details-panel']")[0]
     except IndexError:
         if retry == 3:
+            logger.info(f"{page_url} was skipped!!!!")
             return
         else:
             retry += 1
+            logger.info(f"{page_url}: Retry #{retry}")
             get_data(slug, sgw, retry)
             return
 
@@ -86,6 +90,7 @@ def get_data(slug, sgw: SgWriter, retry=0):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
+    logger.info(f"{len(urls)} URLs to crawl...")
 
     with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
@@ -95,6 +100,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.homesense.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="homesense.com")
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

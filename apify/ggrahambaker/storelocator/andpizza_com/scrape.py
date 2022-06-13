@@ -1,4 +1,5 @@
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -18,6 +19,10 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
+    url = "https://andpizza.com/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    coming_soon_list = soup.findAll("article", {"data-coming-soon": "true"})
     url = "https://andpizza.com/wp-content/themes/andpizza/assets/js/scripts.js?ver=06072021"
     log.info("Fetching the Bearer Token...")
     r = session.get(url, headers=headers)
@@ -40,7 +45,9 @@ def fetch_data():
     }
     loclist = session.get(api_url, headers=headers_2).json()["data"]
     for loc in loclist:
-        location_name = loc["name"]
+        location_name = loc["name"].replace("&pizza //", "")
+        if location_name in coming_soon_list:
+            continue
         log.info(location_name)
         addy = loc["location"]
         street_address = addy["address1"]

@@ -1,12 +1,8 @@
-from lxml import etree
-from time import sleep
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -20,22 +16,33 @@ def fetch_data():
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
         page_url = f"https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html/l/{city.lower()}/{street_address.lower().replace(' ', '-')}/{store_number}"
-        with SgFirefox() as driver:
-            try:
-                driver.get(page_url)
-            except Exception:
-                continue
-            sleep(10)
-            loc_dom = etree.HTML(driver.page_source)
-
-        hoo = loc_dom.xpath(
-            '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        poi_url = f"https://uberall.com/api/storefinders/ALDINORDDE_UimhY3MWJaxhjK9QdZo3Qa4chq1MAu/locations?v=20211005&language=de&locationIds={store_number}"
+        poi_data = session.get(poi_url).json()
+        hoo = []
+        days_dict = {
+            7: "Sunday",
+            1: "Monday",
+            2: "Tuesday",
+            3: "Wednesday",
+            4: "Thursday",
+            5: "Friday",
+            6: "Saturday",
+        }
+        hoo_data = poi_data["response"]["locations"][0]["openingHours"]
+        if hoo_data:
+            for e in hoo_data:
+                day = days_dict[e["dayOfWeek"]]
+                if e.get("closed"):
+                    hoo.append(f"{day}: closed")
+                else:
+                    opens = e["from1"]
+                    closes = e["to1"]
+                    hoo.append(f"{day}: {opens} - {closes}")
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html",
+            page_url=page_url,
             location_name=poi["name"],
             street_address=street_address,
             city=city,
