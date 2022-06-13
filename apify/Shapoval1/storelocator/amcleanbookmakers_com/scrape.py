@@ -27,6 +27,11 @@ def fetch_data(sgw: SgWriter):
             .replace("’", "'")
             .strip()
         )
+        if street_address == "177 Crumlin Road":
+            street_address = "117 Crumlin Road"
+        if street_address == "37 Holywood Road":
+            street_address = "37 Holywoord Road"
+
         city = "".join(d.xpath(".//ul/li[last() - 1]/text()")).replace("\n", "").strip()
         postal = "".join(d.xpath(".//ul/li[last()]/text()")).replace("\n", "").strip()
         country_code = "UK"
@@ -41,22 +46,10 @@ def fetch_data(sgw: SgWriter):
         js = json.loads(js_block)
 
         for j in js:
-            ad = (
-                "".join(j.get("address"))
-                .replace("\n", " ")
-                .replace("\r", " ")
-                .replace("140 Petershill", "140 Peter's Hill")
-                .replace(
-                    "Unit 20, Kings Square Shopping Centre",
-                    "Unit 20, King's Square Shopping Centre",
-                )
-                .replace("117 Crumlin Road", "177 Crumlin Road")
-                .replace("37 Holywoord Road", "37 Holywood Road")
-                .replace("430 Newtownards Raoad", "430 Newtownards Road")
-                .replace("155 Cormac Street", "155 Cromac Street")
-                .strip()
-            )
-            if ad.find(f"{street_address}") != -1:
+            ad_h = j.get("body")
+            h = html.fromstring(ad_h)
+            str_adr = "".join(h.xpath("//p/text()[1]")).replace("\n", "").strip()
+            if str_adr.find(f"{street_address}") != -1:
                 latitude = j.get("point").get("lat")
                 longitude = j.get("point").get("lng")
 
