@@ -189,7 +189,6 @@ def parse(data):
     MISSING = SgRecord.Missing
     try:
         parsed = parser.parse_address_intl(rawa)
-        country_code = parsed.country if parsed.country else MISSING
         street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
         street_address = (
             (street_address + ", " + parsed.street_address_2)
