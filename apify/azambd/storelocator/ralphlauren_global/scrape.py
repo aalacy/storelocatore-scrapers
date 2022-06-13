@@ -103,7 +103,7 @@ def fetch_stores():
                 )
                 log.info(f"{countryCount}==> {cityCount}. scrapping city {len(pages)}")
                 for page in pages:
-                    with SgFirefox() as driver:
+                    with SgFirefox(driver_wait_timeout=100) as driver:
                         driver.get(f"{website}{page}")
                         body = html.fromstring(driver.page_source, "lxml")
                         dataSet = body.xpath(
@@ -141,7 +141,7 @@ def fetch_data():
 
         if location_name == MISSING:
             log.info(f"Fetching page_url by SgFireFox: {page_url} ...")
-            with SgFirefox() as driver:
+            with SgFirefox(driver_wait_timeout=100) as driver:
                 driver.get(page_url)
                 body = html.fromstring(driver.page_source, "lxml")
                 jsonData = body.xpath(
@@ -164,6 +164,13 @@ def fetch_data():
                             .replace("\n", " ")
                             .strip()
                         )
+                jsonDataAddr = body.xpath(
+                    '//script[contains(@type, "application/ld+json")]/text()'
+                )[4]
+
+                dataforaddr = json.loads(jsonDataAddr)
+                street_address = dataforaddr["address"]["streetAddress"]
+                street_address = street_address.replace("," + zip_postal, "")
 
         yield SgRecord(
             locator_domain=DOMAIN,

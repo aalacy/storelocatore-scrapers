@@ -43,16 +43,18 @@ def fetch_data():
             address = temp[0].get_text(separator="|", strip=True).split("|")
             raw_address = strip_accents(address[-2] + " " + address[-1])
             hours_of_operation = loc.text.split("ÖPPETTIDER")[1]
-            hours_of_operations = (
+            hours_of_operation = (
                 BeautifulSoup(hours_of_operation, "html.parser")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .replace("\n", "")
             )
 
-            hours_of_operations = hours_of_operations.split("Bilförsäljning:")[1].split(
-                "Butik"
-            )[0]
+            hours_of_operation = (
+                hours_of_operation.split("Bilförsäljning:")[1]
+                .split("Butik")[0]
+                .replace("00L", "00 L")
+            )
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -67,7 +69,7 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = "BE"
+            country_code = "SE"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

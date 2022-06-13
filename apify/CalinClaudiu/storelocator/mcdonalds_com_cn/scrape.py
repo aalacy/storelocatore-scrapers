@@ -820,9 +820,16 @@ def fix_comma(x):
 
 def fix_ph(x):
     try:
-        return x.split(":")[0]
+        x = x.split(":")[0]
     except Exception:
-        return x
+        pass
+
+    try:
+        x = x.split("-")[0]
+    except Exception:
+        pass
+
+    return x
 
 
 def scrape():
