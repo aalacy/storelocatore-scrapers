@@ -111,6 +111,7 @@ def fetch_data():
             lng = "<MISSING>"
         city = city.replace("&#39;", "'")
         name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
         if Closed is False:
             yield SgRecord(
                 locator_domain=website,
