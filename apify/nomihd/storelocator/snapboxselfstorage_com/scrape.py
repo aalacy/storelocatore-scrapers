@@ -70,45 +70,62 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store_sel.xpath("//address//text()")],
+        temp_address = store_sel.xpath("//address")
+        if len(temp_address) > 0:
+            full_address = list(
+                filter(
+                    str,
+                    [x.strip() for x in temp_address[0].xpath(".//text()")],
+                )
             )
-        )
 
-        raw_address = "<MISSING>"
-
-        full_address = store_info
         street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
         location_name = "".join(store_sel.xpath("//h1/text()")).strip()
 
-        phone = (
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath('//div[@class="contact"]//text()')
-                    ],
-                )
-            )[-3]
-            .strip()
-            .replace("Current Customers:", "")
-            .strip()
+        temp_phone = list(
+            filter(
+                str,
+                [x.strip() for x in store_sel.xpath('//div[@class="contact"]//text()')],
+            )
         )
+        phone = "<MISSING>"
+        for ph in temp_phone:
+            if "Current Customers" in ph:
+                phone = ph.strip().replace("Current Customers:", "").strip()
+
         store_number = page_url.split("-")[-1].strip().replace(".html", "").strip()
 
         location_type = "<MISSING>"
+        if (
+            "Coming Soon"
+            in "".join(
+                store_sel.xpath('//div[@id="facility-details"]//p//text()')
+            ).strip()
+        ):
+            location_type = "Coming Soon"
 
-        hours_of_operation = (
-            "; ".join(store_sel.xpath('//div[@class="hours"]//text()'))
-            .split("Gate Hours:")[0]
-            .strip("; ")
-            .replace("Office Hours:;", "")
-            .strip()
+        temp_hours = store_sel.xpath(
+            '//div[@class="hours"]/p[./strong[contains(text(),"Office Hours")]]'
         )
+        if len(temp_hours) > 0:
+            hours_of_operation = (
+                "; ".join(
+                    list(
+                        filter(
+                            str,
+                            [x.strip() for x in temp_hours[0].xpath("text()")],
+                        )
+                    )
+                )
+                .strip()
+                .split("Gate Hours:")[0]
+                .strip("; ")
+                .replace("Office Hours:;", "")
+                .strip()
+            )
+        else:
+            hours_of_operation = "<MISSING>"
 
         latitude, longitude = "<MISSING>", "<MISSING>"
 
@@ -127,7 +144,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 

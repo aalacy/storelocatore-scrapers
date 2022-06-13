@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+import lxml.html
 
 DOMAIN = "o2fitnessclubs.com"
 BASE_URL = "https://www.o2fitnessclubs.com"
@@ -18,41 +18,16 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
 MISSING = "<MISSING>"
-
-
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url):
     log.info("Pull content => " + url)
     HEADERS["Referer"] = url
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
+    sel = lxml.html.fromstring(req.text)
+    return soup, sel
 
 
 def parse_hours(element):
@@ -60,7 +35,8 @@ def parse_hours(element):
         return MISSING
     days = [val.text for val in element.find_all("p", text=re.compile(r"day.*"))]
     hours = [
-        val.text for val in element.find_all("h5", text=re.compile(r"\d{1,2}\s+am|pm"))
+        val.text
+        for val in element.find_all("h5", text=re.compile(r"\d{1,2}\s+am|pm|Closed"))
     ]
     hoo = []
     for i in range(len(days)):
@@ -73,7 +49,7 @@ def parse_hours(element):
 def fetch_store_urls():
     log.info("Fetching store URL")
     store_urls = []
-    soup = pull_content(LOCATION_URL)
+    soup, sel = pull_content(LOCATION_URL)
     content = soup.find_all("div", {"class": "hs-accordion__item-content"})
     for row in content:
         stores = row.find("ul").find_all("a")
@@ -101,28 +77,44 @@ def fetch_data():
         page_url = page_url.replace("?hsLang=en", "")
         if "wilmington-mayfaire-town-center" in page_url:
             continue
-        soup = pull_content(page_url)
+        soup, sel = pull_content(page_url)
         comming_soon = soup.find("div", {"class": "location-description"})
         if comming_soon and "coming soon" in comming_soon.text.strip().lower():
             continue
+
+        if (
+            "coming soon"
+            in "".join(
+                sel.xpath('//div[@class="location_fullwidth_header_content"]/p/text()')
+            )
+            .strip()
+            .lower()
+        ):
+            continue
         location_name = soup.find("title").text.strip()
-        raw_address = (
-            soup.find("div", {"class": "location-details"})
-            .get_text(strip=True, separator=",")
-            .split(",")
-        )
-        phone = raw_address[-1]
-        raw_address = ", ".join(raw_address[:-1]).strip()
-        street_address, city, state, zip_postal = getAddress(raw_address)
+
+        phone = "".join(sel.xpath('//div[@class="location-phone"]//text()')).strip()
+
+        street_address = "".join(
+            sel.xpath('//div[@class="street-address"]//text()')
+        ).strip()
+        city_state_zip = "".join(
+            sel.xpath('//div[@class="city-state-zip"]//text()')
+        ).strip()
+        city = city_state_zip.split(",")[0].strip()
+        state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
+        zip_postal = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
         country_code = "US"
-        store_number = re.search(
-            r"\?store_id=(\d+)",
-            soup.find("a", {"href": re.compile(r"\?store_id=\d+")})["href"],
-        ).group(1)
+        try:
+            store_number = re.search(
+                r"\?store_id=(\d+)",
+                soup.find("a", {"href": re.compile(r"\?store_id=\d+")})["href"],
+            ).group(1)
+        except:
+            store_number = MISSING
         hours_of_operation = parse_hours(soup.find("div", {"class": "location-hours"}))
         latitude, longitude = get_latlong(soup)
         location_type = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
@@ -138,7 +130,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 

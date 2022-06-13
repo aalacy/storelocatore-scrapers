@@ -44,8 +44,10 @@ def fetch_data():
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         hours = soup.find("ul", {"id": "hours"}).text.replace("pm", "pm ")
-        if "closing due" in hours:
+        if "closing due" in hours or " closed " in hours:
             hours = "Temporarily Closed"
+        if "coming" in hours:
+            hours = "Coming Soon"
         try:
             hours = hours.split("half", 1)[0]
         except:

@@ -179,6 +179,13 @@ def fetch_data():
             if "@" in city or len(city) < 2:
                 city = "<MISSING>"
             state = state.replace(" Cdx 3", "")
+            if "/" in phone:
+                phone = phone.split("/")[0]
+            phone = phone.replace(" DOM", "")
+            add = add.replace("&#39;", "'")
+            phone = phone.replace(" (0)", "")
+            if ", Av Mare" in add:
+                add = add.split(",")[1].strip()
             if LocFound:
                 yield SgRecord(
                     locator_domain=website,

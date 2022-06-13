@@ -1,112 +1,84 @@
-import csv
-import re
-from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
 website = "purcelltire_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
+DOMAIN = "https://www.purcelltire.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    final_data = []
-    pattern = re.compile(r"\s\s+")
     if True:
-        url = "https://www.purcelltire.com/Contact/Find-Us?nav=%2f"
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"id": "LocationListView"}).findAll(
-            "div", {"class": "loclisting type0"}
-        )
+        url = "https://www.purcelltire.com/stores/"
+        r = session.get(url, headers=headers)
+        loclist = r.text.split("m035_AddNewRetailer(")[1:]
         for loc in loclist:
-            temp = loc.find("div", {"id": "info"})
-            store = loc["id"]
-            title = temp.find("div", {"class": "locationInfo"}).find("strong").text
+            loc = loc.split("')")[0].split("','")
+            page_url = DOMAIN + loc[7]
+            log.info(page_url)
+            phone = loc[10].split(",'")[-1]
+            address = loc[6]
             address = (
-                temp.find("div", {"class": "locationInfo"})
+                BeautifulSoup(address, "html.parser")
                 .get_text(separator="|", strip=True)
                 .split("|")
             )
-            street = address[2]
-            city = address[3].split(",", 1)[0]
-            address = address[3].split(",", 1)[1].split()
-            state = address[0]
-            pcode = address[1]
-            link = temp.find("a")["href"]
-            phone = (
-                loc.find("div", {"class": "contactInfo"})
-                .find("div", {"class": "locphone"})
-                .find("a")
-                .text
+            street_address = address[1]
+            location_name = address[0]
+            address = address[0].split(",")
+            city = address[0]
+            state = address[1].replace("(Mall)", "")
+            zip_postal = loc[-1]
+            store_number = loc[0].split(",'")[0]
+            latitude = loc[1]
+            longitude = loc[2]
+            country_code = "US"
+            hours_of_operation = (
+                BeautifulSoup(loc[-2], "html.parser")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            hours = loc.find("div", {"class": "locationhours"}).text.replace(
-                "Hours", ""
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-            hours = re.sub(pattern, "\n", hours).replace("\n", " ").strip()
-            lat = loc.find("div", {"class": "locLink"}).find("span")["lat"]
-            longt = loc.find("div", {"class": "locLink"}).find("span")["lon"]
-            final_data.append(
-                [
-                    "https://www.purcelltire.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
-        return final_data
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

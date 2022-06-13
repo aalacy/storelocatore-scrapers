@@ -48,6 +48,8 @@ def fetch_data():
                 if "**" in location_name:
                     location_type = "Temporarily Closed"
                 location_name = location_name.replace("*", "")
+                if not location_name:
+                    continue
                 log.info(location_name)
                 street_address = strip_accents(loc[1])
                 if location_type == "Franchise store":

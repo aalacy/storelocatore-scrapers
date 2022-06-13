@@ -1,147 +1,111 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://locations.bonefishgrill.com/search"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    for cnt in range(0, 5000, 10):
+        params = {
+            "l": "en",
+            "offset": str(cnt),
+        }
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["response"]["entities"]
 
-        for row in data:
-            writer.writerow(row)
+        for j in js:
+            j = j.get("profile") or {}
 
+            a = j.get("address") or {}
+            adr1 = a.get("line1") or ""
+            adr2 = a.get("line2") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = a.get("city")
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = "US"
+            try:
+                store_number = j["meta"]["id"]
+            except KeyError:
+                store_number = SgRecord.MISSING
+            location_name = f"Bonefish Grill {city}, {state}"
+            page_url = j.get("c_pagesURL")
 
-def generate_links():
-    urls = []
-    session = SgRequests()
-    r = session.get("https://locations.bonefishgrill.com/")
-    tree = html.fromstring(r.text)
-    states = tree.xpath("//a[@class='Directory-listLink']/@href")
-    for s in states:
-        if s.find("/") != -1:
-            s = s.split("/")[0]
-        r = session.get(f"https://locations.bonefishgrill.com/{s}.json")
-        js = r.json()["directoryHierarchy"]
-        urls += list(get_urls(js))
+            try:
+                phone = j["mainPhone"]["display"]
+            except KeyError:
+                phone = SgRecord.MISSING
 
-    return urls
+            g = j.get("yextDisplayCoordinate") or {}
+            latitude = g.get("lat")
+            longitude = g.get("long")
 
+            _tmp = []
+            try:
+                hours = j["hours"]["normalHours"]
+            except:
+                hours = []
 
-def get_urls(states):
-    for state in states.values():
-        children = state["children"]
-        if children is None:
-            yield f"https://locations.bonefishgrill.com/{state['url']}.json"
-        else:
-            yield from get_urls(children)
+            for h in hours:
+                day = h.get("day")
+                isclosed = h.get("isClosed")
+                if isclosed:
+                    _tmp.append(f"{day}: Closed")
+                    continue
 
+                try:
+                    i = h["intervals"][0]
+                except:
+                    i = dict()
 
-def get_data(url):
-    session = SgRequests()
-    r = session.get(url)
-    j = r.json()["profile"]
+                start = str(i.get("start") or "").zfill(4)
+                end = str(i.get("end") or "").zfill(4)
+                start = start[:2] + ":" + start[2:]
+                end = end[:2] + ":" + end[2:]
+                if start != end:
+                    _tmp.append(f"{day}: {start}-{end}")
 
-    locator_domain = "https://www.bonefishgrill.com/"
-    page_url = url.replace(".json", "")
-    location_name = j.get("name") or "<MISSING>"
+            hours_of_operation = ";".join(_tmp)
 
-    a = j.get("address", {}) or {}
-    street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("region") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("countryCode") or "<MISSING>"
-    store_number = "<MISSING>"
-    phone = j.get("mainPhone").get("display") if j.get("mainPhone") else "<MISSING>"
-    loc = j.get("yextDisplayCoordinate", {}) or {}
-    latitude = loc.get("lat") or "<MISSING>"
-    longitude = loc.get("long") or "<MISSING>"
-    location_type = "<MISSING>"
-    days = j.get("hours", {}).get("normalHours") or []
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
-    _tmp = []
-    for d in days:
-        day = d.get("day")[:3].capitalize()
-        try:
-            interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            end = str(interval.get("end"))
+            sgw.write_row(row)
 
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
-            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-        except IndexError:
-            line = f"{day}  Closed"
-
-        _tmp.append(line)
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    ids = generate_links()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 10:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://bonefishgrill.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json",
+        "Referer": "https://locations.bonefishgrill.com/search?q=33.028385%2C-97.08672&qp=Flower%20Mound%2C%20Texas%2075022%2C%20United%20States&l=en",
+        "Alt-Used": "locations.stmtires.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

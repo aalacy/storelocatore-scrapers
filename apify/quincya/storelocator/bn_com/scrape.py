@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
 
     for postcode in search:
         base_link = (
-            "https://stores.barnesandnoble.com/_next/data/ljiqyYqTybLw6ZMrfqsEX/index.json?searchText=%s"
+            "https://stores.barnesandnoble.com/_next/data/ZFPeeQZn5Y9L3i9ZW92Ru/index.json?searchText=%s"
             % postcode
         )
         try:

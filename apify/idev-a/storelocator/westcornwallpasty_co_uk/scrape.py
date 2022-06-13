@@ -19,13 +19,15 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             addr = _["acf"]["location"]
+            if addr["latitude"] == "" and addr["longitude"] == "":
+                continue
             street_address = addr["address_line_1"]
             if addr["address_line_2"]:
                 street_address += " " + addr["address_line_2"]
             yield SgRecord(
-                page_url=_["link"],
+                page_url="https://westcornwallpasty.co.uk/find-us",
                 store_number=_["id"],
-                location_name=_["title"]["rendered"],
+                location_name=_["title"]["rendered"].replace("&#8211;", "-"),
                 street_address=street_address,
                 city=addr["city"],
                 zip_postal=addr["postcode"],

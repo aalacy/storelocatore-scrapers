@@ -9,7 +9,7 @@ import json
 
 logger = SgLogSetup().get_logger("hearusa_com")
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -17,7 +17,8 @@ headers = {
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
     max_search_distance_miles=100,
-    max_search_results=25,
+    expected_search_radius_miles=100,
+    max_search_results=100,
 )
 
 
@@ -30,7 +31,7 @@ def fetch_data():
             + str(clat)
             + "&lng="
             + str(clng)
-            + "&max_results=25&search_radius=100&filter=28"
+            + "&max_results=100&search_radius=100&filter=28"
         )
         try:
             r = session.get(url, headers=headers)
@@ -59,9 +60,11 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<h2 class="centers__header__title">' in line2:
-                name = line2.split('<h2 class="centers__header__title">')[1].split("<")[
-                    0
-                ]
+                name = (
+                    line2.split('<h2 class="centers__header__title">')[1]
+                    .split("<")[0]
+                    .replace("&#8211;", "-")
+                )
             if '"lat":"' in line2:
                 lat = line2.split('"lat":"')[1].split('"')[0]
                 lng = line2.split('"lng":"')[1].split('"')[0]
@@ -75,8 +78,27 @@ def fetch_data():
                     add = add.strip()
                 except:
                     add = add.strip()
-            if "Existing Customers:" in line2:
-                phone = line2.split("Existing Customers:")[1].split("<")[0].strip()
+                add = (
+                    add.split("N The")[0]
+                    .replace("SUITE", "Suite")
+                    .replace("STE", "Suite")
+                    .replace("Ste", "Suite")
+                    .replace("Sumner Plaza", "")
+                    .replace("313 #313", "313")
+                    .replace("B2 Unit B-2", "B2")
+                    .strip()
+                )
+                words = ["Suite", "Building", "#", "Unit", "C-", "B-"]
+                for word in words:
+                    if add.count(word) > 1:
+                        add = add[: add.rfind(word)].strip()
+            if "Customers:" in line2:
+                if "New Customers:" in line2:
+                    phone = line2.split("New Customers:")[1].split("<")[0].strip()
+                elif "Existing Customers:" in line2:
+                    phone = line2.split("Existing Customers:")[1].split("<")[0].strip()
+                else:
+                    phone = line2.split("Customers:")[1].split("<")[0].strip()
             if '<div class="centers__header__hours">' in line2:
                 Found = True
             if Found and "</div>" in line2:
@@ -87,6 +109,11 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+        hours = hours.split("; Sun")[0].strip()
+
+        if lat != "" and lng != "":
+            search.found_location_at(lat, lng)
+
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

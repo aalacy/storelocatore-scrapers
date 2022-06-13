@@ -4,7 +4,7 @@ from sglogging import sglog
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -191,5 +191,12 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-    fetch_data(writer)
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        fetch_data(writer)

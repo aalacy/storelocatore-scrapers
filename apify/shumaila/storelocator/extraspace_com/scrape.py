@@ -13,23 +13,86 @@ headers = {
 
 
 def fetch_data():
-
+    statelist = [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "DC",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming",
+        "Rhodes Island",
+    ]
     titlelist = []
-    for i in range(1, 7):
-        statelink = "https://www.extraspace.com/sitemap-" + str(i) + ".aspx"
+
+    for st in statelist:
+        statelink = (
+            "https://www.extraspace.com/sitemap/states/"
+            + st.lower().replace(" ", "-").strip()
+        )
+
         try:
             r1 = session.get(statelink, headers=headers)
         except:
             pass
-        soup1 = BeautifulSoup(r1.text, "html.parser")
-        maindiv1 = soup1.find("div", {"id": "acc-main"})
-        link_list = maindiv1.findAll("a")
+        try:
+            soup1 = BeautifulSoup(r1.text, "html.parser")
+        except:
+            continue
+        link_list = soup1.select("a[href*=facilities]")
+
         for alink in link_list:
-            if alink.text.find("Extra Space Storage #") > -1:
+
+            if alink["href"].split("/")[-2].isdigit():
                 link = "https://www.extraspace.com" + alink["href"]
 
-                r2 = session.get(link, headers=headers)
                 try:
+                    r2 = session.get(link, headers=headers)
+
                     content = r2.text.split(' "@type": "SelfStorage",', 1)[1].split(
                         "</script>"
                     )[0]

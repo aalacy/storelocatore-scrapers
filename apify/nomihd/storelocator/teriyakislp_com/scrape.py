@@ -8,6 +8,9 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import time
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "teriyakislp.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)

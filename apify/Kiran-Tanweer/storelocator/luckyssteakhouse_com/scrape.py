@@ -70,13 +70,13 @@ def fetch_data():
             hours = (
                 hours.replace("\n", " ")
                 .replace("Our MenuRestaurant Hours", "")
-                .repace("“*Now Accepting reservations, call to inquire**", "")
+                .replace("“*Now Accepting reservations, call to inquire**", "")
                 .strip()
             )
 
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://someburros.com/locations/",
+                page_url=loc,
                 location_name=title,
                 street_address=street.strip(),
                 city=city.strip(),

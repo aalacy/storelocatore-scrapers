@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://api.freshop.com/1/stores?app_key=sedanos&has_address=true&limit=-1&token=2bd46b38a96ac6cd7a34d224de2bbd1c"
+    base_link = "https://api.freshop.com/1/stores?app_key=sedanos&has_address=true&is_selectable=true&limit=-1&token=ee3b57c81d5d5935630a5291523cf3ee"
 
     session = SgRequests()
     stores = session.get(base_link, headers=headers).json()["items"]

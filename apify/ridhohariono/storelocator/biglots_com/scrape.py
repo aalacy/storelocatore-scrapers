@@ -8,7 +8,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "biglots.com"
 BASE_URL = "https://local.biglots.com/"
-LOCATION_URL = "https://local.biglots.com/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -42,7 +41,7 @@ def parse_hours(table):
 def fetch_store():
     log.info("Fetching store URL")
     store_urls = []
-    soup = pull_content(LOCATION_URL)
+    soup = pull_content(BASE_URL)
     state_links = soup.select("ul.Directory-listLinks a.Directory-listLink")
     for state_link in state_links:
         parent_page = pull_content(BASE_URL + state_link["href"])
@@ -92,7 +91,9 @@ def fetch_data():
         state = store["state"]
         zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
         country_code = soup.find("address", {"id": "address"})["data-country"]
-        store_number = MISSING
+        store_number = soup.find("button", {"class": "Hero-button js-favorite-store"})[
+            "value"
+        ]
         phone = soup.find("div", {"id": "phone-main"})
         if not phone:
             phone = MISSING

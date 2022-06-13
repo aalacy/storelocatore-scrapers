@@ -3,28 +3,30 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("millerpaint")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.millerpaint.com/"
+base_url = "https://www.millerpaint.com/stores/"
 
 
 def fetch_data():
-    locator_domain = "https://www.millerpaint.com/"
-    base_url = "https://www.millerpaint.com/stores/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.uabb-masonary-cat-41")
+        links = soup.select("div.uabb-post-wrapper")
         logger.info(f"{len(links)} found")
         for link in links:
             page_url = link.a["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             coord = (
-                sp1.select_one("div.fl-html iframe")["data-src"]
+                sp1.select_one("div.fl-html iframe")["src"]
                 .split("!2d")[1]
                 .split("!2m")[0]
                 .split("!3d")
@@ -56,7 +58,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

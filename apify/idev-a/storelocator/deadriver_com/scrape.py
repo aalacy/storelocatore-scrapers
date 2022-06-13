@@ -1,6 +1,9 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sglogging import SgLogSetup
 import json
 
@@ -19,95 +22,61 @@ headers = {
 locator_domain = "https://www.deadriver.com/"
 page_url = "https://www.deadriver.com/contact-us"
 
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=None,
-    max_search_results=None,
-)
 
+def fetch_records(search):
+    with SgRequests() as session:
+        maxZ = search.items_remaining()
+        total = 0
+        code_list = ["04947"] + [code for code in search]
+        for code in code_list:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            logger.info(("Pulling Zip Code %s..." % code))
+            url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
+            data = {"zipCode": str(code)}
+            res = session.post(url, headers=headers, json=data).json()
+            if not res["d"]:
+                continue
+            locations = json.loads(res["d"])
+            total += len(locations)
+            for _ in locations:
+                search.found_location_at(
+                    _["Latitude"],
+                    _["Longitude"],
+                )
+                street_address = _["AddressOne"]
+                if _["AddressTwo"]:
+                    street_address += ", " + _["AddressTwo"]
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=_["CompanyName"],
+                    street_address=street_address,
+                    city=_["City"],
+                    state=_["State"],
+                    zip_postal=_["ZipCode"],
+                    country_code="US",
+                    phone=_["PhoneOne"],
+                    latitude=_["Latitude"],
+                    longitude=_["Longitude"],
+                    locator_domain=locator_domain,
+                )
+                progress = (
+                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+                )
 
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
-    for code in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
-        data = {"zipCode": str(code)}
-        res = session.post(url, headers=headers, json=data, timeout=15).json()
-        if not res["d"]:
-            continue
-        locations = json.loads(res["d"])
-        total += len(locations)
-        for store in locations:
-            search.found_location_at(
-                store["Latitude"],
-                store["Longitude"],
-            )
-            store["street"] = store["AddressOne"]
-            if store["AddressTwo"]:
-                store["street"] += ", " + store["AddressTwo"]
-            store["country"] = "US"
-            yield store
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
-            )
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.ConstantField(page_url),
-        location_name=sp.MappingField(
-            mapping=["CompanyName"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["Latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["Longitude"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["City"],
-        ),
-        state=sp.MappingField(
-            mapping=["State"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["ZipCode"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["PhoneOne"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MissingField(),
-        location_type=sp.MissingField(),
-        store_number=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+                logger.info(
+                    f"found: {len(locations)} | total: {total} | progress: {progress}"
+                )
 
 
 if __name__ == "__main__":
-    scrape()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+    )
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        for rec in fetch_records(search):
+            writer.write_row(rec)

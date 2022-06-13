@@ -32,6 +32,8 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = ad.split(",")[-1].strip()
         city = a.city or "<MISSING>"
+        if street_address == "71 James Snow Pkwy":
+            city, postal = postal, city
         latitude = j.get("loc_lat")
         longitude = j.get("loc_long")
         phone = j.get("phone") or "<MISSING>"

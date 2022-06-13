@@ -87,6 +87,11 @@ def fetch_data():
         coming_soon = store.xpath(
             'div[@class="shops-contact"]//p[contains(text(),"OPEN")]'
         )
+        if not coming_soon:
+            coming_soon = store.xpath(
+                'div[@class="shops-contact"]//p[contains(text(),"COMING SOON!")]'
+            )
+
         if coming_soon:
             continue
 
@@ -119,6 +124,11 @@ def fetch_data():
             .replace(",,", ",")
             .strip()
             .split(", charleston@")[0]
+            .strip()
+            .replace("StreetBrooklyn", "Street, Brooklyn")
+            .split(", DAILY")[0]
+            .strip()
+            .split(", Weekdays")[0]
             .strip()
         )
         formatted_addr = parser.parse_address_intl(raw_address)
@@ -157,8 +167,28 @@ def fetch_data():
                 ],
             )
         )
+        if "HOURS" in "".join(hours).strip():
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath(
+                            "div[@class='shops-contact']//p[./strong[contains(text(),'HOURS')]]/following-sibling::p/text()"
+                        )
+                    ],
+                )
+            )
+        hours_of_operation = (
+            "; ".join(hours).replace("; :", ":").strip().split("(")[0].strip()
+        )
 
-        hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+        if "843.203.6139;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.replace("843.203.6139;", "").strip()
+            phone = "843.203.6139"
+
+        if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         map_link = "".join(
             store.xpath('div[@class="shops-contact"]//a[contains(@href,"maps")]/@href')

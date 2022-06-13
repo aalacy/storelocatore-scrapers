@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("")
@@ -12,7 +12,7 @@ _headers = {
 }
 
 locator_domain = "https://www.toysrus.es"
-base_url = "https://www.toysrus.es/store-finder?q=&page={}&latitude=40.416706&longitude=-3.7035825"
+base_url = "https://www.toysrus.es/store-finder?q=&page={}&latitude=37.09024&longitude=-95.712891"
 
 
 def fetch_records(http):

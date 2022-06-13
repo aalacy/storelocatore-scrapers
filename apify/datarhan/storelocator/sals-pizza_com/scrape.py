@@ -29,13 +29,23 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[div[div[div[p[contains(text(), "LOCATIONS")]]]]]/following-sibling::ul/li/a/@href'
+        '//div[div[div[div[p[contains(text(), "LOCATIONS")]]]]]/following-sibling::ul/li/a'
     )
-    for store_url in all_locations:
+    for poi_html in all_locations:
+        store_url = poi_html.xpath("@href")[0]
+        location_name = poi_html.xpath("text()")[0]
         if "coming-soon" in store_url:
             continue
+
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
+        o_soon = loc_dom.xpath('//p[contains(text(), "OPENING SOON FOR")]')
+        if o_soon:
+            continue
+
+        if loc_dom.xpath('//span[contains(text(), "Coming Soon")]'):
+            continue
+
         raw_address = loc_dom.xpath(
             "//div[h1]/following-sibling::div[1]/h2/span//text()"
         )
@@ -52,21 +62,29 @@ def fetch_data():
         zip_code = raw_address[1].split(", ")[-1].split()[-1]
         if len(zip_code.strip()) == 2:
             zip_code = ""
+        street_address = raw_address[0]
+        state = raw_address[1].split(", ")[-1].split()[0]
+        city = raw_address[1].split(", ")[0]
+        if state == "(inside":
+            zip_code = street_address.split()[-1]
+            city = location_name.split(",")[0]
+            state = location_name.split(",")[1]
+            street_address = street_address.split(city)[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=store_url,
-            location_name=loc_dom.xpath("//div/h1/span/span/text()")[0],
-            street_address=raw_address[0],
-            city=raw_address[1].split(", ")[0],
-            state=raw_address[1].split(", ")[-1].split()[0],
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
             zip_postal=zip_code,
-            country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            country_code="US",
+            store_number="",
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            location_type="",
+            latitude="",
+            longitude="",
             hours_of_operation=hoo,
         )
 

@@ -63,13 +63,8 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
-            mapping=["url"],
-            value_transform=lambda x: x.replace("None", "")
-            .replace("null", "")
-            .replace("Null", "")
-            .replace("none", "")
-            .replace("  ", " "),
-            is_required=False,
+            mapping=["name"],
+            value_transform=lambda x: "https://www.marks.com/en/stores/" + str(x),
         ),
         location_name=sp.MappingField(
             mapping=["displayName"],
@@ -108,6 +103,11 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(
             mapping=["workingHours"],
+            value_transform=lambda x: x.replace("\n", "; ")
+            .replace("\r", "; ")
+            .replace("\t", "; ")
+            .replace("; ; ; ", "; ")
+            .replace("; ; ", "; "),
         ),
         location_type=sp.MissingField(),
         raw_address=sp.MappingField(

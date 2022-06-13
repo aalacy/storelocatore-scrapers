@@ -57,7 +57,7 @@ def fetch_all_locs(zipcode):
             sleep(2)
             logger.info("zipcode - send_keys executed")
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
-            sleep(20)
+            sleep(25)
             logger.info("Search Button Clicked")
             driver.find_element_by_xpath('//input[@name="location"]').clear()
             code_dom = etree.HTML(driver.page_source)
