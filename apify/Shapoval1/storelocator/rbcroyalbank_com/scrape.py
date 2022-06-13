@@ -33,6 +33,7 @@ def get_data(zips, sgw: SgWriter):
             .replace("&nbsp;", " ")
             .replace("&amp;", "&")
             .replace("&ocirc;", "ô")
+            .replace(",", "")
         )
         city = j.get("city") or "<MISSING>"
         state = j.get("province") or "<MISSING>"
