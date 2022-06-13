@@ -6,9 +6,20 @@ from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
-import json
+from sgselenium import SgChrome
+import json  # noqa
+import ssl
+import time
 
 logger = SgLogSetup().get_logger("walmart_com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -62,54 +73,57 @@ def grab_json(soup):
             return json.loads(data)["store"]
 
 
-def other_source(session, state):
+def other_source(state):
     url = "https://www.walmart.com/store/directory"
-    main = SgRequests.raise_on_err(session.get(url, headers=headers))
-    try:
-        toprint = str(main.text.split("store-directory-container")[1])
-        logger.info(f"store-directory-container: {toprint}")  # noqa
-    except Exception:
-        pass
-    logger.info(f"{str(main.text)}")  # noqa
-    soup = b4(main.text, "lxml")
-    allstates = (
-        soup.find("div", {"class": "store-directory-container"})
-        .find("ul")
-        .find_all("a")
-    )
-    for county in allstates:
-        sec = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + county["href"], headers=headers)
-        )
-        sec = b4(sec.text, "lxml")
-        allcities = (
-            sec.find("div", {"class": "store-directory-container"})
+    main = None
+    with SgChrome() as driver:
+        driver.get(url)
+        time.sleep(5)
+        main = driver.page_source
+        # main = SgRequests.raise_on_err(session.get(url, headers=headers)).text # noqa
+        try:
+            toprint = str(main.split("store-directory-container")[1])
+            logger.info(f"store-directory-container: {toprint}")  # noqa
+        except Exception:
+            pass
+        logger.info(f"{str(main)}")  # noqa
+        soup = b4(main, "lxml")
+        allstates = (
+            soup.find("div", {"class": "store-directory-container"})
             .find("ul")
             .find_all("a")
         )
-        for city in allcities:
-            if city["href"].count("/") > 2:
-                if (
-                    str("https://www.walmart.com" + city["href"])
-                    == "https://www.walmart.com/store/directory/mo/st.-peters"
-                ):
-                    state.push_request(SerializableRequest(url="/store/5421"))
-                    state.push_request(SerializableRequest(url="/store/5427"))
-                    continue
-                tri = SgRequests.raise_on_err(
-                    session.get(
-                        "https://www.walmart.com" + city["href"], headers=headers
+        for county in allstates:
+            driver.get(str("https://www.walmart.com" + county["href"]))
+            sec = driver.page_source
+            time.sleep(5)
+            sec = b4(sec, "lxml")
+            allcities = (
+                sec.find("div", {"class": "store-directory-container"})
+                .find("ul")
+                .find_all("a")
+            )
+            for city in allcities:
+                if city["href"].count("/") > 2:
+                    if (
+                        str("https://www.walmart.com" + city["href"])
+                        == "https://www.walmart.com/store/directory/mo/st.-peters"
+                    ):
+                        state.push_request(SerializableRequest(url="/store/5421"))
+                        state.push_request(SerializableRequest(url="/store/5427"))
+                        continue
+                    driver.get(str("https://www.walmart.com" + city["href"]))
+
+                    tri = driver.page_source
+                    tri = b4(tri, "lxml")
+                    recs = tri.find("ul", {"class": "store-list-ul"}).find_all(
+                        "a", {"class": "storeBanner"}
                     )
-                )
-                tri = b4(tri.text, "lxml")
-                recs = tri.find("ul", {"class": "store-list-ul"}).find_all(
-                    "a", {"class": "storeBanner"}
-                )
-                for rec in recs:
-                    state.push_request(SerializableRequest(url=rec["href"]))
-            else:
-                state.push_request(SerializableRequest(url=city["href"]))
-    return True
+                    for rec in recs:
+                        state.push_request(SerializableRequest(url=rec["href"]))
+                else:
+                    state.push_request(SerializableRequest(url=city["href"]))
+        return True
 
 
 def fetch_other(session, state):
@@ -257,15 +271,13 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    state.get_misc_value("init", default_factory=lambda: other_source(session, state))
+    state.get_misc_value("init", default_factory=lambda: other_source(state))
     for item in fetch_other(session, state):
         for reccz in gen_hours(transform_types(item)):
             yield reccz
     maxZ = search.items_remaining()
     total = 0
-    for item in fetch_other(session, state):
-        for recc in gen_hours(transform_types(item)):
-            yield recc
+    foundNothing = True
     for code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
@@ -286,12 +298,15 @@ def fetch_data():
                     if store["geoPoint"]:
                         if store["geoPoint"]["latitude"]:
                             if store["geoPoint"]["longitude"]:
+                                foundNothing = False
                                 search.found_location_at(
                                     store["geoPoint"]["latitude"],
                                     store["geoPoint"]["longitude"],
                                 )
                     for recc in gen_hours(transform_types(store)):
                         yield recc
+        if foundNothing:
+            search.found_nothing()
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")

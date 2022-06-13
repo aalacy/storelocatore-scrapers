@@ -89,12 +89,18 @@ def fetch_data():
                             .strip()
                         )
 
-            latitude = "".join(
-                store_sel.xpath('//meta[@property="og:latitude"]//@content')
-            ).strip()
-            longitude = "".join(
-                store_sel.xpath('//meta[@property="og:longitude"]//@content')
-            ).strip()
+            latitude = (
+                store_req.text.split("markerLat&quot;:")[1]
+                .strip()
+                .split(",")[0]
+                .strip()
+            )
+            longitude = (
+                store_req.text.split("markerLng&quot;:")[1]
+                .strip()
+                .split(",")[0]
+                .strip()
+            )
 
             yield SgRecord(
                 locator_domain=locator_domain,

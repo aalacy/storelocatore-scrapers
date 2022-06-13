@@ -5,7 +5,7 @@ import ssl
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -475,7 +475,7 @@ def url_fix(url):
 
 def get_api_call(url):
     z = None
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(url)
         time.sleep(60)
         url = None
@@ -893,6 +893,7 @@ def scrape():
             mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
             multi_mapping_concat_with=" ",
             is_required=False,
+            part_of_record_identity=True,
         ),
     )
 

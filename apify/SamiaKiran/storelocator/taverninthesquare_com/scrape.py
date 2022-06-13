@@ -39,13 +39,14 @@ def fetch_data():
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
-                if "la carte brunch" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split("la carte brunch")[0]
+                if "à la carte brunch" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("à la carte brunch")[
+                        0
+                    ]
                 elif "(" in hours_of_operation:
                     hours_of_operation = hours_of_operation.split("(")[0]
             else:
-                hours_of_operation = MISSING
-                address = r.text.split("CONTACT")[1]
+                continue
             address = (
                 BeautifulSoup(address, "html.parser")
                 .find("div", {"data-testid": "richTextElement"})
@@ -80,6 +81,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            city = city.replace("Train Terminal", "").replace("Lakeway Commons", "")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

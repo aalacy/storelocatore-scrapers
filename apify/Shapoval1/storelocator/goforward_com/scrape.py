@@ -24,7 +24,9 @@ def fetch_data(sgw: SgWriter):
     ].values()
 
     for j in js["props"]["pageProps"]["initialState"]["clinics"]["clinics"].values():
-
+        virt = j.get("virtualOnly")
+        if virt:
+            continue
         location_name = j.get("name")
         location_type = "<MISSING>"
         a = j.get("address")

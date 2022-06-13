@@ -2,15 +2,11 @@ import ssl
 import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
-from selenium import webdriver  # noqa
-import undetected_chromedriver as uc  # noqa
+from sgselenium import SgFirefox
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from selenium.webdriver.common.by import By  # noqa
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from webdriver_manager.chrome import ChromeDriverManager  # noqa
-
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -22,83 +18,61 @@ MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-def get_driver(url, driver=None):
-    log.info("Driver Initiation")
-    options = webdriver.ChromeOptions()
-    options.add_argument("start-maximized")
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
-
-    driver.get(url)
-
-    return driver
-
-
 def fetch_data():
-    driver = get_driver(store_locator)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    loclist = soup.find("ul", {"id": "storelist"}).findAll("li")
-    for loc in loclist:
-        page_url = "https://www.therange.co.uk" + loc.find("a")["href"]
-        log.info(page_url)
-        driver = get_driver(page_url)
-        response = driver.page_source
-        temp = json.loads(
-            response.split('<script type="application/ld+json">')[1].split("</script>")[
-                0
-            ]
-        )
-        location_name = temp["name"]
-        phone = temp["telephone"]
-        address = temp["address"]
-        street_address = address["streetAddress"]
-        city = address["addressLocality"]
-        state = address["addressRegion"]
-        zip_postal = address["postalCode"]
-        country_code = address["addressCountry"]
-        hour_list = temp["openingHoursSpecification"]
-        hours_of_operation = ""
-        for hour in hour_list:
-            hours_of_operation = (
-                hours_of_operation
-                + " "
-                + hour["dayOfWeek"].replace("http://schema.org/", "")
-                + " "
-                + hour["opens"]
-                + "-"
-                + hour["closes"]
+    with SgFirefox() as driver:
+        driver.get(store_locator)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        loclist = soup.find("ul", {"id": "storelist"}).findAll("li")
+        for loc in loclist:
+            page_url = "https://www.therange.co.uk" + loc.find("a")["href"]
+            log.info(page_url)
+            driver.get(page_url)
+            response = driver.page_source
+            temp = json.loads(
+                response.split('<script type="application/ld+json">')[1].split(
+                    "</script>"
+                )[0]
             )
-        if "Closed-Closed" in hours_of_operation:
-            continue
-        try:
-            geo_link = driver.find_element(
-                By.XPATH, '//div[@class="google-maps-link"]/a'
-            ).get_attribute("href")
-
-            log.info(f"GEO LINK: {geo_link}")
-            latitude = geo_link.split("ll=")[1].split(",")[0].strip()
-            longitude = geo_link.split("ll=")[1].split(",")[1].split("&")[0].strip()
-        except:
-            latitude = MISSING
-            longitude = MISSING
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=MISSING,
-            phone=phone,
-            location_type=MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            location_name = temp["name"]
+            phone = temp["telephone"]
+            address = temp["address"]
+            street_address = address["streetAddress"]
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            zip_postal = address["postalCode"]
+            country_code = address["addressCountry"]
+            hour_list = temp["openingHoursSpecification"]
+            hours_of_operation = ""
+            for hour in hour_list:
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + hour["dayOfWeek"].replace("http://schema.org/", "")
+                    + " "
+                    + hour["opens"]
+                    + "-"
+                    + hour["closes"]
+                )
+            if "Closed-Closed" in hours_of_operation:
+                continue
+            latitude = loc["geo"]["latitude"]
+            longitude = loc["geo"]["longitude"]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
