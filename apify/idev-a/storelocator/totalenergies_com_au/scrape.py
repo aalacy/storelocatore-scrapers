@@ -42,9 +42,9 @@ def _d(store_number):
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(1000):
-            for b in range(1000):
-                for c in range(1000):
+        for a in range(30):
+            for b in range(100):
+                for c in range(100):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
@@ -59,6 +59,10 @@ def fetch_data():
                         loc = http.get(url, headers=_headers).json()
                         _ = loc["properties"]
                         addr = _["address"]
+                        raw_address = " ".join(addr["lines"])
+                        raw_address += " " + addr["city"]
+                        raw_address += " " + addr.get("zipcode")
+                        raw_address += " " + addr["country_code"]
                         hours = []
                         for key, hh in _["weekly_opening"].items():
                             if key.isdigit() and hh["hours"]:
@@ -71,21 +75,43 @@ def fetch_data():
                         if phone and ("contact" in phone.lower() or phone == "-"):
                             phone = ""
 
+                        if phone:
+                            if "@" in phone or str(phone) == "0" or str(phone) == "1":
+                                phone = ""
+                            else:
+                                phone = phone.split(",")[0].split(";")[0].split("/")[0]
+                                if phone.startswith("???."):
+                                    phone = phone.replace("???.", "")
+                                phone = phone.split("?")[0].strip()
+
+                        city = addr["city"]
+                        zip_postal = addr.get("zipcode")
+                        if "Excellium" in city:
+                            city = ""
+                        if city and city.isdigit():
+                            city = ""
+
+                        if city:
+                            city = city.split(",")[0]
+
+                        street_address = " ".join(addr["lines"]).strip()
+                        if street_address == "-":
+                            street_address = ""
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
-                            street_address=" ".join(addr["lines"]),
-                            city=addr["city"],
-                            state=addr.get("State"),
-                            zip_postal=addr.get("zipcode"),
+                            street_address=street_address,
+                            city=city,
+                            zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
-                            latitude=loc["geometry"]["coordinates"][0],
-                            longitude=loc["geometry"]["coordinates"][1],
+                            latitude=loc["geometry"]["coordinates"][1],
+                            longitude=loc["geometry"]["coordinates"][0],
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
+                            raw_address=raw_address,
                         )
 
 

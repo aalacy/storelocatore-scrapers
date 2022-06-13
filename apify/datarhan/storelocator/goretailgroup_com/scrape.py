@@ -11,14 +11,14 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 def fetch_data():
     session = SgRequests()
-    start_url = "https://www.goretailgroup.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=100&search_radius=500"
+    start_url = "https://www.goretailgroup.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=100&search_radius=200"
     domain = "goretailgroup.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng), headers=hdr)
@@ -26,7 +26,11 @@ def fetch_data():
             all_locations = json.loads(response.text)
             for poi in all_locations:
                 store_url = poi["url"]
-                store_url = store_url if store_url else "<MISSING>"
+                store_url = (
+                    store_url
+                    if store_url
+                    else "https://www.goretailgroup.com/locations-facilities/"
+                )
                 location_name = poi["store"]
                 location_name = location_name if location_name else "<MISSING>"
                 street_address = poi["address"]

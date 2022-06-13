@@ -1,99 +1,76 @@
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgwriter import SgWriter
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-logger = SgLogSetup().get_logger("dominos_no")
 
 
-def fetch_data():
-    url = "https://www.dominos.no/butikker"
-    locs = []
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '" href="/butikker/' in line:
-            items = line.split('" href="/butikker/')
-            for item in items:
-                if "Mer info</p>" in item:
-                    locs.append("https://www.dominos.no/butikker/" + item.split('"')[0])
-    website = "dominos.no"
-    typ = "<MISSING>"
-    country = "NO"
-    for loc in locs:
-        r2 = session.get(loc, headers=headers)
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = "<MISSING>"
-        zc = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        store = "<MISSING>"
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split(" - ")[0]
-            if '"street":"' in line2:
-                add = line2.split('"street":"')[1].split('"')[0]
-                city = line2.split('"city":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(",")[0]
-                lng = line2.split('"longitude":')[1].split(",")[0]
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-            if '"carryout":{"active":true,"hoursOfOperation":[' in line2:
-                days = (
-                    line2.split('"carryout":{"active":true,"hoursOfOperation":[')[1]
-                    .split('},"')[0]
-                    .split('"openingHours":"')
-                )
-                for day in days:
-                    if "closingHours" in day:
-                        hrs = (
-                            day.split('"weekDay":"')[1].split('"')[0]
-                            + ": "
-                            + day.split('"')[0]
-                            + "-"
-                            + day.split('"closingHours":"')[1].split('"')[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://dominos.no"
+    api_url = "https://dominos.no/en/butikker"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+    js = json.loads(div)
+    for j in js["props"]["pageProps"]["stores"]:
+
+        slug = j.get("slug")
+        page_url = f"https://dominos.no/en/butikker/{slug}"
+        location_name = j.get("name") or "<MISSING>"
+        a = j.get("address")
+        street_address = a.get("street")
+        postal = a.get("postalCode")
+        country_code = a.get("country")
+        city = a.get("city")
+        store_number = j.get("externalId")
+        latitude = a.get("location").get("latitude")
+        longitude = a.get("location").get("longitude")
+        hours = j.get("deliveryOptions").get("carryout").get("hoursOfOperation")
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if hours:
+            for h in hours:
+                weekDay = h.get("weekDay")
+                opens = h.get("openingHours")
+                closes = h.get("closingHours")
+                day = h.get("day")
+                line = f"{weekDay} {day} {opens} - {closes}"
+                if line.count("-") > 1:
+                    continue
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp).replace("None", "").strip()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
             city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
+            state=SgRecord.MISSING,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
             phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-
-def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
+        sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

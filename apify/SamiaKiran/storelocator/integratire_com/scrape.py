@@ -39,8 +39,11 @@ def fetch_data():
                 temp.find("p")
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
-                .replace("DIRECTIONS", "")
+                .replace("\t", "")
+                .replace("\n", " ")
+                .replace("Directions", "")
             )
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

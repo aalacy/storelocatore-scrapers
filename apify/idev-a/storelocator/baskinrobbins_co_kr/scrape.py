@@ -48,101 +48,94 @@ def _v(val):
     return val.replace("&#40;", "(").replace("&#41;", ")")
 
 
-def _d(_):
+def _get_loc(_):
     with SgRequests(proxy_country="us") as http:
-        logger.info(_["storeCode"])
-        try:
-            loc = json.loads(
-                http.get(
-                    detail_url.format(_["storeCode"]), headers=_headers
-                ).text.split("\n")[-1]
-            )
-        except:
-            time.sleep(1)
-            loc = json.loads(
-                http.get(
-                    detail_url.format(_["storeCode"]), headers=_headers
-                ).text.split("\n")[-1]
-            )
-        page_url = f"{base_url}?S={_['storeCode']}"
-        hours_of_operation = ""
-        if loc.get("time", ""):
-            hours_of_operation = loc.get("time", "").replace("&#58;", "-")
-        return SgRecord(
-            page_url=page_url,
-            store_number=_["storeCode"],
-            location_name=_v(_["name"]),
-            street_address=_v(_["address3"]),
-            city=_["address2"],
-            state=_["address1"],
-            country_code="Korea",
-            phone=_["tel"],
-            latitude=_["pointY"],
-            longitude=_["pointX"],
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-            raw_address=_v(_["address"]),
+        return json.loads(
+            http.get(detail_url.format(_["storeCode"]), headers=_headers).text.split(
+                "\n"
+            )[-1]
         )
 
 
+def _d(_):
+    logger.info(_["storeCode"])
+    loc = _get_loc(_)
+    page_url = f"{base_url}?S={_['storeCode']}"
+    hours_of_operation = ""
+    if loc.get("time", ""):
+        hours_of_operation = loc.get("time", "").replace("&#58;", "-")
+    return SgRecord(
+        page_url=page_url,
+        store_number=_["storeCode"],
+        location_name=_v(_["name"]),
+        street_address=_v(_["address3"]),
+        city=_["address2"],
+        state=_["address1"],
+        country_code="Korea",
+        phone=_["tel"],
+        latitude=_["pointY"],
+        longitude=_["pointX"],
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=_v(_["address"]),
+    )
+
+
 def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-        is_headless=True,
-    ).driver()
+    return
 
 
 def fetch_data():
-    driver = get_driver()
-    with SgRequests(proxy_country="us") as http:
-        driver.get(base_url)
-        states = driver.find_elements(By.CSS_SELECTOR, "select.location_1 option")
-        logger.info(f"{len(states)} states")
-        for state in states:
-            state_val = state.get_attribute("value")
-            if not state_val:
-                continue
-            del driver.requests
-            state.click()
-            driver.wait_for_request(gun_url, timeout=30)
-            cities = driver.find_elements(By.CSS_SELECTOR, "select.location_2 option")
-            logger.info(f"[{state_val}] {len(cities)} cities")
-            for gun in cities:
-                gun_val = gun.get_attribute("value")
-                if not gun_val:
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ) as driver:
+        with SgRequests(proxy_country="us") as http:
+            driver.get(base_url)
+            states = driver.find_elements(By.CSS_SELECTOR, "select.location_1 option")
+            logger.info(f"{len(states)} states")
+            for state in states:
+                state_val = state.get_attribute("value")
+                if not state_val:
                     continue
-                del driver.requests
-                gun.click()
-                time.sleep(1)
-                driver.find_element(
-                    By.CSS_SELECTOR, 'div.search button[type="submit"]'
-                ).click()
-                lr = driver.wait_for_request(list_url, timeout=20)
-                try:
-                    res = json.loads(lr.response.body)
-                except:
-                    try:
-                        res = http.get(lr.url, headers=_headers).json()
-                    except:
+                state.click()
+                driver.wait_for_request(gun_url, timeout=30)
+                cities = driver.find_elements(
+                    By.CSS_SELECTOR, "select.location_2 option"
+                )
+                logger.info(f"[{state_val}] {len(cities)} cities")
+                for gun in cities:
+                    gun_val = gun.get_attribute("value")
+                    if not gun_val:
                         continue
-                if res.get("cnt") > 0:
-                    locations = res["list"]
-                else:
-                    continue
-                logger.info(f"[{gun_val}] {len(locations)} locations")
-                for _ in locations:
-                    yield _d(_)
+                    gun.click()
+                    time.sleep(1)
+                    driver.find_element(
+                        By.CSS_SELECTOR, 'div.search button[type="submit"]'
+                    ).click()
+                    lr = driver.wait_for_request(list_url, timeout=20)
+                    try:
+                        res = json.loads(lr.response.body)
+                    except:
+                        try:
+                            res = http.get(lr.url, headers=_headers).json()
+                        except:
+                            continue
+                    if res.get("cnt") > 0:
+                        locations = res["list"]
+                    else:
+                        continue
+                    logger.info(f"[{gun_val}] {len(locations)} locations")
+                    for _ in locations:
+                        yield _d(_)
 
-        # get initial page
-        locations = http.get(
-            "http://www.baskinrobbins.co.kr/store/list_ajax.php?ScS=&ScG=&ScWord="
-        ).json()["list"]
-        for _ in locations:
-            yield _d(_)
-
-    if driver:
-        driver.close()
+            # get initial page
+            locations = http.get(
+                "http://www.baskinrobbins.co.kr/store/list_ajax.php?ScS=&ScG=&ScWord="
+            ).json()["list"]
+            for _ in locations:
+                yield _d(_)
 
 
 if __name__ == "__main__":

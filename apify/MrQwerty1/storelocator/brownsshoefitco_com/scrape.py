@@ -23,8 +23,8 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("lng")
 
         _tmp = []
-        days = j.get("display_dow") or []
-        for d in days:
+        days = j.get("display_dow") or {}
+        for d in days.values():
             day = d.get("label")
             inter = d.get("bil_hrs")
             _tmp.append(f"{day}: {inter}")

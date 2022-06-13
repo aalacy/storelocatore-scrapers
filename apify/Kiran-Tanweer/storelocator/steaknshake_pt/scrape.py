@@ -55,6 +55,7 @@ def fetch_data():
             phone = "<MISSING>"
         else:
             phone = phone.split(":")[1].strip()
+        hoo = hoo.replace("â€“", "-").strip()
 
         yield SgRecord(
             locator_domain=DOMAIN,

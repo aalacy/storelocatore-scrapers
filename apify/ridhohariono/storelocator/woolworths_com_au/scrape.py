@@ -34,7 +34,7 @@ def fetch_data():
         state = row["State"]
         zip_postal = row["Postcode"]
         phone = row["Phone"]
-        country_code = MISSING
+        country_code = "AU"
         store_number = row["StoreNo"]
         hoo = ""
         for hday in row["TradingHours"]:

@@ -89,9 +89,9 @@ def get_store_data(store_sel, page_url):
         longitude = longitude[0]
 
     hours = store_sel.xpath('//table[@class="c-location-hours-details"][1]')
+    hours_list = []
     if len(hours) > 0:
         hours = hours[0].xpath("tbody/tr")
-        hours_list = []
         for hour in hours:
             day = "".join(hour.xpath("td[1]/text()")).strip()
             time = "".join(hour.xpath("td[2]//text()")).strip()
