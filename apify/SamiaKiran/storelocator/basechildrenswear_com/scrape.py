@@ -1,22 +1,15 @@
 import ssl
 import json
 from sglogging import sglog
-from sgselenium import SgChrome
 from bs4 import BeautifulSoup
+from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 website = "basechildrenswear_com"
@@ -31,9 +24,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        with SgChrome(
-            executable_path=ChromeDriverManager().install(), is_headless=True
-        ) as driver:
+        with SgChrome() as driver:
             url = "https://www.basechildrenswear.com/store-locator/all-stores/"
             driver.get(url)
             response_text = driver.page_source
