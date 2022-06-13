@@ -5,8 +5,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from sglogging import SgLogSetup
-import math
-from concurrent.futures import ThreadPoolExecutor
 
 logger = SgLogSetup().get_logger("adidas")
 
@@ -15,7 +13,7 @@ _headers = {
 }
 
 locator_domain = "https://www.adidas.com"
-base_url = "https://placesws.adidas-group.com/API/search?brand=adidas&geoengine=google&method=get&category=store&latlng={}%2C-119.71057150869696%2C9153&page=1&pagesize=50000&fields=name%2Cstreet1%2Cstreet2%2Caddressline%2Cbuildingname%2Cpostal_code%2Ccity%2Cstate%2Cstore_o+wner%2Ccountry%2Cstoretype%2Clongitude_google%2Clatitude_google%2Cstore_owner%2Cstate%2Cperformance%2Cbrand_store%2Cfactory_outlet%2Coriginals%2Cneo_label%2Cy3%2Cslvr%2Cchildren%2Cwoman%2Cfootwear%2Cfootball%2Cbasketball%2Coutdoor%2Cporsche_design%2Cmiadidas%2Cmiteam%2Cstella_mccartney%2Ceyewear%2Cmicoach%2Copening_ceremony%2Coperational_status%2Cfrom_date%2Cto_date%2Cdont_show_country&format=json&storetype="
+base_url = "https://placesws.adidas-group.com/API/search?brand=adidas&geoengine=google&method=get&category=store&latlng={}%2C{}%2C11449&page=1&pagesize=5000&fields=phone%2copeninghours_Monday%2Copeninghours_Tuesday%2Copeninghours_Wednesday%2Copeninghours_Thursday%2Copeninghours_Friday%2Copeninghours_Saturday%2Copeninghours_Sunday%2Cname%2Cstreet1%2Cstreet2%2Caddressline%2Cbuildingname%2Cpostal_code%2Ccity%2Cstate%2Cstore_o+wner%2Ccountry%2Cstoretype%2Clongitude_google%2Clatitude_google%2Cstore_owner%2Cstate%2Cperformance%2Cbrand_store%2Cfactory_outlet%2Coriginals%2Cneo_label%2Cy3%2Cslvr%2Cchildren%2Cwoman%2Cfootwear%2Cfootball%2Cbasketball%2Coutdoor%2Cporsche_design%2Cmiadidas%2Cmiteam%2Cstella_mccartney%2Ceyewear%2Cmicoach%2Copening_ceremony%2Coperational_status%2Cfrom_date%2Cto_date%2Cdont_show_country&format=json&storetype=ownretail"
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 detail_url = "https://placesws.adidas-group.com/API/detail?brand=adidas&method=get&category=store&objectId={}&format=json"
 
@@ -32,54 +30,6 @@ coords = [
 ]
 
 
-max_workers = 32
-
-
-def fetchConcurrentSingle(_):
-    page_url = f"https://www.adidas.com/us/storefinder#/storeID/{_['id']}/"
-    logger.info(page_url)
-    hours = []
-    phone = ""
-    try:
-        ss = request_with_retries(detail_url.format(_["id"])).json()["wsResponse"][
-            "result"
-        ][0]
-        phone = ss.get("phone")
-        if phone:
-            phone = phone.replace("&#43;", "+")
-        for day in days:
-            if ss.get(f"openinghours_{day}"):
-                hours.append(f'{day}: {ss.get(f"openinghours_{day}")}')
-    except:
-        page_url = "https://www.adidas.com/us/storefinder#/"
-    return _, phone, hours, page_url
-
-
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            if result:
-                count = count + 1
-                if count % reminder == 0:
-                    logger.debug(f"Concurrent Operation count = {count}")
-                output.append(result)
-    return output
-
-
-def request_with_retries(url):
-    with SgRequests() as session:
-        return session.get(url, headers=_headers)
-
-
 def fetch_records():
     for lat, lng in coords:
         with SgRequests() as session:
@@ -94,7 +44,16 @@ def fetch_records():
                 for _ in locations
                 if "opening_soon" not in _.get("operational_status", "").lower()
             ]
-            for _, phone, hours, page_url in fetchConcurrentList(locations):
+            for _ in locations:
+                page_url = f"https://www.adidas.com/us/storefinder#/storeID/{_['id']}/"
+                logger.info(page_url)
+                hours = []
+                phone = _.get("phone")
+                if phone:
+                    phone = phone.replace("&#43;", "+")
+                for day in days:
+                    if _.get(f"openinghours_{day}"):
+                        hours.append(f'{day}: {_.get(f"openinghours_{day}")}')
                 zip_postal = _.get("postal_code")
                 if zip_postal == "n/a":
                     zip_postal = ""
