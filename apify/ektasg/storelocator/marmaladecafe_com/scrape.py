@@ -23,7 +23,7 @@ def fetch_data():
     for div in divlist:
         title = div.find("h3").text.strip()
         link = "https://marmaladecafe.com" + div.find("h3").find("a")["href"]
-
+        print(title)
         div = re.sub(cleanr, "\n", str(div))
         div = re.sub(pattern, "\n", str(div)).strip()
         address = (
@@ -55,7 +55,7 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=SgRecord.MISSING,
             longitude="<MISSING>",
-            hours_of_operation=hours,
+            hours_of_operation=hours.replace("&amp;", "-").strip(),
         )
 
 
