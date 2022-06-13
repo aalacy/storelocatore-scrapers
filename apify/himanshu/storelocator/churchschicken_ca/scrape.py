@@ -79,11 +79,14 @@ def fetch_data(sgw: SgWriter):
                 driver.implicitly_wait(30)
                 driver.maximize_window()
                 driver.switch_to.frame(0)
-                WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, '//div[@class="bottom-actions"]')
+                try:
+                    WebDriverWait(driver, 30).until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, '//div[@class="bottom-actions"]')
+                        )
                     )
-                )
+                except:
+                    driver.switch_to.default_content()
                 try:
                     ll = driver.find_element_by_xpath(
                         '//div[@class="google-maps-link"]/a'
