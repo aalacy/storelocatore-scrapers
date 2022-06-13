@@ -35,12 +35,10 @@ def fetch_data():
                 continue
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            aa = (
-                sp1.find("span", string=re.compile(r"^Branch Details"))
-                .find_parent("div")
-                .find_parent()
-                .find_next_sibling()
-            )
+            _aa = sp1.find("span", string=re.compile(r"^Branch Details"))
+            if not _aa:
+                continue
+            aa = _aa.find_parent("div").find_parent().find_next_sibling()
             block = list(aa.stripped_strings)
             raw_address = block[0]
             addr = raw_address.split(",")
@@ -76,12 +74,8 @@ def fetch_data():
 
         # agency
         soup = bs(session.get(agency_url, headers=_headers).text, "lxml")
-        block1 = soup.select(
-            "div.aem-Grid.aem-Grid--12.aem-Grid--default--5.aem-Grid--phone--6 "
-        )
-        block2 = soup.select(
-            "div.aem-Grid.aem-Grid--12.aem-Grid--default--7.aem-Grid--phone--6 "
-        )
+        block1 = soup.select("div.aem-Grid.aem-Grid--default--5.aem-Grid--phone--6")
+        block2 = soup.select("div.aem-Grid--default--7.aem-Grid--phone--6 ")
         for x in range(len(block1)):
             info = list(block1[x].stripped_strings)
             com = block2[x].select("div.cbsTextComponent")

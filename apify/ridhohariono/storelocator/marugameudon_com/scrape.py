@@ -53,10 +53,10 @@ def pull_content(url):
 
 
 def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
         return MISSING, MISSING
-    return longlat.group(2), longlat.group(1)
+    return latlong.group(1), latlong.group(2)
 
 
 def fetch_data():

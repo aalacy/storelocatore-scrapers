@@ -25,6 +25,8 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("table").findAll("tr")[1:]
         for loc in loclist:
+            if not loc.text:
+                continue
             page_url = loc.find("a")["href"]
             loc = loc.findAll("td")
             location_name = loc[1].text
@@ -33,6 +35,16 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
+            if "Mall" in raw_address:
+                raw_address = (
+                    soup.find("tbody")
+                    .findAll("tr")[1]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Address: ", "")
+                )
+                if raw_address == "Fairview Shopping Center":
+                    raw_address = "1800 Sheppard Ave East, Willowdale, Ontario M2J 5A7"
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

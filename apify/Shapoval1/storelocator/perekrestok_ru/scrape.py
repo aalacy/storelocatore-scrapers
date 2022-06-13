@@ -14,7 +14,7 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Auth": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiJ9.eyJpYXQiOjE2NDE1NzQ2NjYsImV4cCI6MTY0MTYwMzQ2NiwiZCI6IjEuNC4xLjA6YzBkNTlkYWQtMmMxMS00MzRlLWJjNWUtZjMzZTMwN2ZlOGI2IiwianRpIjoiZGI3NTY4NWEtODUzNC00ZWI0LWI2ZTMtMDc0NTMzMTBjMDBhIiwiaXAiOiI5My43OC4yMTIuMTY4IiwidSI6IjgwOTJmYjVjLWYyNTgtNDg2NS1hODAwLTA3MDJhZTdmNTk0MiJ9.AHtmFd-r5oUHJrk44uDH3gc6o9yZcGnIsnDVXL2y2G2kiHZhBsn024WV4BJxfOCBqsbvEZIhcD68jOD8HVETLQOUAGSDIVeK40n3_huzhcWUGF55gV7keRwvxTamONbJhc8PjAWdNgb1-_9vDICXupvmOnvqxTeJ6pGB4zzsFdc6R6QP",
+        "Auth": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiJ9.eyJpYXQiOjE2NDQ0MTM3NTMsImV4cCI6MTY0NDQ0MjU1MywiZCI6IjEuNC4xLjA6MzU4MDFjNDAtM2VhZS00YThkLTlkMjQtZDllNDkzOGY1OTdjIiwianRpIjoiYTc0NjM4YTUtMmY5Yi00MWU1LWJjOWUtYWM4Mjc1YjY5YjQzIiwiaXAiOiI5My43OC4yMTIuMTY4IiwidSI6ImZjM2ZmMWVhLTMwYmMtNGNhMC1hM2Q4LTMwNTU3ZTQxYjA2YyJ9.AVxLN0XZ3suzz4dtaOR0xTeEF-g4y4r1ApEIviXX-YudfL1CACLizieH4hJ6_7E1Scj6mlY2udSf43pCTfiyO0NOAMOZfz6XisiGesO018m_2yPcEhAMHcvjLSqJH-YBDztRqtbLiStAcXkncQqPUogirz2dRBVN8Z6XBvIszPmSsyKU",
         "Connection": "keep-alive",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",

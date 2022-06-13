@@ -108,7 +108,25 @@ def fetch_data(sgw: SgWriter):
                     if not hours_of_operation:
                         hours_of_operation = ""
                 except:
-                    pass
+                    try:
+                        if (
+                            "opening times"
+                            in base.find(class_="wysiwygl location-text").text
+                        ):
+                            rows = (
+                                base.find(class_="wysiwygl location-text")
+                                .find(string="Shop opening times")
+                                .find_all_next("p")
+                            )
+                            for row in rows:
+                                if "day" in row.text:
+                                    hours_of_operation = (
+                                        hours_of_operation + " " + row.text
+                                    ).strip()
+                                else:
+                                    break
+                    except:
+                        pass
 
                 try:
                     latitude = base.find(class_="bhflocation map-container-small")[

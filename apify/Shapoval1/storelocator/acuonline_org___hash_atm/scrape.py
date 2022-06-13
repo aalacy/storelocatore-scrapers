@@ -15,7 +15,6 @@ from tenacity import retry, stop_after_attempt
 import tenacity
 import random
 
-
 locator_domain = "acuonline.org"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 api_url = "https://locationapi.wave2.io/api/client/getlocations"
@@ -74,12 +73,15 @@ def get_data(coord, sgw: SgWriter):
             a = j.get("Properties")
             location_name = a.get("LocationName") or "<MISSING>"
             street_address = a.get("Address") or "<MISSING>"
+            street_address = str(street_address).replace("*", "").strip()
             city = a.get("City") or "<MISSING>"
             state = a.get("State") or "<MISSING>"
             postal = a.get("Postalcode") or "<MISSING>"
             if postal == "0":
                 postal = "<MISSING>"
             country_code = a.get("Country") or "<MISSING>"
+            if country_code == "US4" or country_code == "<MISSING>":
+                country_code = "US"
             store_number = a.get("LocationId")
             phone = "<MISSING>"
             latitude = a.get("Latitude") or "<MISSING>"
@@ -111,9 +113,9 @@ def get_data(coord, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     postals = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.JAPAN],
-        max_search_distance_miles=50,
-        expected_search_radius_miles=10,
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=300,
+        expected_search_radius_miles=50,
         max_search_results=100,
     )
 
@@ -130,9 +132,8 @@ if __name__ == "__main__":
         deduper=SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.STORE_NUMBER,
                 }
             ),

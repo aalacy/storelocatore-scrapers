@@ -46,7 +46,11 @@ def fetch_data():
             if loc_response.status_code != 200:
                 continue
             loc_dom = etree.HTML(loc_response.text)
-            street_address = loc_dom.xpath('//div[@itemprop="streetAddress"]/text()')[0]
+            street_address = loc_dom.xpath('//div[@itemprop="streetAddress"]/text()')[
+                0
+            ].strip()
+            if not street_address:
+                continue
             hoo = []
             days = [
                 "monday",

@@ -91,9 +91,12 @@ def fetch_data():
                     if CS:
                         name = name + " - Coming Soon"
                     add = add.replace("\\t", "").replace("\t", "")
+                    raw_address = raw_address.replace("\\t", "").replace("\t", "")
                     zc = zc.replace("\\t", "").replace("\t", "")
                     city = city.replace("\\t", "").replace("\t", "")
                     phone = phone.replace("\\t", "").replace("\t", "")
+                    state = state.replace("\\t", "").replace("\t", "")
+                    hours = hours.replace("\\t", "").replace("\t", "")
                     if ", P.O" in add:
                         add = add.split(", P.O")[0].strip()
                     if "(" in add:

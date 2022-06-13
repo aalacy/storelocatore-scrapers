@@ -46,6 +46,8 @@ def fetch_data():
         "55800": "3:30",
     }
     zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
+    zips = zips + ["36330", "35121", "36301"]
+
     if True:
         for zip_code in zips:
             search_url = "https://api.searshometownstores.com/lps-mygofer/api/v1/mygofer/store/nearby"
@@ -81,6 +83,7 @@ def fetch_data():
                 pcode = loc["zipCode"]
                 phone = loc["phone"]
                 phone = "(" + phone[0:3] + ") " + phone[3:6] + "-" + phone[6:10]
+
                 store = str(loc["unitNumber"])
                 link = (
                     "https://www.searshometownstores.com/home/"
@@ -110,7 +113,8 @@ def fetch_data():
                     )
                 longt = loc["storeDetails"]["longitude"]
                 lat = loc["storeDetails"]["latitude"]
-
+                if len(phone.strip()) < 7:
+                    phone = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.searshometownstores.com/",
                     page_url=link,

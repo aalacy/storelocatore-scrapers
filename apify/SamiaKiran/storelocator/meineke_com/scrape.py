@@ -23,16 +23,21 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     store_url_list = []
     http = SgRequests()
     state_list = http.get(url, headers=headers).json()["message"]
-    for state_url in state_list:
-        logger.info(f"Fetching from State: {state_url['stateName']}")
+    for temp_state in state_list:
+        logger.info(f"Fetching from State: {temp_state['stateName']}")
         state_url = (
             "https://api.meineke.com/api/stores/cities/?state="
-            + state_url["stateAbbreviation"]
+            + temp_state["stateAbbreviation"]
         )
         city_list = http.get(state_url, headers=headers).json()["message"]["cities"]
         for city_url in city_list:
             logger.info(f"Fetching from City : {city_url['cityName']}")
-            city_url = "https://www.meineke.com/locations/?key=" + city_url["citySlug"]
+            city_url = (
+                "https://www.meineke.com/locations/?key="
+                + city_url["citySlug"]
+                + ","
+                + str(temp_state["stateAbbreviation"]).lower()
+            )
             r = http.get(city_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.findAll("div", {"class": "location-detail"})
@@ -47,6 +52,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
         try:
@@ -58,7 +64,8 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         except Exception as e:
             logger.info(f"Error: {e}")
             continue
-        location_name = loc["name"]
+        store_number = r.text.split('data-storeId="')[1].split('"')[0]
+        location_name = soup.find("h1").text
         phone = loc["telephone"]
         if phone == 0:
             phone = MISSING
@@ -71,17 +78,13 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
         try:
-            hour_list = loc["openingHoursSpecification"]
-            hours_of_operation = ""
-            for hour in hour_list:
-                day = (
-                    str(hour["dayOfWeek"])
-                    .replace("', '", ", ")
-                    .replace("['", "")
-                    .replace("']", "")
-                )
-                time = hour["opens"] + "-" + hour["closes"]
-                hours_of_operation = hours_of_operation + " " + day + " " + time
+            hours_of_operation = (
+                soup.find("div", {"class": "hours-block-oneStore"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Sat: -", "")
+                .replace("Sun: -", "")
+            )
         except:
             hours_of_operation = MISSING
         yield SgRecord(
@@ -93,7 +96,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             state=state.strip(),
             zip_postal=zip_postal.strip(),
             country_code=country_code,
-            store_number=MISSING,
+            store_number=store_number,
             phone=phone.strip(),
             location_type=MISSING,
             latitude=latitude,

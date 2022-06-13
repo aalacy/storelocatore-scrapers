@@ -52,6 +52,13 @@ def fetch_data():
 
                 stores = typ.xpath('div[@class="store"]')
                 for store in stores:
+                    if (
+                        "permanently closed"
+                        in "".join(
+                            store.xpath('span[@class="shop-notice"]/text()')
+                        ).strip()
+                    ):
+                        continue
                     page_url = "".join(
                         store.xpath(
                             "div[@class='actions']/a[@class='visit-store']/@href"

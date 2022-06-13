@@ -3,4 +3,5 @@ sgscrape==0.2.4
 sgvalidator==0.0.71
 sgrequests==0.2.9
 beautifulsoup4==4.9.3
-sgselenium==0.1.4
+sgselenium==0.1.5
+sgpostal==0.1.0

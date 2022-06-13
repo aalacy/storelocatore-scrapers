@@ -39,17 +39,25 @@ def fetch_data():
 
             store_info = store["address"]
             street_address = ", ".join(store_info["street_addresses"])
+            if street_address:
+                street_address = street_address.replace(
+                    "Enterprise Rent A Car,", ""
+                ).strip()
             city = store_info["city"]
 
             state = store_info["country_subdivision_code"]
+            if state and len(state) == 1:
+                state = "<MISSING>"
 
             zip = store_info["postal"]
+            if zip and zip == "0":
+                zip = "<MISSING>"
 
             country_code = store_info["country_code"]
 
             phone = store["phones"]
             if phone:
-                phone = phone[0]["phone_number"]
+                phone = phone[0]["phone_number"].split(",")[0].strip()
             else:
                 phone = "<MISSING>"
 
@@ -68,16 +76,29 @@ def fetch_data():
                     break
 
                 day = datetime.datetime.strptime(dt, "%Y-%m-%d").strftime("%A")
-                if hours_json[dt]["STANDARD"]["closed"] is True:
-                    time = "Closed"
-                elif hours_json[dt]["STANDARD"]["open24Hours"] is True:
-                    time = "24 Hours"
-                else:
-                    time = (
-                        hours_json[dt]["STANDARD"]["hours"][0]["open"]
-                        + " - "
-                        + hours_json[dt]["STANDARD"]["hours"][0]["close"]
-                    )
+                time = "<MISSING>"
+                if "STANDARD" in hours_json[dt]:
+                    if hours_json[dt]["STANDARD"]["closed"] is True:
+                        time = "Closed"
+                    elif hours_json[dt]["STANDARD"]["open24Hours"] is True:
+                        time = "24 Hours"
+                    else:
+                        time = (
+                            hours_json[dt]["STANDARD"]["hours"][0]["open"]
+                            + " - "
+                            + hours_json[dt]["STANDARD"]["hours"][0]["close"]
+                        )
+                elif "DROP" in hours_json[dt]:
+                    if hours_json[dt]["DROP"]["closed"] is True:
+                        time = "Closed"
+                    elif hours_json[dt]["DROP"]["open24Hours"] is True:
+                        time = "24 Hours"
+                    else:
+                        time = (
+                            hours_json[dt]["DROP"]["hours"][0]["open"]
+                            + " - "
+                            + hours_json[dt]["DROP"]["hours"][-1]["close"]
+                        )
                 hours_list.append(day + ":" + time)
                 index = index + 1
 

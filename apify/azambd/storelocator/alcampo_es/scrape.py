@@ -33,7 +33,7 @@ def fetch_stores():
     while True:
         page = page + 1
         url = f"{json_url}{page}"
-        log.debug(f"{page}. fetching {url}")
+        log.info(f"{page}. fetching {url}")
         try:
             response = request_with_retries(url)
             response = json.loads(response.text)
@@ -76,6 +76,10 @@ def get_phone(Source):
     for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
         phone = match
         return phone
+    if phone == MISSING:
+        for match in re.findall(r"[1-9][0-9 .\-\(\)]{8,}", Source):
+            phone = match
+            return phone
     return phone
 
 
@@ -136,6 +140,7 @@ def fetch_data():
 
         store_number = get_JSON_object(properties, "store_id")
         page_url = f"{website}{get_JSON_object(properties, 'contact.website')}"
+
         location_type = get_type(userProperties)
         location_name = get_JSON_object(properties, "name")
         if location_type == "Hipermercado" or location_type == "Supermercado":
@@ -150,6 +155,7 @@ def fetch_data():
 
         country_code = get_JSON_object(properties, "address.country_code")
         phone = get_phone(get_JSON_object(properties, "contact.phone"))
+
         latitude = get_JSON_object(geometry, "coordinates")[0]
         longitude = get_JSON_object(geometry, "coordinates")[1]
         hours_of_operation = get_JSON_object(userProperties, "horario_apertura")

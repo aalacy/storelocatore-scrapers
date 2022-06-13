@@ -138,8 +138,18 @@ def fetch_data():
             hours_list = []
             for hour in hours:
                 day = "".join(hour.xpath("td[1]//text()")).strip()
-                time = "".join(hour.xpath("td[2]//text()")).strip()
-                hours_list.append(day + ":" + time)
+                temp_time = hour.xpath("td[2]//text()")
+                time = []
+                for t in temp_time:
+                    if len("".join(t).strip()) > 0:
+                        time.append(
+                            "".join(t)
+                            .strip()
+                            .replace("\r\n", "")
+                            .replace("\n", "")
+                            .strip()
+                        )
+                hours_list.append(day + ":" + ", ".join(time))
 
             hours_of_operation = ";".join(hours_list).strip()
             latitude, longitude = (

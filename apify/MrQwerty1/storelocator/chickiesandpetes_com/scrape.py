@@ -37,12 +37,10 @@ def get_address(line):
         "StreetNamePostType": "address1",
         "CornerOf": "address1",
         "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
         "USPSBoxGroupID": "address1",
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -53,12 +51,14 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city") or ""
+    state = a.get("state")
+    postal = a.get("postal")
+    if not street_address:
+        street_address = line.split(city)[0].strip()
 
     return street_address, city, state, postal
 
@@ -123,6 +123,9 @@ def get_data(param, sgw: SgWriter):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
+    if raw_address[0].isalpha():
+        raw_address = "".join(tree.xpath("//iframe[contains(@src, 'google')]/@title"))
+
     street_address, city, state, postal = get_address(raw_address)
     phone = "".join(
         tree.xpath(
@@ -143,12 +146,15 @@ def get_data(param, sgw: SgWriter):
         "//div[./div/h3[contains(text(), 'Hours')]]/following-sibling::div[1]//p//text()"
     )
     for h in hours:
-        if not h.strip() or "last" in h.lower() or "event" in h.lower():
+        if not h.strip() or "event" in h.lower():
             continue
+        if "last" in h.lower():
+            break
         if "(" in h:
             h = h.split("(")[0]
         _tmp.append(h.replace("|", " ").strip())
-    hours_of_operation = " ".join(_tmp)
+    hours_of_operation = " ".join(_tmp).replace("Hours:", "").strip()
+
     if not hours_of_operation:
         try:
             line = "".join(

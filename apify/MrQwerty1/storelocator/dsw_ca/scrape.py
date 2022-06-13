@@ -1,98 +1,110 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
+    api = "https://stores.dsw.ca/search"
 
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    for cnt in range(0, 5000, 10):
+        params = {
+            "l": "en_US",
+            "offset": str(cnt),
+        }
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["response"]["entities"]
 
-        for row in data:
-            writer.writerow(row)
+        for j in js:
+            j = j.get("profile") or {}
+            a = j.get("address") or {}
+            adr1 = a.get("line1") or ""
+            adr2 = a.get("line2") or ""
+            street_address = " ".join(f"{adr1} {adr2}".split())
+            city = a.get("city")
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = a.get("countryCode")
+            try:
+                store_number = j["meta"]["id"]
+            except KeyError:
+                store_number = SgRecord.MISSING
+            location_name = j.get("name") or ""
 
+            page_url = j.get("c_pagesURL") or j.get("c_cAPagesURL")
 
-def generate_links():
-    r = session.get('https://stores.dsw.ca/index.json')
-    js = r.json()['directoryHierarchy']
+            try:
+                phone = j["mainPhone"]["display"]
+            except KeyError:
+                phone = SgRecord.MISSING
 
-    urls = list(get_urls(js))
+            g = j.get("yextDisplayCoordinate") or {}
+            latitude = g.get("lat")
+            longitude = g.get("long")
 
-    return urls
-
-
-def get_urls(states):
-    for state in states.values():
-        children = state['children']
-        if children is None:
-            yield f"https://stores.dsw.ca/{state['url']}.json"
-        else:
-            yield from get_urls(children)
-
-
-def fetch_data():
-    out = []
-    urls = generate_links()
-    locator_domain = 'https://stores.dsw.ca/index.html'
-
-    for url in urls:
-        r = session.get(url)
-        j = r.json()['profile']
-        page_url = url.replace('.json', '')
-        mod = j.get('c_geomodifier') or j.get('geomodifier')
-        location_name = f"{j.get('name')} {mod or ''}".strip() or '<MISSING>'
-        a = j.get('address', {})
-        street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or '<MISSING>'
-        city = a.get('city') or '<MISSING>'
-        state = a.get('region') or '<MISSING>'
-        postal = a.get('postalCode') or '<MISSING>'
-        country_code = a.get('countryCode') or '<MISSING>'
-        store_number = '<MISSING>'
-        phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
-        latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
-        longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
-        location_type = '<MISSING>'
-        days = j.get('hours', {}).get('normalHours') or '<MISSING>'
-        if days == '<MISSING>':
-            hours_of_operation = days
-        else:
             _tmp = []
-            for d in days:
-                day = d.get('day')[:3].capitalize()
-                start, end = '0', '0'
-                interval = d.get('intervals')
-                if interval:
-                    start = str(interval[0].get('start', '0'))
-                    end = str(interval[0].get('end', '0'))
+            try:
+                hours = j["hours"]["normalHours"]
+            except:
+                hours = []
 
-                    # normalize 9:30 -> 09:30
-                    if len(start) == 3:
-                        start = f'0{start}'
+            for h in hours:
+                day = h.get("day")
+                isclosed = h.get("isClosed")
+                if isclosed:
+                    _tmp.append(f"{day}: Closed")
+                    continue
 
-                if start != '0' and end != '0':
-                    line = f'{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}'
-                else:
-                    line = f'{day}  Closed'
-                _tmp.append(line)
-            hours_of_operation = ';'.join(_tmp) or '<MISSING>'
+                try:
+                    i = h["intervals"][0]
+                except:
+                    i = dict()
 
-            if hours_of_operation.count('Closed') == 7:
-                hours_of_operation = 'Closed'
+                start = str(i.get("start") or "").zfill(4)
+                end = str(i.get("end") or "").zfill(4)
+                start = start[:2] + ":" + start[2:]
+                end = end[:2] + ":" + end[2:]
+                if start != end:
+                    _tmp.append(f"{day}: {start}-{end}")
 
-        row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-               country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-        out.append(row)
-    return out
+            hours_of_operation = ";".join(_tmp)
 
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
+
+        if len(js) < 10:
+            break
 
 
 if __name__ == "__main__":
+    locator_domain = "https://dsw.ca/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json",
+        "Referer": "https://stores.dsw.ca/",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
     session = SgRequests()
-    links = generate_links()
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

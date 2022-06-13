@@ -5,8 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from sgpostal import sgpostal as parser
 import re
+import lxml.html
 
 DOMAIN = "thesill.com"
 BASE_URL = "https://www.thesill.com"
@@ -21,10 +22,31 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
+
+
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
+            data = parser.parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -48,41 +70,49 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
-
-
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return "<MISSING>", "<MISSING>"
-    return latlong.group(1), latlong.group(2)
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
+    sel = lxml.html.fromstring(req.text)
+    return soup, sel
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.select("h4.store-title a")
-    for row in contents:
-        page_url = BASE_URL + row["href"]
-        store = pull_content(page_url)
-        info = store.find(
-            "div", {"class": "location-content cell medium-9 large-12"}
-        ).find_all("p")
-        location_name = store.find("h3", {"class": "location-title"}).text
+    soup, sel = pull_content(LOCATION_URL)
+    contents = sel.xpath(
+        '//a[./span[@class="location__title font-medium text-primary"]]/@href'
+    )
+    for store_url in contents:
+        page_url = BASE_URL + store_url
+        store, store_sel = pull_content(page_url)
+        info = store.select_one("div.sill-container.w-full.h-full.flex.flex-col.gap-4")
+        location_name = info.find("h1").text.strip()
         if "Coming Soon" in location_name:
             continue
-        raw_address = info[0].text.strip()
+        raw_address = info.find("div", {"class": "flex items-center gap-4"}).get_text(
+            strip=True, separator=","
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = store.find("a", {"href": re.compile(r"tel.*")}).text.strip()
-        hours_of_operation = info[2].get_text(strip=True, separator=",").strip()
-        if "Monday" not in hours_of_operation:
-            hours_of_operation = info[1].get_text(strip=True, separator=",").strip()
+        try:
+            phone = store.find("a", {"href": re.compile(r"tel.*")}).text.strip()
+        except:
+            phone = re.sub(
+                r"[a-zA-Z]|,|\.|:|@|-",
+                "",
+                store.find("meta", {"name": "description"})["content"],
+            ).strip()
+        hoo = ""
+        hoo_content = info.find_all("div", {"class": "flex gap-2"})
+        for hday in hoo_content:
+            hoo += hday.text.strip() + ", "
+        hours_of_operation = hoo.strip().rstrip(",")
         country_code = "US"
         store_number = MISSING
-        location_type = "thesill"
-        latitude = MISSING
-        longitude = MISSING
+        location_type = MISSING
+        map_link = "".join(
+            store_sel.xpath('//iframe[contains(@src,"maps/embed")]/@src')
+        ).strip()
+        latitude, longitude = get_latlng(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

@@ -1,3 +1,7 @@
+import json
+
+from bs4 import BeautifulSoup
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -8,17 +12,18 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = (
-        "https://www.nandosperiperi.com/_next/data/M0VXEOPz9JAVnGwmQbDp9/find.json"
-    )
+    base_link = "https://www.nandosperiperi.com/find"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()["pageProps"][
-        "allLocations"
-    ]["restaurants"]
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    stores = json.loads(base.find(id="__NEXT_DATA__").contents[0])["props"][
+        "pageProps"
+    ]["allLocations"]["restaurants"]
 
     locator_domain = "nandosperiperi.com"
 

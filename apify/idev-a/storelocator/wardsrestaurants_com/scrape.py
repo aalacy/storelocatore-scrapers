@@ -21,8 +21,7 @@ def fetch_data():
                 street_address += " " + _["address2"]
             yield SgRecord(
                 page_url="https://wardsrestaurants.com/locations/",
-                store_number=_["ID"],
-                location_name=_["name"],
+                location_name=_["name"].replace("&#8217;", "'").replace("&#039;", "'"),
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
@@ -36,7 +35,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

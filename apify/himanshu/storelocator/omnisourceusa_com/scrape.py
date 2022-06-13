@@ -1,88 +1,100 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('omnisourceusa_com')
-
-
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    base_url= "https://www.omnisourceusa.com/locations"
+def fetch_data(sgw: SgWriter):
+    base_url = "https://www.omnisourceusa.com/locations"
     r = session.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    lat =[]
+    soup = BeautifulSoup(r.text, "lxml")
+    lat = []
     log = []
-    k= (soup.find_all("div",{"class":"contact-card-small"}))
-    name1 = (soup.find_all("div",{"class":"contact-card-name mb-2"}))
+    ids = []
+    k = soup.find_all("div", {"class": "contact-card-small"})
+    name1 = soup.find_all("div", {"class": "contact-card-name mb-2"})
     script = soup.find_all("script")
     for i in script:
         if "var omniLocations" in i.text:
-            jn =i.text.replace("var omniLocations = [","").replace("];","").replace("'", '"').strip().replace("'","").replace("\'", "\"").replace('\t','').replace('\n','').replace(',}','}').replace(',]',']')
-            # logger.info(json.loads(jn,strict=False))
+            jn = (
+                i.text.replace("var omniLocations = [", "")
+                .replace("];", "")
+                .replace("'", '"')
+                .strip()
+                .replace("'", "")
+                .replace("'", '"')
+                .replace("\t", "")
+                .replace("\n", "")
+                .replace(",}", "}")
+                .replace(",]", "]")
+            )
             for o in range(len(jn.split("lng"))):
-                if o>0:
-                    log.append(jn.split("lng")[o].split(' "lat":')[0].replace('": "','').replace('",',""))
-                    lat.append(jn.split("lng")[o].split(' "lat":')[1].replace('": "','').replace('",',"").split("}")[0].replace('"',""))
-           
-    # exit()
-    for index,i in enumerate(k):
-        tem_var =[]
+                if o > 0:
+                    log.append(
+                        jn.split("lng")[o]
+                        .split(' "lat":')[0]
+                        .replace('": "', "")
+                        .replace('",', "")
+                    )
+                    lat.append(
+                        jn.split("lng")[o]
+                        .split(' "lat":')[1]
+                        .replace('": "', "")
+                        .replace('",', "")
+                        .split("}")[0]
+                        .replace('"', "")
+                    )
+                    ids.append(
+                        jn.split("id")[o].split(",")[0].replace('":', "").strip()
+                    )
+    for index, i in enumerate(k):
         name = name1[index].text.strip().lstrip()
-        phone = list(i.stripped_strings)[-3]
-        city = list(i.stripped_strings)[-5].split(',')[0]
-        state = list(i.stripped_strings)[-5].split(',')[1].split( )[0]
-        zip1 = list(i.stripped_strings)[-5].split(',')[1].split( )[1]
-        st = (" ".join(list(i.stripped_strings)[:-5]))
-        
+        try:
+            phone = list(i.stripped_strings)[-1]
+            if "-" not in phone:
+                phone = ""
+        except:
+            phone = ""
 
-        tem_var.append("https://www.omnisourceusa.com")
-        tem_var.append(name)
-        tem_var.append(st)
-        tem_var.append(city)
-        tem_var.append(state)
-        tem_var.append(zip1)
-        tem_var.append("US")
-        tem_var.append("<MISSING>")
-        tem_var.append(phone)
-        tem_var.append("<MISSING>")
-        tem_var.append(lat[index])
-        tem_var.append(log[index])
-        tem_var.append("<MISSING>")
-        tem_var.append("https://www.omnisourceusa.com/locations")
-        # logger.info(tem_var)
-        return_main_object.append(tem_var)
-        
+        raw_data = list(i.stripped_strings)
+        if len(raw_data) > 4:
+            st = " ".join(raw_data[:2])
+            city_line = raw_data[2]
+        else:
+            st = raw_data[0]
+            city_line = raw_data[1]
 
-    return return_main_object
+        if st[-1:] == ",":
+            st = st[:-1]
+
+        city = city_line.split(",")[0]
+        state = city_line.split(",")[1].split()[0]
+        zip1 = city_line.split(",")[1].split()[1]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain="https://www.omnisourceusa.com",
+                page_url="https://www.omnisourceusa.com/locations",
+                location_name=name,
+                street_address=st,
+                city=city,
+                state=state,
+                zip_postal=zip1,
+                country_code="US",
+                store_number=ids[index],
+                phone=phone,
+                location_type="",
+                latitude=lat[index],
+                longitude=log[index],
+                hours_of_operation="",
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
-
-
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

@@ -1,10 +1,13 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("")
 
@@ -13,58 +16,99 @@ _headers = {
 }
 
 locator_domain = "https://www.oeffnungszeitenbuch.de"
-base_url = "https://www.oeffnungszeitenbuch.de/"
+base_url = "https://www.oeffnungszeitenbuch.de/einkaufszentrum-uebersicht.html"
 
 
-def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        cities = soup.select("div#textbereich > table a")
-        for city in cities:
-            city_base = city["href"]
-            logger.info(city_base)
-            pages = bs(session.get(city_base, headers=_headers).text, "lxml").select(
-                "select#seitennr option"
+def record_initial_requests(http, state):
+    logger.info(f"IP: {http.my_public_ip()}")
+    soup = bs(http.get(base_url, headers=_headers).text, "lxml")
+    cities = soup.find("div", {"id": "textbereich"})
+    cities = cities.find("table").find_all("a")
+    for city in cities:  # Sliced for testing
+        city_base = city["href"]
+        logger.info(city_base)
+        logger.info(f"IP: {http.my_public_ip()}")
+        pages = bs(
+            SgRequests.raise_on_err(http.get(city_base, headers=_headers)).text, "lxml"
+        )
+        pages = pages.find("div", {"id": "textbereich"})
+        pages = pages.find("table")
+        all_links = pages.find_all("a", {"href": True})
+        for link in all_links:
+            page_url = link["href"]
+            state.push_request(
+                SerializableRequest(url=page_url, context={"link": link.text.strip()})
             )
-            for page in pages:
-                section_url = city_base.split("-")[0] + "-" + page.text + ".html"
-                logger.info(section_url)
-                links = bs(
-                    session.get(section_url, headers=_headers).text, "lxml"
-                ).select("div.cboxserp")
-                for link in links:
-                    page_url = link.a["href"]
-                    logger.info(page_url)
-                    sp2 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                    addr = list(
-                        sp2.select("span.entryAdrFnt > div")[1].stripped_strings
-                    )[:3]
-                    phone = ""
-                    if sp2.select_one("span.telClk"):
-                        phone = sp2.select_one("span.telClk").text.strip()
-                    hours = []
-                    for hh in sp2.select("table.zeitenTbl tr"):
-                        td = hh.select("td")
-                        if len(td) == 1:
-                            break
-                        hours.append(" ".join(hh.stripped_strings))
+    return True
 
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=link.a.text.strip(),
-                        street_address=addr[0],
-                        city=addr[-1],
-                        zip_postal=addr[1],
-                        country_code="DE",
-                        phone=phone,
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                        raw_address=" ".join(addr),
-                    )
+
+def page(http, next_r):
+    page = None
+    try:
+        logger.info(f"IP: {http.my_public_ip()}")
+        page = SgRequests.raise_on_err(http.get(next_r.url))
+        return page
+    except Exception as e:
+        if "404" in str(e):
+            return None
+        else:
+            raise (f"{str(e)}")
+
+
+def producer(http, state):
+    for next_r in state.request_stack_iter():
+        yield {
+            "page_url": next_r.url,
+            "link": next_r.context.get("link") if next_r.context else None,
+            "text": page(http, next_r),
+        }
+
+
+def consumer(resp_generator, writer):
+    for response in resp_generator:
+        if response["text"]:
+            sp2 = bs(response["text"].text, "lxml")
+            addr = [
+                i
+                for i in sp2.find("div", {"id": "textbereich"})
+                .find("table")
+                .find("td")
+                .stripped_strings
+            ]
+            rawa = [addr[8], addr[9], addr[10]]
+            rawa = " ".join(rawa)
+            parsed = parse_address_intl(rawa + ", Germany")
+            street_address = ""
+            city = parsed.city
+            zip_postal = parsed.postcode
+            if zip_postal:
+                street_address = rawa.split(zip_postal)[0].strip()
+            location_name = response["link"] if response["link"] else addr[0]
+            writer.write_row(
+                SgRecord(
+                    page_url=response["page_url"],
+                    location_name=location_name.split(":")[-1],
+                    street_address=street_address,
+                    city=city,
+                    zip_postal=zip_postal,
+                    country_code="DE",
+                    phone=SgRecord.MISSING,
+                    locator_domain=locator_domain,
+                    hours_of_operation=SgRecord.MISSING,
+                    raw_address=rawa,
+                )
+            )
+
+
+def fetch_data(http, state, writer):
+    consumer(producer(http, state), writer)
 
 
 if __name__ == "__main__":
+    state = CrawlStateSingleton.get_instance()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+        with SgRequests(proxy_country="DE") as http:
+            state.get_misc_value(
+                "init", default_factory=lambda: record_initial_requests(http, state)
+            )
+            fetch_data(http, state, writer)
