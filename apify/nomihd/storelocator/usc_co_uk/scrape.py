@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -11,8 +11,18 @@ import json
 website = "usc.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "www.usc.co.uk",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
 
 
@@ -33,6 +43,8 @@ def fetch_data():
             locator_domain = website
 
             store_req = session.get(page_url, headers=headers)
+            if isinstance(store_req, SgRequestError):
+                continue
 
             retry_count = 0
             while "var store =" not in store_req.text and retry_count < 3:
@@ -50,10 +62,26 @@ def fetch_data():
                 )
 
                 location_name = store_json["formattedStoreNameLong"]
-                street_address = store_json["address"]
+                street_address = (
+                    store_json["address"]
+                    .replace("\r\n", "")
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                )
+                raw_address = street_address
                 city = store_json["town"]
+                if city and len(city) > 0:
+                    raw_address = raw_address + ", " + city
+
                 state = store_json["county"]
+                if state and len(state) > 0:
+                    raw_address = raw_address + ", " + state
+
                 zip = store_json["postCode"]
+                if zip and len(zip) > 0:
+                    raw_address = raw_address + ", " + zip
+
                 country_code = store_json["countryCode"]
 
                 store_number = str(store_json["code"])
@@ -111,6 +139,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
             else:
                 location_name = "".join(
@@ -186,6 +215,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 

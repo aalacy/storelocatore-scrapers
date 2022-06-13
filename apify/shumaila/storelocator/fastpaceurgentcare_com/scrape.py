@@ -1,174 +1,150 @@
 from bs4 import BeautifulSoup
-import csv
-import usaddress
+import json
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
+    "Cookie": "_gcl_au=1.1.492775561.1649979093; _ga=GA1.2.1102456833.1649979093; _fbp=fb.1.1649979094512.31143188; city=Hohenwald; hospital_id=6936; hospital_name=Hohenwald; hospital_post_id=3486; isLocationSet=yes; region_name=Tennessee; thid=5105; _gid=GA1.2.633866335.1650293362; PHPSESSID=0f22f661b8d25dfcdec92b110d5827f4; cebs=1; lat=36.1972824; lng=-85.4169211; _yfpc=803487941266; _gat_UA-47751755-1=1; _ce.s=v~6b2f32df052689e4a6317c1f1b62796f8b06b899~vpv~2~v11.rlc~1650317400429~ir~1~gtrk.la~l258ldk5",
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
-    data = []
-    streetlist = []
-    p = 0
-    url = "https://www.fastpacehealth.com/locations/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    soup = str(soup)
-    start = 0
-    while True:
 
-        start = soup.find('\\"Title\\"', start)
-        if start == -1:
-            break
-        start = soup.find(":", start) + 1
-        end = soup.find(",", start)
-        title = soup[start:end].replace("\\", "").replace('"', "")
-        start = end + 1
-        start = soup.find('\\"LocationNumber\\"', start)
-        start = soup.find(":", start) + 1
-        end = soup.find(",", start)
-        store = soup[start:end].replace("\\", "").replace('"', "")
-        start = end + 1
-        start = soup.find('\\"DirectUrl\\"', start)
-        start = soup.find(":", start) + 1
-        end = soup.find(",", start)
-        link = "https://www.fastpacehealth.com" + soup[start:end].replace(
-            "\\", ""
-        ).replace('"', "").replace(" ", "-")
-        start = end + 1
-        start = soup.find('\\"LocationAddress\\"', start)
-        start = soup.find(":", start)
-        start = soup.find('"', start) + 1
-        end = soup.find('"', start)
-        address = soup[start:end].replace("\\", "").replace(",", "")
-        if address.find("COMING SOON") == -1:
+    url = "https://fastpacehealth.com/wp-admin/admin-ajax.php"
+    dataobj = {
+        "action": "load_more_dealers",
+        "address": "",
+        "lat": "36.1972824",
+        "lng": "-85.4169211",
+        "radius": "10000",
+        "post_length": "0",
+    }
 
-            address = usaddress.parse(address)
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
-            start = end + 1
-            start = soup.find('\\"LocationPhoneNum\\"', start)
-            start = soup.find(":", start) + 1
-            end = soup.find(",", start)
-            phone = soup[start:end].replace("\\", "").replace('"', "")
-            start = end + 1
-            start = soup.find('\\"Latitude\\"', start)
-            start = soup.find(":", start) + 1
-            end = soup.find(",", start)
-            lat = soup[start:end].replace("\\", "").replace('"', "")
-            start = end + 1
-            start = soup.find('\\"Longitude\\"', start)
-            start = soup.find(":", start) + 1
-            end = soup.find(",", start)
-            longt = soup[start:end].replace("\\", "").replace('"', "")
-            start = end + 1
+    loclist = session.post(url, headers=headers, data=dataobj).json()["location_list"]
+    loclist = BeautifulSoup(loclist.replace("\\", ""), "html.parser").findAll(
+        "li", {"class": "single-item"}
+    )
+    for loc in loclist:
 
-            r1 = session.get(link, headers=headers, verify=False)
-            soup1 = str(BeautifulSoup(r1.text, "html.parser"))
-
-            mstart = soup1.find("Hours of Operation")
-            mstart = soup1.find('"Values\\"', mstart)
-            mstart = soup1.find("[", mstart) + 1
-            mend = soup1.find("]", mstart)
-            hours = (
-                soup1[mstart:mend].replace("\\", "").replace('"', "").replace(",", ", ")
+        store = loc["id"].replace("li_store_id_", "")
+        title = loc["data-hname"]
+        try:
+            facility = str(loc).split('data-yext-id="Facility-', 1)[1].split('"', 1)[0]
+            loclink = (
+                "https://knowledgetags.yextpages.net/embed?key=BW5iO01rVpuBJkLSsAXT5nv2m1ByWv-EEO_3Vgyk5k4Yx-lOn5kZUuXnfKQWh_8B&account_id=950683801497861850&entity_id=Facility-"
+                + str(facility)
+                + "&locale=en&v=20210504"
             )
 
-            if len(hours) < 3:
-                hours = "<MISSING>"
-            if street.lstrip() in streetlist:
-                continue
-            streetlist.append(street.lstrip())
-            if len(pcode) < 3:
-                pcode = "<MISSING>"
-            if "Tennessee" in city and len(state) < 2:
-                state = "TN"
-                city = city.replace("Tennessee", "")
-            if len(phone) < 3:
-                phone = "<MISSING>"
-            data.append(
-                [
-                    "https://fastpaceurgentcare.com/",
-                    link,
-                    title,
-                    street.lstrip(),
-                    city.lstrip(),
-                    state.lstrip(),
-                    pcode.lstrip(),
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
+            r = session.get(loclink, headers=headers).text
+            link = r.split('"websiteUrl.url":"', 1)[1].split("?", 1)[0]
+            address = r.split('"address":', 1)[1].split("}", 1)[0]
+            address = address + "}"
+            address = json.loads(address)
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            pcode = address["postalCode"]
+            street = address["streetAddress"]
+            lat = r.split('"latitude":', 1)[1].split(",", 1)[0]
+            longt = r.split('"longitude":', 1)[1].split("}", 1)[0]
+            phone = r.split('"phone":"', 1)[1].split('"', 1)[0]
+            hourslist = r.split('"openingHoursSpecification":', 1)[1].split("]", 1)[0]
+            hourslist = hourslist + "]"
+            hourslist = json.loads(hourslist)
 
-            p += 1
-        else:
-            start = end + 1
-    return data
+            hours = ""
+            for hr in hourslist:
+
+                try:
+                    day = hr["dayOfWeek"]
+                    closestr = hr["closes"]
+                    close = int(closestr.split(":", 1)[0])
+                    if close > 12:
+                        close = close - 12
+                    openstr = hr["opens"]
+                    check = int(openstr.split(":", 1)[0])
+                    if check > 12:
+                        check = check - 12
+                        hours = (
+                            hours
+                            + day
+                            + " "
+                            + str(check)
+                            + ":"
+                            + openstr.split(":", 1)[1]
+                            + " pm - "
+                            + str(close)
+                            + ":"
+                            + closestr.split(":", 1)[1]
+                            + " pm "
+                        )
+                    else:
+                        hours = (
+                            hours
+                            + day
+                            + " "
+                            + openstr
+                            + " am - "
+                            + str(close)
+                            + ":"
+                            + closestr.split(":", 1)[1]
+                            + " pm "
+                        )
+                except:
+                    hours = hours + day + " Closed "
+        except:
+
+            hours = link = "<MISSING>"
+            datanow = {"action": "load_single_clinic_page", "post_id": str(store)}
+            locnow = session.post(url, headers=headers, data=datanow).json()[
+                "location_markers"
+            ][0]
+            lat = locnow["lat"]
+            longt = locnow["lng"]
+            link = (
+                "https://fastpacehealth.com/location/"
+                + str(loc).split("/location/", 1)[1].split("'", 1)[0]
+            )
+            address = str(loc).split("<p>", 1)[1].split("</p>", 1)[0]
+            street, city = address.split("<br/>", 1)
+            city, state = city.split(", ", 1)
+            state, pcode = state.split(" ", 1)
+            phone = (
+                str(loc).split('<a href="tel:', 1)[1].split(">", 1)[1].split("<", 1)[0]
+            )
+        yield SgRecord(
+            locator_domain="https://fastpacehealth.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

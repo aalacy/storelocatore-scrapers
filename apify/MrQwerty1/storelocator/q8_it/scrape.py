@@ -14,7 +14,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("localita")
         street_address = j.get("indirizzo") or ""
-        street_address = street_address.replace(">", "-")
+        street_address = street_address.upper().replace(">", "-").strip()
         city = j.get("localita")
         postal = j.get("cap")
         phone = j.get("telefono")
@@ -22,6 +22,7 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("longitudine") or ""
         if str(latitude) == "0.0":
             latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
         store_number = j.get("codice") or ""
         for c in countries:
             if c in store_number:
@@ -29,6 +30,9 @@ def fetch_data(sgw: SgWriter):
                 break
         else:
             country = "IT"
+
+        if country == "BE":
+            continue
 
         row = SgRecord(
             page_url=page_url,
@@ -57,10 +61,6 @@ if __name__ == "__main__":
     }
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -7,13 +6,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
     session = SgRequests()
 
     start_url = "https://www.bathstore.com/stores"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "bathstore.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -27,18 +27,26 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         location_name = loc_dom.xpath(
             '//h3[@class="storeDetailMap_locationName_title"]/text()'
-        )[0]
+        )
+        if not location_name:
+            continue
+        location_name = location_name[0]
         raw_address = loc_dom.xpath('//div[@class="storeDetailMap_address"]/p/text()')
-        raw_address = [e.strip() for e in raw_address if e.strip()]
-        city = raw_address[-2].split(", ")[-1].strip()
-        if city == ",":
-            city = ""
-        street_address = ", ".join(raw_address[:-2])
-        if "," in raw_address[-2] and raw_address[-2].split(",")[0] != city:
-            street_address += ", " + raw_address[-2].split(",")[0]
-        if street_address.endswith(","):
+        raw_address = " ".join([e.strip() for e in raw_address if e.strip()]).replace(
+            ", ,", ","
+        )
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if street_address and addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        else:
+            street_address = addr.street_address_2
+        if not street_address:
+            street_address = loc_dom.xpath(
+                '//div[@class="storeDetailMap_address"]/p/text()'
+            )[0]
+        if street_address and street_address.endswith(","):
             street_address = street_address[:-1]
-        street_address = street_address.replace(",,", "")
         phone = loc_dom.xpath(
             '//div[@class="storeDetailMap_locationInformation"]//a[contains(@href, "tel")]/text()'
         )
@@ -48,15 +56,18 @@ def fetch_data():
             '//li[@class="storeDetailMap_openingTime_item"]/span/text()'
         )
         hoo = " ".join(hoo)
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = " ".join(raw_address.split()[-2:])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
+            city=addr.city,
             state="",
-            zip_postal=raw_address[-1],
+            zip_postal=zip_code,
             country_code="",
             store_number="",
             phone=phone,
@@ -64,7 +75,7 @@ def fetch_data():
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,
-            raw_address=" ".join(raw_address),
+            raw_address=raw_address,
         )
 
         yield item

@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="col-md-6"]')
+    div = tree.xpath("//div[./h3]")
     for d in div:
 
         page_url = "https://www.superduperburgers.com/locations/"
@@ -25,7 +25,11 @@ def fetch_data(sgw: SgWriter):
         if delivery or location_name.find("Coming Soon") != -1:
             continue
         ad = (
-            "".join(d.xpath(".//h3/following-sibling::p[2]/a[1]/text()"))
+            "".join(
+                d.xpath(
+                    ".//h3/following-sibling::p[1]/a[1]/text() | .//h3/following-sibling::p[1]//text()"
+                )
+            )
             .replace("(Directions)", "")
             .strip()
         )

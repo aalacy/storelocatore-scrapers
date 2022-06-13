@@ -35,7 +35,9 @@ def fetch_data(sgw: SgWriter):
             city = j.get("cityEnglishText")
             postal = j.get("zipCodeText")
 
-            phone = j.get("phoneNumber")
+            phone = j.get("phoneNumber") or ""
+            if "/" in phone:
+                phone = phone.split("/")[0].strip()
             latitude = j.get("lat")
             longitude = j.get("lng")
             location_type = j.get("storeType")

@@ -1,5 +1,4 @@
 import re
-import ssl
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -8,14 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgChrome
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -39,13 +31,19 @@ def fetch_data():
         location_name = location_name[0].strip() if location_name else "<MISSING>"
         raw_data = poi_html.xpath('.//div[@class="details"]/text()')
         raw_data = [e.strip() for e in raw_data if e.strip()]
-        addr = parse_address_intl(raw_data[0])
+        if ";" in raw_data[0]:
+            raw_address = raw_data[0].replace(";", ",")
+        else:
+            raw_address = " ".join(raw_data).split("☎")[0]
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
+        if zip_code:
+            zip_code = zip_code.split()[0]
         country_code = addr.country
         phone = raw_data[-1][2:]
         hoo = []
@@ -68,7 +66,7 @@ def fetch_data():
                 latitude = geo[0]
                 longitude = geo[1]
             except:
-                with SgChrome() as driver:
+                with SgFirefox() as driver:
                     driver.get(store_url)
                     driver.switch_to.frame(
                         driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
@@ -97,6 +95,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         yield item

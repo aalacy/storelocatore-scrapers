@@ -1,37 +1,21 @@
-import csv
-from sgrequests import SgRequests
-from sgzip import ClosestNSearch
 import json
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.childrensplace.com/"
+    api_url = (
+        "https://www.childrensplace.com/api/v2/store/findStoresbyLatitudeandLongitude"
+    )
 
-def fetch_data():
-    session = SgRequests()
-    locator_domain = 'https://www.childrensplace.com/'
-    search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes = ['us', 'ca'])
-
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 500
-
-    coord = search.next_coord()
-    dup_tracker = set()
-    all_store_data = []
-    while coord:
-        x = coord[0]
-        y = coord[1]
-        
-        url = "https://www.childrensplace.com/api/v2/store/findStoresbyLatitudeandLongitude"
-
-        HEADERS = {
+    headers = {
         "authority": "www.childrensplace.com",
         "method": "GET",
         "path": "/api/v2/store/findStoresbyLatitudeandLongitude",
@@ -48,66 +32,109 @@ def fetch_data():
         "langid": "-1",
         "storeid": "10151",
         "catalogid": "10551",
-        "latitude": str(x),
-        "longitude": str(y),
+        "latitude": str(lat),
+        "longitude": str(long),
         "maxitems": "1000",
-        "radius": "500"
-        }
+        "radius": "500",
+    }
 
-        r = session.get(url, headers=HEADERS)
-        
-        result_coords = []
-        res_json = r.json()['PhysicalStore'][0]
-        
-        for loc in res_json:
-            lat = loc['latitude']
-            longit = loc['longitude']
+    session = SgRequests()
 
-            result_coords.append([lat, longit])
-            
-            street_address = loc['addressLine']['0'] + ' ' + loc['addressLine']['1']
-            city = loc['city'].strip()
-            state = loc['stateOrProvinceName'].strip()
-            zip_code = loc['postalCode'].strip()
-            country_code = loc['country'].strip()
-            
-            phone_number = loc['telephone1'].strip()
-            store_number = loc['uniqueId']
-            
-            location_name = loc['description']['displayStoreName']
-            if store_number not in dup_tracker:
-                dup_tracker.add(store_number)
-            else:
-                continue
-            
-            hours_obj = json.loads(loc['attribute']['displayValue'])['storehours']
-            hours = ''
-            for i, h in enumerate(hours_obj):
-                if i == 7:
-                    break
-                hours += h['nick'] + ' ' + h['availability'][0]['status'] + ' '
-            
-            location_type = '<MISSING>'
-            page_url = 'https://www.childrensplace.com/us/store/' + location_name.replace(' ', '') + '-' + state + '-' + city.replace(' ', '') + '-' + zip_code.replace(' ', '') + '-' + store_number
+    r = session.get(api_url, headers=headers)
 
-            #https://www.childrensplace.com/us/store/{displayStoreName without spaces}-{state or province code}-{city without spaces}-{zip or postal code}-{uniqueId}
-            
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+    js = r.json()["PhysicalStore"][0]
 
-            all_store_data.append(store_data)
+    for j in js:
 
-        if len(res_json) == 0:
-            search.max_distance_update(MAX_DISTANCE)
-        else:
-            search.max_count_update(result_coords)
-            
-        coord = search.next_coord()  
+        latitude = j["latitude"]
+        longitude = j["longitude"]
+        street_address = j["addressLine"]["0"] + " " + j["addressLine"]["1"]
+        street_address = str(street_address).replace(" NA", "").strip()
+        city = j["city"].strip()
+        state = j["stateOrProvinceName"].strip()
+        postal = j["postalCode"].strip()
+        country_code = j["country"].strip()
+        phone = j["telephone1"].strip()
+        store_number = j["uniqueId"]
+        location_name = j["description"]["displayStoreName"]
+        hours_of_operation = "<MISSING>"
+        hours_obj = json.loads(j["attribute"]["displayValue"])["storehours"]
+        tmp = []
+        if hours_obj:
+            for h in hours_obj:
+                day = h.get("nick")
+                opens = str(h.get("availability")[0].get("from"))
+                if opens.find("T") != -1:
+                    opens = (
+                        opens.split("T")[1]
+                        .replace(":00:00", ":00")
+                        .replace(":30:00", ":30")
+                        .strip()
+                    )
+                closes = str(h.get("availability")[0].get("to"))
+                if closes.find("T") != -1:
+                    closes = (
+                        closes.split("T")[1]
+                        .replace(":00:00", ":00")
+                        .replace(":30:00", ":30")
+                        .strip()
+                    )
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+        page_url = (
+            "https://www.childrensplace.com/us/store/"
+            + location_name.replace(" ", "")
+            + "-"
+            + state
+            + "-"
+            + city.replace(" ", "")
+            + "-"
+            + postal.replace(" ", "")
+            + "-"
+            + store_number
+        )
 
-    return all_store_data
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
-scrape()
+
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        fetch_data(writer)

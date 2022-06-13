@@ -41,7 +41,10 @@ def fetch_data():
                     try:
                         location_type = loc["service_details"]["ARH"]["title"]
                     except:
-                        location_type = loc["service_details"]["GMS"]["title"]
+                        try:
+                            location_type = loc["service_details"]["GMS"]["title"]
+                        except:
+                            location_type = MISSING
                 if "Care homes" in location_type:
                     continue
                 log.info(page_url)

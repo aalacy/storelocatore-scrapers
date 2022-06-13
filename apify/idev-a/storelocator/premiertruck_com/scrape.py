@@ -1,12 +1,17 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
-import dirtyjson as json
+from tenacity import retry, stop_after_attempt, wait_fixed
+from webdriver_manager.chrome import ChromeDriverManager
+import ssl
 import re
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("premiertruck")
 
@@ -16,55 +21,103 @@ _headers = {
 }
 
 locator_domain = "https://www.premiertruck.com"
-base_url = "https://images.motorcar.com/fonts/dealerlocator/data/locations.json"
+base_url = "https://images.ebizautos.media/fonts/dealerlocator/sites/12153/data/locations.json?v=2&formattedAddress=&boundsNorthEast=&boundsSouthWest="
+
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
+
+
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(2))
+def get_url(driver=None, url=None):
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+    except:
+        driver = get_driver()
+        raise Exception
 
 
 def fetch_data():
-    with SgRequests() as session:
+    driver = get_driver()
+    with SgRequests(proxy_country="us") as session:
         locations = session.get(base_url, headers=_headers).json()
-        url = locator_domain + locations[0]["web"]
-        sp1 = bs(session.get(url, headers=_headers).text, "lxml")
-        locs = sp1.find("script", string=re.compile(r"var loc_")).string.split(
-            "var loc_"
-        )
-        for loc in locs:
-            if not loc:
-                continue
-            _ = json.loads(loc.split("=")[1].split(";")[0].strip())
-            page_url = locator_domain + f"/{_['locAddress']['City']}.aspx"
-            street_address = _["locAddress"]["Address1"]
-            if _["locAddress"].get("address2"):
-                street_address += " " + _["locAddress"]["Address2"]
-            hours = []
-            for day, hh in _["Hours"]["General"].items():
-                hours.append(f"{day}: {hh}")
-            latitude = _["locAddress"]["GeoLat"]
-            longitude = _["locAddress"]["GeoLong"]
-            if latitude == "0":
-                latitude = ""
-            if longitude == "0":
-                longitude = ""
+        for _ in locations:
+            page_url = locator_domain + _["web"]
+            logger.info(page_url)
+            get_url(driver, page_url)
+            sp1 = bs(driver.page_source, "lxml")
+            if sp1.select("div.d-sm-none table"):
+                hours = [
+                    " ".join(hh.stripped_strings)
+                    for hh in sp1.select("div.d-sm-none table")[0].select("tr")
+                ]
+            elif sp1.select("div.d-md-none table"):
+                hours = [
+                    " ".join(hh.stripped_strings)
+                    for hh in sp1.select("div.d-md-none table")[0].select("tr")
+                ]
+            else:
+                hours = []
+                days = list(
+                    sp1.select_one("div#section-hours table thead tr").stripped_strings
+                )
+                times = sp1.select("div#section-hours table tbody tr")[0].select("td")[
+                    1:
+                ]
+                for x in range(len(days)):
+                    hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
+
+            street_address = _["address"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
+
+            country_code = "US"
+            if _["state"] in ca_provinces_codes:
+                country_code = "CA"
+            phone = _["phone"]
+            if not phone and sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             yield SgRecord(
                 page_url=page_url,
-                store_number=_["locAccountID"],
-                location_name=_["locName"],
+                store_number=_["id"],
+                location_name=_["name"],
                 street_address=street_address,
-                city=_["locAddress"]["City"],
-                state=_["locAddress"]["State"],
-                zip_postal=_["locAddress"]["Zip"],
-                latitude=latitude,
-                longitude=longitude,
-                country_code=_["locAddress"]["Country"],
-                phone=_["Contacts"]["General"]["Phone"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["postal"].replace("Canada", "").strip(),
+                latitude=_["lat"],
+                longitude=_["lng"],
+                country_code=country_code,
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

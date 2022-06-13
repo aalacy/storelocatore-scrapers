@@ -54,6 +54,9 @@ def fetch_data():
             locator_domain = website
 
             location_name = "".join(store.xpath(".//h4//text()")).strip()
+            if len(location_name) <= 0:
+                continue
+
             page_url = search_url
             store_info = list(
                 filter(
@@ -75,6 +78,8 @@ def fetch_data():
 
             city = formatted_addr.city
             state = formatted_addr.state
+            if not state:
+                state = "PR"
             zip = formatted_addr.postcode
 
             country_code = "PR"

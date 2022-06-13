@@ -43,12 +43,34 @@ def fetch_data(sgw: SgWriter):
         state = line.split()[0].strip()
         postal = line.split()[1].strip()
         page_url = "".join(l.xpath(".//h3[@class='loc-name']/a/@href"))
-        phone = "".join(l.xpath(".//span[@class='loc-phone']/text()")).strip()
+        phone = "".join(l.xpath(".//span[@class='loc-phone']//text()")).strip()
 
         if phone.find("/") != -1:
             phone = phone.split("/")[0].strip()
         latitude, longitude = coords.get(f"{i}", ",").split(",")
-        hours_of_operation = ";".join(l.xpath(".//span[@class='loc-hours']/text()"))
+
+        _tmp = []
+        hours = l.xpath(".//span[@class='loc-hours']/text()")
+        for h in hours:
+            if "; Buffet" in h:
+                h = h.split("; Buffet")[0].strip()
+            if "; Dining" in h:
+                h = h.split("; Dining")[0].strip()
+            if "JOIN" in h:
+                h = h.split("JOIN")[0].strip()
+            if "; DEL/CO" in h:
+                h = h.split("; DEL/CO")[0].strip()
+            if ", Delivery" in h:
+                h = h.split(", Delivery")[0].replace("Dining Room: ", "").strip()
+            if "; Delivery" in h:
+                h = h.split("; Delivery")[0].strip()
+            if "Buffet ends" in h:
+                h = h.split("Buffet ends")[0].strip()
+            if "Store Hours:" in h:
+                h = h.split("; Store Hours:")[0].strip()
+            _tmp.append(h)
+
+        hours_of_operation = ";".join(_tmp)
         i += 1
 
         row = SgRecord(

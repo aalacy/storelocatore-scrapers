@@ -49,8 +49,8 @@ def get_data(page_url, sgw: SgWriter):
         .strip()
     )
     lines = tree.xpath("//blockquote/p/text()")
-    phone = lines.pop(0)
-    lines.pop(0)
+    phone = lines.pop()
+    lines = lines[1:-1]
 
     i = 0
     for line in lines:

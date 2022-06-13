@@ -22,6 +22,7 @@ def fetch_data(sgw: SgWriter):
 
     divs = tree.xpath("//h2/following-sibling::p/a|//h2/following-sibling::p/strong")
     for d in divs:
+        uniq = False
         header = d.xpath(".//text()")
         header = list(
             filter(
@@ -41,7 +42,10 @@ def fetch_data(sgw: SgWriter):
             street_address = text.replace("–", "").strip()
             phone = SgRecord.MISSING
         else:
-            continue
+            uniq = True
+            street_address, phone = "".join(
+                d.xpath("./following-sibling::text()[2]")
+            ).split(" - ")
 
         try:
             map_url = (
@@ -64,6 +68,9 @@ def fetch_data(sgw: SgWriter):
         except IndexError:
             raw_address, postal = SgRecord.MISSING, SgRecord.MISSING
             city = location_name
+
+        if uniq:
+            city = text
 
         row = SgRecord(
             page_url=page_url,

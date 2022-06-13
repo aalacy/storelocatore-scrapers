@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 
-session = SgRequests()
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -10,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 
 
 def fetch_data(sgw: SgWriter):
-
+    session = SgRequests()
     titlelist = []
     url = "https://southstatebank.com/Global/About/CRA/Locations-Listing"
     r = session.get(url)
@@ -63,6 +61,13 @@ def fetch_data(sgw: SgWriter):
             hours = hours.split("Branch Features", 1)[0]
         except:
             pass
+        if hours:
+            hours = (
+                hours.split("Drive Thru")[0]
+                .replace("Lobby  By Appointment Only", "")
+                .replace("Lobby", "")
+                .strip()
+            )
         street = city
         city = state.replace(",", "")
         state, pcode = pcode.split(" ", 1)

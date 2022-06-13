@@ -22,10 +22,10 @@ def get_data(loc):
     location_name = loc["displayName"]
     store_number = loc["name"]
     phone = loc["WhatsApp"]
-    street_address = loc["line1"] + "" + loc["line2"]
+    street_address = loc["line1"]
     city = loc["town"]
     zip_postal = loc["postalCode"]
-    phone = loc["WhatsApp"]
+    phone = loc["phone"]
     latitude = loc["latitude"]
     longitude = loc["longitude"]
     if latitude == "0.0":

@@ -3,4 +3,4 @@ sgscrape==0.2.6
 sgpostal==0.1.0
 lxml==4.6.2
 httpx==0.19.0
-sgrequests==0.2.9
+sgrequests==0.2.10

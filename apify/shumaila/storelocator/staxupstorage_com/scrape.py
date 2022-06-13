@@ -14,7 +14,7 @@ headers = {
 
 def fetch_data():
 
-    url = "https://www.staxupstorage.com/sitemap.xml"
+    url = "https://www.staxupstorage.com/sitemaps/index-by-state-CA.xml"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     linklist = soup.findAll("loc")

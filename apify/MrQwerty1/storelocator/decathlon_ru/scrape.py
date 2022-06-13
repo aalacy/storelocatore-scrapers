@@ -1,5 +1,6 @@
 import gzip
 import json
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -7,10 +8,12 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
 
 
 def get_urls():
     r = session.get("https://www.decathlon.ru/sitemap-magasin-ru.xml.gz")
+    logger.info(f"Tried to get sitemap, response {r}")
     tree = html.fromstring(gzip.decompress(r.content))
 
     return set(tree.xpath("//loc/text()"))
@@ -18,6 +21,7 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
+    logger.info(f"{page_url}: {r}")
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), 'SportingGoodsStore')]/text()")
@@ -65,14 +69,15 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.decathlon.ru/"
-    session = SgRequests()
+    locator_domain = "http://www.decathlon.ru/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="decathlon.ru")
+    session = SgRequests(proxy_country="ru")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
