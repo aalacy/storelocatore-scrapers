@@ -13,7 +13,6 @@ def get_data():
     url = "https://www.bupa.co.uk/BDC/GoogleMapSearch"
 
     for search_lat, search_lon in search:
-        print(search_lat, search_lon)
         x = 0
         while True:
             x = x + 1
