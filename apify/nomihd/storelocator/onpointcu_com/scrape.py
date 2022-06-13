@@ -31,16 +31,17 @@ def fetch_data():
     search_url = "https://www.onpointcu.com/locations-atms/"
     search_res = session.get(search_url, headers=headers)
     json_str = search_res.text.split("locationData =")[1].split("}],")[0] + "}]"
-
-    json_res = json.loads(json_str)
-
-    store_list = json_res
+    store_list = json.loads(
+        json_str.replace('\\"', '"').strip().replace('\\"', '"').strip(), strict=False
+    )
 
     for store in store_list:
 
         page_url = store.get("customAtmInfo", None)
         if page_url:
-            page_url = page_url.split('href="')[1].split('"')[0]
+            page_url = (
+                page_url.split('href="')[1].split('"')[0].replace("\\/", "/").strip()
+            )
         locator_domain = website
 
         location_name = store["name"]
