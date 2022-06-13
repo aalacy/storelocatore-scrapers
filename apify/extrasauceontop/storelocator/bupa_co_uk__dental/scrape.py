@@ -29,6 +29,7 @@ def get_data():
             try:
                 response = response.json()
             except Exception:
+                search.found_nothing()
                 break
             if len(response) == 0:
                 break
