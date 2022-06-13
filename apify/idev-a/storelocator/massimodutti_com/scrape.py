@@ -14,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://www.massimodutti.com/"
-base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009527/physical-store?appId=1&languageId=-1&latitude={}&longitude={}"
+base_url = "https://www.massimodutti.com/itxrest/2/bam/store/34009527/physical-store?appId=1&languageId=-1&latitude={}&longitude={}&radioMax=100000000"
 
 days = [
     "",
@@ -71,6 +71,8 @@ def fetch_records(search):
                     _state = "-".join(store["city"].split()).lower()
 
                 page_url = f'https://www.massimodutti.com/us/store-locator/{_state}/{_streat}/{store["latitude"]},{store["longitude"]}/{store["id"]}'
+
+                search.found_location_at(store["latitude"], store["longitude"])
                 yield SgRecord(
                     page_url=page_url,
                     store_number=store["id"],
@@ -93,7 +95,7 @@ def fetch_records(search):
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, granularity=Grain_8()
+        country_codes=SearchableCountries.ALL, max_search_distance_miles=100000
     )
     with SgWriter(
         deduper=SgRecordDeduper(
