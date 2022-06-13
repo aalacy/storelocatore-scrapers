@@ -1,37 +1,10 @@
-import csv
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_address(line):
@@ -76,8 +49,9 @@ def get_address(line):
 
 def get_coords():
     coords = dict()
-    session = SgRequests()
-    r = session.get("https://cwi-logistics.com/wp-json/wpgmza/v1/markers")
+    r = session.get(
+        "https://cwi-logistics.com/wp-json/wpgmza/v1/markers", headers=headers
+    )
     for j in r.json():
         _id = j["address"].split()[0]
         lat = j["lat"]
@@ -87,15 +61,7 @@ def get_coords():
     return coords
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://cwi-logistics.com/"
-    page_url = "https://cwi-logistics.com/locations/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@class='single-location-block']")
@@ -105,42 +71,33 @@ def fetch_data():
         location_name = "".join(d.xpath(".//div[@class='loc-name']/h5/text()")).strip()
         line = "".join(d.xpath(".//div[@class='address']/a/text()")).strip()
         street_address, city, state, postal = get_address(line)
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")).strip()
-            or "<MISSING>"
-        )
+        phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")).strip()
+
         _id = line.split()[0]
         latitude, longitude = coords[_id]
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://cwi-logistics.com/"
+    page_url = "https://cwi-logistics.com/locations/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

@@ -1,174 +1,65 @@
-import csv
-import usaddress
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    api = "https://www.crackshack.com/modules/multilocation/?near_location=75022&threshold=4000&distance_unit=miles&limit=20&services__in=&language_code=en-us&published=1&within_business=true"
+    r = session.get(api, headers=headers)
+    js = r.json()["objects"]
+
+    for j in js:
+        raw_address = j.get("formatted_address")
+        adr1 = j.get("street") or ""
+        adr2 = j.get("street2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postal_code")
+        country_code = "US"
+        store_number = j.get("id")
+        location_name = j.get("location_name")
+        page_url = j.get("location_url")
+        phone = j["phones"][0]["number"]
+        latitude = j.get("lat")
+        longitude = j.get("lon")
+
+        _tmp = []
+        hours = j["formatted_hours"]["primary"]["grouped_days"]
+        for h in hours:
+            day = h.get("label_abbr")
+            inter = h.get("content")
+            _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            raw_address=raw_address,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_address(line):
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
-
-    return street_address, city, state, postal
-
-
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.crackshack.com/locations/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath(
-        "//a[@class='cs-black-button' and not(contains(@href, 'coming-soon'))]/@href"
-    )
-
-
-def get_data(page_url):
-    locator_domain = "https://www.crackshack.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = tree.xpath("//h1/text()")[0].strip()
-    line = tree.xpath("//p[text()='Address']/following-sibling::p[1]/text()")
-    line = ", ".join(
-        list(filter(None, [l.replace("Westfield Mall L1", "").strip() for l in line]))
-    )
-
-    street_address, city, state, postal = get_address(line)
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//p[text()='Phone']/following-sibling::p[1]/text()")
-        ).strip()
-        or "<MISSING>"
-    )
-    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
-    latitude, longitude = get_coords_from_google_url(text)
-    location_type = "<MISSING>"
-
-    _tmp = []
-    hours = tree.xpath("//p[text()='Hours']/following-sibling::p[1]/text()")
-    for h in hours:
-        if not h.strip() or "indoor" in h or "*" in h or "takeout" in h:
-            continue
-        _tmp.append(h.strip())
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.crackshack.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

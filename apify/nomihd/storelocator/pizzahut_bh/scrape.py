@@ -45,7 +45,7 @@ def fetch_data():
         street_address = "<MISSING>"
         city = "<MISSING>"
         if len(raw_address) > 1:
-            street_address = raw_address[:-1]
+            street_address = ", ".join(raw_address[:-1]).strip()
             city = raw_address[-1]
             if city == "Bahrain":
                 city = "<MISSING>"
@@ -104,7 +104,9 @@ def fetch_data():
             + stores[key]["FridayDeliveryEnd"]
         )
 
-        hours_of_operation = "; ".join(hours_list).strip()
+        hours_of_operation = (
+            "; ".join(hours_list).strip().replace("26:45", "02:45").strip()
+        )
 
         latitude, longitude = (
             stores[key]["MapLocation"]["Latitude"],

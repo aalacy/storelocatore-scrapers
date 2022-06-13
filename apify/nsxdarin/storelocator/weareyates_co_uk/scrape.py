@@ -1,149 +1,110 @@
-import csv
+from lxml import html
+from datetime import datetime
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-logger = SgLogSetup().get_logger("weareyates_co_uk")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def get_data(zips, sgw: SgWriter):
+
+    locator_domain = "https://weareyates.co.uk/"
+
+    session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.greatukpubs.co.uk",
+        "Connection": "keep-alive",
+        "Referer": "https://www.greatukpubs.co.uk/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
+
+    data = {"postcode": f"{zips}"}
+
+    r = session.post("https://www.greatukpubs.co.uk/", headers=headers, data=data)
+    try:
+        js = r.json()["mapPoints"]
+    except:
+        return
+    for j in js:
+        store_number = j.get("id") or "<MISSING>"
+        slug = j.get("UrlText")
+        page_url = f"https://www.greatukpubs.co.uk/{slug}"
+        location_name = j.get("UnitName") or "<MISSING>"
+        street_address = (
+            f"{j.get('Address1')} {j.get('Address2')}".replace("Market House", "")
+            .replace("Marshall House", "")
+            .strip()
         )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
+        street_address = " ".join(street_address.split())
+        city = j.get("TownCity") or "<MISSING>"
+        state = "<MISSING>"
+        postal = j.get("PostCode") or "<MISSING>"
+        country_code = "UK"
+        phone = j.get("Telephone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        if longitude == "0" or longitude == 0:
+            longitude = "<MISSING>"
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="opening-times"]/div//text()'))
+            .replace("\n", "")
+            .strip()
         )
-        for row in data:
-            writer.writerow(row)
+        today = datetime.today().strftime("%A")
+        hours_of_operation = (
+            " ".join(hours_of_operation.split()).replace("Today", f"{today}").strip()
+        )
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
-def fetch_data():
-    locs = []
-    url = "https://www.greatukpubs.co.uk/find-a-pub"
-    r = session.get(url, headers=headers)
-    website = "weareyates.co.uk"
-    typ = "<MISSING>"
-    country = "GB"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'class="inner-item">' in line:
-            locs.append(
-                "https://greatukpubs.co.uk/" + line.split("href=")[1].split(" ")[0]
-            )
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = "<MISSING>"
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        DFound = True
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if 'href="tel:' in line2 and phone == "":
-                phone = line2.split('href="tel:')[1].split('"')[0]
-            if '<h1 class="section-heading">Welcome to <br />' in line2:
-                name = line2.split('<h1 class="section-heading">Welcome to <br />')[
-                    1
-                ].split("<")[0]
-            if 'menu vertical address">' in line2:
-                g = next(lines)
-                h = next(lines)
-                i = next(lines)
-                j = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
-                i = str(i.decode("utf-8"))
-                j = str(j.decode("utf-8"))
-                state = "<MISSING>"
-                if "<li>" not in j:
-                    add = g.split(">")[1].split("<")[0]
-                    city = h.split(">")[1].split("<")[0]
-                    zc = i.split(">")[1].split("<")[0]
-                else:
-                    try:
-                        try:
-                            add = (
-                                g.split(">")[1].split("<")[0]
-                                + " "
-                                + h.split(">")[1].split("<")[0]
-                            )
-                        except:
-                            add = h.split(">")[1].split("<")[0]
-                        city = i.split(">")[1].split("<")[0]
-                        zc = j.split(">")[1].split("<")[0]
-                    except:
-                        add = g.split(">")[1].split("<")[0]
-                        city = h.split(">")[1].split("<")[0]
-                        zc = j.split(">")[1].split("<")[0]
-            if DFound and '<div class="address">' in line2:
-                DFound = False
-            if DFound and "day: </span>" in line2:
-                hrs = line2.split(">")[1].split("<")[0]
-                next(lines)
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                hrs = hrs + g.strip().replace("\t", "").replace("\r", "").replace(
-                    "\n", ""
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if "center: { lng:" in line2:
-                lng = line2.split("center: { lng:")[1].split(",")[0].strip()
-                lat = line2.split("lat: ")[1].split("}")[0].strip()
-        if add != "":
-            name = name.replace("&amp;", "&").replace("&#39;", "'")
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+def fetch_data(sgw: SgWriter):
+    zips = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        max_search_distance_miles=20,
+        expected_search_radius_miles=20,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

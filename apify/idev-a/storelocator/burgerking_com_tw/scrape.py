@@ -1,31 +1,33 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
-import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
+_headers = {
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
+    "Content-Type": "application/json;charset=UTF-8",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 locator_domain = "https://www.burgerking.com.tw"
 base_url = "https://www.burgerking.com.tw/storeMap"
-json_url = "/AJhandler/frontierHandler.ashx"
+json_url = "https://www.burgerking.com.tw/AJhandler/frontierHandler.ashx"
+payload = {
+    "what": "getDeliveryInfo",
+    "args": 520000,
+    "list": {"type": 20, "view": 1},
+    "args2": "",
+}
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        driver.get(base_url)
-        request = driver.wait_for_request(json_url)
-        locations = json.loads(request.response.body)["args"]["branchList"]
+    with SgRequests() as http:
+        locations = http.post(json_url, headers=_headers, json=payload).json()["args"][
+            "branchList"
+        ]
         for _ in locations:
             yield SgRecord(
                 page_url=base_url,

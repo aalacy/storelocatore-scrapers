@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("walmart_ca")
 
@@ -11,40 +14,12 @@ headers = {
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.CANADA],
-    max_radius_miles=20,
-    max_search_results=25,
+    max_search_distance_miles=20,
+    max_search_results=20,
 )
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    ids = []
     for code in search:
         logger.info(("Pulling Zip Code %s..." % code))
         url = (
@@ -63,7 +38,10 @@ def fetch_data():
                 for item in items:
                     if '"address":{' in item:
                         hours = ""
-                        name = item.split('"displayName":"')[1].split('"')[0]
+                        try:
+                            name = item.split('"displayName":"')[1].split('"')[0]
+                        except:
+                            name = ""
                         store = item.split('"id":')[1].split(",")[0]
                         loc = (
                             "https://www.walmart.ca/en/stores-near-me/"
@@ -109,29 +87,32 @@ def fetch_data():
                             typ = "Neighborhood Market"
                         if hours == "":
                             hours = "<MISSING>"
-                        if add != "" and store not in ids:
-                            ids.append(store)
-                            yield [
-                                website,
-                                loc,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                        if add != "" and name != "":
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

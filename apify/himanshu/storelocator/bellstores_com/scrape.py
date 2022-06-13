@@ -1,54 +1,82 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+website = "bellstores_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+DOMAIN = "https://bellstores.com/"
+MISSING = SgRecord.MISSING
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://bellstores.com"
-    r = session.get(base_url + "/home/locations")
-    soup = BeautifulSoup(r.text,"lxml")
+    url = "https://bellstores.com/home/locations"
+    r = session.get(url)
+    soup = BeautifulSoup(r.text, "lxml")
     scripts = soup.find_all("script")
-    return_main_object = []
-    scripts = soup.find_all("script")
-    return_main_object = []
     for script in scripts:
         if "var locations" in script.text:
-            location_list = json.loads(script.text.split("var locations = ")[1].split("]")[0] + "]")
-            for i in range(len(location_list)):
-                store_data = location_list[i]
-                store = []
-                store.append("https://bellstores.com")
-                store.append(store_data['Name'])
-                store.append(store_data["Address1"])
-                store.append(store_data['City'])
-                store.append(store_data['State'])
-                store.append(store_data["Zip"])
-                store.append("US")
-                store.append(store_data['StoreNumber'])
-                store.append(store_data['PhoneNumber'])
-                store.append("bell stores")
-                store.append(store_data["Latitude"])
-                store.append(store_data["Longitude"])
-                store.append("<MISSING>")
-                return_main_object.append(store)
-    return return_main_object
+            location_list = json.loads(
+                script.text.split("var locations = ")[1].split("]")[0] + "]"
+            )
+            for loc in location_list:
+                location_name = loc["Name"]
+                log.info(location_name)
+                phone = loc["PhoneNumber"]
+                try:
+                    street_address = loc["Address1"] + " " + loc["Address2"]
+                except:
+                    street_address = loc["Address1"]
+                log.info(street_address)
+                city = loc["City"]
+                state = loc["State"]
+                zip_postal = loc["Zip"]
+                country_code = "US"
+                latitude = loc["Latitude"]
+                longitude = loc["Longitude"]
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=MISSING,
+                )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

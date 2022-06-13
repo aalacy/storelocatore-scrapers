@@ -38,19 +38,21 @@ def fetch_data():
                 .find_parent("h2")
                 .find_next_siblings("p")
             ]
-            coord = (
-                sp1.find("a", href=re.compile(r"https://www\.google\.com/maps"))["href"]
-                .split("?ll=")[1]
-                .split("&")[0]
-                .split(",")
-            )
+            zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
+            href = sp1.find("a", href=re.compile(r"https://www\.google\.com/maps"))[
+                "href"
+            ]
+            if zip_postal in href:
+                coord = href.split("@")[1].split(",")
+            else:
+                coord = ("", "")
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.select_one("main h1").text.strip(),
                 street_address=" ".join(addr[:-1]),
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                zip_postal=zip_postal,
                 country_code="US",
                 phone=sp1.find("span", string=re.compile(r"Call Ahead"))
                 .find_parent("h2")

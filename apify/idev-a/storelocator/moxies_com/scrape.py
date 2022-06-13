@@ -1,93 +1,88 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
-from sgscrape.sgpostal import parse_address, International_Parser
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+import json
+import math
+from concurrent.futures import ThreadPoolExecutor
 
-ca_provinces_codes = {
-    "AB",
-    "BC",
-    "MB",
-    "NB",
-    "NL",
-    "NS",
-    "NT",
-    "NU",
-    "ON",
-    "PE",
-    "QC",
-    "SK",
-    "YT",
+logger = SgLogSetup().get_logger("moxies")
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+locator_domain = "https://moxies.com"
+base_url = "https://moxies.com/location-finder?usredirect=no"
+session = SgRequests().requests_retry_session()
+max_workers = 8
 
-def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for row in data:
-            writer.write_row(row)
+
+def fetchConcurrentSingle(link):
+    page_url = urljoin(locator_domain, link["href"])
+    response = request_with_retries(page_url)
+    return page_url, bs(response.text, "lxml")
 
 
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    return session.get(url, headers=_headers)
 
 
 def fetch_data():
-    locator_domain = "https://moxies.com"
-    base_url = "https://moxies.com/location-finder?usredirect=no"
-    with SgRequests() as session:
-        soup = bs(session.get(base_url).text, "lxml")
-        links = soup.select(
-            "ul.call-location-block__locations li.call-location-block__location > a"
+    soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    links = soup.select("div#content-area div.call-location-block__city ul li > a")
+    logger.info(f"{len(links)} found")
+    for page_url, soup1 in fetchConcurrentList(links):
+        logger.info(page_url)
+        ss = json.loads(soup1.find("script", type="application/ld+json").string)
+        addr = ss["address"]
+        location_type = ""
+        src = soup1.select_one("div.intro-banner picture img")["srcset"]
+        if "TempClosure" in src:
+            location_type = "Temporarily Closed"
+        yield SgRecord(
+            page_url=page_url,
+            location_name=ss["name"].replace("’", "'"),
+            street_address=addr["streetAddress"],
+            city=addr["addressLocality"].replace("’", "'"),
+            state=addr["addressRegion"],
+            latitude=ss["geo"]["latitude"],
+            longitude=ss["geo"]["longitude"],
+            zip_postal=addr["postalCode"],
+            country_code=addr["addressCountry"],
+            phone=ss["telephone"],
+            locator_domain=locator_domain,
+            location_type=location_type,
+            hours_of_operation="; ".join(ss["openingHours"]).replace("–", "-"),
         )
-        for link in links:
-            page_url = urljoin(locator_domain, link["href"])
-            soup1 = bs(session.get(page_url).text, "lxml")
-            location_name = soup1.select_one("h1.title span").text.strip()
-            contact_info = soup1.select_one("div.contact-info p a")
-            addr = parse_address(
-                International_Parser(), " ".join(list(contact_info.stripped_strings))
-            )
-            phone = soup1.select("div.contact-info p")[1].a.text
-            direction = contact_info["href"].split("/")[-1].strip().split(",")
-            hours_of_operation = soup1.select_one("h2.subtitle").text
-            if (
-                "closed" in hours_of_operation.lower()
-                or "temporarily closed"
-                in soup1.select_one("div.field-name-field-location-description").text
-            ):
-                hours_of_operation = "Temporarily closed"
-            else:
-                tags = soup1.select("table.hours tbody tr")
-                hours_of_operation = ",".join(tag["content"] for tag in tags)
-
-            yield SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=addr.street_address_1,
-                city=addr.city,
-                state=addr.state,
-                latitude=direction[0],
-                longitude=direction[1],
-                zip_postal=addr.postcode,
-                country_code="CA" if addr.state in ca_provinces_codes else "US",
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation=_valid(hours_of_operation),
-            )
 
 
 if __name__ == "__main__":
     data = fetch_data()
-    write_output(data)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for row in data:
+            writer.write_row(row)

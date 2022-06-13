@@ -43,6 +43,7 @@ def fetch_data():
                 phone=_["phone"],
                 location_type=_["location_type_name"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=_["address"],
             )
 
