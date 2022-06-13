@@ -3,9 +3,10 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 session = SgRequests()
 website = "barnardos_org_uk"
@@ -30,11 +31,15 @@ def fetch_data():
         for link in range(int(page_limit)):
             url = "https://www.barnardos.org.uk/shops/our-shops?page=" + str(link)
             log.info(f"Fetching locations from Page No {link}")
-            main_r = session.get(url, headers=headers, timeout=180)
+            main_r = session.get(url, headers=headers)
             soup = BeautifulSoup(main_r.text, "html.parser")
             loclist = soup.find("ul", {"class": "teaser-list__teasers"}).findAll("li")
             for loc in loclist:
-                location_type = loc.find("span", {"class": "teaser__type"}).text
+                try:
+                    location_type = loc.find("span", {"class": "teaser__topic"}).text
+                except:
+                    if "Superstore" in loc.text:
+                        location_type = "Superstore"
                 page_url = "https://www.barnardos.org.uk" + loc.find("a")["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
@@ -50,6 +55,8 @@ def fetch_data():
                     .replace("View on Google Maps", " ")
                 )
                 phone = temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                if "Monday" in phone:
+                    phone = MISSING
                 try:
                     hours_of_operation = (
                         temp[2].get_text(separator="|", strip=True).replace("|", " ")
@@ -58,14 +65,19 @@ def fetch_data():
                     hours_of_operation = MISSING
                 location_name = soup.find("h1", {"class": "title"}).text
                 pa = parse_address_intl(raw_address)
+
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING
+
                 city = pa.city
                 city = city.strip() if city else MISSING
+
                 state = pa.state
                 state = state.strip() if state else MISSING
+
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
+
                 country_code = "UK"
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -87,18 +99,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -1,47 +1,17 @@
 import json
-import csv
-import urllib.parse
 from lxml import etree
+from urllib.parse import urljoin, unquote
+
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-
-    items = []
-
-    DOMAIN = "windsorstore.com"
+    session = SgRequests()
+    domain = "windsorstore.com"
     start_url = (
         "https://cdn.shopify.com/s/files/1/0070/8853/7651/t/8/assets/stores.json"
     )
@@ -50,7 +20,10 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["features"]:
-        store_url = "https://www.windsorstore.com" + poi["properties"]["url"]
+        store_url = urljoin(
+            "https://www.windsorstore.com/pages/locations", poi["properties"]["url"]
+        )
+        store_url = "".join(store_url.split())
         location_name = poi["properties"]["name"]
         if location_name == "zebra test location":
             continue
@@ -80,7 +53,7 @@ def fetch_data():
             '//div[@class="StoreDetail__hours"]/@data-store-hours'
         )
         hours_of_operation = (
-            urllib.parse.unquote(hours_of_operation[0]) if hours_of_operation else ""
+            unquote(hours_of_operation[0]) if hours_of_operation else ""
         )
         hoo = []
         if hours_of_operation:
@@ -90,30 +63,36 @@ def fetch_data():
                 hoo.append(f'{elem["day"]} {elem["hours"]}')
         hours_of_operation = " ".join(hoo).replace("+", " ") if hoo else "<MISSING>"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -80,22 +80,29 @@ def fetch_data():
         )
         raw_address = re.sub(r"\(.*GPS\)", "", raw_address).replace("Route", "")
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "741 East" in street_address:
+            street_address = "226 Gap Road"
         phone = (
             info.find("div", {"class": "phones"})
             .find("div")
             .text.replace("Phone:", "")
             .strip()
         )
-        hours_of_operation = (
+        hours_of_operation = re.sub(
+            r",Isaac’s.*",
+            "",
             info.find("div", {"class": "hours"})
             .get_text(strip=True, separator=",")
             .replace("Hours of Operation:,", "")
             .replace(
                 "South York Isaac’s is open once more with new temporary hours:", ""
             )
+            .replace("These hours are only at South York Isaac’s location.", "")
             .replace(",CLOSED", ": CLOSED")
-            .lstrip(",")
-        )
+            .lstrip(","),
+        ).lstrip(",")
+        if not re.search(r".*am|.*pm|.*CLOSED", hours_of_operation, re.IGNORECASE):
+            hours_of_operation = MISSING
         store_number = MISSING
         country_code = "US"
         location_type = "isaacsrestaurants"

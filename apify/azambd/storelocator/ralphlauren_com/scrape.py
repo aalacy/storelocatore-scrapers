@@ -1,56 +1,54 @@
 from lxml import html
 import time
 import json
-import ast
-import pycountry
-from sgpostal.sgpostal import parse_address_intl
+import random
 
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgrequests import SgRequests
+
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+
 
 import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
-
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
 
 DOMAIN = "ralphlauren.com"
 website = "https://www.ralphlauren.com"
-MISSING = SgRecord.MISSING
+MISSING = "<MISSING>"
 
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-headers = {
-    "authority": "www.ralphlauren.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "cross-site",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9",
-    "Cookie": "_pxhd=X6pf-dLqFYkjA1LCKGtlPcl6cBFRCPs2iYVwqyoWVpmiFne2kEErCndacgOYkLxn29-FWBi6qwzPKYEWlZwMxw==:12sFThbmi9og/ljBydM0KoHlehInIUBYxzxYO6/WGs7n2lITdGW7TYErdUnag15C7RF6ZBTBgKthZz3cwHYRWl8QaT7avj6thDZEdTbEvcA=",
-}
-
-
-def do_fuzzy_search(country):
+def driverSleep(driver, time=2):
     try:
-        result = pycountry.countries.search_fuzzy(country)
-    except Exception:
-        return None
-    else:
-        return result[0].alpha_2
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
+        )
+    except Exception as e1:
+        log.info(f"Driver Err: {e1}")
+        pass
 
 
-def get_var_name(value):
+def randomSleep(driver, start=5, limit=6):
+    driverSleep(driver, random.randint(start, start + limit))
+
+
+def getVarName(value):
     try:
         return int(value)
     except ValueError:
@@ -58,10 +56,10 @@ def get_var_name(value):
     return value
 
 
-def get_JSON_object_variable(Object, varNames, noVal=MISSING):
+def getJSONObjectVariable(Object, varNames, noVal=MISSING):
     value = noVal
     for varName in varNames.split("."):
-        varName = get_var_name(varName)
+        varName = getVarName(varName)
         try:
             value = Object[varName]
             Object = Object[varName]
@@ -72,133 +70,177 @@ def get_JSON_object_variable(Object, varNames, noVal=MISSING):
     return value
 
 
-def get_address(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
+def fetch_stores():
 
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state
-    except Exception as e:
-        log.info(f"No Address {e}")
-        pass
-    return MISSING, MISSING, MISSING
-
-
-def fetch_stores(http):
-    response = http.get(f"{website}/Stores-ShowCountries", headers=headers)
-
-    body = html.fromstring(response.text, "lxml")
-    countries = body.xpath('//a[contains(@class, "store-directory-countrylink")]/@href')
-    log.debug(f"Total countries ={len(countries)}")
-
-    countryCount = 0
-
-    stores = []
-    for country in countries:
-        countryCount = countryCount + 1
-        log.debug(f"{countryCount}. scrapping country {country}")
-        response = http.get(f"{website}{country}", headers=headers)
-        body = html.fromstring(response.text, "lxml")
-        cities = body.xpath('//a[contains(@class, "store-directory-citylink")]/@href')
-        log.debug(f"{countryCount}. total city = {len(cities)}")
-
-        cityCount = 0
-        for city in cities:
-            cityCount = cityCount + 1
-            pages = body.xpath(
-                '//a[contains(@class, "store-directory-citylink")]/@href'
+    with SgFirefox(is_headless=True, block_third_parties=True) as driver:
+        driver.get(f"{website}/stores")
+        time.sleep(15)
+        body = html.fromstring(driver.page_source, "lxml")
+        allCountryCodes = body.xpath(
+            "//select[@id='dwfrm_storelocator_country']/option/@value"
+        )
+        log.debug(f"Total country count: {len(allCountryCodes)} ...")
+        allStores = []
+        for countryCode in allCountryCodes[1:]:
+            log.info(f"Now Fetching country {countryCode}")
+            if countryCode == "BG":
+                continue
+            driver.get(
+                f"{website}/findstores?dwfrm_storelocator_country={countryCode}&dwfrm_storelocator_findbycountry=Search&findByValue=CountrySearch"
             )
-            log.debug(f"{countryCount}==> {cityCount}. scrapping city {len(pages)}")
-            for page in pages:
-                response = http.get(f"{website}{page}", headers=headers)
-                body = html.fromstring(response.text, "lxml")
-                dataSet = body.xpath(
-                    '//div[contains(@class,"storeJSON")]/@data-storejson'
-                )
-                for data in dataSet:
-                    stores = stores + json.loads(data)
-    return stores
+            randomSleep(driver, 20)
+            body = html.fromstring(driver.page_source, "lxml")
+
+            stores = json.loads(
+                body.xpath('//div[contains(@class, "storeJSON hide")]/@data-storejson')[
+                    0
+                ]
+            )
+            jsonData = body.xpath(
+                '//script[contains(@type, "application/ld+json")]/text()'
+            )
+
+            for data in jsonData:
+                if 'store":[{' in data:
+                    dataJSON = json.loads(data)["store"]
+                    log.info(f"total stores in {countryCode} are {len(stores)}")
+                    for store in stores:
+                        store["location_name"] = MISSING
+                        store["street_address"] = MISSING
+                        store["hoo"] = MISSING
+                        store["country_code"] = "US"
+                        if "latitude" not in store:
+                            continue
+
+                        for data in dataJSON:
+                            if (
+                                "latitude" in data["geo"]
+                                and f'{data["geo"]["latitude"]} {data["geo"]["longitude"]}'
+                                == f'{store["latitude"]} {store["longitude"]}'
+                            ):
+                                store["location_name"] = data["name"]
+                                store["street_address"] = data["address"][
+                                    "streetAddress"
+                                ]
+                                store["country_code"] = data["address"][
+                                    "addressCountry"
+                                ]
+
+                                ooh = []
+                                if (
+                                    data["openingHours"] == "LOCATION CLOSED"
+                                    or data["openingHours"] == "Coming Soon"
+                                    or data["openingHours"] == ""
+                                    or data["openingHours"]
+                                    == "By appointment only. | Solo su appuntamento."
+                                ):
+                                    store[
+                                        "hoo"
+                                    ] = "Monday: Closed, Tuesday: Closed, Wednesday: Closed, Thursday: Closed, Friday: Closed, Saturday: Closed, Sunday: Closed"
+                                elif "By appointment only" in data["openingHours"]:
+                                    store["hoo"] = MISSING
+                                elif "appuntamento" in data["openingHours"]:
+                                    store["hoo"] = MISSING
+                                elif "temporarily closed" in data["openingHours"]:
+                                    store["hoo"] = "temporarily closed"
+                                elif "Opening mid-June" in data["openingHours"]:
+                                    store["hoo"] = "Opening mid-June"
+                                elif "Opening mid-May" in data["openingHours"]:
+                                    store["hoo"] = "Opening mid-May"
+                                elif "MON" in data["openingHours"]:
+                                    store["hoo"] = (
+                                        data["openingHours"]
+                                        .replace("<br>\n", ", ")
+                                        .replace("<br/>\n", ", ")
+                                        .replace("<br/>", "")
+                                    )
+                                else:
+
+                                    weeks_dict = json.loads(data["openingHours"])
+
+                                    for day in [
+                                        "monday",
+                                        "tuesday",
+                                        "wednesday",
+                                        "thursday",
+                                        "friday",
+                                        "saturday",
+                                        "sunday",
+                                    ]:
+                                        if "isClosed" in weeks_dict[day]:
+                                            ooh.append(day.title() + ": Closed")
+                                        else:
+                                            ooh.append(
+                                                day.title()
+                                                + ": "
+                                                + weeks_dict[day]["openIntervals"][0][
+                                                    "start"
+                                                ]
+                                                + "-"
+                                                + weeks_dict[day]["openIntervals"][0][
+                                                    "end"
+                                                ]
+                                            )
+
+                                    store["hoo"] = ", ".join(ooh)
+
+            allStores = allStores + stores
+        return allStores
 
 
-def fetch_data(http):
-    stores = fetch_stores(http)
+def fetch_data():
+    stores = fetch_stores()
     log.info(f"Total stores = {len(stores)}")
     for store in stores:
 
         location_type = MISSING
 
-        store_number = get_JSON_object_variable(store, "id")
+        store_number = getJSONObjectVariable(store, "id")
         page_url = f"{website}/Stores-Details?StoreID={store_number}"
-        location_name = get_JSON_object_variable(store, "location_name")
+        location_name = getJSONObjectVariable(store, "location_name")
         location_name = location_name.split("-")[0].strip()
-        zip_postal = get_JSON_object_variable(store, "postalCode")
-        country = get_JSON_object_variable(store, "countryCode")
-        country_code = do_fuzzy_search(country)
-        phone = get_JSON_object_variable(store, "phone")
-        latitude = get_JSON_object_variable(store, "latitude")
-        longitude = get_JSON_object_variable(store, "longitude")
-
         if location_name == MISSING:
-            log.debug(f"Fetching page_url {page_url} ...")
-            time.sleep(5)
-            response = http.get(f"{page_url}", headers=headers)
-            body = html.fromstring(response.text, "lxml")
-            jsonData = body.xpath(
-                '//script[contains(@type, "application/ld+json")]/text()'
-            )[3].strip()
-            data = ast.literal_eval(jsonData)
-            location_name = data["name"]
-            location_name = location_name.split("-")[0].strip()
-            log.info(f"Location Name: {location_name}")
-            street_address = data["address"]["streetAddress"]
-            log.info(f"Street Address: {street_address}")
-            address2 = data["address"]["addressLocality"]
-            raw_address = f"{street_address}, {address2}"
+            continue
+        street_address = getJSONObjectVariable(store, "street_address")
+        city = getJSONObjectVariable(store, "city")
+        state = getJSONObjectVariable(store, "stateCode")
+        zip_postal = getJSONObjectVariable(store, "postalCode")
+        street_address = street_address.replace(f",{zip_postal}", "")
 
-            street_address, city, state = get_address(raw_address)
-            log.info(f"street_address: {street_address} city:{city}, state:{state}")
-            hoo = []
-            hoos = body.xpath('//tr[@class="store-hourrow"]')
-            if len(hoos) > 1:
-                for h in hoos:
-                    day = (
-                        h.xpath('./td[@class="store-hours-day"]/text()')[0]
-                        .strip()
-                        .replace(">", "")
-                    )
-                    try:
-                        hrs = h.xpath('./td[@class="store-hours-open"]/text()')[0]
-                        hoo.append(f"{day}:{hrs}")
-                    except:
-                        hoo.append(f"{day}")
-                        pass
+        if "temporarily closed" in str(street_address):
+            location_type = "temporarily closed"
 
-            else:
-                for h in hoos:
-                    day = (
-                        "".join(h.xpath('./td[@class="store-hours-day"]/text()'))
-                        .strip()
-                        .replace("\n", ",")
-                    )
-                    hoo.append(f"{day}")
+        country_code = getJSONObjectVariable(store, "country_code")
+        phone = getJSONObjectVariable(store, "phone")
+        latitude = getJSONObjectVariable(store, "latitude")
+        longitude = getJSONObjectVariable(store, "longitude")
 
-            hours_of_operation = ";".join(hoo)
-            log.info(f"HOO: {hours_of_operation}")
+        hours_of_operation = getJSONObjectVariable(store, "hoo")
+        hours_of_operation = (
+            hours_of_operation.replace("<br/>\n", " ")
+            .replace("<br/>", " ")
+            .replace("<br>", " ")
+            .replace("\n", " ")
+            .replace("<br/", " ")
+            .strip()
+        )
+        if "temporarily closed" in str(hours_of_operation):
+            location_type = "temporarily closed"
+        if "temporarily closed" in str(hours_of_operation):
+            hours_of_operation = MISSING
 
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
+        raw_address = " ".join(raw_address.split())
+        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+        if raw_address[len(raw_address) - 1] == ",":
+            raw_address = raw_address[:-1]
+
+        street_address = street_address.replace("Store temporarily closed. ,", "")
+        street_address = street_address.replace(
+            "Store re-opening 26th September. ,", ""
+        )
         yield SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
@@ -216,19 +258,21 @@ def fetch_data(http):
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+
     return []
 
 
 def scrape():
-    log.info("Crawling started ...")
+    log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgRequests() as http:
-        with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-        ) as writer:
-            for rec in fetch_data(http):
-                writer.write_row(rec)
+    count = 0
+
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
+            count = count + 1
     end = time.time()
+    log.info(f"Total Rows Added= {count}")
     log.info(f"Scrape took {end-start} seconds.")
 
 

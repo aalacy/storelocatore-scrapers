@@ -81,7 +81,11 @@ def fetch_data():
                 )
             except:
                 street_address = loc["tm_X3b_en_address_line1"][0]
-            latitude, longitude = loc["reference_coordinates"].split(",")
+            try:
+                latitude, longitude = loc["reference_coordinates"].split(",")
+            except:
+                latitude = MISSING
+                longitude = MISSING
             city = loc["tm_X3b_en_locality"][0]
             state = loc["tm_X3b_en_administrative_area_code"][0]
             zip_postal = loc["tm_X3b_en_postal_code"][0]
@@ -91,7 +95,7 @@ def fetch_data():
             except:
                 location_type = MISSING
             store_number = str(loc["its_nid"])
-            location_name = loc["tm_X3b_en_title"][0]
+            location_name = loc["tm_X3b_en_title"][0].split("-")[0]
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             try:

@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -31,6 +32,11 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat")
         longitude = j.get("lng")
         hours_of_operation = j.get("hours") or "<MISSING>"
+        if hours_of_operation != "<MISSING>":
+            h = html.fromstring(hours_of_operation)
+            hours_of_operation = (
+                " ".join(h.xpath("//*//text()")).replace("\n", "").strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

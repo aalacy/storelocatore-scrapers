@@ -1,84 +1,58 @@
 from lxml import etree
 from urllib.parse import urljoin
-from time import sleep
-from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
+    start_url = "https://www.aldi.be/nl/informatie/winkels-en-openingsuren.html"
     domain = "aldi.be"
 
-    search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=nl-BE&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&Country=B&Zip={}&Town=&Street=&Radius=100000"
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BELGIUM], expected_search_radius_miles=100
-    )
-    for code in all_codes:
-        sleep(uniform(0, 5))
-        response = session.get(search_url.format(code))
-        session_id = response.url.split("=")[-1]
-        hdr = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
-        }
-        dom = etree.HTML(
-            response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
-        )
-        option = dom.xpath('//select[@name="Loc"]/option/@value')
-        loc = option[0] if option else ""
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-        frm = {
-            "SessionGuid": session_id,
-            "View": "",
-            "ClearParas": "AdminUnitID,AdminUnitName,WhereCondition",
-            "ClearGroups": "GeoMap,MapNav",
-            "Locale": "nl-BE",
-            "Loc": loc,
-        }
-
-        response = session.post(start_url, headers=hdr, data=frm)
-        dom = etree.HTML(
-            response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
-        )
-
-        all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
-        all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
-        next_page = dom.xpath('//a[@title="Volgende pagina"]/@href')
-        while next_page:
-            response = session.get(urljoin(start_url, next_page[0]))
-            dom = etree.HTML(
-                response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
+    all_cities = dom.xpath('//div[@class="mod-stores__multicolumn"]//a/@href')
+    for url in all_cities:
+        response = session.get(urljoin(start_url, url))
+        dom = etree.HTML(response.text)
+        all_locations = dom.xpath('//div[@class="mod-stores__multicolumn"]//a/@href')
+        for url in all_locations:
+            page_url = urljoin(start_url, url)
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            more_locations = loc_dom.xpath(
+                '//div[@class="mod-stores__overview"]//a/@href'
             )
-            all_locations += dom.xpath('//td[@class="ItemTemplateColumnLocation"]')
-            all_locations += dom.xpath(
-                '//td[@class="AlternatingItemTemplateColumnLocation"]'
-            )
-            next_page = dom.xpath('//a[@title="Volgende pagina"]/@href')
+            if more_locations:
+                all_locations += more_locations
+                continue
 
-        for poi_html in all_locations:
-            location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
-            raw_adr = poi_html.xpath(".//address/text()")
-            raw_adr = [e.strip() for e in raw_adr]
-            hoo = poi_html.xpath('.//td[contains(@class,"OpeningHours")]//text()')
+            location_name = loc_dom.xpath('//p[@itemprop="name"]/text()')
+            if not location_name:
+                location_name = loc_dom.xpath("//h1/text()")[0].split(" - ")
+            location_name = location_name[0] if location_name else ""
+            street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[
+                0
+            ]
+            city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
+            zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+            hoo = loc_dom.xpath('//*[@itemprop="openingHours"]/text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.aldi.be/nl/informatie/winkels-en-openingsuren.html",
+                page_url=page_url,
                 location_name=location_name,
-                street_address=raw_adr[0],
-                city=" ".join(raw_adr[1].split()[1:]),
+                street_address=street_address,
+                city=city,
                 state=SgRecord.MISSING,
-                zip_postal=raw_adr[1].split()[0],
+                zip_postal=zip_code,
                 country_code="BE",
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,

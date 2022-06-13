@@ -1,85 +1,87 @@
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgwriter import SgWriter
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-logger = SgLogSetup().get_logger("cherryberryyogurtbar_com")
 
 
-def fetch_data():
-    for x in range(0, 10):
-        url = "https://www.cherryberryyogurtbar.com/find-a-location?page=" + str(x)
-        r = session.get(url, headers=headers)
-        website = "cherryberryyogurtbar.com"
-        typ = "<MISSING>"
-        country = "US"
-        loc = "https://www.cherryberryyogurtbar.com/find-a-location"
-        name = "Cherry Berry"
-        logger.info("Pulling Stores")
-        lines = r.iter_lines()
-        for line in lines:
-            line = str(line.decode("utf-8"))
-            if '<span itemprop="streetAddress">' in line:
-                phone = "<MISSING>"
-                city = ""
-                state = ""
-                zc = ""
-                lat = ""
-                lng = ""
-                country = "US"
-                add = (
-                    line.split('<span itemprop="streetAddress">')[1]
-                    .split("<")[0]
-                    .strip()
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.cherryberryyogurtbar.com/"
+    api_url = "https://www.cherryberryyogurtbar.com/find-a-location"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    }
+
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "markers")]/text()'))
+        .split('"markers":')[1]
+        .split("]")[0]
+        + "]"
+    )
+    js = json.loads(div)
+
+    for j in js:
+
+        info = j.get("text")
+        a = html.fromstring(info)
+        page_url = "https://www.cherryberryyogurtbar.com/find-a-location"
+        location_name = j.get("title") or "<MISSING>"
+        street_address = (
+            "".join(a.xpath('//span[@itemprop="streetAddress"]/text()')) or "<MISSING>"
+        )
+        state = (
+            "".join(a.xpath('//span[@itemprop="addressRegion"]/text()')) or "<MISSING>"
+        )
+        postal = (
+            "".join(a.xpath('//span[@itemprop="postalCode"]/text()')) or "<MISSING>"
+        )
+        country_code = "CA"
+        if postal.isdigit():
+            country_code = "US"
+        city = (
+            "".join(a.xpath('//span[@itemprop="addressLocality"]/text()'))
+            or "<MISSING>"
+        )
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = (
+            "".join(
+                a.xpath(
+                    '//div[@class="views-field views-field-field-phone"]/div[1]/text()'
                 )
-            if 'itemprop="addressLocality">' in line:
-                city = line.split('itemprop="addressLocality">')[1].split("<")[0]
-                state = line.split('addressRegion">')[1].split("<")[0]
-            if 'itemprop="postalCode">' in line:
-                zc = line.split('itemprop="postalCode">')[1].split("<")[0]
-                store = "<MISSING>"
-            if 'data-lat="' in line:
-                lat = line.split('data-lat="')[1].split('"')[0]
-                lng = line.split('long="')[1].split('"')[0]
-            if '<a href="tel:' in line:
-                phone = line.split('">')[1].split("<")[0]
-            if (
-                '<td  class="views-field views-field-field-catering' in line
-                and 'scope="col">' not in line
-            ):
-                hours = "<MISSING>"
-                if " " in zc:
-                    country = "CA"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+            )
+            or "<MISSING>"
+        )
+        hours_of_operation = "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
+        fetch_data(writer)

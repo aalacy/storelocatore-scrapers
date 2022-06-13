@@ -27,7 +27,11 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         page_url = "https://mysprintfs.com/locations"
         location_name = j.get("title")
-        street_address = "".join(j.get("address")).replace(",", "").strip()
+        street_address = (
+            "".join(j.get("address")).replace(",", "").strip() or "<MISSING>"
+        )
+        if street_address == "<MISSING>":
+            continue
         state = "<MISSING>"
         postal = j.get("zip")
         country_code = "USA"
@@ -67,6 +71,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://mysprintfs.com"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         fetch_data(writer)
