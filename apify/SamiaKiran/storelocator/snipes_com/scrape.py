@@ -80,8 +80,11 @@ def fetch_data():
                 country_code = "Belgium"
             elif "www.snipes.pl" in link:
                 country_code = "Poland"
+            elif "www.snipes.pt" in link:
+                country_code = "Portugal"
             elif "www.snipes.com" in link:
                 country_code = "Germany"
+
             r = session.get(link, headers=headers)
             log.info(
                 f"Fetching Stores from {country_code} >> Response Status: {r.status_code}"

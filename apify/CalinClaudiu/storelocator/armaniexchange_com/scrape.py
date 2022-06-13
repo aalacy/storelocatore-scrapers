@@ -3,159 +3,283 @@ from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sgpostal import sgpostal as parser
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+from bs4 import BeautifulSoup as b4
+import json  # noqa
+from sgscrape.sgrecord import SgRecord
 
-session = SgRequests()
-logzilla = sglog.SgLogSetup().get_logger(logger_name="checkmate")
+logzilla = sglog.SgLogSetup().get_logger(logger_name="mani")
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 }
 
 
-def get_store(url, country):
+def parse(data):
+    soup = data[0]
+    url = data[1]
 
-    logzilla.info(url)
-    r = session.get(url, headers=headers)
     k = {}
-    soup = BeautifulSoup(r.text, "lxml")
-    data = soup.find("main", {"id": "store-container", "class": True, "data-id": True})
     k["url"] = url
     try:
-        k["name"] = data.find("h1", {"class": "store__title"}).text
-    except:
-        k["name"] = "<MISSING>"
+        k["name"] = soup.find(
+            "h1",
+            {
+                "class": lambda x: x
+                and all(i in x for i in ["Heading", "Hero-heading", "Heading--head"])
+            },
+        ).text.strip()
+    except Exception as e:
+        logzilla.error("name", exc_info=e)
+        k["name"] = SgRecord.MISSING
 
-    if k["name"] == "":
+    try:
+        coords = soup.find(
+            "span",
+            {
+                "class": "Address-coordinates",
+                "itemtype": "http://schema.org/GeoCoordinates",
+            },
+        )
+        k["lat"] = coords.find("meta", {"itemprop": "latitude"})["content"]
+        k["lng"] = coords.find("meta", {"itemprop": "longitude"})["content"]
+    except Exception as e:
+        logzilla.error("coords", exc_info=e)
+        k["lat"] = SgRecord.MISSING
+        k["lng"] = SgRecord.MISSING
+
+    try:
+        k["address"] = soup.find(
+            "span",
+            {
+                "class": lambda x: x
+                and all(i in x for i in ["Address-field", "Address-line1"])
+            },
+        ).text.strip()
         try:
-            k["name"] = data.find("h2", {"class": "store__subtitle"}).text
-        except:
-            k["name"] = "<MISSING>"
+            k["address"] = (
+                k["address"]
+                + ", "
+                + soup.find(
+                    "span",
+                    {
+                        "class": lambda x: x
+                        and all(i in x for i in ["Address-field", "Address-line2"])
+                    },
+                ).text.strip()
+            )
+        except Exception:
+            pass
+    except Exception as e:
+        logzilla.error("address", exc_info=e)
+        k["address"] = SgRecord.MISSING
 
     try:
-        k["lat"] = data["data-store-lat"]
-    except:
-        k["lat"] = "<MISSING>"
+        k["city"] = soup.find(
+            "span",
+            {
+                "class": lambda x: x
+                and all(i in x for i in ["Address-field", "Address-city"])
+            },
+        ).text.strip()
+    except Exception as e:
+        logzilla.error("city", exc_info=e)
+        k["city"] = SgRecord.MISSING
+
+    k["state"] = SgRecord.MISSING
 
     try:
-        k["lng"] = data["data-store-lng"]
-    except:
-        k["lng"] = "<MISSING>"
-
-    k["address"] = "<MISSING>"
-    k["city"] = "<MISSING>"
-    k["state"] = "<MISSING>"
-    k["zip"] = "<MISSING>"
+        k["zip"] = soup.find(
+            "span",
+            {
+                "class": lambda x: x
+                and all(i in x for i in ["Address-field", "Address-postalCode"])
+            },
+        ).text.strip()
+    except Exception as e:
+        logzilla.error("zip", exc_info=e)
+        k["zip"] = SgRecord.MISSING
 
     try:
-        raw_address = (
-            data.find("li", {"class": "store__loc-address"})
-            .find("span", {"class": "text"})
-            .text
-        )
-        formatted_addr = parser.parse_address_intl(raw_address)
-        k["address"] = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            k["address"] = k["address"] + ", " + formatted_addr.street_address_2
+        k["country"] = url.split("/")[4]
+    except Exception:
+        k["country"] = SgRecord.MISSING
 
-        if k["address"] is None:
-            k["address"] = "<MISSING>"
+    try:
+        k["phone"] = soup.find(
+            "a",
+            {
+                "data-ya-track": "phone",
+                "class": lambda x: x and all(i in x for i in ["Link", "Phone-link"]),
+            },
+        )["href"]
+        try:
+            k["phone"] = k["phone"].split(":")[-1]
+        except Exception:
+            pass
+    except Exception:
+        k["phone"] = SgRecord.MISSING
 
-        k["city"] = formatted_addr.city
-        if k["city"] is None:
-            k["city"] = "<MISSING>"
+    try:
+        dat = soup.find(
+            "a",
+            {
+                "data-ya-track": lambda x: x and "cta" in x,
+                "class": lambda x: x
+                and all(i in x for i in ["Button", "Hero-button", "Button--primary"]),
+            },
+        )["href"]
+        try:
+            k["country"] = dat.split("countryIso=", 1)[1].split("&", 1)[0]
+        except Exception as e:
+            logzilla.error(f"country_code {dat}", exc_info=e)
+            if not dat:
+                logzilla.error(f"\n\n\n\n\n\n\n\n\n\n{str(soup)}\n\n\n\n\n\n\n\n\n\n")
+        try:
+            k["id"] = dat.split("storeId=", 1)[1].strip()
+        except Exception:
+            k["id"] = SgRecord.MISSING
 
-        k["state"] = formatted_addr.state
-        if k["state"] is None:
-            k["state"] = "<MISSING>"
-
-        k["zip"] = formatted_addr.postcode
-        if k["zip"] is None:
-            k["zip"] = "<MISSING>"
-    except:
+    except Exception:
         pass
-
-    k["country"] = country
-
-    try:
-        k["phone"] = (
-            data.find("a", {"class": "phone"}).find("span", {"class": "text"}).text
-        )
-    except:
-        k["phone"] = "<MISSING>"
-
-    try:
-        k["id"] = data["data-id"]
-    except:
-        k["id"] = "<MISSING>"
 
     try:
         j = []
-        k["hours"] = data.find("div", {"class": "store__hours"}).find(
-            "ul", {"data-expandable-area": True, "data-expandable": True}
-        )
-        k["hours"] = k["hours"].find_all("li")
+        k["hours"] = soup.find("div", {"data-days": True})["data-days"]
+        k["hours"] = json.loads(k["hours"])
         for i in k["hours"]:
-            j.append(i.text)
+            if "rue" in str(i["isClosed"]):
+                j.append(str(i["day"] + ": Closed"))
+            else:
+                j.append(
+                    str(
+                        i["day"]
+                        + ": "
+                        + str(i["intervals"][0]["start"])
+                        + "-"
+                        + str(i["intervals"][0]["end"])
+                    )
+                )
         k["hours"] = "; ".join(j)
-        k["hours"] = k["hours"].replace("\n", " ")
+    except Exception as e:
+        logzilla.error("hours", exc_info=e)
+        k["hours"] = SgRecord.MISSING
 
-    except:
-        k["hours"] = "<MISSING>"
-
-    try:
-        k["type"] = " ".join(data["class"])
-        k["type"] = k["type"].split("type-")[1].split(" ", 1)[0]
-    except:
-        k["type"] = "<MISSING>"
     return k
 
 
-def fetch_data():
-    url = "https://www.armaniexchange.com/experience/us/store-locator"
+def grab_links(state):
+    url = "https://stores.armaniexchange.com/"
+    with SgRequests() as session:
+        page = session.get(url)
+        soup = b4(page.text, "lxml")
+        continents = soup.find(
+            "div",
+            {
+                "class": lambda x: x
+                and all(i in x for i in ["Directory-groups", "l-row"])
+            },
+        ).find_all("a", {"href": True, "data-ya-track": "todirectory"})
 
-    logzilla.info(f"Generating request links")  # noqa
-    son = session.get(url, headers=headers)
-    soup = BeautifulSoup(son.text, "lxml")
-    gen = soup.find_all("li", {"class": "store-locator__stores-list-item"})
-    for i in gen:
-        country = (
-            i.find("button", {"class": "store-locator__stores-button"})
-            .find("span", {"class": "text"})
-            .text
+        countries = continents
+        for country in countries:
+            if country["href"].count("/") > 0:
+                state.push_request(SerializableRequest(url=country["href"]))
+            else:
+                page = session.get(url + country["href"])
+                soup = b4(page.text, "lxml")
+                stores = soup.find(
+                    "section",
+                    {
+                        "class": lambda x: x
+                        and all(
+                            i in x
+                            for i in ["Directory", "Directory--ace", "LocationList"]
+                        )
+                    },
+                )
+                stores = stores.find_all(
+                    "a",
+                    {
+                        "href": True,
+                        "data-ya-track": "details",
+                        "class": lambda x: x
+                        and all(
+                            i in x
+                            for i in [
+                                "Link",
+                                "Teaser-link",
+                                "Teaser-ctaLink",
+                                "Link--small",
+                            ]
+                        ),
+                    },
+                )
+                for store in stores:
+                    logzilla.info(f"{store['href']}")
+                    state.push_request(SerializableRequest(url=store["href"]))
+
+    return True
+
+
+def fetch_stores(state):
+    with SgRequests() as session:
+        url_to_test = "https://stores.armaniexchange.com/united-kingdom/ax-armani-exchange-westfield-stratford-city"
+        logzilla.info(
+            f"{parse((b4(session.get(url_to_test).text,'lxml'),url_to_test))}"
         )
-        links = [
-            j["href"]
-            for j in i.find("div", {"class": "store-locator__stores-details"}).find_all(
-                "a", {"class": "store-locator__stores-details-name"}
+        for next_r in state.request_stack_iter():
+            logzilla.info(str("https://stores.armaniexchange.com/" + next_r.url))
+            try:
+                res = SgRequests.raise_on_err(
+                    session.get("https://stores.armaniexchange.com/" + next_r.url)
+                )
+            except Exception as e:
+                if "520" or "404" in str(e):
+                    try:
+                        res = SgRequests.raise_on_err(
+                            session.get(
+                                "https://stores.armaniexchange.com/" + next_r.url
+                            )
+                        )
+                    except Exception:
+                        continue
+                else:
+                    raise Exception
+            yield parse(
+                (
+                    b4(res.text, "lxml"),
+                    str("https://stores.armaniexchange.com/" + next_r.url),
+                )
             )
-        ]
 
-        logzilla.info(f"Grabbing {len(links)} locations from {country}")
-        for link in links:
-            k = get_store(link, country)
-            yield k
 
-    logzilla.info(f"Finished grabbing data!!")  # noqa
+def fetch_data():
+    state = CrawlStateSingleton.get_instance()
+    state.get_misc_value("init", default_factory=lambda: grab_links(state))
+    state.save(override=True)
+    for store in fetch_stores(state):
+        yield store
 
 
 def scrape():
     url = "https://armaniexchange.com/"
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["url"]),
-        location_name=MappingField(mapping=["name"]),
-        latitude=MappingField(mapping=["lat"]),
-        longitude=MappingField(mapping=["lng"]),
-        street_address=MappingField(mapping=["address"]),
-        city=MappingField(mapping=["city"]),
-        state=MappingField(mapping=["state"]),
-        zipcode=MappingField(mapping=["zip"]),
-        country_code=MappingField(mapping=["country"]),
-        phone=MappingField(mapping=["phone"]),
-        store_number=MappingField(mapping=["id"], part_of_record_identity=True),
-        hours_of_operation=MappingField(mapping=["hours"]),
-        location_type=MappingField(mapping=["type"]),
+        page_url=MappingField(mapping=["url"], part_of_record_identity=True),
+        location_name=MappingField(mapping=["name"], is_required=False),
+        latitude=MappingField(mapping=["lat"], is_required=False),
+        longitude=MappingField(mapping=["lng"], is_required=False),
+        street_address=MappingField(mapping=["address"], is_required=False),
+        city=MappingField(mapping=["city"], is_required=False),
+        state=MappingField(mapping=["state"], is_required=False),
+        zipcode=MappingField(mapping=["zip"], is_required=False),
+        country_code=MappingField(mapping=["country"], is_required=False),
+        phone=MappingField(mapping=["phone"], is_required=False),
+        store_number=MappingField(
+            mapping=["id"], is_required=False, part_of_record_identity=True
+        ),
+        hours_of_operation=MappingField(mapping=["hours"], is_required=False),
+        location_type=MappingField(mapping=["type"], is_required=False),
     )
 
     pipeline = SimpleScraperPipeline(
