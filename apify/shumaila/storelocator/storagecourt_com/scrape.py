@@ -43,15 +43,30 @@ def fetch_data():
             lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
             longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0]
             phone = r.text.split("Call Now (", 1)[1].split('"', 1)[0]
-            phone = phone + "("
+            phone = "(" + phone
+
+            hours = ""
+            hourslist = soup.findAll("div", {"class": "rnl-Content"})
+            for hr in hourslist:
+                try:
+                    if "HOURS" in hr.find("span").text:
+                        hours = hr.text
+                        break
+                except:
+                    continue
             hours = (
-                soup.text.split("OFFICE HOURS", 1)[1]
+                hours.split("OFFICE HOURS", 1)[1]
                 .split("ACCESS HOURS", 1)[0]
                 .replace("pm", "pm ")
             )
             hours = re.sub(pattern, " ", hours).strip()
+
             try:
                 hours = hours.split("(", 1)[0]
+            except:
+                pass
+            try:
+                hours = hours.split("hours:", 1)[1].strip()
             except:
                 pass
         except:
