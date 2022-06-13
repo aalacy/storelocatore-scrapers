@@ -5,6 +5,7 @@ import os
 import json
 import ssl
 from sglogging import sglog
+from proxyfier import ProxyProviders
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -42,6 +43,7 @@ def get_data():
     with SgFirefox(
         block_third_parties=True,
         proxy_country="fr",
+        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as driver:
         driver.get(url)
         response = driver.page_source
@@ -117,7 +119,7 @@ def get_data():
                             phone = a_tag["href"].replace("tel:", "")
                             break
 
-                    location_type = "<MISSING>"
+                    location_type = location["banner"]
                     country_code = "France"
 
                     if page_url != "https://www.carrefour.fr/magasin/":
