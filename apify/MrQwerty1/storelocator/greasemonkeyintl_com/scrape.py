@@ -18,7 +18,14 @@ def get_street(page_url):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//div[contains(@class, 'center-address')]/div/text()")[1].strip()
+    address = tree.xpath("//div[contains(@class, 'center-address')]/div/text()")
+    if len(address):
+        return address[1].strip()
+
+    address = tree.xpath(
+        "//div[contains(@class, 'Address-line')]/span[contains(@class, 'Address-line1')]/text()"
+    )
+    return address[0].strip()
 
 
 def fetch_data(sgw: SgWriter):
