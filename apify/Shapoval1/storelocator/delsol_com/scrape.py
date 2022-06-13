@@ -89,6 +89,9 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
+        if latitude == "<MISSING>":
+            latitude = "".join(tree.xpath("//div/@data-latitude")) or "<MISSING>"
+            longitude = "".join(tree.xpath("//div/@data-longitude")) or "<MISSING>"
         phone = (
             "".join(tree.xpath('//*[text()="Contact"]/following-sibling::a[1]/text()'))
             .replace("\n", "")
