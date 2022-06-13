@@ -77,9 +77,19 @@ def fetch_data():
 
         hours_of_operation = raw_phone[-1].strip()
         latitude, longitude = (
-            store_res.text.split('"lat":')[1].split(",")[0].strip('" ').strip(),
-            store_res.text.split('"lng":')[1].split(",")[0].strip('" ').strip(),
+            store_res.text.split('"map_start_lat":"')[1]
+            .split(",")[0]
+            .replace('"', "")
+            .strip(),
+            store_res.text.split('"map_start_lng":"')[1]
+            .split(",")[0]
+            .replace('"', "")
+            .strip(),
         )
+        if latitude == "0":
+            latitude = "<MISSING>"
+        if longitude == "0":
+            longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,

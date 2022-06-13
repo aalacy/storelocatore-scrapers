@@ -1,5 +1,8 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -7,45 +10,18 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://stoneyriver.com/locations/"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    lines = r.iter_lines(decode_unicode=True)
+    lines = r.iter_lines()
     for line in lines:
         if 'Book Now <span class="screenreadable">' in line:
             name = line.split('Book Now <span class="screenreadable">')[1].split("<")[0]
             website = "stoneyriver.com"
             typ = name.split(" |")[0]
             country = "US"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
             hours = ""
             store = line.split('{"venueId":')[1].split(",")[0]
         if "google.com/maps/" in line or "maps.google.com/" in line:
@@ -89,21 +65,21 @@ def fetch_data():
             )
             zc = zc.replace("</address>", "")
             phone = line.split('<a href="tel:')[1].split('"')[0]
-            try:
-                hours = (
-                    line.split("Hours of Operation<br /><p>")[1]
-                    .split(",")[0]
-                    .replace("<!--", "")
-                )
+            g = next(lines)
+            g = next(lines)
+            while "pm<" in g or "pm," in g or "Daily<" in g:
+                hrs = g.split("<")[0]
+                if hours == "":
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
                 g = next(lines)
-                if '<span class="screenreadable">' not in g:
-                    hours = hours + "; " + g.split("<")[0]
-                    g = next(lines)
-                hours = hours + "; " + g.split("<")[0]
-            except:
-                hours = "<MISSING>"
-            hours = hours.replace("; Dining Room Open", "").replace("-->", "")
-            purl = "<MISSING>"
+            hours = (
+                hours.replace("; Dining Room Open", "")
+                .replace("-->", "")
+                .replace(",;", ";")
+            )
+            purl = "https://stoneyriver.com/locations/"
             hours = (
                 hours.replace("&#8211;", "-").replace("<br/>", "").replace("<br />", "")
             )
@@ -124,27 +100,39 @@ def fetch_data():
                 hours = hours.split("; Dine")[0].strip()
             if "3900 Sum" in add:
                 hours = hours.replace("; Mon", "Mon")
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "Northbrook" in name:
+                hours = "Mon-Thurs 11am-9pm; Fri 11am-10pm; Sat 11:30am-10pm; Sun 11:30am-9pm"
+            if "Annapolis" in name:
+                hours = "Sun-Thurs 11:30am-9pm; Fri-Sat 11:30am-10pm"
+            if "Livonia" in name:
+                hours = "Sun 11:30am-9pm; Mon-Thurs 11am-9pm; Mon-Thurs 11am-9pm"
+            if "102 Oxmoor Ct" in add:
+                hours = "Sun-Thurs 11am-9pm; Fri-Sat 11am-10pm"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

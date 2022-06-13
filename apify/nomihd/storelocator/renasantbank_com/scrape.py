@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -41,6 +41,8 @@ def fetch_data():
                 stores_req = session.get(
                     search_url.format(zip_code, lat, lng), headers=headers
                 )
+                if isinstance(stores_req, SgRequestError):
+                    continue
                 stores = json.loads(stores_req.text)["LocationItemList"]
                 if stores is not None:
                     for store in stores:

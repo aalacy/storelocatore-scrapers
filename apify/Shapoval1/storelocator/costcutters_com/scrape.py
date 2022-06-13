@@ -19,7 +19,7 @@ def get_hours(hours) -> str:
 
 
 def get_urls():
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
@@ -32,11 +32,11 @@ def get_urls():
 
 
 def get_data(url, sgw: SgWriter):
-    locator_domain = "https://www.anthonys.com"
+    locator_domain = "https://costcutters.com/"
     page_url = "".join(url)
     if page_url.count("/") != 6:
         return
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
@@ -84,13 +84,29 @@ def get_data(url, sgw: SgWriter):
     phone = (
         "".join(
             tree.xpath(
-                '//div[@class="maps-container"]/following-sibling::div[@class="salondetailspagelocationcomp"]//a[contains(@href, "tel")]/text()'
+                '//div[@class="salon-address loc-details-edit"]//span[@itemprop="telephone"]//text()'
+            )
+        )
+        .replace("\n", "")
+        .strip()
+        or "".join(
+            tree.xpath(
+                '//div[@class="maps-container"]/following-sibling::div[3]//span[@itemprop="telephone"]//text()'
             )
         )
         .replace("\n", "")
         .strip()
         or "<MISSING>"
     )
+    if phone == "<MISSING>":
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//p[@itemprop="address"]/following-sibling::span[1]//text()'
+                )
+            )
+            or "<MISSING>"
+        )
     store_number = (
         "".join(
             tree.xpath(

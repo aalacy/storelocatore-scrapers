@@ -10,7 +10,6 @@ from sgpostal.sgpostal import parse_address_intl
 
 DOMAIN = "kw.com"
 website = "https://www.kw.com"
-page_url = f"{website}/offices"
 json_url = "https://api-endpoint.cons-prod-us-central1.kw.com/graphql"
 MISSING = SgRecord.MISSING
 
@@ -116,6 +115,7 @@ def fetch_data():
         phone = str(get_JSON_object_variable(store, "phone"))
         latitude = str(get_JSON_object_variable(store, "lat"))
         longitude = str(get_JSON_object_variable(store, "lng"))
+        page_url = str(get_JSON_object_variable(store, "url"))
         raw_address = raw_address
 
         yield SgRecord(

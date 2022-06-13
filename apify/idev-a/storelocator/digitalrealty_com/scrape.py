@@ -155,7 +155,7 @@ def _d(page_url, sp3, country):
 
 def fetch_data(session):
     soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-    countries = soup.select("div.Footer > div > ul > li")[1].select("ul a")
+    countries = soup.select("ul.uk-list")[0].select("li a")
     logger.info(f"{len(countries)} found")
     for country_url, sp1 in fetchConcurrentList(countries):
         country = country_url.split("/")[-1]

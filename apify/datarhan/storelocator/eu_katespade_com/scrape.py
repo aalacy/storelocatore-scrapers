@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -21,25 +22,29 @@ def fetch_data():
         page_url = "https://eu.katespade.com" + poi["storeURL"]
         poi_html = etree.HTML(poi["storeHours"])
         hoo = poi_html.xpath("//p/text()")[2:-1]
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("is open:")[-1]
         street_address = poi["address1"]
         if poi["address2"]:
             street_address += ", " + poi["address2"]
+        city = poi["city"]
+        if not city:
+            addr = parse_address_intl(poi["name"])
+            city = addr.city
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi["name"],
             street_address=street_address,
-            city=poi["city"],
+            city=city,
             state=poi["stateCode"],
             zip_postal=poi["postalCode"],
             country_code=poi["countryCode"],
             store_number=store_number,
             phone=poi["phone"],
             location_type=poi["storeType"],
-            latitude=poi["latitude"],
-            longitude=poi["longitude"],
+            latitude=poi["latitude"].replace(",", "."),
+            longitude=poi["longitude"].replace(",", "."),
             hours_of_operation=hoo,
         )
 

@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "pizzahut.com.hk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(verify_ssl=False, proxy_country="hk")
 headers = {
     "authority": "www.pizzahut.com.hk",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -39,14 +39,14 @@ def fetch_data():
 
         page_url = search_url
 
-        store_number = (
+        ID = (
             "".join(store.xpath("./@href"))
             .split("javascript:findstore('")[1]
             .split("',")[0]
             .strip()
         )
 
-        page_url = f"https://www.pizzahut.com.hk/corp/en/store/detail.html?id={store_number}&l=en"
+        page_url = f"https://www.pizzahut.com.hk/corp/en/store/detail.html?id={ID}&l=en"
         log.info(page_url)
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(
@@ -69,7 +69,7 @@ def fetch_data():
                 )
             )
 
-            raw_address = " ".join(full_address).strip()
+            raw_address = ", ".join(full_address).strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -85,13 +85,17 @@ def fetch_data():
             phone = (
                 "".join(location.xpath('./div[@class="store_to"]//text()'))
                 .strip()
-                .split(":")[0]
+                .replace("Store phone no:", "")
                 .strip()
             )
 
-            location_type = "<MISSING>"
-
-            hours_of_operation = "<MISSING>"
+            location_type = ", ".join(
+                location.xpath('.//div[@class="store_item"]//td/text()')
+            ).strip()
+            store_number = "<MISSING>"
+            hours_of_operation = (
+                "Monday to Thursday: 11:00 - 22:30, Friday to Sunday: 11:00 - 23:00"
+            )
 
             latitude, longitude = "<MISSING>", "<MISSING>"
 
@@ -121,7 +125,7 @@ def scrape():
         deduper=SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

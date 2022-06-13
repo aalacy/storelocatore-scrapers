@@ -4,60 +4,58 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://burgerkingbangladesh.com/"
-    api_url = "https://burgerkingbangladesh.com/delivery"
+    page_url = "https://burgerkingbangladesh.com/new/restaurants"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//option[text()="PLEASE ENTER DELIVERY LOCATION"]/following-sibling::option'
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "var branches = ")]/text()'))
+        .split("var branches = ")[2]
+        .split(";")[0]
+        .strip()
     )
-    for d in div:
-        ids = "".join(d.xpath(".//@value"))
+    block = eval(div)
+    for b in block:
 
-        session = SgRequests()
-        r = session.get(
-            f"https://burgerkingbangladesh.com/bkashmicrosite/locationwisebranch?locationid={ids}",
-            headers=headers,
-        )
-        js = r.json()
-        if js is None:
-            continue
-
-        page_url = "https://burgerkingbangladesh.com/delivery"
-        location_name = js.get("branchname")
-        street_address = js.get("address") or "<MISSING>"
-        country_code = "Bangladesh"
-        latitude = js.get("latitude") or "<MISSING>"
-        longitude = js.get("longitude") or "<MISSING>"
-        phone = js.get("contactno") or "<MISSING>"
-        hours_of_operation = (
-            f"Monday {js.get('monday')} Tuesday {js.get('tuesday')} Wednesday {js.get('wednesday')} Thursday {js.get('thursday')} Friday {js.get('friday')} Saturday {js.get('saturday')} Sunday {js.get('sunday')}"
+        location_name = "".join(b[0])
+        ad = "".join(b[4])
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "Bangladesh"
+        city = location_name.replace("Burger King", "").replace("2", "").strip()
+        latitude = b[1]
+        longitude = b[2]
 
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=SgRecord.MISSING,
-            state=SgRecord.MISSING,
-            zip_postal=SgRecord.MISSING,
+            city=city,
+            state=state,
+            zip_postal=postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
-            phone=phone,
+            phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

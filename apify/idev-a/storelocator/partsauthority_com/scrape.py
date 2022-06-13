@@ -4,96 +4,76 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
-import re
-import bs4
 
-logger = SgLogSetup().get_logger("partsauthority")
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+
+header1 = {
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Content-Type": "application/json;charset=UTF-8",
+    "Host": "partsauthority.com",
+    "Origin": "https://partsauthority.com",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 locator_domain = "https://partsauthority.com"
 base_url = "https://partsauthority.com/locations/"
+state_url = "https://partsauthority.com/branchloc/GetBranchesByState"
 
 
-def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
-    locs = (
-        bs(http.get(base_url, headers=_headers).text, "lxml")
-        .find("", string=re.compile(r"^Locations$"))
-        .find_parent("a")
-        .find_next_sibling("ul")
-        .select("a")[1:]
+def fetch_records(http):
+    res = http.get(base_url, headers=_headers).text
+    locs = bs(res, "lxml").select("div.mul_location > a")
+    header1["apikey"] = (
+        res.split("var _paapiwebaddresskey =")[1].split("var")[0].strip()[1:-1]
     )
-    logger.info(f"{len(locs)} locs found")
     for loc in locs:
-        page_url = loc["href"]
-        state.push_request(SerializableRequest(url=page_url))
-
-    return True
-
-
-def fetch_records(http, state):
-    for next_r in state.request_stack_iter():
-        locations = bs(http.get(next_r.url, headers=_headers).text, "lxml").select(
-            'div[data-elementor-type="single"] div.elementor-col-25 div.elementor-text-editor'
+        url = locator_domain + "/" + loc["href"]
+        header1["Referer"] = url
+        state_id = (
+            http.get(url, headers=_headers)
+            .text.split("var _paramStateId =")[1]
+            .split(";")[0]
+            .strip()[1:-1]
         )
-        logger.info(f"[{len(locations)}] {next_r.url}")
+        payload = {
+            "BranchId": "null",
+            "StateId": state_id,
+            "StateName": "null",
+            "ZipCode": "null",
+            "RediusMile": "null",
+        }
+        locations = http.post(state_url, headers=header1, json=payload).json()["Result"]
+        logger.info(f"{state_id}, {len(locations)}")
         for _ in locations:
-            if not _.h3:
-                continue
-            raw_address = list(_.p.stripped_strings)
-            store_number = raw_address[0].split("–")[-1]
-            del raw_address[0]
             hours = []
-            _hr = _.select_one("span strong").find_parent("p")
-            hours = []
-            for tt in _hr.find_next_siblings("p"):
-                temp = []
-                _tt = list(tt.children)
-                for x, hh in enumerate(_tt):
-                    _hh = ""
-                    if type(hh) == bs4.element.NavigableString:
-                        _hh = hh
-                    else:
-                        _hh = hh.text
-                    if "Online" in _hh or "Website" in _hh:
-                        break
-                    if hh.name != "br":
-                        temp.append(_hh)
-                    if temp and (hh.name == "br" or x == len(_tt) - 1):
-                        hours.append(" ".join(temp))
-                        temp = []
-            addr = parse_address_intl(" ".join(raw_address))
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            for hh in _["BranchTimingList"]:
+                hours.append(f"{hh['WeekDay']}: {hh['TimingText']}")
+            page_url = url + "/" + _["BranchLinkUrl"]
             yield SgRecord(
-                page_url=next_r.url,
-                store_number=store_number,
-                location_name=_.h3.text.strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                page_url=page_url,
+                store_number=_["BranchId"],
+                location_name=_["BranchName"],
+                street_address=_["BranchAddress"],
+                city=_["BranchCity"],
+                state=_["StateName"],
+                zip_postal=_["BranchZipCode"],
                 country_code="US",
-                phone=_hr.text.strip(),
+                latitude=_["BranchLat"],
+                longitude=_["BranchLong"],
+                phone=_["BranchPhone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=" ".join(raw_address),
             )
 
 
 if __name__ == "__main__":
-    state = CrawlStateSingleton.get_instance()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        with SgRequests() as http:
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records(http, state):
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        with SgRequests(verify_ssl=False) as http:
+            for rec in fetch_records(http):
                 writer.write_row(rec)

@@ -28,6 +28,8 @@ def fetch_data():
     stores = stores_raw_text.split("googleMapsLocations.push(")
     for index in range(1, len(stores)):
         store_json = json.loads(stores[index].split(");")[0].strip())
+        if "estHref" not in store_json:
+            continue
         page_url = store_json["estHref"]
         locator_domain = website
         location_name = store_json["estName"].replace("&amp;", "&").strip()

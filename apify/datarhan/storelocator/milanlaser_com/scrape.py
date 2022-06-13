@@ -24,18 +24,20 @@ def fetch_data():
     for poi in all_locations:
         page_url = poi["url"]
         page_url = page_url.replace("http://htttps://", "https://")
-        loc_response = session.get(page_url + "/about-us/", headers=hdr)
-        loc_dom = etree.HTML(loc_response.text)
         raw_address = poi["address"]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
-        hoo = loc_dom.xpath(
-            '//h5[contains(text(), "Hours of Operation")]/following-sibling::p[1]//text()'
-        )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo).split(" (S")[0]
+        hoo = ""
+        if page_url:
+            loc_response = session.get(page_url + "/about-us/", headers=hdr)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath(
+                '//h5[contains(text(), "Hours of Operation")]/following-sibling::p[1]//text()'
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hoo = " ".join(hoo).split(" (S")[0]
 
         item = SgRecord(
             locator_domain=domain,
