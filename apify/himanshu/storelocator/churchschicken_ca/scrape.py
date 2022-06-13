@@ -4,6 +4,10 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from sgpostal.sgpostal import International_Parser, parse_address
 
 
@@ -69,16 +73,30 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             hours_of_operation = " ".join(hours_of_operation.split())
-            text = "".join(d.xpath('.//a[contains(text(), " Get Directions")]/@href'))
-            try:
-                if text.find("ll=") != -1:
-                    latitude = text.split("ll=")[1].split(",")[0]
-                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-                else:
-                    latitude = text.split("@")[1].split(",")[0]
-                    longitude = text.split("@")[1].split(",")[1]
-            except IndexError:
-                latitude, longitude = "<MISSING>", "<MISSING>"
+            with SgFirefox() as driver:
+
+                driver.get(page_url)
+                driver.implicitly_wait(30)
+                driver.maximize_window()
+                driver.switch_to.frame(0)
+                WebDriverWait(driver, 30).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, '//div[@class="bottom-actions"]')
+                    )
+                )
+                try:
+                    ll = driver.find_element_by_xpath(
+                        '//div[@class="google-maps-link"]/a'
+                    ).get_attribute("href")
+                except:
+                    ll = "<MISSING>"
+                ll = "".join(ll)
+                driver.switch_to.default_content()
+                try:
+                    latitude = ll.split("ll=")[1].split(",")[0].strip()
+                    longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
