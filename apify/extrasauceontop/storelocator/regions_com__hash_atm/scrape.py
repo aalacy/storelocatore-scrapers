@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape import simple_scraper_pipeline as sp
+import html
 
 
 def extract_json(html_string):
@@ -47,7 +48,7 @@ def get_data():
     )
 
     for search_code in search:
-
+        search.found_nothing()
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
             + search_code
@@ -147,19 +148,19 @@ def get_data():
             hours = hours.replace("<br/>", " ").strip()
 
             yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
+                "locator_domain": html.unescape(locator_domain),
+                "page_url": html.unescape(page_url),
+                "location_name": html.unescape(location_name),
                 "latitude": latitude,
                 "longitude": longitude,
-                "city": city,
+                "city": html.unescape(city),
                 "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
+                "street_address": html.unescape(address),
+                "state": html.unescape(state),
+                "zip": html.unescape(zipp),
                 "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
+                "location_type": html.unescape(location_type),
+                "hours": html.unescape(hours),
                 "country_code": country_code,
             }
 

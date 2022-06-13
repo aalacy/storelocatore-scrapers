@@ -60,9 +60,9 @@ def fetch_data():
                 except AttributeError:
                     label = MISSING
 
-                if label.find("open") != -1:
+                if label.find("Opening") != -1:
                     title = title + " " + "Coming Soon"
-                if label.find("coming") != -1:
+                if label.find("Coming") != -1:
                     title = title + " " + "Coming Soon"
 
                 if address.find("|") != -1:
