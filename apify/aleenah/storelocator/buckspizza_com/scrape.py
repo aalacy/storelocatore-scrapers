@@ -20,7 +20,7 @@ headers = {
 
 
 def fetch_data():
-    cleanr = re.compile(r"<[^>]+>")
+
     pattern = re.compile(r"\s\s+")
     with SgChrome(user_agent=user_agent) as driver:
         url = "https://buckspizza.com/locations/"
@@ -38,7 +38,6 @@ def fetch_data():
             link = div.find("a")["href"]
             if "franchise" in link:
                 continue
-            print(link)
             driver.get(link)
             soup = BeautifulSoup(driver.page_source, "html.parser")
             content = soup.find(
