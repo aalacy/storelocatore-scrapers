@@ -67,6 +67,8 @@ def fetch_data():
                 "".join(store.xpath('.//span[@itemprop="addressLocality"]/text()'))
                 .strip(",. ")
                 .strip()
+                .split("(")[0]
+                .strip()
             )
             state = (
                 "".join(store.xpath('.//span[@itemprop="addressRegion"]/text()'))
@@ -78,6 +80,18 @@ def fetch_data():
                 .strip(",. ")
                 .strip()
             )
+            if not zip and "," in city:
+                zip = city.split(",")[-1].strip()
+                city = city.split(",")[0].strip()
+
+            if zip == "Victoria 3148":
+                state = "Victoria"
+                zip = "3148"
+
+            if city == "Frankfurt am Main 60528":
+                city = "Frankfurt am Main"
+                zip = "60528"
+
             if us.states.lookup(state):
                 country_code = "US"
             else:
