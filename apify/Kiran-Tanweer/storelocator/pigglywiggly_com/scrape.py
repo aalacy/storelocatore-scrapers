@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
-
+import re
 
 session = SgRequests()
 website = "pigglywiggly_com"
@@ -21,6 +21,8 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
+        pattern = re.compile(r"\s\s+")
+        cleanr = re.compile(r"<[^>]+>")
         search_url = "http://www.pigglywiggly.com/store-locations"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
@@ -36,10 +38,14 @@ def fetch_data():
             country = bs.findAll("div", {"class": "country-name"})
             phone = bs.findAll("div", {"class": "views-field-field-phone-value"})
             location = bs.findAll("div", {"class": "location map-link"})
+
             for st, cit, ste, pc, cty, ph, loc in zip(
                 street, city, state, pcode, country, phone, location
             ):
                 street = st.text.strip()
+                street = street.replace("\n", " ").strip()
+                street = re.sub(pattern, " ", street)
+                street = re.sub(cleanr, " ", street)
                 city = cit.text.strip()
                 state = ste.text.strip()
                 pcode = pc.text.strip()
@@ -49,6 +55,10 @@ def fetch_data():
                 coords = coords.split("q=")[1].split("+%")[0].strip()
                 lat = coords.split("+")[0].strip()
                 lng = coords.split("+")[1].strip()
+                if lng.find("-") == -1:
+                    lat = MISSING
+                    lng = MISSING
+
                 if country == "Unites States":
                     country = "US"
 

@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "ritecheck_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
@@ -46,11 +46,13 @@ def fetch_data():
             address = re.sub(pattern, " ", address)
             address = re.sub(cleanr, " ", address)
             hour = hr.strip()
+            address = address.replace("Open 24/7", "").strip()
+            title = address
 
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=DOMAIN,
-                location_name=SgRecord.MISSING,
+                page_url="https://www.ritecheck.com/locations/",
+                location_name=title,
                 street_address=address.strip(),
                 city=SgRecord.MISSING,
                 state=SgRecord.MISSING,
@@ -68,11 +70,7 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
-    )
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
