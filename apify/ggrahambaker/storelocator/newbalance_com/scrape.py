@@ -35,7 +35,7 @@ class ExampleSearchIteration(SearchIteration):
                 + str(x)
                 + "&map_center_lng="
                 + str(y)
-                + "&map_distance_diag=100&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10"
+                + "&map_distance_diag=3000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10"
             )
             res_json = session.get(url, headers=HEADERS).json()["markers"]
 
@@ -77,6 +77,8 @@ class ExampleSearchIteration(SearchIteration):
                             soup.find("script", {"type": "application/ld+json"}).text
                         )
                         for hh in loc_json.get("openingHoursSpecification", []):
+                            if not hh.get("dayOfWeek"):
+                                continue
                             hours.append(
                                 f"{', '.join(hh['dayOfWeek'])}: {hh['opens']} - {hh['closes']}"
                             )
@@ -99,10 +101,16 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_2()
+        search_type="DynamicGeoSearch",
+        granularity=Grain_2(),
+        max_search_distance_miles=3000,
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
