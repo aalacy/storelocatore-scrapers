@@ -186,7 +186,7 @@ def parse(data):
     except Exception as e:
         logzilla.error("rawa", exc_info=e)
         rawa = None
-
+    MISSING = SgRecord.Missing
     try:
         parsed = parser.parse_address_intl(rawa)
         country_code = parsed.country if parsed.country else MISSING
