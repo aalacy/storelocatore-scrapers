@@ -7,6 +7,7 @@ from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from bs4 import BeautifulSoup as b4
 import json  # noqa
 from sgscrape.sgrecord import SgRecord
+from sgscrape import sgpostal as parser
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="mani")
 headers = {
@@ -85,7 +86,13 @@ def parse(data):
         logzilla.error("city", exc_info=e)
         k["city"] = SgRecord.MISSING
 
-    k["state"] = SgRecord.MISSING
+    try:
+        k["state"] = soup.find("meta", {"name": "geo.region", "content": True})[
+            "content"
+        ].split("-")[-1]
+    except Exception as e:
+        logzilla.error("state", exc_info=e)
+        k["state"] = SgRecord.MISSING
 
     try:
         k["zip"] = soup.find(
@@ -154,15 +161,43 @@ def parse(data):
                     str(
                         i["day"]
                         + ": "
-                        + str(i["intervals"][0]["start"])
+                        + str(
+                            str(int(i["intervals"][0]["start"]) / 100)
+                            + ":"
+                            + str(int(i["intervals"][0]["start"]) % 100)
+                        )
                         + "-"
-                        + str(i["intervals"][0]["end"])
+                        + str(
+                            str(int(i["intervals"][0]["end"]) / 100)
+                            + ":"
+                            + str(int(i["intervals"][0]["end"]) % 100)
+                        )
                     )
                 )
         k["hours"] = "; ".join(j)
     except Exception as e:
         logzilla.error("hours", exc_info=e)
         k["hours"] = SgRecord.MISSING
+
+    try:
+        rawa = soup.find("meta", {"itemprop": "streetAddress", "content": True})[
+            "content"
+        ]
+    except Exception as e:
+        logzilla.error("rawa", exc_info=e)
+        rawa = None
+    MISSING = SgRecord.Missing
+    try:
+        parsed = parser.parse_address_intl(rawa)
+        street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
+        street_address = (
+            (street_address + ", " + parsed.street_address_2)
+            if parsed.street_address_2
+            else street_address
+        )
+        k["address"] = street_address
+    except Exception as e:
+        logzilla.error(f"Parsing\n{str(rawa)}", exc_info=e)
 
     return k
 
@@ -280,6 +315,7 @@ def scrape():
         ),
         hours_of_operation=MappingField(mapping=["hours"], is_required=False),
         location_type=MappingField(mapping=["type"], is_required=False),
+        raw_address=MappingField(mapping=["rawa"], is_required=False),
     )
 
     pipeline = SimpleScraperPipeline(
