@@ -40,12 +40,16 @@ def fetch_data():
                     soup.find("div", {"class": "location-details"}).find("small").text
                 )
                 phone = soup.find("span", {"itemprop": "telephone"}).text
-                lat = driver.page_source.split('latitude" content="', 1)[1].split(
-                    '"', 1
-                )[0]
-                longt = driver.page_source.split('"longitude" content="', 1)[1].split(
-                    '"', 1
-                )[0]
+                lat = (
+                    driver.page_source.split('"GeoCoordinates",', 1)[1]
+                    .split('"latitude": "', 1)[1]
+                    .split('"', 1)[0]
+                )
+                longt = (
+                    driver.page_source.split('"GeoCoordinates",', 1)[1]
+                    .split('"longitude": "', 1)[1]
+                    .split('"', 1)[0]
+                )
 
                 address = usaddress.parse(address)
                 ltype = "Store"
