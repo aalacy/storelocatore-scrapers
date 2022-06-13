@@ -88,11 +88,14 @@ def fetch_data():
                         if city:
                             city = city.split(",")[0]
 
+                        street_address = " ".join(addr["lines"]).strip()
+                        if street_address == "-":
+                            street_address = ""
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
-                            street_address=" ".join(addr["lines"]),
+                            street_address=street_address,
                             city=city,
                             zip_postal=zip_postal,
                             country_code=addr["country_code"],

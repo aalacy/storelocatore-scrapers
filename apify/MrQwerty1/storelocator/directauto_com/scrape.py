@@ -49,6 +49,9 @@ def fetch_data(sgw: SgWriter):
 
             for j in js:
                 j = j.get("profile") or {}
+                desc = j.get("description") or ""
+                if "permanently closed" in desc:
+                    continue
 
                 a = j.get("address") or {}
                 adr1 = a.get("line1") or ""
@@ -62,7 +65,7 @@ def fetch_data(sgw: SgWriter):
                     store_number = j["meta"]["id"]
                 except KeyError:
                     store_number = SgRecord.MISSING
-                location_name = j.get("name")
+                location_name = j.get("name") or ""
                 page_url = j.get("c_pagesURL")
 
                 try:
@@ -100,6 +103,8 @@ def fetch_data(sgw: SgWriter):
                         _tmp.append(f"{day}: {start}-{end}")
 
                 hours_of_operation = ";".join(_tmp)
+                if "closed" not in location_name.lower() and not hours_of_operation:
+                    continue
 
                 row = SgRecord(
                     page_url=page_url,
