@@ -95,7 +95,7 @@ def fetch_data(sgw: SgWriter):
     final_links = get_store_urls(state_links, [])
     logger.info("Processing " + str(len(final_links)) + " links ...")
     count_green_burrito = 0
-    for num, final_link in enumerate(final_links[0:10]):
+    for num, final_link in enumerate(final_links[0:]):
         logger.info(f"[{num}] PullingContentFrom : {final_link}")
         final_link = final_link.replace("--", "-")
         req = get_response(num, final_link)
