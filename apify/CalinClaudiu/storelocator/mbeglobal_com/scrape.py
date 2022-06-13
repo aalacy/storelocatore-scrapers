@@ -122,7 +122,7 @@ def ret_record(record):
     city = parsed.city if parsed.city else MISSING
     state = parsed.state if parsed.state else MISSING
     zip_postal = parsed.postcode if parsed.postcode else MISSING
-
+    raw_address = re.sub("[\t\r\n ]+", " ", str(raw_address).strip())
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
