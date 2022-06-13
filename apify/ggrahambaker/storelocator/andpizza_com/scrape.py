@@ -45,9 +45,13 @@ def fetch_data():
     }
     loclist = session.get(api_url, headers=headers_2).json()["data"]
     for loc in loclist:
+        location_type = MISSING
         location_name = loc["name"].replace("&pizza //", "")
-        if location_name in coming_soon_list:
-            continue
+        for coming in coming_soon_list:
+            if location_name == coming.find("h2").text:
+                print(location_name)
+                location_type = "Coming Soon"
+                break
         log.info(location_name)
         addy = loc["location"]
         street_address = addy["address1"]
@@ -77,7 +81,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours,
