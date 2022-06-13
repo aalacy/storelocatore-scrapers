@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, Grain_8, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from tenacity import retry, stop_after_attempt, wait_fixed
 from sglogging import SgLogSetup
 
