@@ -53,7 +53,16 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         _tmp = []
-        black_list = ["dec", "christmas", "new", "/", "thanksgiving", "xmas"]
+        black_list = [
+            "dec",
+            "christmas",
+            "new",
+            "/",
+            "thanksgiving",
+            "xmas",
+            "april",
+            ".22",
+        ]
         hours = d.xpath(".//div[@class='store-hours']/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         for h in hours:

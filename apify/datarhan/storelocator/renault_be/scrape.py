@@ -79,6 +79,10 @@ def fetch_data():
     for start_url in start_urls:
         all_locations = session.get(start_url, headers=hdr).json()
         for poi in all_locations:
+            zip_code = poi.get("postalCode")
+            if zip_code and zip_code in ["00000", "Mayo", "EIRE", "0"]:
+                zip_code = ""
+
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_urls[start_url.split("/")[2]],
@@ -86,7 +90,7 @@ def fetch_data():
                 street_address=poi["streetAddress"],
                 city=poi["locality"],
                 state="",
-                zip_postal=poi.get("postalCode"),
+                zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number=poi["dealerId"],
                 phone=poi["telephone"].get("value"),

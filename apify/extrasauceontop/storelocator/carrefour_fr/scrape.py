@@ -146,7 +146,7 @@ def get_data():
 
                     else:
                         hours = "<MISSING>"
-
+                    log.info(location_name)
                     yield {
                         "locator_domain": locator_domain,
                         "page_url": page_url,

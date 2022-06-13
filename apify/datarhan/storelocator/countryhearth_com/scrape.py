@@ -20,16 +20,16 @@ def fetch_data():
         )
         for i, h in enumerate(all_hotels):
             driver.find_element_by_id("edit-property").click()
-            sleep(2)
+            sleep(10)
             all_hotels[i].click()
-            sleep(2)
+            sleep(10)
             driver.find_element_by_id("edit-submit").click()
 
             loc_dom = etree.HTML(driver.page_source)
             data = loc_dom.xpath('//script[contains(text(), "INITIAL_STATE__")]/text()')
             if not data:
                 driver.get(start_url)
-                sleep(10)
+                sleep(15)
                 all_hotels = driver.find_elements_by_xpath(
                     '//select[@id="edit-property"]/option'
                 )
@@ -60,7 +60,7 @@ def fetch_data():
             yield item
 
             driver.get(start_url)
-            sleep(10)
+            sleep(15)
             all_hotels = driver.find_elements_by_xpath(
                 '//select[@id="edit-property"]/option'
             )
