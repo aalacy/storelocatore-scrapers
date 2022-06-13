@@ -49,7 +49,6 @@ def fetch_data():
         location_name = loc["name"].replace("&pizza //", "")
         for coming in coming_soon_list:
             if location_name == coming.find("h2").text:
-                print(location_name)
                 location_type = "Coming Soon"
                 break
         log.info(location_name)
