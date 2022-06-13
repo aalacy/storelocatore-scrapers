@@ -27,6 +27,7 @@ def fetch_data():
         "https://www.dacia.pl/wired/commerce/v1/dealers/locator?lat=52.19291267474554&lon=20.245607335979912&country=pl&language=pl&filters=dacia.blacklisted%3D%3Dfalse%3Bdacia.receiveLead%3D%3Dtrue%3BbirId!%3D61617948%3BbirId!%3D61617506%3BbirId!%3D61617134%3BbirId!%3D61617949%3BbirId!%3D61617810%3BbirId!%3D61617859%3BbirId!%3D61617118%3BbirId!%3D61617893%3BbirId!%3D61617892%3BbirId!%3D61617020%3BbirId!%3D61617102%3BbirId!%3D61617895%3BbirId!%3D61617881%3BbirId!%3D61617947%3BbirId!%3D61617504%3BbirId!%3D61617945%3BbirId!%3D61617110%3BbirId!%3D61617066%3BbirId!%3D61617800%3BbirId!%3D61617151&count=250",
         "https://www.dacia.ro/wired/commerce/v1/dealers/locator?lat=45.681199386460406&lon=23.959507546139548&country=ro&language=ro&filters=dacia.blacklisted%3D%3Dfalse%3Bdacia.receiveLead%3D%3Dtrue%3BbirId!%3D64200017%3BbirId!%3D64200204%3BbirId!%3D64200290&count=250",
         "https://www.dacia.rs/wired/commerce/v1/dealers/locator?lat=44.91631454215744&lon=20.3272146911047&country=rs&language=sr&filters=dacia.blacklisted%3D%3Dfalse%3BbirId!%3D89150041%3Bbird!%3D89150176%3BbirId!%3D89150176&count=250",
+        "https://www.dacia.pt/wired/commerce/v1/dealers/locator?lat=39.26311909603629&lon=-8.249245579123823&country=pt&language=pt&filters=dacia.blacklisted%3D%3Dfalse&count=100",
     ]
 
     page_urls = {
@@ -49,6 +50,7 @@ def fetch_data():
         "www.dacia.ro": "https://www.dacia.ro/reteaua-dacia.html",
         "www.dacia.rs": "https://www.dacia.rs/pronadji-distributera.html",
         "www.dacia.si": "https://www.dacia.si/poiscite-pooblascenega-prodajalca.html",
+        "www.dacia.pt": "https://www.dacia.pt/concessionarios.html",
     }
     domain = "dacia.be"
     hdr = {
