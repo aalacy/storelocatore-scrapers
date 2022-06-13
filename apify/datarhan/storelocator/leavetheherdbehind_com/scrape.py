@@ -34,8 +34,14 @@ def fetch_data():
     for country_code, start_url in start_urls.items():
         response = session.get(start_url)
         dom = etree.HTML(response.text)
-
         all_locations = dom.xpath('//a[@class="single-location__image"]/@href')
+        next_page = dom.xpath('//span[@class="next"]/a/@href')
+        while next_page:
+            response = session.get(urljoin(start_url, next_page[0]))
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@class="single-location__image"]/@href')
+            next_page = dom.xpath('//span[@class="next"]/a/@href')
+
         with SgFirefox() as driver:
             for store_url in all_locations:
                 store_url = urljoin(start_url, store_url)
@@ -52,40 +58,21 @@ def fetch_data():
                 location_name = loc_dom.xpath(
                     '//h1[@class="hero__title title-lg location-title-label"]/span/text()'
                 )
-                location_name = location_name[0] if location_name else "<MISSING>"
+                location_name = location_name[0] if location_name else ""
                 address_raw = loc_dom.xpath("//address/p/text()")
                 addr = parse_address_intl(" ".join(address_raw))
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address = addr.street_address_1 + " " + addr.street_address_2
-                street_address = street_address if street_address else "<MISSING>"
                 city = addr.city
-                city = city if city else ""
                 if not city:
                     if len(address_raw) > 2:
                         city = address_raw[-2]
                 state = addr.state
-                state = state if state else "<MISSING>"
                 zip_code = addr.postcode
-                zip_code = zip_code if zip_code else "<MISSING>"
-                if zip_code == "<MISSING>":
+                if not zip_code:
                     if len(" ".join(address_raw).split(", ")) == 3:
                         zip_code = " ".join(address_raw).split(", ")[-1]
-
-                geo_data = loc_dom.xpath('//script[contains(text(), "center:")]/text()')
-                latitude = ""
-                longitude = ""
-                if geo_data:
-                    geo = re.findall(r"center: \[(.+?)\],", geo_data[0])
-                    if geo:
-                        geo = geo[0].split(",")
-                        latitude = geo[1]
-                        longitude = geo[0]
-                    else:
-                        geo = re.findall(r"center: (.+?}),", geo_data[0])[0]
-                        geo = demjson.decode(geo)
-                        latitude = geo["lat"]
-                        longitude = geo["lng"]
                 hours_of_operation = loc_dom.xpath('//p[@class="day"]//text()')
                 if not hours_of_operation:
                     hours_of_operation = loc_dom.xpath(
@@ -135,7 +122,7 @@ def fetch_data():
                 hours_of_operation = (
                     hours_of_operation
                     if hours_of_operation and hours_of_operation.strip()
-                    else "<MISSING>"
+                    else ""
                 )
                 if hours_of_operation == "Opening Hours will be published soon.":
                     continue
@@ -144,6 +131,9 @@ def fetch_data():
                     zip_code = "SL4 1PJ"
                 if hours_of_operation == "We are now temporarily closed":
                     hours_of_operation = "temporarily closed"
+
+                if country_code == "England" or country_code == "Scotland":
+                    country_code = "GB"
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -157,8 +147,8 @@ def fetch_data():
                     store_number="",
                     phone="",
                     location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
+                    latitude="",
+                    longitude="",
                     hours_of_operation=hours_of_operation,
                     raw_address=" ".join(address_raw),
                 )
