@@ -9,11 +9,11 @@ from concurrent import futures
 
 
 def get_urls():
-    r = session.get("https://www.douglas.it/storelist", headers=headers)
+    r = session.get("https://www.douglas.it/it/l", headers=headers)
     tree = html.fromstring(r.text)
 
     return tree.xpath(
-        "//div[@class='rd__letters-listing__letter__stores__store']/a[@class='rd__link']/@href"
+        "//a[@class='link link--no-decoration list-view-item__link']/@href"
     )
 
 
@@ -21,34 +21,52 @@ def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.douglas.it{slug}"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'DglStaticData =')]/text()")
-    ).strip()
-    text = text.split("DglStaticData =")[1].split("}};")[0] + "}}"
-    j = json.loads(text)["storeDetails"]
 
     location_name = " ".join(" ".join(tree.xpath("//h1//text()")).split())
-    a = j.get("address") or {}
-    street = a.get("street") or ""
-    number = a.get("number") or ""
-    street_address = f"{street} {number}".strip()
-    street_address = street_address.replace("(", "").replace(")", "").strip()
-    city = a.get("city")
-    postal = a.get("zip")
+    street_address = " ".join(
+        "".join(tree.xpath("//div[@class='store-address__line1']//text()")).split()
+    )
+    if "(" in street_address:
+        street_address = street_address.split("(")[0].strip()
+    line = tree.xpath("//div[@class='store-address__line2']//text()")
+    line = list(filter(None, [li.strip() for li in line]))
+    postal = line.pop(0)
+    city = line.pop(0)
     country_code = "IT"
-    phone = j.get("phone")
-    store_number = j.get("code")
+    phone = "".join(
+        tree.xpath("//div[@class='store-detail-view__phone']//text()")
+    ).strip()
+    store_number = page_url.split("/")[-1]
 
-    c = j.get("coordinates")
-    latitude = c.get("latitude")
-    longitude = c.get("longitude")
+    _tmp, _days = [], []
+    days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    text = "".join(
+        tree.xpath("""//script[contains(text(), '"LocalBusiness"')]/text()""")
+    )
+    js = json.loads(text, strict=False)
+    for j in js:
+        if j.get("@type") == "LocalBusiness":
+            hours = j.get("openingHoursSpecification") or []
+            for h in hours:
+                day = str(h.get("dayOfWeek")).split("/")[-1]
+                start = h.get("opens")
+                end = h.get("closes")
+                if start:
+                    _tmp.append(f"{day}: {start}-{end}")
+                    _days.append(day)
+            break
 
-    _tmp = []
-    hours = j.get("openingHours") or []
-    for h in hours:
-        day = h.get("days")
-        inter = h.get("time")
-        _tmp.append(f"{day}: {inter}")
+    for day in days:
+        if day not in _days:
+            _tmp.append(f"{day}: Closed")
 
     hours_of_operation = ";".join(_tmp)
 
@@ -60,8 +78,6 @@ def get_data(slug, sgw: SgWriter):
         zip_postal=postal,
         country_code=country_code,
         store_number=store_number,
-        latitude=latitude,
-        longitude=longitude,
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
@@ -73,7 +89,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
