@@ -11,107 +11,79 @@ from sgpostal import sgpostal as parser
 
 website = "uncletetsu-ca.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "authority": "uncletetsu-ca.com",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "Connection": "keep-alive",
+    "Referer": "http://uncletetsu-ca.com/",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://uncletetsu-ca.com/contact/"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests(verify_ssl=False) as session:
+        search_url = "http://uncletetsu-ca.com/store-location"
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(set(search_sel.xpath("//p[.//strong and .//br]")))
+        stores = search_sel.xpath(
+            "//div[@id='canada-box']//div[@class='city_list-box-item']"
+        )
 
-    for store in store_list:
+        for store in stores:
 
-        page_url = search_url
-        locator_domain = website
+            page_url = search_url
+            locator_domain = website
 
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store.xpath(".//text()")],
+            raw_address = (
+                "".join(store.xpath("p/text()"))
+                .strip()
+                .replace("Location Address :", "")
+                .strip()
             )
-        )
 
-        location_name = store_info[0]
+            location_name = "".join(store.xpath("h4/text()")).strip()
 
-        raw_info = store_info[1:]
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        full_address = []
-        phone = ""
-        hours_of_operation = ""
-        for info in raw_info:
-            if "Phone:" in info:
-                phone = info.upper().replace("PHONE", "").strip(" :").strip()
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
+            country_code = "CA"
 
-            elif "Hours:" in info:
-                hours_of_operation = (
-                    info.upper().replace("HOURS", "").strip(" :").strip()
-                )
-            else:
-                full_address.append(info)
-
-        raw_address = (
-            ", ".join(full_address)
-            .strip()
-            .replace("(Beside South Entrance)", "")
-            .strip()
-        )
-
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
-
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
-        country_code = "CA"
-
-        store_number = "<MISSING>"
-
-        location_type = "<MISSING>"
-
-        if "emporarily Closed" in store_info:
+            phone = "<MISSING>"
             hours_of_operation = "<MISSING>"
-            location_type = "Temporarily Closed"
-            raw_address = raw_address.replace(", emporarily Closed", "").strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+            store_number = "<MISSING>"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            location_type = "<MISSING>"
+
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
