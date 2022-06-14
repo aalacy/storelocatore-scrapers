@@ -1,91 +1,73 @@
-import time
-import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('marmaladecafe_com')
-
-
-
-
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
-#driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver2 = webdriver.Chrome("chromedriver", options=options)
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
-    return lat, lon
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
-    count=0
-    data=[]
-    driver.get("https://marmaladecafe.com/locations")
-    time.sleep(10)
-    stores = driver.find_elements_by_css_selector('div.uk-panel.uk-panel-box')
-    for store in stores:
-        location_name= store.find_element_by_css_selector('a.uk-link-reset').text
-        info = store.find_element_by_css_selector('div.uk-margin > p:nth-child(1)').text.splitlines()
-        phone = info[-2]
-        state_city_zip =  info[-3]
-        zipcode = state_city_zip.split(" ")[-1]
-        state = state_city_zip.split(" ")[-2]
-        city = state_city_zip.split(",")[0]
-        street_addr = info[-4]
-        hours_of_op = store.find_element_by_css_selector('div.uk-margin > p:nth-child(2) ').text
-        data.append([
-                'https://marmaladecafe.com/',
-                location_name,
-                street_addr,
-                city,
-                state,
-                zipcode,
-                'US',
-                '<MISSING>',
-                phone,
-                '<MISSING>',
-                '<MISSING>',
-                '<MISSING>',
-                hours_of_op
-            ])
-        count = count + 1
-        logger.info(count)
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
+    url = "https://marmaladecafe.com/locations"
+    r = session.get(url, headers=headers)
 
-    geomaps = store.find_elements_by_xpath("//a[contains(@href,'https://goo.gl/maps')]")
-    geo_url = [geomaps[i].get_attribute('href') for i in range(0,len(geomaps))]
-    for i in range(0,len(geo_url)):
-        driver2.get(geo_url[i])
-        time.sleep(10)
-        lat, lon = parse_geo(driver2.current_url)
-        data[i][10] = lat
-        data[i][11] = lon
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "uk-panel-box"})
+    for div in divlist:
+        title = div.find("h3").text.strip()
+        link = "https://marmaladecafe.com" + div.find("h3").find("a")["href"]
 
-    time.sleep(3)
-    driver.quit()
-    return data
+        div = re.sub(cleanr, "\n", str(div))
+        div = re.sub(pattern, "\n", str(div)).strip()
+        address = (
+            div.split("Address", 1)[1].split("\n", 1)[1].split("TEL", 1)[0].splitlines()
+        )
+        street = address[0]
+        city, state = address[1].split(", ", 1)
+        state, pcode = state.split(" ", 1)
+        phone = div.split("TEL : ", 1)[1].split("\n", 1)[0]
+        hours = (
+            div.split("Hours", 1)[1]
+            .split("\n", 1)[1]
+            .split("Order", 1)[0]
+            .replace("\n", " ")
+            .strip()
+        )
+
+        yield SgRecord(
+            locator_domain="https://marmaladecafe.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude="<MISSING>",
+            hours_of_operation=hours.replace("&amp;", "-").strip(),
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
