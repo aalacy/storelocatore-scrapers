@@ -43,7 +43,7 @@ def fetch_data():
             soup.text.split("Hours", 1)[1]
             .split("Contact", 1)[0]
             .replace("PM", " PM ")
-            .replace("AM", " AM")
+            .replace("AM", " AM ")
             .strip()
         )
 

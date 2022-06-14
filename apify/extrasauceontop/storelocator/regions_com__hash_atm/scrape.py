@@ -44,7 +44,8 @@ def get_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         granularity=Grain_2(),
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
+        max_search_results=25,
     )
 
     for search_code in search:
@@ -97,7 +98,7 @@ def get_data():
             country_code = "US"
             store_number = location["itemId"]
             location_type = "atm"
-            location_type_check = location["type"]
+            location_type_check = location["type"].lower()
 
             if page_url != "<MISSING>":
                 try:
