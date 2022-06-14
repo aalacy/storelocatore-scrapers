@@ -84,7 +84,10 @@ def fetch_data():
                     else:
                         hours_list.append("".join(hour).strip())
 
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = (
+                "; ".join(hours_list).strip().split("; Closed on")[0].strip()
+            )
+
             store_number = "<MISSING>"
             latitude, longitude = "<MISSING>", "<MISSING>"
 
