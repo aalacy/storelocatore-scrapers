@@ -44,7 +44,11 @@ def fetch_data(sgw: SgWriter):
             location_type = ", ".join([location_type, row["name"]])
         location_type = location_type[1:].strip()
 
-        phone = store["location"]["extra_fields"]["phone-number"].split(">")[1].split("<")[0]
+        phone = (
+            store["location"]["extra_fields"]["phone-number"]
+            .split(">")[1]
+            .split("<")[0]
+        )
         hours_of_operation = store["location"]["extra_fields"]["hours"]
         latitude = store["location"]["lat"]
         longitude = store["location"]["lng"]
