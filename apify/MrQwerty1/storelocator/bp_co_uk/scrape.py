@@ -125,7 +125,7 @@ def fetch_data():
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()

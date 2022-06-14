@@ -1,20 +1,15 @@
 import json
-import ssl
+import undetected_chromedriver as uc
 
 from bs4 import BeautifulSoup
-
 from sglogging import sglog
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 
 log = sglog.SgLogSetup().get_logger(logger_name="ebgames.co.nz")
-
-ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
@@ -23,8 +18,13 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.ebgames.co.nz/"
 
-    with SgChrome() as driver:
-        driver.get_and_wait_for_request(base_link)
+    options = uc.ChromeOptions()
+    options.headless = True
+
+    with uc.Chrome(
+        driver_executable_path=ChromeDriverManager().install(), options=options
+    ) as driver:
+        driver.get(base_link)
         base = BeautifulSoup(driver.page_source, "lxml")
         if "complete a CAPTCHA" in base.text:
             log.info("CAPTCHA!")
