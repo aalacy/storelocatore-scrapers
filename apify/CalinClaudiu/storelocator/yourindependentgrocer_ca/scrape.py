@@ -835,9 +835,7 @@ def tariq_dedupe(df_crawl):
     df_crawl.head()
     row_num, col_num = df_crawl.shape
     locator_domain_list = df_crawl["url"].tolist()
-    ldomain_list_deduped = list(set(locator_domain_list))  # informational
-    # We ldomain_list_deduped assigned to domain_list
-    # domain_list = ['https://www.valumart.ca', 'https://www.realcanadiansuperstore.ca', 'https://www.joefresh.com', 'https://www.independentcitymarket.ca', 'https://www.freshmart.ca', 'https://stores.pharmaprix.ca', 'https://www.atlanticsuperstore.ca', 'https://www.extrafoods.ca', 'https://www.marchepalumbo.com', 'https://www.newfoundlandgrocerystores.ca', 'https://www.wellwise.ca', 'https://www.axep.ca', 'https://www.lintermarche.ca', '<MISSING>', 'https://www.shopeasy.ca', 'https://www.wholesaleclub.ca', 'https://www.realcanadianliquorstore.ca', 'https://www.fortinos.ca', 'https://www.provigo.ca', 'https://www.zehrs.ca', 'https://stores.shoppersdrugmart.ca', 'https://www.maxi.ca', 'https://www.loblaws.ca', 'https://www.yourindependentgrocer.ca', 'https://www.nofrills.ca']
+    ldomain_list_deduped = list(set(locator_domain_list))
     df_list = []
     for dnum, domain in enumerate(ldomain_list_deduped[0:]):
         df_contains_domain = df_crawl[df_crawl["url"].str.contains(domain)]
