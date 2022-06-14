@@ -17,6 +17,30 @@ base_url = "https://www.sasktel.com/dealers/"
 json_url = "https://www.sasktel.com/findadealer?lat=50.455&lng=-104.609&searchtype=location&sortby=distance&limit=2000&sortorder=asc&distance=5000&type=SKST&type=SKDL"
 
 
+def _v(val):
+    if (
+        val.startswith("Unit")
+        or val.startswith("#")
+        or val.split("-")[0].strip().isdigit()
+        or val.split(" ")[0].strip().isdigit()
+    ):
+        return val.strip()
+    else:
+        return (
+            val.split("-")[-1]
+            .split("Mall")[-1]
+            .split("Plaza")[-1]
+            .split("Landing")[-1]
+            .replace("Grasslands", "")
+            .split("Gate")[-1]
+            .replace("&#39;", "'")
+            .replace("&amp;", "&")
+            .replace("Box", "")
+            .split("Floor")[-1]
+            .strip()
+        )
+
+
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(json_url, headers=_headers).json()["data"]
@@ -34,9 +58,9 @@ def fetch_data():
                 hours.append(hh)
             yield SgRecord(
                 page_url=base_url,
-                location_name=_["name"],
-                street_address=street_address,
-                city=_["address"]["city"],
+                location_name=_["name"].replace("&#39;", "'").replace("&amp;", "&"),
+                street_address=_v(street_address),
+                city=_["address"]["city"].replace("&#39;", "'").replace("&amp;", "&"),
                 zip_postal=_["address"]["postalCode"],
                 latitude=_["lat"],
                 longitude=_["lng"],
