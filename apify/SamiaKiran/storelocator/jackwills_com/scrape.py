@@ -55,7 +55,10 @@ def fetch_data():
                 city = temp[1]
                 zip_postal = temp[2]
             state = MISSING
-            country_code = "UK"
+            if "Dublin" in city:
+                country_code = "Ireland"
+            else:
+                country_code = "UK"
             hourlist = loc.findAll("meta", {"itemprop": "openingHours"})
             hours_of_operation = ""
             for hour in hourlist:
