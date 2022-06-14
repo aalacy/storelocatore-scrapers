@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -126,6 +126,54 @@ def fetch_data(sgw: SgWriter):
                 )
             )
 
+    locator_domain = "https://www.ulta.com"
+    api_url = "https://www.ulta.com/company/ulta-beauty-at-target-locations/js/data-ulta-beauty-at-target-locations-2021-08-29.json"
+    page_url = "https://www.ulta.com/company/ulta-beauty-at-target-locations/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["storeData"]
+    for j in js:
+        location_name = j.get("store_name") or "<MISSING>"
+        location_type = "Ulta Beauty at Target"
+        street_address = j.get("address") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-    fetch_data(writer)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=SgRecord.MISSING,
+            location_type=location_type,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

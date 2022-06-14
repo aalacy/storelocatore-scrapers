@@ -39,6 +39,8 @@ def fetch_data():
             state = poi["address"].get("region")
             zip_code = poi["address"]["postalCode"]
             country_code = poi["address"]["countryCode"]
+            if country_code != "GB":
+                continue
             phone = poi["mainPhone"]
             location_type = ", ".join(poi["meta"]["schemaTypes"])
             latitude = poi["geocodedCoordinate"]["latitude"]
