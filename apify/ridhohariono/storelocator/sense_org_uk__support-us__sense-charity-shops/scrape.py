@@ -75,7 +75,7 @@ def fetch_data():
             if len(street_address) < 4:
                 street_address = raw_address.split(",")[0].strip()
             phone = info.find("dl").find("dd").text.strip()
-            if "tba" in phone or "email" in phone:
+            if "tba" in phone.lower() or "tbc" in phone.lower() or "email" in phone:
                 phone = MISSING
             country_code = "UK"
             store_number = MISSING
