@@ -26,13 +26,13 @@ def fetch_data():
     logger.info("Pulling Stores")
     Found = False
     for line in r.iter_lines():
-        if "<h2>Tesla Stores & Galleries</h2>" in line:
+        if "<h2>Tesla Stores and Galleries</h2>" in line:
             Found = True
         if Found and "<h2>Tesla Service Centers</h2>" in line:
             Found = False
         if (
             Found
-            and '<a href="/en_AE/findus/list/stores/' in line
+            and '<a href="/en_ae/findus/list/stores/' in line.lower()
             and "United+States" not in line
             and "Canada" not in line
             and "United+Kingdom" not in line
