@@ -90,7 +90,7 @@ def fetch_records(search):
                 )
 
         else:
-            search.found_nothing(lat, lng)
+            search.found_nothing()
             logger.warning(base_url.format(lat, lng))
 
 
