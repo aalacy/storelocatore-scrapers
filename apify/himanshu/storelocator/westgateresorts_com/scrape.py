@@ -1,43 +1,16 @@
 # -*- coding: utf-8 -*-
-import csv
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 DOMAIN = "westgateresorts.com"
 session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def pull_content(url):
@@ -47,22 +20,27 @@ def pull_content(url):
 
 
 def parse_json(soup):
-    info = soup.find("script", type="application/ld+json").string
-    data = json.loads(info)
+    info = soup.find("script", type="application/ld+json")
+    if not info:
+        return []
+    data = json.loads(info.string)
     return data
 
 
 def fetch_data():
     base_url = "https://www.westgateresorts.com/explore-destinations/"
     main_soup = pull_content(base_url)
-    locations = []
     k = main_soup.find_all("a", {"class": "button resort"})
     log.info("Found {} urls".format(len(k)))
 
     for i in k:
         store_url = "https://www.westgateresorts.com/" + i["href"]
         soup = pull_content(store_url)
-        data = parse_json(soup)[0]
+        data = parse_json(soup)
+        if len(data) <= 0:
+            log.info("skipped")
+        else:
+            data = data[0]
         location_name = data["name"]
         street_address = data["address"]["streetAddress"]
         city = data["address"]["addressLocality"]
@@ -75,34 +53,39 @@ def fetch_data():
         latitude = data["geo"]["latitude"]
         longitude = data["geo"]["longitude"]
         hours_of_operation = "<MISSING>"
-        log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
