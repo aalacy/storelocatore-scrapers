@@ -107,7 +107,10 @@ def ret_record(record):
         longitude = str(record["Coords"]["Lng"])
     except Exception:
         pass
-
+    if len(str(latitude)) <= 3:
+        latitude = MISSING
+    if len(str(longitude)) <= 3:
+        longitude = MISSING
     parsed = parser.parse_address_intl(raw_address)
     street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
     street_address = (
@@ -140,7 +143,7 @@ def ret_record(record):
     country_code = parsed.country if parsed.country else MISSING
     state = parsed.state if parsed.state else MISSING
     zip_postal = parsed.postcode if parsed.postcode else MISSING
-
+    raw_address = re.sub("[\t\r\n ]+", " ", str(raw_address).strip())
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
