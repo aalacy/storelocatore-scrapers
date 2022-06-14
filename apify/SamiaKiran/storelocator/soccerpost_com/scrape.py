@@ -1,9 +1,9 @@
-import usaddress
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -22,51 +22,46 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        url = "https://cdn.shopify.com/s/files/1/0570/1609/0802/t/11/assets/storeifyapps-geojson.js"
+        url = "https://soccerpost.com/a/store-locator/list"
         r = session.get(url, headers=headers)
-        loclist = r.text.split('type:"Feature"')[1:-1]
+        v = r.text.split("geojson.js?v=")[1].split('"')[0]
+        url = (
+            "https://cdn.shopify.com/s/files/1/0570/1609/0802/t/19/assets/storeifyapps-geojson.js?v="
+            + v
+        )
+        r = session.get(url, headers=headers)
+        loclist = r.text.split('type:"Feature"')[1:]
         for loc in loclist:
             location_name = loc.split('name:"')[1].split('"')[0]
             if "COMING SOON!" in location_name:
                 continue
-            phone = loc.split('phone:"')[1].split('"')[0]
+            log.info(location_name)
+            try:
+                phone = loc.split('phone:"')[1].split('"')[0]
+            except:
+                phone = MISSING
             if "Coming Soon!" in phone:
                 phone = MISSING
             longitude, latitude = (
                 loc.split("coordinates:[")[1].split("]}")[0].split(",")
             )
             store_number = loc.split("id:")[1].split(",")[0]
+            raw_address = loc.split('address:"')[1].split('"')[0]
+            pa = parse_address_intl(raw_address)
 
-            log.info(location_name)
-            address = loc.split('address:"')[1].split('"')[0]
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
 
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
-            i = 0
-            street_address = ""
-            city = ""
-            state = ""
-            zip_postal = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street_address = street_address + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    zip_postal = zip_postal + " " + temp[0]
-                i += 1
+            city = pa.city
+            city = city.strip() if city else MISSING
 
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            if city == MISSING:
+                city = raw_address.split(",")[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -83,22 +78,20 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=MISSING,
+                raw_address=raw_address,
             )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

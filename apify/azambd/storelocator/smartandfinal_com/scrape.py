@@ -80,9 +80,7 @@ def fetch_data():
             + "/"
             + grid["id"].split("-")[-1]
         )
-        page_url = (
-            "https://www.smartandfinal.com/stores/sacramento-28th-street-405/7991"
-        )
+
         try:
             driver.get(page_url)
             log.info("Pull content => " + page_url)

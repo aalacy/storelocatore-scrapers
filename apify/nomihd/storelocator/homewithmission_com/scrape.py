@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -78,7 +78,8 @@ def fetch_data():
                                 page_url = base + "/" + store["link"]
                             else:
                                 page_url = base + store["link"]
-
+                        else:
+                            continue
                         locator_domain = website
 
                         if len(store["description"]) <= 0:
@@ -114,6 +115,11 @@ def fetch_data():
                         country_code = "US"
 
                         location_name = store["title"]
+                        if "Bonneville" in location_name:
+                            continue
+                        location_type = "<MISSING>"
+                        if "Headquarters" in location_name:
+                            location_type = "Headquarters"
 
                         if (
                             location_name
@@ -123,13 +129,19 @@ def fetch_data():
                                 "Advanced Healthcare Services Home Health- Newark"
                             )
 
+                        location_name = (
+                            location_name.encode("ascii", "replace")
+                            .decode("utf-8")
+                            .replace("?", "-")
+                            .strip()
+                            .split("-")[0]
+                            .strip()
+                        )
                         phone = "".join(
                             desc_sel.xpath('//div[@class="office-wrapper"]/text()')
                         ).strip()
 
-                        store_number = store["id"]
-
-                        location_type = "<MISSING>"
+                        store_number = "<MISSING>"
 
                         hours_of_operation = "<MISSING>"
                         latitude, longitude = "<MISSING>", "<MISSING>"
@@ -137,6 +149,8 @@ def fetch_data():
                         if len(page_url) > 0:
                             log.info(page_url)
                             loc_res = session.get(page_url, headers=headers)
+                            if isinstance(loc_res, SgRequestError):
+                                continue
                             loc_sel = lxml.html.fromstring(loc_res.text)
 
                             hours_list = []

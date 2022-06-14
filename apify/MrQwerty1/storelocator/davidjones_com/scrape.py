@@ -1,116 +1,94 @@
-from sgselenium.sgselenium import SgChrome
-from bs4 import BeautifulSoup as bs
-from sgscrape import simple_scraper_pipeline as sp
-from sglogging import sglog
-import ssl
 import re
+import ssl
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium import SgFirefox
+from sglogging import sglog
 
-ssl._create_default_https_context = ssl._create_unverified_context
-MISSING = "<MISSING>"
-DOMAIN = "davidjones.com"
-logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-store_locator = "https://www.davidjones.com/stores"
+locator_domain = "https://www.davidjones.com/"
+logger = sglog.SgLogSetup().get_logger(logger_name="davidjones.com")
+session = SgRequests()
 
 
-def parse_json(soup, driver):
-    data = {}
-    data["locator_domain"] = DOMAIN
-    data["location_name"] = soup.select_one(
-        "li.active span[itemprop=title]"
-    ).text.strip()
-    data["store_number"] = MISSING
-    data["page_url"] = driver.current_url
-    data["location_type"] = "Store"
+def get_urls():
+    r = session.get("https://www.davidjones.com/sitemaps/stores-sitemap.xml")
+    tree = html.fromstring(r.content)
 
-    data["street_address"] = soup.select_one("span.store-suburb").text.strip()
+    return tree.xpath("//loc/text()")
+
+
+def fetch_location(page_url, fox, sgw, retry=0):
     try:
-        data["city"] = soup.select_one("span.store-city").text.strip()
-    except Exception as e:
-        logger.info(f"Missing City - trying another tag, Err: {e}")
-        data["city"] = soup.select_one("span.store-suburb").text.strip()
+        logger.info(f"Starting {page_url}")
+        fox.get(page_url)
+        source = fox.page_source
+        logger.info(f"{page_url} got HTML")
+        tree = html.fromstring(source)
+        street_address = "".join(
+            tree.xpath("//span[@class='store-suburb']/text()")
+        ).strip()
+        city = "".join(tree.xpath("//span[@class='store-city']/text()")).strip()
+        state = "".join(tree.xpath("//span[@class='store-state']/text()")).strip()
+        postal = "".join(tree.xpath("//span[@class='store-postcode']/text()")).strip()
+        country_code = "".join(
+            tree.xpath("//span[@class='store-country']/text()")
+        ).strip()
+        text = "".join(tree.xpath("//script[contains(text(), 'stores:')]/text()"))
+        store_number = re.findall(r'id: "(.+?)"', text)[-1]
+        location_name = "".join(tree.xpath("//h1/text()")).strip()
+        phone = "".join(tree.xpath("//span[@class='tel-no']/text()")).strip()
+        latitude = "".join(tree.xpath("//meta[@itemprop='latitude']/@content"))
+        longitude = "".join(tree.xpath("//meta[@itemprop='longitude']/@content"))
 
-    data["state"] = soup.select_one("span.store-state").text.strip()
-    if soup.select_one("span.store-country").text.strip() == "Australia":
-        data["country_code"] = "AU"
-    elif soup.select_one("span.store-country").text.strip() == "New Zealand":
+        _tmp = []
+        hours = tree.xpath("//div[@class='opening-hours']//tr")
+        for h in hours:
+            day = "".join(h.xpath("./td[1]//text()")).strip()
+            inter = "".join(h.xpath("./td[2]//text()")).strip()
 
-        data["country_code"] = "NZ"
-    else:
-        data["country_code"] = "<MISSING>"
+            if day.endswith("th"):
+                continue
 
-    data["zip_postal"] = soup.select_one("span.store-postcode").text.strip()
-    data["phone"] = soup.select_one("span.tel-no").text.strip()
-    data["latitude"] = soup.select_one("meta[itemprop=latitude]")["content"]
-    data["longitude"] = soup.select_one("meta[itemprop=longitude]")["content"]
-    ooh = []
-    for row in soup.select("tr"):
-        day = (row.select("td")[0].text).replace("\r", " ").replace("\n", "").strip()
-        time = (row.select("td")[1].text).replace("\r", " ").replace("\n", "").strip()
-        ooh.append(day + ": " + time)
+            _tmp.append(f"{day}: {inter}")
 
-    ooh = ", ".join(ooh)
-    data["hours_of_operation"] = ooh
+        hours_of_operation = re.sub("\n", "", ";".join(_tmp))
 
-    return data
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
 
+        sgw.write_row(row)
 
-def fetch_data():
-    with SgChrome() as driver:
-
-        driver.get(store_locator)
-        soup = bs(driver.page_source, "html.parser")
-        pull_str = re.search(
-            r"window\.geodata = ({.*})",
-            soup.select_one('script[type*=javascript]:-soup-contains("window.geodata")')
-            .text.strip()
-            .replace("\n", "")
-            .replace("\t", ""),
-        ).group(1)
-        stores = [
-            "https://www.davidjones.com/stores/" + store
-            for store in re.findall('"/stores/([A-Za-z-0-9]*)"', pull_str)
-        ]
-        stores.append("https://www.davidjones.com/newmarket")
-        stores.append("https://www.davidjones.com/sunshine")
-        stores.append("https://www.davidjones.com/wollongong-central")
-        for store in stores:
-            logger.info(f"Crawling: {store}")
-            driver.get(store)
-            soup2 = bs(driver.page_source, "html.parser")
-            i = parse_json(soup2, driver)
-            yield i
+    except:
+        return fetch_location(page_url, fox, sgw, retry + 1)
 
 
-def scrape():
-    logger.info(f"Start Crawling {DOMAIN} ...")
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(DOMAIN),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MappingField(mapping=["latitude"]),
-        longitude=sp.MappingField(mapping=["longitude"]),
-        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
-        city=sp.MappingField(mapping=["city"], is_required=False),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
-        hours_of_operation=sp.MappingField(
-            mapping=["hours_of_operation"], is_required=False
-        ),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
-    )
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    logger.info(f"{len(urls)} URLs need to crawl...")
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+    with SgFirefox(is_headless=True) as fox:
+        for page_url in urls:
+            fetch_location(page_url, fox, sgw)
 
 
 if __name__ == "__main__":
-    scrape()
+    ssl._create_default_https_context = ssl._create_unverified_context
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

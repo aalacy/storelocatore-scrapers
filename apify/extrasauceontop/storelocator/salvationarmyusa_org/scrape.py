@@ -1,4 +1,3 @@
-# Import dependencies
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 import re

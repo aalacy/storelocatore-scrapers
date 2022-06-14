@@ -4,8 +4,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 
+@retry(stop=stop_after_attempt(8), wait=wait_fixed(5))
 def fetch_data(lat, lng, sgw: SgWriter):
     lat, lng = str(lat).replace(".", "_"), str(lng).replace(".", "_")
     url = f"https://www.goodlifefitness.com/content/goodlife/en/clubs/jcr:content/root/responsivegrid/responsivegrid_1015243366/findaclub.ClubByMapBounds.{lat}.{lng}.undef.undef.2022127.json"

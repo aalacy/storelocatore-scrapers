@@ -21,10 +21,15 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    items = base.find_all(class_="fa-ul template-icon-list-text")
+    items = base.find_all(class_="fa-ul")
     for item in items:
-        link = item.find_all("a")[-1]["href"]
-        location_name = item.find_previous("h4").text
+        try:
+            link = item.find_all("a")[-1]["href"]
+        except:
+            continue
+        if "puttputt.com/" not in link:
+            continue
+        location_name = item.find_previous(class_="contactus-greenheader").text
 
         raw_data = list(item.stripped_strings)
         street_address = raw_data[0]
@@ -33,7 +38,7 @@ def fetch_data(sgw: SgWriter):
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
-        phone = raw_data[2]
+        phone = raw_data[3]
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         latitude = "<MISSING>"

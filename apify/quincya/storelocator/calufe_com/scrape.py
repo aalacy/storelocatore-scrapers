@@ -38,6 +38,22 @@ def fetch_data(sgw: SgWriter):
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
+        if "Córdoba" in location_name:
+            city = "Córdoba"
+        if "Xalapa" in location_name:
+            city = "Xalapa"
+        if "Cholula" in location_name:
+            city = "Cholula"
+        if "Veracruz" in location_name:
+            city = "Veracruz"
+        if "Carmen" in location_name:
+            city = location_name
+        if "Obregón" in street_address:
+            city = "Obregón"
+        if not city:
+            city = raw_data[2].split(",")[0]
+        if "Novillero" in city:
+            city = "Veracruz"
 
         country_code = ""
         store_number = ""

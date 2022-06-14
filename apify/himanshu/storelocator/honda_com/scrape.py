@@ -25,7 +25,7 @@ def get_data(zips, sgw: SgWriter):
 
     params = {
         "zip": f"{zips}",
-        "searchRadius": "",
+        "searchRadius": "1000",
         "filters": "",
     }
 
@@ -70,6 +70,8 @@ def get_data(zips, sgw: SgWriter):
         if hours:
             for h in hours:
                 typ = h.get("Type")
+                if typ != "Sales":
+                    continue
                 operation_hours = h.get("OperationHours")
                 tmp.append(typ)
                 for i in operation_hours:
@@ -81,7 +83,7 @@ def get_data(zips, sgw: SgWriter):
                     "; ".join(tmp)
                     .replace("Service;", "Service")
                     .replace("Parts;", "Parts")
-                    .replace("Sales;", "Sales")
+                    .replace("Sales;", "")
                     .strip()
                 )
         if (
@@ -114,12 +116,12 @@ def get_data(zips, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=200,
-        expected_search_radius_miles=50,
-        max_search_results=None,
+        max_search_distance_miles=500,
+        expected_search_radius_miles=100,
+        max_search_results=50,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=6) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()

@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 
 
 def fetch_data():
@@ -41,7 +39,7 @@ def fetch_data():
             SearchableCountries.MEXICO,
             SearchableCountries.UNITED_ARAB_EMIRATES,
         ],
-        expected_search_radius_miles=5,
+        granularity=Grain_2(),
     )
     for lat, lng in all_coords:
         c_iso = all_coords.current_country()
@@ -50,7 +48,10 @@ def fetch_data():
         if data.status_code != 200:
             session = SgRequests()
             continue
-        data = data.json()
+        try:
+            data = data.json()
+        except Exception:
+            continue
         if not data["locationList"]:
             continue
         for poi in data["locationList"]:
@@ -66,7 +67,9 @@ def fetch_data():
             zip_code = poi["postalCode"]
             if zip_code == "00000":
                 zip_code = ""
-
+            all_coords.found_location_at(
+                poi["location"]["latitude"], poi["location"]["longitude"]
+            )
             item = SgRecord(
                 locator_domain=domain,
                 page_url=f"https://www.amazon.{domains[c_iso]}/ulp",
