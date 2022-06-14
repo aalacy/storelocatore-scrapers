@@ -22,6 +22,7 @@ logger = SgLogSetup().get_logger("gaes")
 locator_domain = "https://www.gaes.es"
 base_url = "https://www.gaes.es/nuestros-centros-auditivos"
 
+
 def fetch_data():
     locations = []
     with SgChrome(
