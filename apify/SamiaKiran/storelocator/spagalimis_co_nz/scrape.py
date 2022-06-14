@@ -44,7 +44,7 @@ def fetch_data():
                 address = temp[-1]
             else:
                 address = temp[-2]
-            raw_address = address.find("p").text
+            raw_address = address.findAll("p")[-1].text
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -56,6 +56,7 @@ def fetch_data():
             state = pa.state
             state = state.strip() if state else MISSING
 
+            street_address = street_address.replace("Corner Of", "")
             hours_of_operation = (
                 soup.find("table")
                 .get_text(separator="|", strip=True)
