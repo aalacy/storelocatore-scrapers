@@ -31,38 +31,50 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        url = "https://www.rexel.pt/lojas/"
+        url = "https://www.rexel.pt/lojas-rexel/"
         r = session.get(url, headers=headers)
-        loclist = r.text.split("stores: ")[1].split(" ],")[0].split("}")[:-1]
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("a", {"class": "btn-primary"})[:-1]
         for loc in loclist:
-            location_name = strip_accents(
-                loc.split("name: ")[1].split(",")[0].replace("'", "")
+            page_url = loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text.replace("Estamos na", "")
+            loc = (
+                soup.find("div", {"class": "general-content"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            log.info(location_name)
-            address = loc.split("address: ")[1].split("',")[0].replace("'", "")
-            address = BeautifulSoup(address, "html.parser")
-            address = address.get_text(separator="|", strip=True).split("|")
-            hours_of_operation = strip_accents(address[-1].replace("'", ""))
+            raw_address = loc.split("Morada:")[1].split("Horário:")[0]
+            hours_of_operation = loc.split("Horário:")[1].split("Telefone:")[0]
+            phone = loc.split("Telefone:")[1].split("Medidas")[0]
 
-            raw_address = address[0] + " " + address[1]
             pa = parse_address_intl(strip_accents(raw_address))
-
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
 
             state = pa.state
             state = state.strip() if state else MISSING
 
-            city = loc.split("city: ")[1].split("',")[0].replace("'", "")
-            zip_postal = (
-                loc.split("zipcode: ")[1].split("',")[0].replace("'", "").split()[0]
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
             )
-            latitude = loc.split("latitude: ")[1].split(",")[0]
-            longitude = loc.split("longitude: ")[1].split(",")[0]
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
             country_code = "PT"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -70,7 +82,7 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
-                phone=MISSING,
+                phone=phone,
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
@@ -83,7 +95,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
