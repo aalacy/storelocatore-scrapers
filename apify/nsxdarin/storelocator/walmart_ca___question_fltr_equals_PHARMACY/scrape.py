@@ -56,6 +56,7 @@ def fetch_data():
                     phone = item["phone"]
                     lat = item["geoPoint"]["latitude"]
                     lng = item["geoPoint"]["longitude"]
+                    search.found_location_at(lat, lng)
                     hours = ""
                     for svc in item["servicesMap"]:
                         svcname = svc["service"]["name"]
@@ -109,6 +110,7 @@ def fetch_data():
                         )
             except:
                 Retry = True
+                search.found_nothing()
 
 
 def scrape():
