@@ -63,6 +63,16 @@ def fetch_data():
                         lurl = lurl.replace("https://www.providence.orghttps", "https")
                         if "," in phone:
                             phone = phone.split(",")[0].strip()
+                        if "/providence" in lurl:
+                            typ = "Providence"
+                        if "/facey" in lurl:
+                            typ = "Facey"
+                        if "/covenant" in lurl:
+                            typ = "Covenant"
+                        if " - " in name:
+                            namesuffix = name.split(" - ")[1].strip()
+                            if city in namesuffix:
+                                name = name.split(" - ")[0].strip()
                         yield SgRecord(
                             locator_domain=website,
                             page_url=lurl,
