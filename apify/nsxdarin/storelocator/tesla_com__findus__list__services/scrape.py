@@ -366,6 +366,68 @@ def fetch_data():
         hours = hours.replace("sedSun", "sed; Sun").replace("pmSun", "pm; Sun")
         if "appointment" in hours.lower():
             hours = "Monday-Sunday: Closed"
+        if "Petah Tikva" in city:
+            country = "IL"
+        if "Dubai" in city:
+            country = "UAE"
+        if "Amman" in rawadd:
+            country = "Jordan"
+        if "San Juan" in city:
+            country = "PR"
+        if (
+            "Ciudad De M" in city
+            or "Guadalajara" in name
+            or "Campestre" in city
+            or "Mexico City" in city
+        ):
+            country = "MX"
+        if "Aarhus" in city:
+            country = "Denmark"
+        if "Wellington" in city or "auckland" in loc or "christchurch" in loc:
+            country = "NZ"
+        if "singapore" in loc:
+            country = "SG"
+        if (
+            "seongnam" in loc
+            or "gwangju" in loc
+            or "daegu" in loc
+            or "busan" in loc
+            or "seoul" in loc
+            or "yongin" in loc
+            or "jejuaewol" in loc
+        ):
+            country = "KR"
+        if (
+            "Adelaide" in city
+            or "Brisbane" in name
+            or "Canberra" in name
+            or "Sydney" in name
+            or "Gold Coast" in name
+            or "Perth" in name
+        ):
+            country = "AU"
+        if (
+            "newtaipei" in loc
+            or "apactwhsinchu" in loc
+            or "taichungs" in loc
+            or "taipei" in loc
+            or "kaohsiung" in loc
+        ):
+            country = "TW"
+        if "macau" in loc:
+            country = "CN"
+        if "apleichau" in loc or "kowloon" in loc:
+            country = "HK"
+        if (
+            "sendai" in loc
+            or "osaka" in loc
+            or "tokyo" in loc
+            or "aichinagoya" in loc
+            or "kawasaki" in loc
+            or "yokohama" in loc
+            or "fukuoka" in loc
+        ):
+            country = "JP"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

@@ -20,13 +20,15 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "http://www.atlanticwireless.com/store-locator/"
         location_name = (
-            "".join(d.xpath(".//preceding-sibling::strong//text()"))
+            "".join(
+                d.xpath(
+                    ".//preceding-sibling::strong[1]//text() | .//preceding-sibling::strong[text()][1]//text()"
+                )
+            )
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
-        if location_name == "<MISSING>":
-            location_name = "".join(d.xpath(".//preceding::strong[1]//text()"))
         street_address = (
             "".join(d.xpath(".//preceding-sibling::text()[4]"))
             .replace("\n", "")
@@ -39,8 +41,20 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .replace("NC,", "NC")
                 .strip()
+            ) or "<MISSING>"
+        if street_address == "<MISSING>":
+            street_address = " ".join(
+                d.xpath(
+                    './/preceding::p[./strong][1]/following-sibling::p[1]//text() | .//preceding::p[contains(text(), "Suite")][1]//text()'
+                )
             )
-
+        if (
+            street_address.find("213 N Stadium Blvd") != -1
+            or street_address.find("151 St. Robert Blvd") != -1
+        ):
+            location_name = "".join(d.xpath(".//preceding::p[./strong][1]//text()"))
+        if location_name == "<MISSING>":
+            location_name = "".join(d.xpath(".//preceding-sibling::text()[last()]"))
         czp = (
             "".join(d.xpath(".//preceding-sibling::text()[3]"))
             .replace("\n", "")
@@ -54,8 +68,9 @@ def fetch_data(sgw: SgWriter):
                 .replace("NC,", "NC")
                 .replace("Greenville NC 27833", "Greenville, NC 27833")
                 .strip()
-            )
-
+            ) or "<MISSING>"
+        if czp == "<MISSING>":
+            czp = "".join(d.xpath('.//preceding::p[contains(text(), ",")][1]//text()'))
         state = czp.split(",")[1].split()[0].strip()
         postal = czp.split(",")[1].split()[1].strip()
         country_code = "USA"
@@ -74,9 +89,11 @@ def fetch_data(sgw: SgWriter):
             "".join(d.xpath(".//preceding-sibling::text()[2]"))
             .replace("\n", "")
             .strip()
-        )
+        ) or "<MISSING>"
         if phone.find("Corporate Mailing Address") != -1:
             phone = "<MISSING>"
+        if phone == "<MISSING>":
+            phone = "".join(d.xpath(".//preceding::p[1]//text()"))
         hours_of_operation = (
             " ".join(d.xpath(".//following-sibling::text()"))
             .replace("\n", "")

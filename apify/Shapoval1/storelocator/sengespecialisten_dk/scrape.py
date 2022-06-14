@@ -57,6 +57,8 @@ def fetch_data(sgw: SgWriter):
             line = f"{day} {opens} - {closes}"
             tmp.append(line)
         hours_of_operation = "; ".join(tmp)
+        if phone == "<MISSING>":
+            phone = div.split('"fallbackPhone":"')[1].split('"')[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
