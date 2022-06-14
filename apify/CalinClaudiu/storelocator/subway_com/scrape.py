@@ -12,6 +12,23 @@ from bs4 import BeautifulSoup as b4
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def fix_comma(x):
+    h = []
+    x = x.replace("None", "")
+    try:
+        x = x.split(",")
+        for i in x:
+            if len(i.strip()) > 1:
+                h.append(i.strip())
+        h = ", ".join(h)
+    except:
+        h = x
+    if len(h) < 2:
+        h = "<MISSING>"
+
+    return h.replace("<br>", "")
+
+
 def replac(x):
     x = str(x)
     x = x.replace("'", "").replace("(", "").replace(")", "").replace(",", "")
@@ -108,7 +125,9 @@ class ExampleSearchIteration:
                 current = {
                     "page_url": page_url if page_url else MISSING,
                     "location_name": MISSING,
-                    "street_address": street_address if street_address else MISSING,
+                    "street_address": fix_comma(street_address)
+                    if street_address
+                    else MISSING,
                     "city": city if city else MISSING,
                     "state": state if state else MISSING,
                     "zip_postal": zip_postal if zip_postal else MISSING,
@@ -147,7 +166,7 @@ class ExampleSearchIteration:
                 yield SgRecord(
                     page_url=foundstuff[storeno]["page_url"],
                     location_name=foundstuff[storeno]["location_name"],
-                    street_address=foundstuff[storeno]["street_address"],
+                    street_address=fix_comma(foundstuff[storeno]["street_address"]),
                     city=foundstuff[storeno]["city"],
                     state=foundstuff[storeno]["state"],
                     zip_postal=foundstuff[storeno]["zip_postal"],

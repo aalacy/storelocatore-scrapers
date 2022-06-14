@@ -2,11 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from sgselenium import SgChrome
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-import time
 import ssl
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 import json
@@ -245,7 +240,6 @@ def get_subpage(session, url):
         try:
             response = SgRequests.raise_on_err(session.get(url, headers=headers))
             soup = b4(response.text, "lxml")
-            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
         except Exception as e:
@@ -263,8 +257,8 @@ def get_subpage(session, url):
                         logzilla.info(f"Content\n{response.text}\n\n")
                     soup = b4(response.text, "lxml")
                 except Exception as e:
-                    logzilla.error(f"{str(e)}")
-                    raise
+                    logzilla.error(f" for url: {str(url)}\n{str(e)}")
+                    pass
 
         try:
             data = json.loads(
@@ -293,40 +287,55 @@ def get_subpage(session, url):
     return data
 
 
-def initial(driver, url, state):
-    with SgChrome() as driver:
-        driver.get(url)
-        try:
-            locator = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/main/section/div/div/div/div/p/p/a",
-                    )
-                )
-            )  # noqa
-        except Exception:
-            locator2 = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/main/div[3]/div/div/div/div/span",
-                    )
-                )
-            )  # noqa
+def new_brands():
+    brands = {
+        "pii": "Park Inn by Radisson",
+        "rdb": "Radisson Blu",
+        "rdr": "Radisson RED",
+        "art": "art'otel",
+        "rad": "Radisson",
+        "ri": "Radisson Individuals",
+        "prz": "prizeotel",
+        "pph": "Park Plaza",
+        "cis": "Country Inn & Suites",
+        "rco": "Radisson Collection",
+    }
 
-        time.sleep(15)
-        time.sleep(5)
-        reqs = list(driver.requests)
-        logzilla.info(f"Length of driver.requests: {len(reqs)}")
-        for r in reqs:
-            x = r.url
-            if "zimba" in x and "hotels?" in x:
-                son = json.loads(r.response.body)
-                for item in son["hotels"]:
-                    state.push_request(
-                        SerializableRequest(url=item["overviewPath"], context=item)
-                    )
+    return brands
+
+
+def fetch_brand(brand, domain):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = domain
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36"
+
+    url = f"{domain}s/hotels?brand={brand[0]}".replace("en-us", "zimba-api")
+    with SgRequests() as session:
+        response = SgRequests.raise_on_err(
+            session.get(str(url), headers=headers)
+        ).json()
+        return response
+
+
+def initial(url, state):
+    brands = new_brands()
+    brands = brands.items()
+    for brand in brands:
+        data = fetch_brand(brand, url)
+        logzilla.info(
+            f"for brand {str(brand)} found {str(len(data['hotels']))} , d: {url.split('radisson',1)[1].split('.com',1)[0]}"
+        )
+        for item in data["hotels"]:
+            state.push_request(
+                SerializableRequest(url=item["overviewPath"], context=item)
+            )
 
 
 def record_initial_requests(state):
@@ -334,8 +343,8 @@ def record_initial_requests(state):
         "https://www.radissonhotels.com/en-us/destination",
         "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        with SgChrome() as driver:
-            initial(driver, url, state)
+        initial(url, state)
+    return True
 
 
 def data_fetcher(session, state):
@@ -368,7 +377,7 @@ def fix_phone(x):
 
 def old_brands(x):
     brands = {
-        "ry": "noClue",
+        "ry": "<MISSING>",
         "pii": "Park Inn by Radisson",
         "rdb": "Radisson Blu",
         "rdr": "Radisson RED",

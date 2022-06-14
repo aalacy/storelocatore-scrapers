@@ -3,6 +3,11 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import demjson
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -20,9 +25,11 @@ def _phone(val):
     )
 
 
+locator_domain = "https://pelicanssnoballs.com"
+base_url = "https://pelicanssnoballs.com/locations/"
+
+
 def fetch_data():
-    locator_domain = "https://pelicanssnoballs.com"
-    base_url = "https://pelicanssnoballs.com/locations/"
     with SgRequests() as session:
         states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul.franchises li a"
@@ -34,12 +41,15 @@ def fetch_data():
             )[1:]
             for city in cities:
                 page_url = locator_domain + city["href"]
+                logger.info(page_url)
                 res = session.get(page_url, headers=_headers).text
                 soup = bs(res, "lxml")
                 location_name = list(
                     soup.select_one("div.avia_textblock h1").stripped_strings
                 )
                 addr = list(soup.select_one("div.avia_textblock h2").stripped_strings)
+                if addr[0] == ",":
+                    continue
                 hours = [_.text for _ in soup.select("div.avia_textblock ul.hours li")]
                 coord = {"lat": "", "lng": ""}
                 try:
@@ -62,12 +72,13 @@ def fetch_data():
                     hours_of_operation = "Closed"
                 if "Daily Veterans" in hours_of_operation:
                     hours_of_operation = ""
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=location_name[0],
-                    street_address=addr[0],
-                    city=addr[1].split(",")[0].strip(),
-                    state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                    street_address=" ".join(addr[::-1]),
+                    city=addr[-1].split(",")[0].strip(),
+                    state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                     latitude=coord["lat"],
                     longitude=coord["lng"],
                     phone=phone,
@@ -75,11 +86,12 @@ def fetch_data():
                     country_code="US",
                     locator_domain=locator_domain,
                     hours_of_operation=hours_of_operation,
+                    raw_address=" ".join(addr),
                 )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
