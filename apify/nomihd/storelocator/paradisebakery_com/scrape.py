@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "paradisebakery.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -25,12 +27,12 @@ def fetch_data():
         '//a[contains(@href,"locations")]/following::ul[@style="display:none"]/li/a/@href'
     )
 
-    for city in cities_list:
+    for city_url in cities_list:
 
-        page_url = "https://www.paradisebakery.com/locations"
+        page_url = city_url
         locator_domain = website
-        log.info(city)
-        page_res = session.get(city, headers=headers)
+        log.info(city_url)
+        page_res = session.get(city_url, headers=headers)
         page_sel = lxml.html.fromstring(page_res.text)
 
         stores_list = page_sel.xpath(
@@ -59,6 +61,9 @@ def fetch_data():
                 .replace("\n", " ")
                 .replace("  ", " ")
                 .strip()
+                .encode("ascii", "ignore")
+                .decode("utf-8")
+                .strip()
             )
 
             formatted_addr = parser.parse_address_usa(raw_address)
@@ -67,6 +72,10 @@ def fetch_data():
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
             street_address = street_address.replace("Ste", "Suite")  # Suite in address
+
+            location_type = "<MISSING>"
+            if "120 Regency" in street_address:
+                location_type = "Closed"
 
             city = formatted_addr.city
             state = formatted_addr.state
@@ -90,8 +99,10 @@ def fetch_data():
                 .replace("\n", " ")
                 .replace("  ", " ")
                 .strip()
+                .encode("ascii", "ignore")
+                .decode("utf-8")
+                .strip()
             )
-            location_type = "<MISSING>"
 
             hours_list = list(
                 filter(
@@ -138,7 +149,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
