@@ -3,26 +3,37 @@ from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=YNDRAXWGIEKBMEAP&center=35.84,-78.64&coordinates=-90,90,-180,180&multi_account=false&page=1&pageSize=70"
     session = SgRequests()
-
+    url = "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token=YNDRAXWGIEKBMEAP&country=US&multi_account=false"
     response = session.get(url).json()
 
-    for location in response:
+    for location in response["locations"]:
         locator_domain = "centers.consulatehealthcare.com"
-        page_url = location["store_info"]["website"]
-        location_name = location["store_info"]["name"]
-        latitude = location["store_info"]["latitude"]
-        longitude = location["store_info"]["longitude"]
-        city = location["store_info"]["locality"]
-        store_number = location["store_info"]["corporate_id"]
+        page_url = "https://centers.consulatehealthcare.com" + location["llp_url"]
         address = location["store_info"]["address"]
+        city = location["store_info"]["locality"]
         state = location["store_info"]["region"]
         zipp = location["store_info"]["postcode"]
-        phone = location["store_info"]["phone"]
         location_type = "<MISSING>"
         hours = "24/7"
-        country_code = "US"
+        country_code = location["store_info"]["country"]
+
+        api_url = (
+            "https://api.momentfeed.com/v1/analytics/api/llp.json?address="
+            + address.replace(" ", "+")
+            + "&locality="
+            + city.replace(" ", "+")
+            + "&multi_account=false&pageSize=30&region="
+            + state
+            + "&auth_token=YNDRAXWGIEKBMEAP"
+        )
+        page_response = session.get(api_url).json()
+
+        phone = page_response[0]["store_info"]["phone"]
+        location_name = page_response[0]["store_info"]["name"]
+        latitude = page_response[0]["store_info"]["latitude"]
+        longitude = page_response[0]["store_info"]["longitude"]
+        store_number = page_response[0]["store_info"]["corporate_id"]
 
         yield {
             "locator_domain": locator_domain,
