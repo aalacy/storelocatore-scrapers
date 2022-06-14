@@ -23,7 +23,7 @@ def fetch_data():
             opens = hours["opens"]
             closes = hours["closes"]
             hoo.append(f"{day}: {opens} - {closes}")
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).replace("None - None", "closed")
 
         item = SgRecord(
             locator_domain=domain,
