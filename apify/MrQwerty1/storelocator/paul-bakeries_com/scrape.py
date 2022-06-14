@@ -33,40 +33,42 @@ def fetch_data(sgw: SgWriter):
         js = r.json()["data"]
 
         for j in js:
-            store_number = j.get('storelocator_id')
+            store_number = j.get("storelocator_id")
             if not store_number:
                 continue
 
-            raw_address = ', '.join(j.get('address') or [])
+            raw_address = ", ".join(j.get("address") or [])
             street_address = get_international(raw_address, s=True)
             city = j.get("city") or get_international(raw_address, c=True)
             postal = j.get("zipcode") or get_international(raw_address, p=True)
-            country_code = j.get('country_id')
-            location_name = j.get('storename')
-            page_url = f'https://www.paul-bakeries.com/en/bakeries/index/view/id/{store_number}/'
-            phone = j.get("telephone") or ''
-            if phone.count('0') == 10:
+            country_code = j.get("country_id")
+            location_name = j.get("storename")
+            page_url = f"https://www.paul-bakeries.com/en/bakeries/index/view/id/{store_number}/"
+            phone = j.get("telephone") or ""
+            if phone.count("0") == 10:
                 phone = SgRecord.MISSING
-            latitude = j.get("latitude") or ''
+            latitude = j.get("latitude") or ""
             longitude = j.get("longitude")
-            if '.' not in latitude:
+            if "." not in latitude:
                 latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
             _tmp = []
-            source = j.get('storetime') or '[]'
+            source = j.get("storetime") or "[]"
             hours = json.loads(source)
             for h in hours:
-                day = h.get('days')
-                if not h.get('day_status'):
-                    _tmp.append(f'{day}: Closed')
+                day = h.get("days")
+                if not h.get("day_status"):
+                    _tmp.append(f"{day}: Closed")
 
-                open_hour = h.get('open_hour')
-                open_minute = h.get('open_minute')
-                close_hour = h.get('close_hour')
-                close_minute = h.get('close_minute')
-                _tmp.append(f'{day}: {open_hour}:{open_minute}-{close_hour}:{close_minute}')
+                open_hour = h.get("open_hour")
+                open_minute = h.get("open_minute")
+                close_hour = h.get("close_hour")
+                close_minute = h.get("close_minute")
+                _tmp.append(
+                    f"{day}: {open_hour}:{open_minute}-{close_hour}:{close_minute}"
+                )
 
-            hours_of_operation = ';'.join(_tmp)
+            hours_of_operation = ";".join(_tmp)
 
             row = SgRecord(
                 page_url=page_url,
@@ -86,7 +88,7 @@ def fetch_data(sgw: SgWriter):
 
             sgw.write_row(row)
 
-        pages = r.json().get('totalPages') or 0
+        pages = r.json().get("totalPages") or 0
         if i >= pages:
             break
 
