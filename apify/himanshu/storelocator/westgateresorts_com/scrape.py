@@ -34,11 +34,12 @@ def fetch_data():
     log.info("Found {} urls".format(len(k)))
 
     for i in k:
-        store_url = "https://www.westgateresorts.com/" + i["href"]
+        store_url = "https://www.westgateresorts.com" + i["href"]
         soup = pull_content(store_url)
         data = parse_json(soup)
         if len(data) <= 0:
             log.info("skipped")
+            continue
         else:
             data = data[0]
         location_name = data["name"]
