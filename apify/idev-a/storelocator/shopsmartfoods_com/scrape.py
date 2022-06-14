@@ -24,6 +24,8 @@ def fetch_data():
         links = soup.select("div#StoreLocator tr a")
         for link in links:
             addr = list(link.stripped_strings)
+            if "Shop Smart" not in addr[0]:
+                continue
             state_zip = " ".join(addr[3:]).strip().split(" ")
             page_url = link["href"].replace("&amp;", "&")
             logger.info(page_url)
