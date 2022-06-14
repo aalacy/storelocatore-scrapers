@@ -48,18 +48,21 @@ def fetch_data():
         phone = phone.split("\n")[1].strip()
         hours = hours.replace("View Menus", "").strip()
         hours = hours.replace("Hours ", "").strip()
-        if hours.find('Oyster') != -1:
-            hours = hours.split('Oyster Bar')[1].split('Happy')[0].strip()
-            hours = hours.replace('& Lounge ', '').strip()
+        if hours.find("Oyster") != -1:
+            hours = hours.split("Oyster Bar")[1].split("Happy")[0].strip()
+            hours = hours.replace("& Lounge ", "").strip()
         else:
-            hours = hours.split('Dinner')[1].split('Happy')[0].strip()
+            hours = hours.split("Dinner")[1].split("Happy")[0].strip()
         address = re.sub(pattern, " ", address)
         address = re.sub(cleanr, " ", address)
-        script = soup.findAll('script', {"type":"text/javascript"})[11]
+        script = soup.findAll("script", {"type": "text/javascript"})[11]
         script = str(script)
-        script = script.replace('\n', '')
-        script = script.replace(';/* ]]> */</script>', '')
-        script = script.replace('<script id="theme-js-extra" type="text/javascript">/* <![CDATA[ */var raindrop_localize = ', '')
+        script = script.replace("\n", "")
+        script = script.replace(";/* ]]> */</script>", "")
+        script = script.replace(
+            '<script id="theme-js-extra" type="text/javascript">/* <![CDATA[ */var raindrop_localize = ',
+            "",
+        )
         script = json.loads(script)
         address = address.replace("Address ", "").strip()
         parsed = parser.parse_address_usa(address)
@@ -72,11 +75,11 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
-        for store in script['locations']:
-            if title.find(store['title']) != -1:
-                store_id = store['ID']
-                latitude = store['map']['lat']
-                longitude = store['map']['lng']
+        for store in script["locations"]:
+            if title.find(store["title"]) != -1:
+                store_id = store["ID"]
+                latitude = store["map"]["lat"]
+                longitude = store["map"]["lng"]
 
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -100,9 +103,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.STORE_NUMBER}
-        )
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.STORE_NUMBER})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
