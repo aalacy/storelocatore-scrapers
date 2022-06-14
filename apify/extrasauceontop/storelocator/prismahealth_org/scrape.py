@@ -36,6 +36,9 @@ def get_data():
 
             locations = response_json["Items"]
 
+            if len(locations) == 0:
+                search.found_nothing()
+
             for location in locations:
                 locator_domain = "prismahealth.org"
                 page_url = data_url
