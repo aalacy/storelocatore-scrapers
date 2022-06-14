@@ -45,7 +45,7 @@ def fetch_data():
                     lat = MISSING
                     lng = MISSING
 
-                parsed = parser.parse_address_usa(raw_address)
+                parsed = parser.parse_address_usa(raw_addr)
                 street1 = (
                     parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
                 )
