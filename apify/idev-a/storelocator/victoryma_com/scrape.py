@@ -97,7 +97,7 @@ def _info(_):
 
 def fetch_data():
     for lat, lng in coords:
-        with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="ca") as session:
             locations = session.get(base_url.format(lat, lng), headers=_headers).json()
             logger.info(f"[{lat, lng}] {len(locations)}")
             for _ in locations:
