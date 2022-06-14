@@ -10,7 +10,7 @@ _headers = {
 }
 
 locator_domain = "https://mcdonalds.by"
-base_url = "https://mcdonalds.by/by/restaurants.html"
+base_url = "https://mcdonalds.by/en/restaurants.html"
 
 
 def fetch_data():
@@ -22,6 +22,14 @@ def fetch_data():
             .strip()
         )
         for _ in locations:
+            hours_of_operation = ""
+            if _["time"]:
+                hours_of_operation = (
+                    _["time"]
+                    .split("McDrive")[0]
+                    .replace("Restaurant:", "")
+                    .replace("—", "-")
+                )
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -33,7 +41,7 @@ def fetch_data():
                 country_code="Belarus",
                 phone=_["phones"][0].split(",")[0],
                 locator_domain=locator_domain,
-                hours_of_operation=_["time_mccafe"].replace("—", "-"),
+                hours_of_operation=hours_of_operation,
             )
 
 

@@ -1,43 +1,16 @@
-import csv
-
 from bs4 import BeautifulSoup
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-
-def fetch_data():
-    addressess = []
     base_url = "https://www.enterprisetrucks.com"
     r = session.get(base_url + "/truckrental/en_US/locations.html")
     soup = BeautifulSoup(r.text, "lxml")
@@ -45,6 +18,7 @@ def fetch_data():
     for atag in main:
         page_url = base_url + atag["href"]
         r1 = session.get(base_url + atag["href"])
+        tree = html.fromstring(r1.text)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if "Our apologies…an unexpected error occurred." not in r1.text:
             try:
@@ -68,32 +42,41 @@ def fetch_data():
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            hours_of_operation = " ".join(
-                list(
-                    soup1.find("table", {"class": "businessHours"})
-                    .find("tbody")
-                    .stripped_strings
-                )
+            mon_open = "".join(tree.xpath('//input[@name="hr_op_mon_st"]/@value'))
+            mon_close = "".join(tree.xpath('//input[@name="hr_op_mon_end"]/@value'))
+            tue_open = "".join(tree.xpath('//input[@name="hr_op_tue_st"]/@value'))
+            tue_close = "".join(tree.xpath('//input[@name="hr_op_tue_end"]/@value'))
+            wed_open = "".join(tree.xpath('//input[@name="hr_op_wed_st"]/@value'))
+            wed_close = "".join(tree.xpath('//input[@name="hr_op_wed_end"]/@value'))
+            thu_open = "".join(tree.xpath('//input[@name="hr_op_thu_st"]/@value'))
+            thu_close = "".join(tree.xpath('//input[@name="hr_op_thu_end"]/@value'))
+            fri_open = "".join(tree.xpath('//input[@name="hr_op_fri_st"]/@value'))
+            fri_close = "".join(tree.xpath('//input[@name="hr_op_fri_end"]/@value'))
+            sat_open = "".join(tree.xpath('//input[@name="hr_op_sat_st"]/@value'))
+            sat_close = "".join(tree.xpath('//input[@name="hr_op_sat_end"]/@value'))
+            sun_open = "".join(tree.xpath('//input[@name="hr_op_sun_st"]/@value'))
+            sun_close = "".join(tree.xpath('//input[@name="hr_op_sun_end"]/@value'))
+            hours_of_operation = f"Monday {mon_open} - {mon_close} Tuesday {tue_open} - {tue_close} Wednesday {wed_open} - {wed_close} Thursday {thu_open} - {thu_close} Friday {fri_open} - {fri_close} Saturday {sat_open} - {sat_close} Sunday {sun_open} - {sun_close}"
+
+            row = SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code="US",
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-            store = []
-            store.append("https://www.enterprisetrucks.com")
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours_of_operation)
-            store.append(page_url)
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
-            yield store
+
+            sgw.write_row(row)
+
     base_url = "https://www.enterprisetrucks.com"
     r = session.get(base_url + "/truckrental/en_US/locations.html")
     soup = BeautifulSoup(r.text, "lxml")
@@ -101,6 +84,7 @@ def fetch_data():
     for atag in main:
         page_url = base_url + atag["href"]
         r1 = session.get(base_url + atag["href"])
+        tree = html.fromstring(r1.text)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if "Our apologies…an unexpected error occurred." not in r1.text:
             try:
@@ -122,37 +106,43 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
-            hours_of_operation = " ".join(
-                list(
-                    soup1.find("table", {"class": "businessHours"})
-                    .find("tbody")
-                    .stripped_strings
-                )
+            mon_open = "".join(tree.xpath('//input[@name="hr_op_mon_st"]/@value'))
+            mon_close = "".join(tree.xpath('//input[@name="hr_op_mon_end"]/@value'))
+            tue_open = "".join(tree.xpath('//input[@name="hr_op_tue_st"]/@value'))
+            tue_close = "".join(tree.xpath('//input[@name="hr_op_tue_end"]/@value'))
+            wed_open = "".join(tree.xpath('//input[@name="hr_op_wed_st"]/@value'))
+            wed_close = "".join(tree.xpath('//input[@name="hr_op_wed_end"]/@value'))
+            thu_open = "".join(tree.xpath('//input[@name="hr_op_thu_st"]/@value'))
+            thu_close = "".join(tree.xpath('//input[@name="hr_op_thu_end"]/@value'))
+            fri_open = "".join(tree.xpath('//input[@name="hr_op_fri_st"]/@value'))
+            fri_close = "".join(tree.xpath('//input[@name="hr_op_fri_end"]/@value'))
+            sat_open = "".join(tree.xpath('//input[@name="hr_op_sat_st"]/@value'))
+            sat_close = "".join(tree.xpath('//input[@name="hr_op_sat_end"]/@value'))
+            sun_open = "".join(tree.xpath('//input[@name="hr_op_sun_st"]/@value'))
+            sun_close = "".join(tree.xpath('//input[@name="hr_op_sun_end"]/@value'))
+            hours_of_operation = f"Monday {mon_open} - {mon_close} Tuesday {tue_open} - {tue_close} Wednesday {wed_open} - {wed_close} Thursday {thu_open} - {thu_close} Friday {fri_open} - {fri_close} Saturday {sat_open} - {sat_close} Sunday {sun_open} - {sun_close}"
+
+            row = SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code="CA",
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-            store = []
-            store.append("https://www.enterprisetrucks.com")
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("CA")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours_of_operation)
-            store.append(page_url)
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
-            yield store
+
+            sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

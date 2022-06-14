@@ -15,7 +15,6 @@ from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIter
 
 website = "postoffice.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "www.postoffice.co.uk",
     "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
@@ -89,6 +88,17 @@ class _SearchIteration(SearchIteration):
                     else:
                         street_address = formatted_addr.street_address_2
 
+                if street_address:
+                    if street_address.replace("-", "").strip().isdigit():
+                        try:
+                            street_address = raw_address.split(",")[0].strip()
+                        except:
+                            pass
+
+                try:
+                    street_address = ", ".join(raw_address.split(",")[:2]).strip()
+                except:
+                    pass
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = store["postCode"].strip()
@@ -96,6 +106,8 @@ class _SearchIteration(SearchIteration):
                 country_code = "GB"
 
                 location_name = store["name"].strip()
+                if not city:
+                    city = location_name
 
                 phone = "<MISSING>"
                 store_number = store["id"]
@@ -148,13 +160,12 @@ def scrape():
     )
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        with SgRequests() as http:
+        with SgRequests(dont_retry_status_codes=([404])) as http:
             search_iter = _SearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
                 country_codes=["GB"],
-                max_threads=8,
             )
 
             for rec in par_search.run():

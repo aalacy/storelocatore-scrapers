@@ -1,5 +1,10 @@
-import csv
+import json
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -7,75 +12,57 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    url = "https://cdn.shopify.com/s/files/1/0397/6842/4614/t/8/assets/stores-map.js"
+
+    url = "https://mothersnc.pixelatedarts.net/assets/files/stores-map.js"
     r = session.get(url, headers=headers)
-    website = "mothersnutritionalcenter.com"
-    typ = "<MISSING>"
-    country = "US"
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<p><strong>" in line:
-            name = line.split("<p><strong>")[1].split("<")[0].replace("\\", "")
-            store = name.rsplit(" ", 1)[1]
-            hours = line.split("Store Hours: ")[1].split("<")[0].replace(" |", ";")
-            add = line.split("</p><p>")[2].split(",")[0].strip().replace('"', "")
-            city = line.split("</p><p>")[2].split(",")[1].strip().rsplit(" ", 1)[0]
-            state = line.split("</p><p>")[2].split(",")[1].strip().rsplit(" ", 1)[1]
-            zc = line.split("?api=1&destination")[1].split("'")[0].rsplit("+", 1)[1]
-            lat = line.split("</p>',")[1].split(",")[0].strip()
-            lng = line.split("</p>',")[1].split(",")[1].strip()
-            phone = "<MISSING>"
-            loc = "https://mothersnc.com/pages/stores"
-            zc = zc.replace("\\", "").replace("/", "").strip()
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+    hourslist = r.text.split("var locations = ", 1)[1].split(";var storeLocations", 1)[
+        0
+    ]
+    hourslist = json.loads(hourslist)
+
+    for hr in hourslist:
+
+        divlist = BeautifulSoup(str(hr[0]), "html.parser").findAll("p")
+        title = divlist[0].text
+        hours = divlist[1].text.replace("Store Hours:", "").strip()
+        address = divlist[2].text
+        street, city = address.split(", ", 1)
+        pcode = city.split(" ")[-1]
+        state = city.split(" ")[-2]
+        city = city.split(" " + state, 1)[0]
+        phone = divlist[3].text
+        store = title.split("Store ", 1)[1]
+        lat = hr[1]
+        longt = hr[2]
+
+        yield SgRecord(
+            locator_domain="https://mothersnutritionalcenter.com/",
+            page_url="https://mothersnc.com/pages/stores/",
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

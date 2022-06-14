@@ -1,104 +1,89 @@
-import csv
-import json
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://oldchicago.com/locations/getLocationJson?"
+    r = session.get(api, headers=headers)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    session = SgRequests()
-    locator_domain = "https://oldchicago.com"
-    api_url = "https://oc-api-prod.azurewebsites.net/graphql"
-    headers = {"Content-Type": "application/json"}
-
-    data = {
-        "query": 'query LocationList_ViewerRelayQL($id_0:ID!) {node(id:$id_0) {...F0}} fragment F0 on Viewer {_locations3pwhxm:locations(first:1500,geoString:"") {edges {node {id,slug,locationId,title,isOpen,latitude,longitude,simpleHours {days,hours,id},distance,distancefromSearch,searchLatitude,searchLongitude,phone,address {route,streetNumber,stateCode,stateName,city,postalCode,id},comingSoon},cursor},pageInfo {hasNextPage,hasPreviousPage}},id}',
-        "variables": {"id_0": "Vmlld2VyOjA="},
-    }
-
-    r = session.post(api_url, headers=headers, data=json.dumps(data))
-
-    js = r.json()["data"]["node"]["_locations3pwhxm"]["edges"]
+    js = r.json()["markers"]
 
     for j in js:
-        j = j["node"]
-        a = j.get("address")
-        street_address = f"{a.get('streetNumber')} {a.get('route') or ''}".strip()
-        city = a.get("city") or "<MISSING>"
-        state = a.get("stateCode") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
+        street_address = j.get("address")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zipcode")
         country_code = "US"
-        store_number = j.get("locationId") or "<MISSING>"
-        page_url = f'https://oldchicago.com/locations/{j.get("slug")}'
-        location_name = j.get("title")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        store_number = j.get("id")
+        f = j.get("fields") or {}
+        location_name = f.get("location_name")
+        slug = f.get("location_slug")
+        page_url = f"https://oldchicago.com/locations/{slug}"
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
         _tmp = []
-        hours = j.get("simpleHours", []) or []
-        for h in hours:
-            day = h.get("days")
-            time = h.get("hours")
-            _tmp.append(f"{day}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
         ]
-        out.append(row)
+        hours = j.get("hours")
+        if hours:
+            for h in hours.split(";"):
+                t = h.strip().split(",")
+                if not t[0]:
+                    continue
+                day = days[int(t[0]) - 1]
+                start = t[1].zfill(4)
+                start = start[:2] + ":" + start[2:]
+                end = t[2].zfill(4)
+                end = end[:2] + ":" + end[2:]
+                _tmp.append(f"{day}: {start}-{end}")
 
-    return out
+        hours_of_operation = ";".join(_tmp)
 
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://oldchicago.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "max-age=0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

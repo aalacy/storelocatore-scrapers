@@ -1,0 +1,18 @@
+ --ignore StreetAddressHasNumber  (Confirmed scrape correctly)
+ Found 223 concerning rows. Examples:
+                       street_address              REASON  rowNumber
+0   189Allée Des Erables Za Du Pontet  ADDR_HAS_NO_NUMBER          0
+8       Shopping Promenade Cellule B8  ADDR_HAS_NO_NUMBER          8
+9    Zac Des Magots Avenue Des Aulnes  ADDR_HAS_NO_NUMBER          9
+11    Za De Kerpuns Chemin De Kerpuns  ADDR_HAS_NO_NUMBER         11
+13    Zac De Bellevue Parc D'Activité  ADDR_HAS_NO_NUMBER         13
+ 
+ 
+ --ignore StreetAddressHasStateName (Confirmed scrape correctly)
+ Found 5 concerning rows. Examples:
+                                   street_address                    REASON  rowNumber
+29       17 Allée De La Bouvine Zac Le Fenouillet  ADDR_CONTAINS_STATE_NAME         29
+140                  702 Avenue Du Moulin Neuf Zi  ADDR_CONTAINS_STATE_NAME        140
+209  Rue Du 8 Mai 1945 Zone Commercale Du Parquet  ADDR_CONTAINS_STATE_NAME        209
+297                              Za La Pyrénéenne  ADDR_CONTAINS_STATE_NAME        297
+417  10 Chemin Petit Centre Commercial Caluire Ii  ADDR_CONTAINS_STATE_NAME        417

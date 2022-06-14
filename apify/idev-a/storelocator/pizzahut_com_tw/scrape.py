@@ -20,9 +20,6 @@ def fetch_data():
             .text.split("sdata=")[-1]
             .strip()[:-1]
         )
-        import pdb
-
-        pdb.set_trace()
         for key, _ in locations.items():
             yield SgRecord(
                 page_url="",

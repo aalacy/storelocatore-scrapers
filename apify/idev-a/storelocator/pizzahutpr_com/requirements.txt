@@ -1,0 +1,5 @@
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+
+tabula-py==2.2.0
+sglogging==0.0.4
+sgscrape==0.1.13
