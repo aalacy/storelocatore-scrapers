@@ -80,6 +80,8 @@ def fetch_data():
 
             store_number = store["storeCodeC"]
             phone = store["storePhoneC"]
+            if phone and phone == "TBD":
+                phone = "<MISSING>"
 
             location_type = store["typeC"]
 

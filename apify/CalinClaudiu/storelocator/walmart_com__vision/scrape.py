@@ -8,10 +8,18 @@ from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sgselenium import SgChrome
 import json  # noqa
-
+import ssl
 import time
 
 logger = SgLogSetup().get_logger("walmart_com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -269,6 +277,7 @@ def fetch_data():
             yield reccz
     maxZ = search.items_remaining()
     total = 0
+    foundNothing = True
     for code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
@@ -289,12 +298,15 @@ def fetch_data():
                     if store["geoPoint"]:
                         if store["geoPoint"]["latitude"]:
                             if store["geoPoint"]["longitude"]:
+                                foundNothing = False
                                 search.found_location_at(
                                     store["geoPoint"]["latitude"],
                                     store["geoPoint"]["longitude"],
                                 )
                     for recc in gen_hours(transform_types(store)):
                         yield recc
+        if foundNothing:
+            search.found_nothing()
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
