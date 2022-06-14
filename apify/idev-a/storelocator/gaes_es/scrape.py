@@ -49,7 +49,10 @@ def fetch_data():
             sp1 = bs(driver.page_source, "lxml")
             if driver.current_url == base_url:
                 continue
-            _ = json.loads(sp1.find("script", type="application/ld+json").string)
+            try:
+                _ = json.loads(sp1.find("script", type="application/ld+json").string)
+            except:
+                continue
             phone = ""
             if sp1.select_one("span.phone-list"):
                 phone = sp1.select_one("span.phone-list").text.strip()
