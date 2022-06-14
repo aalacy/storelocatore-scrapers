@@ -1,120 +1,69 @@
-import csv
+# -*- coding: utf-8 -*-
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-import re
-import json
-import sgzip
-import requests
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger('renault_co_uk')
-
-
-session = SgRequests()
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 20
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes=['UK'])
-    zip_code = search.next_zip()
-    current_results_len = 0
-    adressess = []
-    
-    base_url = "https://www.renault.co.uk/"
-    
-    while zip_code:
-        result_coords =[]
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
+    session = SgRequests(verify_ssl=False)
 
-        url = "https://dealerlocator.renault.co.uk/data/GetDealersList"
-        payload = 'postcode='+str(zip_code)
-        headers = {
-        'Host': 'dealerlocator.renault.co.uk',
-        'Origin': 'https://dealerlocator.renault.co.uk',
-        'Referer': 'https://dealerlocator.renault.co.uk/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        }
-        try:
-            response = requests.request("POST", url, headers=headers, data = payload).json()
-        except:
-            pass
-        if "Result" in response:
-            for data in response['Result']['Dealers']:
-                street_address1=''
-                location_name = data['DealerName']
-                street_address1 = data['AddressLine1']
-                if street_address1:
-                    street_address1=street_address1
-                street_address =street_address1+ ' '+ data['AddressLine2']
-                city = data['Town']
-                state = "<MISSING>"
-                zipp = data['PostCode']
-                phone = data['Phone']
-                lat = data['Latitude']
-                lng = data['Longitude']
-                page_url = data['Website']
-                store_number = "<MISSING>"
-                hours=""
-                if data['OpeningHours'] != None:
-                    for h in data['OpeningHours']:
-                        # logger.info(h)
-                        if h["Value"] != None:
-                            if h["Value"]:
-                                hours = hours+ ' '+h["Label"]+ ' '+h["Value"]
-                else:
-                    hours = "<MISSING>"
-                result_coords.append((lat,lng))
-                store = []
-                store.append(base_url)
-                store.append(location_name)
-                store.append(street_address)
-                store.append(city)
-                store.append(state)
-                store.append(zipp)   
-                store.append("UK")
-                store.append(store_number)
-                store.append(phone)
-                store.append("<MISSING>")
-                store.append(lat)
-                store.append(lng)
-                store.append(hours if hours else "<MISSING>")
-                store.append(page_url if page_url else "<MISSING>")     
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                if store[2] in adressess:
-                    continue
-                adressess.append(store[2])
-                #logger.info(store)
-                yield store
+    start_url = "https://dealerlocator.renault.co.uk/data/GetDealersList"
+    domain = "renault.co.uk"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+        "content-type": "application/x-www-form-urlencoded",
+    }
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=20
+    )
+    for code in all_codes:
+        frm = {"postcode": code}
+        data = session.post(start_url, headers=hdr, data=frm).json()
+        for poi in data["Result"]["Dealers"]:
+            street_address = poi["AddressLine1"]
+            if poi["AddressLine2"]:
+                street_address += ", " + poi["AddressLine2"]
+            hoo = []
+            hoo_data = poi["OpeningHours"]
+            if hoo_data:
+                for e in hoo_data:
+                    hoo.append(f'{e["Label"]}: {e["Value"]}')
+            hoo = " ".join(hoo)
 
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        
-        zip_code = search.next_zip()
-    
-    
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://dealerlocator.renault.co.uk/",
+                location_name=poi["DealerName"],
+                street_address=street_address,
+                city=poi["Town"],
+                state=poi["County"],
+                zip_postal=poi["PostCode"],
+                country_code="",
+                store_number=poi["DealerId"],
+                phone=poi["Phone"],
+                location_type=poi["DealerCategory"],
+                latitude=poi["Latitude"],
+                longitude=poi["Longitude"],
+                hours_of_operation=hoo,
+            )
+
+            yield item
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()
