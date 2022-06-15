@@ -1,193 +1,51 @@
-import re
-from sgpostal.sgpostal import parse_address_intl
-from lxml import html
-import time
-import random
+from sgrequests import SgRequests
+from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+import datetime as dt
 
-from sgscrape.pause_resume import CrawlStateSingleton
-from sgselenium.sgselenium import SgChrome
+DOMAIN = "nike.com"
+logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
+api_url = (
+    "https://storeviews-cdn.risedomain-prod.nikecloud.com/store-locations-static.json"
+)
 
 
-website = "https://www.nike.com"
-store_url = f"{website}/retail/directory"
-MISSING = SgRecord.MISSING
-
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-
-
-def driver_sleep(driver, time=2):
-    try:
-        WebDriverWait(driver, time).until(
-            EC.presence_of_element_located((By.ID, MISSING))
-        )
-    except Exception:
-        pass
+def add_hours(time_string, hr):
+    the_time = dt.datetime.strptime(time_string, "%I:%M")
+    new_time = the_time + dt.timedelta(hours=hr)
+    return new_time.strftime("%I:%M")
 
 
-def random_sleep(driver, start=1, limit=2):
-    driver_sleep(driver, random.randint(start, start + limit))
+def pt_hours(store):
+    # HOO is in this format "startTime": "11:00", "duration": "PT11H"
+    # Its showing the duration and add_hours() fn produce the end_time using the duration
 
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
 
-def request_with_retries(driver, url, tried=1):
-    try:
-        driver.get(url)
-        random_sleep(driver)
-        return html.fromstring(driver.page_source, "lxml")
-    except Exception as e:
-        log.info(e)
-        if tried == 10:
-            log.error(f"Can't access url = {url}")
-            return None
-        else:
-            return request_with_retries(driver, url, tried + 1)
+    hoos = store["operationalDetails"]["hoursOfOperation"]["regularHours"]
+    all_hours = []
+    for day in days:
+        try:
+            start_time = hoos[f"{day}"][0]["startTime"]
+            duration = hoos[f"{day}"][0]["duration"]
+            duration = duration.split("H")[0].replace("PT", "")
+            end_time = add_hours(start_time, int(duration))
+            all_hours.append(f"{day}:{start_time} - {end_time}")
+        except:
+            all_hours.append(f"{day}:Closed")
 
+    hoo = ", ".join(all_hours)
 
-def fetch_stores(driver):
-    body = request_with_retries(driver, store_url)
-    directory_urls = body.xpath(
-        '//a[contains(@href, "https://www.nike.com/retail/directory/")]/@href'
-    )
-    log.info(f"Total countries = {len(directory_urls)}")
-
-    all_directories = []
-    store_urls = []
-    all_directories = all_directories + directory_urls
-
-    count = 0
-    while True:
-        new_directories = []
-        for directory_url in directory_urls:
-            count = count + 1
-            body = request_with_retries(driver, directory_url)
-            if body is None:
-                continue
-
-            stores = body.xpath(
-                '//a[contains(@href, "https://www.nike.com/retail/s/")]/@href'
-            )
-            for store in stores:
-                if store not in store_urls:
-                    store_urls.append(store)
-            directories = body.xpath(
-                '//a[contains(@href, "https://www.nike.com/retail/directory/")]/@href'
-            )
-            for directory in directories:
-                if directory not in all_directories:
-                    all_directories.append(directory)
-                    new_directories.append(directory)
-            log.info(
-                f"{count}. From {directory_url} : stores = {len(stores)} and directories = {len(directories)} and total stores = {len(store_urls)}"
-            )
-
-        log.info(f"Total new directories = {len(new_directories)}")
-        if len(new_directories) == 0:
-            break
-        directory_urls = new_directories
-
-    return store_urls
-
-
-def get_address(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"Address Missing: {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
-
-
-def get_main_section(body, location_name):
-    for section in body.xpath("//section"):
-        if section.xpath('.//h1[text()="{location_name}"]'):
-            return section
-    return body
-
-
-def get_phone(main_section):
-    Source = " ".join(main_section.xpath(".//p/text()"))
-    phone = MISSING
-
-    if Source is None or Source == "":
-        return phone
-
-    for match in re.findall(
-        r"[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9][\(]?[0-9][0-9 .\-\(\)]", Source
-    ):
-        phone = match
-        return phone
-    return phone
-
-
-def get_raw_country(main_section):
-    raw_address = ", ".join(
-        main_section.xpath(".//div[contains(@class, 'headline-5')]/p/text()")
-    )
-    if "," not in raw_address:
-        return MISSING, MISSING
-
-    address = raw_address.split(",")
-    country_code = address[len(address) - 1]
-    raw_address = ", ".join(address[0 : len(address) - 1])
-    raw_address = " ".join(raw_address.split())
-    raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
-    if raw_address[len(raw_address) - 1] == ",":
-        raw_address = raw_address[:-1]
-    raw_address = raw_address.strip()
-    country_code = country_code.strip()
-
-    if len(country_code) == 0 or len(raw_address) == 0:
-        return MISSING, MISSING
-    return raw_address, country_code
-
-
-def get_lat_lng(main_section):
-    link = " ".join(
-        main_section.xpath(
-            ".//a[contains(@href, 'https://www.google.com/maps/')]/@href"
-        )
-    )
-    if "https://www.google.com/maps/dir/?api=1&destination=" in link:
-        link = link.replace("https://www.google.com/maps/dir/?api=1&destination=", "")
-        lat, lng = link.split(" ")[0].split(",")
-        return lat, lng
-    return MISSING, MISSING
-
-
-def get_hoo(main_section):
-    divs = main_section.xpath(".//div")
-    for div in divs:
-        if len(div.xpath(".//h2[contains(text(), 'Store Hours')]")) > 0:
-            return ("; ").join(div.xpath(".//section/text()")).strip()
-    return MISSING
+    return hoo
 
 
 def update_location_name(location_name):
@@ -202,133 +60,84 @@ def update_location_name(location_name):
     return location_name
 
 
-def fetch_data(driver):
-    stores = fetch_stores(driver)
-    log.info(f"Total stores = {len(stores)}")
-    count = 0
-    error_urls = []
-    for page_url in stores:
-        count = count + 1
-        log.info(f"{count}. scrapping store {page_url} ...")
-        body = request_with_retries(driver, page_url)
-        if body is None:
-            error_urls.append(page_url)
-            continue
+def parse_json(store):
+    data = {}
+    data["locator_domain"] = DOMAIN
+    data["store_number"] = store["storeNumber"]
+    data["page_url"] = "https://www.nike.com/retail/s/" + store["slug"]
+    data["location_name"] = update_location_name(store["name"])
+    data["location_type"] = store["facilityType"]
+    data["street_address"] = (
+        store["address"]["address1"]
+        + " "
+        + store["address"]["address2"]
+        + " "
+        + store["address"]["address3"]
+    )
+    data["city"] = store["address"]["city"]
+    data["state"] = store["address"]["state"]
+    data["country_code"] = store["address"]["iso2Country"]
+    data["zip_postal"] = store["address"]["postalCode"]
+    data["phone"] = store["phone"]
+    data["latitude"] = store["coordinates"]["latitude"]
+    data["longitude"] = store["coordinates"]["longitude"]
+    data["hours_of_operation"] = pt_hours(store)
 
-        store_number = MISSING
-        location_type = MISSING
+    data["raw_address"] = (
+        data["street_address"]
+        + " "
+        + data["city"]
+        + " "
+        + data["state"]
+        + " "
+        + data["zip_postal"]
+    )
 
-        location_name = body.xpath('//h1[contains(@class, "headline-1")]/text()')
-        if len(location_name) == 0:
-            log.info("Error not found name")
-            error_urls.append(page_url)
-            continue
-        location_name = location_name[0].strip()
-        main_section = get_main_section(body, location_name)
+    return data
 
-        raw_address, country_code = get_raw_country(main_section)
-        if country_code == MISSING or main_section == MISSING:
-            log.info("Error not found country")
-            error_urls.append(page_url)
-            continue
-        phone = get_phone(main_section)
-        latitude, longitude = get_lat_lng(main_section)
-        hours_of_operation = get_hoo(main_section)
-        street_address, city, state, zip_postal = get_address(raw_address)
 
-        if city == "-02":
-            city = "Toco"
-        if city == "598-8509":
-            city = "泉佐野市"
-        if "6Th Of October Cairo" in str(city):
-            city = "6Th Of October"
-
-        location_name = update_location_name(location_name)
-
-        yield SgRecord(
-            locator_domain=website,
-            store_number=store_number,
-            page_url=page_url,
-            location_name=location_name,
-            location_type=location_type,
-            street_address=street_address,
-            city=city,
-            zip_postal=zip_postal,
-            state=state,
-            country_code=country_code,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-
-    log.info(f"Total error urls = {len(error_urls)}")
-
-    count = 0
-    for page_url in error_urls:
-        count = count + 1
-        log.info(f"{count}. scrapping error store {page_url} ...")
-
-        body = request_with_retries(driver, page_url)
-        if body is None:
-            yield SgRecord(locator_domain=website, page_url=page_url)
-            continue
-
-        store_number = MISSING
-        location_type = MISSING
-
-        location_name = body.xpath('//h1[contains(@class, "headline-1")]/text()')
-        if len(location_name) == 0:
-            log.info("Error not found name")
-            yield SgRecord(locator_domain=website, page_url=page_url)
-            continue
-        location_name = location_name[0].strip()
-        main_section = get_main_section(body, location_name)
-
-        raw_address, country_code = get_raw_country(main_section)
-
-        phone = get_phone(main_section)
-        latitude, longitude = get_lat_lng(main_section)
-        hours_of_operation = get_hoo(main_section)
-        street_address, city, state, zip_postal = get_address(raw_address)
-        location_name = update_location_name(location_name)
-
-        yield SgRecord(
-            locator_domain=website,
-            store_number=store_number,
-            page_url=page_url,
-            location_name=location_name,
-            location_type=location_type,
-            street_address=street_address,
-            city=city,
-            zip_postal=zip_postal,
-            state=state,
-            country_code=country_code,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-
-    return []
+def fetch_data():
+    for store in data["stores"]:
+        i = data["stores"][f"{store}"]
+        yield parse_json(i)
 
 
 def scrape():
-    CrawlStateSingleton.get_instance().save(override=True)
-    log.info(f"Start scrapping {website} ...")
-    start = time.time()
-    with SgChrome() as driver:
-        with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
-        ) as writer:
-            for rec in fetch_data(driver):
-                writer.write_row(rec)
+    logger.info(f"Start Crawling {DOMAIN} ...")
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(DOMAIN),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(mapping=["location_name"]),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
+    )
 
-    end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=5,
+    )
+
+    pipeline.run()
 
 
 if __name__ == "__main__":
+    with SgRequests() as session:
+        data = session.get(api_url).json()
+
     scrape()
