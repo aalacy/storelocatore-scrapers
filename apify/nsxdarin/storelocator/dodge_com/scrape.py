@@ -82,6 +82,7 @@ def fetch_data():
                 phone = handle_missing(dealer["phoneNumber"])
                 lat = handle_missing(dealer["dealerShowroomLatitude"])
                 lng = handle_missing(dealer["dealerShowroomLongitude"])
+                search.found_location_at(lat, lng)
                 hours = parse_hours(dealer["departments"]["sales"]["hours"])
                 yield SgRecord(
                     locator_domain=website,
@@ -100,6 +101,7 @@ def fetch_data():
                     hours_of_operation=hours,
                 )
         except:
+            search.found_nothing()
             pass
 
 

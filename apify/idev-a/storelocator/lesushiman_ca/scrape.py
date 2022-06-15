@@ -44,7 +44,7 @@ def fetch_data():
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             bb = sp1.select("div.single-rest_case")
             raw_address = bb[0].text.strip()
-            addr = parse_address_intl(raw_address + ", Canada")
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
