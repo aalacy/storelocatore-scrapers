@@ -47,10 +47,14 @@ def fetch_data(sgw: SgWriter):
             phone = j.get("telephone") or ""
             if phone.count("0") == 10:
                 phone = SgRecord.MISSING
+            if phone.strip().endswith("/"):
+                phone = phone.strip()[:-1]
             latitude = j.get("latitude") or ""
             longitude = j.get("longitude")
             if "." not in latitude:
                 latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+            if "-" in latitude:
+                latitude, longitude = longitude, latitude
 
             _tmp = []
             source = j.get("storetime") or "[]"
@@ -94,7 +98,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.lincare.com/"
+    locator_domain = "https://www.paul-bakeries.com/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }

@@ -55,7 +55,18 @@ def fetch_data(sgw: SgWriter):
             latitude = store["Geolocation"]["Latitude"]
             longitude = store["Geolocation"]["Longitude"]
             link = "https://www.ebgames.co.nz/stores/store/" + store["StoreUrl"]
+            raw_hours = store["ThreeDayTradingTimesDetails"]
             hours_of_operation = ""
+            for row in raw_hours:
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + row["Date"]
+                    + " "
+                    + row["Open"]
+                    + "-"
+                    + row["Close"]
+                ).strip()
 
             sgw.write_row(
                 SgRecord(

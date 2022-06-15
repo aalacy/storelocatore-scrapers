@@ -99,12 +99,7 @@ def fetch_data(sgw: SgWriter):
             longitude = store["map_start_lng"]
         except:
             try:
-                raw_data = (
-                    base.find_all("h4")[1]
-                    .text.replace("\xa0", "")
-                    .replace("St.Elko", "St.\nElko")
-                    .split("\n")
-                )
+                raw_data = list(base.find_all("h4")[1].stripped_strings)
                 if "Kristen & Warren" not in raw_data[0]:
                     map_link = base.find(
                         class_="fusion-button button-flat fusion-button-round button-large button-default button-1"
