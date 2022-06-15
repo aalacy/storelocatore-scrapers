@@ -87,8 +87,12 @@ def fetch_data():
                 if sp1.select_one("a.contact--store-telephone"):
                     phone = sp1.select_one("a.contact--store-telephone").text.strip()
 
-
-                location_type = link.find_parent('div').find_parent().find_previous_sibling().text.strip()
+                location_type = (
+                    link.find_parent("div")
+                    .find_parent()
+                    .find_previous_sibling()
+                    .text.strip()
+                )
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
