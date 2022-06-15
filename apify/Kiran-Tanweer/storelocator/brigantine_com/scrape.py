@@ -6,13 +6,14 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 import re
+import json
 from sgscrape import sgpostal as parser
 
 
 session = SgRequests()
 website = "brigantine_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
@@ -47,10 +48,23 @@ def fetch_data():
         phone = phone.split("\n")[1].strip()
         hours = hours.replace("View Menus", "").strip()
         hours = hours.replace("Hours ", "").strip()
+        if hours.find("Oyster") != -1:
+            hours = hours.split("Oyster Bar")[1].split("Happy")[0].strip()
+            hours = hours.replace("& Lounge ", "").strip()
+        else:
+            hours = hours.split("Dinner")[1].split("Happy")[0].strip()
         address = re.sub(pattern, " ", address)
         address = re.sub(cleanr, " ", address)
+        script = soup.findAll("script", {"type": "text/javascript"})[11]
+        script = str(script)
+        script = script.replace("\n", "")
+        script = script.replace(";/* ]]> */</script>", "")
+        script = script.replace(
+            '<script id="theme-js-extra" type="text/javascript">/* <![CDATA[ */var raindrop_localize = ',
+            "",
+        )
+        script = json.loads(script)
         address = address.replace("Address ", "").strip()
-
         parsed = parser.parse_address_usa(address)
         street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
         street = (
@@ -61,32 +75,35 @@ def fetch_data():
         city = parsed.city if parsed.city else "<MISSING>"
         state = parsed.state if parsed.state else "<MISSING>"
         pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+        for store in script["locations"]:
+            if title.find(store["title"]) != -1:
+                store_id = store["ID"]
+                latitude = store["map"]["lat"]
+                longitude = store["map"]["lng"]
 
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=link,
-            location_name=title,
-            street_address=street.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=pcode,
-            country_code="US",
-            store_number=MISSING,
-            phone=phone,
-            location_type=MISSING,
-            latitude=MISSING,
-            longitude=MISSING,
-            hours_of_operation=hours.strip(),
-        )
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode,
+                    country_code="US",
+                    store_number=store_id,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours.strip(),
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.STORE_NUMBER})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

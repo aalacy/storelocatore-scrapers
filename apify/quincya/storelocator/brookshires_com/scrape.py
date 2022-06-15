@@ -1,13 +1,12 @@
+import undetected_chromedriver as uc
+
 from bs4 import BeautifulSoup
-
 from sglogging import sglog
-
-from sgselenium.sgselenium import SgChrome
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from webdriver_manager.chrome import ChromeDriverManager
 
 log = sglog.SgLogSetup().get_logger(logger_name="brookshires.com")
 
@@ -16,11 +15,13 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.brookshires.com/stores/?coordinates=33.081696254439834,-95.94856100000001&zoom=4"
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
+    options = uc.ChromeOptions()
+    options.headless = True
 
-    with SgChrome(user_agent=user_agent) as driver:
+    with uc.Chrome(
+        driver_executable_path=ChromeDriverManager().install(), options=options
+    ) as driver:
+
         driver.get(base_link)
         base = BeautifulSoup(driver.page_source, "lxml")
         log.info(base)

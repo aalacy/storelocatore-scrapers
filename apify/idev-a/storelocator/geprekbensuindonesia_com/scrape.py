@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -39,6 +40,14 @@ def fetch_data():
                 )
             except:
                 coord = ["", ""]
+            hours = []
+            _hr = _.find("strong", string=re.compile(r"Jam Operasional"))
+            if _hr:
+                for hh in _hr.find_parent().find_next_siblings("p"):
+                    _hh = hh.text.strip()
+                    if not _hh:
+                        continue
+                    hours.append(_hh)
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
@@ -51,7 +60,7 @@ def fetch_data():
                 longitude=coord[0],
                 locator_domain=locator_domain,
                 raw_address=raw_address,
-                hours_of_operation=_.select("p")[-1].text.strip(),
+                hours_of_operation="; ".join(hours),
             )
 
 
