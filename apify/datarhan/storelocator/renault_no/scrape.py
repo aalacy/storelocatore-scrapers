@@ -23,14 +23,13 @@ def fetch_data():
 
     all_locations = data["data"]["forhandlere"]["nodes"]
     for poi in all_locations:
-
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["dealer"]["linkToForhandlerside"],
             location_name=poi["title"],
             street_address=poi["dealerSideBar"]["adresse"],
             city=poi["dealerSideBar"]["poststed"],
-            state="",
+            state=poi["dealer"]["fylke"].capitalize(),
             zip_postal=poi["dealerSideBar"]["postnummer"],
             country_code="NO",
             store_number=poi["dealer"]["depId"],
