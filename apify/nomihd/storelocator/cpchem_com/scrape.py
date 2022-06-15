@@ -54,18 +54,29 @@ def fetch_data():
                 continue
 
             location_name = store_type
-            street_address = (
-                " ".join(store.xpath('.//span[@itemprop="streetAddress"]//text()'))
-                .strip(",. ")
-                .strip()
-                .replace(
-                    "Chevron Phillips Global Sales FZE Dubai Airport Free Zone,", ""
+            address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath(
+                            './/span[@itemprop="streetAddress"]//text()'
+                        )
+                    ],
                 )
-                .strip()
             )
+
+            add_list = []
+            for add in address:
+                if "Chevron Phillips" not in "".join(add).strip():
+                    add_list.append("".join(add).strip())
+
+            street_address = ", ".join(add_list).strip()
             city = (
                 "".join(store.xpath('.//span[@itemprop="addressLocality"]/text()'))
                 .strip(",. ")
+                .strip()
+                .split("(")[0]
                 .strip()
             )
             state = (
@@ -78,6 +89,18 @@ def fetch_data():
                 .strip(",. ")
                 .strip()
             )
+            if not zip and "," in city:
+                zip = city.split(",")[-1].strip()
+                city = city.split(",")[0].strip()
+
+            if zip == "Victoria 3148":
+                state = "Victoria"
+                zip = "3148"
+
+            if city == "Frankfurt am Main 60528":
+                city = "Frankfurt am Main"
+                zip = "60528"
+
             if us.states.lookup(state):
                 country_code = "US"
             else:
