@@ -97,8 +97,12 @@ def other_source(state):
                 + str(county["code"]).lower().strip().replace(" ", "-")
             )
             time.sleep(3)
-            sec = get_json(driver.page_source)
-            allcities = sec["directory"]["cityData"]["cities"]
+            try:
+                sec = get_json(driver.page_source)
+                allcities = sec["directory"]["cityData"]["cities"]
+            except Exception as e:
+                logger.error(f"{driver.page_source}", exc_info=e)
+                raise
             for city in allcities:
                 data = str(list(i for i in city.items()))
                 if "storeCount" in data:
