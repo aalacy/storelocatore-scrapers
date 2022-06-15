@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import unidecode
 import ssl
-from proxyfier import ProxyProviders
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
