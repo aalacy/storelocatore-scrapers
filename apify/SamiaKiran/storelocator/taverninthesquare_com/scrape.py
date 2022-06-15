@@ -33,7 +33,7 @@ def fetch_data():
             if "HOURS" in r.text:
                 loc = r.text.split("HOURS")[1].split("</section>", 1)[0]
                 soup = BeautifulSoup(loc, "html.parser")
-                address = loc.split("CONTACT")[1]
+                address = r.text.split("CONTACT")[1]
                 hours_of_operation = (
                     soup.find("div", {"data-testid": "richTextElement"})
                     .get_text(separator="|", strip=True)

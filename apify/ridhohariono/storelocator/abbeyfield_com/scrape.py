@@ -15,7 +15,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
 }
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
@@ -59,13 +59,14 @@ def fetch_data():
         "https://www.abbeyfield.com/dementia-friendly-care-homes/",
         "https://www.abbeyfield.com/residential-care-homes/",
         "https://www.abbeyfield.com/independent-living/",
+        "https://www.abbeyfield.com/sheltered-housing/",
         "https://www.abbeyfield.com/supported-housing/",
         "https://www.abbeyfield.com/nursing-homes/",
     ]
     urls = soup.find_all(
         "loc",
         text=re.compile(
-            r"\/dementia-friendly-care-homes\/.*|\/residential-care-homes\/.*|\/independent-living\/.*|\/supported-housing\/.*|\/nursing-homes\/.*"
+            r"\/dementia-friendly-care-homes\/.*|\/residential-care-homes\/.*|\/independent-living\/.*|\/sheltered-housing\/.*|\/supported-housing\/.*|\/nursing-homes\/.*"
         ),
     )
     for row in urls:
