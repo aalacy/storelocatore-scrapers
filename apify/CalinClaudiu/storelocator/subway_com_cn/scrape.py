@@ -221,7 +221,7 @@ if __name__ == "__main__":
 
     state = CrawlStateSingleton.get_instance()
 
-    tocrawl = = [
+    tocrawl = [
         "cn",
         "rw",
         "sb",
