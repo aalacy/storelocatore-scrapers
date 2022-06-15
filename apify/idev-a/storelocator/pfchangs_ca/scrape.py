@@ -1,9 +1,9 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
+import json
 from bs4 import BeautifulSoup as bs
 
 _headers = {
@@ -51,6 +51,9 @@ def fetch_data():
             if street_address.endswith(","):
                 street_address = street_address[:-1]
 
+            zip_postal = addr.get("postal_code")
+            if not zip_postal:
+                zip_postal = " ".join(_["address"].split(",")[-2].strip().split()[1:])
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -58,17 +61,21 @@ def fetch_data():
                 street_address=street_address,
                 city=addr["city"],
                 state=addr["state"],
-                zip_postal=addr["postal_code"],
+                zip_postal=zip_postal,
                 latitude=addr["lat"],
                 longitude=addr["lng"],
                 country_code=addr["country"],
-                phone=_p(info.a.text.strip()),
+                phone=_p(info.a.text.strip()) if info.a else "",
                 locator_domain=locator_domain,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
