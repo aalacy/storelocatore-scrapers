@@ -1,9 +1,36 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+import json
+
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
 def get_data():
+    page_urls = []
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
         granularity=Grain_8(),
@@ -60,8 +87,31 @@ def get_data():
 
                 location_type = "<MISSING>"
 
-                phone = "<LATER>"
-                hours = "<LATER>"
+                if page_url in page_urls:
+                    continue
+                page_urls.append(page_url)
+                page_response = session.get(page_url).text
+                json_objects = extract_json(page_response)
+
+                for item in json_objects:
+                    if "openingHoursSpecification" not in item.keys():
+                        continue
+
+                    hours = ""
+                    for hour_object in item["openingHoursSpecification"]:
+                        for day in hour_object["dayOfWeek"]:
+                            sta = hour_object["opens"]
+                            end = hour_object["closes"]
+                            if sta == "" and end == "":
+                                hours = hours + day + " closed, "
+
+                            else:
+                                hours = hours + day + " " + sta + "-" + end + ", "
+
+                    hours = hours[:-2]
+                    print(hours)
+                    phone = item["telephone"]
+                    break
 
                 yield {
                     "locator_domain": locator_domain,
