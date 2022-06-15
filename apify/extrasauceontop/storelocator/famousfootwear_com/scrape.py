@@ -29,6 +29,9 @@ def get_data():
         }
         response = session.post(url, headers=headers).json()
 
+        if len(response) == 0:
+            search.found_nothing()
+
         for location in response["results"]:
             locator_domain = "famousfootwear.com"
             page_url = "famousfootwear.com" + location["raw"]["storedetailurl"]
