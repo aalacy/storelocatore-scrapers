@@ -12,7 +12,7 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         try:
-            a = j['addresses'][0]
+            a = j["addresses"][0]
         except:
             a = dict()
 
@@ -22,10 +22,10 @@ def fetch_data(sgw: SgWriter):
         city = a.get("city")
         state = a.get("state")
         postal = a.get("postal")
-        country_code = a.get('country')
+        country_code = a.get("country")
         store_number = j.get("id")
-        location_name = j.get('name')
-        phone = j['phones'][0]['phone']
+        location_name = j.get("name")
+        phone = j["phones"][0]["phone"]
         latitude = j.get("latitude")
         longitude = j.get("longitude")
 
@@ -49,7 +49,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://holidaymarket.storebyweb.com/"
-    page_url = 'https://holidaymarket.storebyweb.com/s/1000-28/select-store'
+    page_url = "https://holidaymarket.storebyweb.com/s/1000-28/select-store"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
