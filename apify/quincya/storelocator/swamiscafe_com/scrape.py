@@ -20,54 +20,53 @@ def fetch_data(sgw: SgWriter):
     user_agent = (
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
-    driver = SgChrome(user_agent=user_agent).driver()
 
-    driver.get(base_link)
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get(base_link)
+        response = driver.page_source
+        base = BeautifulSoup(response, "lxml")
+        locator_domain = "swamiscafe.com"
 
-    base = BeautifulSoup(driver.page_source, "lxml")
-    locator_domain = "swamiscafe.com"
+        raw_data = base.find(id="popmenu-apollo-state").contents[0]
+        js = raw_data.split("STATE =")[1].split(";\n")[0]
+        store_data = json.loads(js)
 
-    raw_data = base.find(id="popmenu-apollo-state").contents[0]
-    js = raw_data.split("STATE =")[1].strip()[:-1]
-    store_data = json.loads(js)
+        for loc in store_data:
+            if "RestaurantLocation:" in loc:
+                store = store_data[loc]
 
-    for loc in store_data:
-        if "RestaurantLocation:" in loc:
-            store = store_data[loc]
+                location_name = store["name"]
+                street_address = store["streetAddress"]
+                city = store["city"]
+                state = store["state"]
+                zip_code = store["postalCode"]
+                country_code = "US"
+                location_type = "<MISSING>"
+                phone = store["displayPhone"]
+                hours_of_operation = " ".join(store["schemaHours"])
+                link = "https://www.swamiscafe.com/" + store["slug"]
+                store_number = store["id"]
+                latitude = store["lat"]
+                longitude = store["lng"]
 
-            location_name = store["name"]
-            street_address = store["streetAddress"]
-            city = store["city"]
-            state = store["state"]
-            zip_code = store["postalCode"]
-            country_code = "US"
-            location_type = "<MISSING>"
-            phone = store["displayPhone"]
-            hours_of_operation = " ".join(store["schemaHours"])
-            link = "https://www.swamiscafe.com/" + store["slug"]
-            store_number = store["id"]
-            latitude = store["lat"]
-            longitude = store["lng"]
-
-            sgw.write_row(
-                SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=link,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_code,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
                 )
-            )
-    driver.close()
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
