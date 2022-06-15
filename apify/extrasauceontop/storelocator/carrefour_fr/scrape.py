@@ -117,7 +117,7 @@ def get_data():
                             phone = a_tag["href"].replace("tel:", "")
                             break
 
-                    location_type = "<MISSING>"
+                    location_type = location["banner"]
                     country_code = "France"
 
                     if page_url != "https://www.carrefour.fr/magasin/":
