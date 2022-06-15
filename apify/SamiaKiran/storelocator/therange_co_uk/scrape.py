@@ -55,8 +55,8 @@ def fetch_data():
                 )
             if "Closed-Closed" in hours_of_operation:
                 continue
-            latitude = loc["geo"]["latitude"]
-            longitude = loc["geo"]["longitude"]
+            latitude = temp["geo"]["latitude"]
+            longitude = temp["geo"]["longitude"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
