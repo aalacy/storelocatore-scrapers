@@ -70,6 +70,8 @@ def fetch_data():
                 rawadd = rawadd.split("Ph.N")[0].strip()
             if " Hotline" in rawadd:
                 rawadd = rawadd.split(" Hotline")[0].strip()
+            if "Ph." in add:
+                add = add.split("Ph.")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
