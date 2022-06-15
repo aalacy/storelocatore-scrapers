@@ -30,7 +30,6 @@ def get_data():
         response = session.post(url, headers=headers).json()
 
         for location in response["results"]:
-            print("here")
             locator_domain = "famousfootwear.com"
             page_url = "famousfootwear.com" + location["raw"]["storedetailurl"]
             location_name = location["title"]
