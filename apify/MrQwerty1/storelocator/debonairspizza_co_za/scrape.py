@@ -23,6 +23,18 @@ def fetch_data(sgw: SgWriter):
             adr1 = a.get("line1") or ""
             adr2 = a.get("line2") or ""
             street_address = f"{adr1} {adr2}".strip()
+            if "(" in street_address:
+                street_address = (
+                    street_address.split("(")[0].strip()
+                    + " "
+                    + street_address.split(")")[1].strip()
+                )
+            if "{" in street_address:
+                street_address = (
+                    street_address.split("{")[0].strip()
+                    + " "
+                    + street_address.split("}")[0].strip()
+                )
             city = a.get("city")
             state = a.get("region")
             postal = a.get("postalCode")
