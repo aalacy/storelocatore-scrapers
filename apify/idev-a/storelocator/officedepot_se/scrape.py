@@ -22,9 +22,12 @@ def fetch_data():
             try:
                 _ = json.loads(loc.split("=")[1].split(";")[0].strip())
             except:
-                break
+                continue
+            if "Butiken har stängt" in _[7]:
+                continue
             raw_address = _[8]
             addr = raw_address.split(",")
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_[4],
