@@ -26,9 +26,10 @@ def fetch_data():
         if "Showroom" not in location_name:
             continue
         raw_data = poi_html.xpath("./td[1]/text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
         if not raw_data:
             raw_data = poi_html.xpath("./td[1]/p[2]/text()")
-        raw_data = [e.strip() for e in raw_data]
+            raw_data = [e.strip() for e in raw_data if e.strip()]
         raw_address = ", ".join(raw_data)
         addr = parse_address_intl(raw_address)
         hoo = poi_html.xpath("./td[2]/text()")
