@@ -371,4 +371,3 @@ if __name__ == "__main__":
         ) as http1:
             for rec in dattafetch(search, http1):
                 writer.write_row(rec)
-
