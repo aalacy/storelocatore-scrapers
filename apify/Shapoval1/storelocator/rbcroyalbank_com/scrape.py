@@ -89,6 +89,13 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = "; ".join(tmp)
             if hours_of_operation.count("Closed") == 7:
                 hours_of_operation = "<MISSING>"
+            status_h = j.get("storeStatus").get("status")
+            if (
+                hours_of_operation == "<MISSING>"
+                and status_h == "closed"
+                and "branch" in location_type
+            ):
+                hours_of_operation = "Closed"
 
             row = SgRecord(
                 locator_domain=locator_domain,

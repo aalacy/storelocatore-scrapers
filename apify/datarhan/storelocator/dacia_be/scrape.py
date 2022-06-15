@@ -61,24 +61,23 @@ def fetch_data():
     for start_url in start_urls:
         country_code = url_query_parameter(start_url, "country")
         all_coords = DynamicGeoSearch(
-            country_codes=[country_code], expected_search_radius_miles=200
+            country_codes=[country_code], expected_search_radius_miles=500
         )
         for lat, lng in all_coords:
             all_locations = session.get(start_url.format(lat, lng), headers=hdr).json()
             if not all_locations:
                 all_coords.found_nothing()
-            else:
-                all_coords.found_location_at(lat, lng)
             for poi in all_locations:
                 latitude = poi.get("geolocalization", {}).get("lat")
                 longitude = poi.get("geolocalization", {}).get("lon")
+                all_coords.found_location_at(latitude, longitude)
 
                 item = SgRecord(
                     locator_domain=domain,
                     page_url=page_urls[start_url.split("/")[2]],
                     location_name=poi["name"],
                     street_address=poi["streetAddress"],
-                    city=poi["locality"],
+                    city=poi["locality"].split(",")[0],
                     state="",
                     zip_postal=poi.get("postalCode"),
                     country_code=poi["country"],
@@ -102,7 +101,8 @@ def scrape():
                     SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.LOCATION_TYPE,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

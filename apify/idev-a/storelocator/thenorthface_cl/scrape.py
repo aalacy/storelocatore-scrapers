@@ -28,7 +28,7 @@ headers = {
 def fetch_data():
     with SgChrome() as driver:
         driver.get(base_url)
-        driver.wait_for_request(json_url)
+        driver.wait_for_request(json_url, timeout=30)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("main div.main-page-ioz div.pagebuilder-column")
         for _ in locations:
