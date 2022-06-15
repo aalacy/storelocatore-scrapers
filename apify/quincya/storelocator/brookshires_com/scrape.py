@@ -1,3 +1,4 @@
+import ssl
 import time
 
 import undetected_chromedriver as uc
@@ -15,6 +16,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 log = sglog.SgLogSetup().get_logger(logger_name="brookshires.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
