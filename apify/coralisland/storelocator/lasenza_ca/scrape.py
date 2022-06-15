@@ -34,8 +34,8 @@ def fetch_data():
         store_number = key
         page_url = "https://www.lasenza.com/us/store-details/?StoreID=" + store_number
         phone = store["phone"]
-        if '/' in phone:
-        phone=phone.split("/")[0]
+        if "/" in phone:
+            phone = phone.split("/")[0]
         location_type = "La Senza Store"
         latitude = store["latitude"]
         longitude = store["longitude"]
