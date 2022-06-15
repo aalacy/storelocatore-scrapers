@@ -11,11 +11,11 @@ def get_data():
     page_urls = []
     for search_lat, search_lon in search:
         url = (
-            "https://platform.cloud.coveo.com/rest/search/v2?sitecoreItemUri=sitecore%3A%2F%2Fweb%2F%7BC020E446-D3F3-4E7C-BAF2-EEB5B6D0E0B9%7D%3Flang%3Den%26amp%3Bver%3D1&siteName=Famous%20Footwear&actionsHistory=%5B%5D&referrer=https%3A%2F%2Fwww.famousfootwear.com%2F%3Fpartnerid%3DAdwords%26cpc%3DAdwords%26campaign%3DFF_Brand%2BCore_USA_Exact%26group%3DCore_Exact%26cpckw%3Dfamous%2Bfootwear%26cvosrc%3Dppc.google.famous%2Bfootwear%26matchtype%3De%26gclid%3DCj0KCQjwuMuRBhCJARIsAHXdnqMM0KScIFZq1bvfOSNVSNkUCenn0W3iQlFLjnMaorVWeehvZbyPGCsaAtTqEALw_wcB%26gclsrc%3Daw.ds&analytics=%7B%22clientId%22%3A%227c598e48-42e1-251a-f99f-99acdec5d752%22%2C%22documentLocation%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2Fstores%3Ficid%3Dftr_store_click_storefinder%22%2C%22documentReferrer%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2F%3Fpartnerid%3DAdwords%26cpc%3DAdwords%26campaign%3DFF_Brand%2BCore_USA_Exact%26group%3DCore_Exact%26cpckw%3Dfamous%2Bfootwear%26cvosrc%3Dppc.google.famous%2Bfootwear%26matchtype%3De%26gclid%3DCj0KCQjwuMuRBhCJARIsAHXdnqMM0KScIFZq1bvfOSNVSNkUCenn0W3iQlFLjnMaorVWeehvZbyPGCsaAtTqEALw_wcB%26gclsrc%3Daw.ds%22%2C%22pageId%22%3A%22%22%7D&visitorId=7c598e48-42e1-251a-f99f-99acdec5d752&isGuestUser=false&aq=(%24qf(function%3A'dist(%40latitude%2C%20%40longitude%2C%20"
+            "https://platform.cloud.coveo.com/rest/search/v2?sitecoreItemUri=sitecore%3A%2F%2Fweb%2F%7BC020E446-D3F3-4E7C-BAF2-EEB5B6D0E0B9%7D%3Flang%3Den%26amp%3Bver%3D1&siteName=Famous%20Footwear&actionsHistory=%5B%5D&referrer=https%3A%2F%2Fwww.famousfootwear.com%2F&analytics=%7B%22clientId%22%3A%227c598e48-42e1-251a-f99f-99acdec5d752%22%2C%22documentLocation%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2Fstores%3Ficid%3Dftr_store_click_storefinder%22%2C%22documentReferrer%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2F%22%2C%22pageId%22%3A%22%22%7D&visitorId=7c598e48-42e1-251a-f99f-99acdec5d752&isGuestUser=false&aq=(%24qf(function%3A'dist(%40latitude%2C%20%40longitude%2C%20"
             + str(search_lat)
             + "%2C%20"
             + str(search_lon)
-            + ")'%2C%20fieldName%3A%20'distance'))%20(%40distance%3C%3D1000000000)&cq=%40source%3D%3D20000_FamousFootwear&searchHub=FamousStoreLocator&locale=en&maximumAge=900000&firstResult=0&numberOfResults=100&excerptLength=200&enableDidYouMean=false&sortCriteria=%40distance%20ascending&queryFunctions=%5B%5D&rankingFunctions=%5B%5D&facetOptions=%7B%7D&categoryFacets=%5B%5D&retrieveFirstSentences=true&timezone=America%2FChicago&enableQuerySyntax=false&enableDuplicateFiltering=false&enableCollaborativeRating=false&debug=false&context=%7B%22isAnonymous%22%3A%22true%22%2C%22device%22%3A%22Default%22%2C%22website%22%3A%22FamousFootwear%22%7D&allowQueriesWithoutKeywords=true"
+            + ")'%2C%20fieldName%3A%20'distance'))%20(%40distance%3C%3D40233.5)&cq=%40source%3D%3D20000_FamousFootwear_Catalog&searchHub=FamousStoreLocator&locale=en&maximumAge=900000&firstResult=0&numberOfResults=10&excerptLength=200&enableDidYouMean=false&sortCriteria=%40distance%20ascending&queryFunctions=%5B%5D&rankingFunctions=%5B%5D&facetOptions=%7B%7D&categoryFacets=%5B%5D&retrieveFirstSentences=true&timezone=America%2FChicago&enableQuerySyntax=false&enableDuplicateFiltering=false&enableCollaborativeRating=false&debug=false&context=%7B%22isAnonymous%22%3A%22true%22%2C%22device%22%3A%22Default%22%2C%22website%22%3A%22FamousFootwear%22%7D&allowQueriesWithoutKeywords=true"
         )
 
         headers = {
@@ -30,7 +30,6 @@ def get_data():
         response = session.post(url, headers=headers).json()
 
         for location in response["results"]:
-
             locator_domain = "famousfootwear.com"
             page_url = "famousfootwear.com" + location["raw"]["storedetailurl"]
             location_name = location["title"]
