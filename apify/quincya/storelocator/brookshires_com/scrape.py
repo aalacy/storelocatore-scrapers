@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
     base_link = "https://www.brookshires.com/stores/?coordinates=33.081696254439834,-95.94856100000001&zoom=4"
 
     options = uc.ChromeOptions()
-    options.headless = False
+    options.headless = True
 
     with uc.Chrome(
         driver_executable_path=ChromeDriverManager().install(), options=options
