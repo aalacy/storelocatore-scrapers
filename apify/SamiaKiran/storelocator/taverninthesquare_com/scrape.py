@@ -53,6 +53,9 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .split("|")
             )
+            if len(address) > 3:
+                if "GM" in address[-3]:
+                    address = address[:-3]
             phone = address[-1]
             address = " ".join(address[:-1])
             address = address.replace(",", " ")
