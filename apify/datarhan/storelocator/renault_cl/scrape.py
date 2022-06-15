@@ -10,7 +10,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     start_url = "https://www.renault.cl/concesionarios/"
     domain = "renault.cl"
@@ -18,10 +18,7 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    session.get(
-        "https://www.renault.cl/concesionarios/rm-region-metropolitana-de-santiago/todos/venta",
-        headers=hdr,
-    )
+    session.get(start_url, headers=hdr)
     data = session.get(
         "https://middleware.dercocenter.cl/api/jsons/v4/subsidiaries/filters",
         headers=hdr,
@@ -56,7 +53,10 @@ def fetch_data():
             types = poi_html.xpath(
                 './/div[@class="subsidiary-card-body"]/ul/li/h5/text()'
             )
-            location_type = ", ".join([e.strip() for e in types if e.strip()])
+            types = [e.strip() for e in types if e.strip()]
+            if "Venta" not in types:
+                continue
+            location_type = ", ".join(types)
 
             item = SgRecord(
                 locator_domain=domain,

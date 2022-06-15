@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import dirtyjson as json
 from sgpostal.sgpostal import parse_address_intl
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 import os
 
@@ -33,7 +32,6 @@ base_url = "https://www.specsavers.nl/winkelzoeker/winkeloverzicht"
 
 def fetch_data():
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
     ) as driver:
         driver.get(base_url)
@@ -70,7 +68,7 @@ def fetch_data():
                     coord = {"lat": "", "lng": ""}
 
                 raw_address = (
-                    " ".join(_addr).replace("\n", "").replace("Z.O.", "").strip()
+                    ", ".join(_addr).replace("\n", "").replace("Z.O.", "").strip()
                 )
                 addr = parse_address_intl(raw_address + ", Netherlands")
                 if sp1.select("div.field-name-field-opening-times span.oh-display"):
@@ -88,17 +86,24 @@ def fetch_data():
                 phone = ""
                 if sp1.select_one("a.contact--store-telephone"):
                     phone = sp1.select_one("a.contact--store-telephone").text.strip()
+
+                location_type = (
+                    link.find_parent("div")
+                    .find_parent()
+                    .find_previous_sibling()
+                    .text.strip()
+                )
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
                     street_address=_addr[0].replace("\n", "").replace(",", " ").strip(),
                     city=addr.city or sp1.h1.text.strip(),
-                    state=addr.state,
-                    zip_postal=addr.postcode,
+                    zip_postal=_addr[-2],
                     country_code="Netherlands",
                     phone=phone,
                     latitude=coord["lat"],
                     longitude=coord["lng"],
+                    location_type=location_type,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                     raw_address=raw_address,

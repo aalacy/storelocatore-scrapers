@@ -833,9 +833,9 @@ def fix_ph(x):
         pass
 
     try:
-        if len(x) < ((lenp / 2) - 2):
+        if len(x) < ((lenp / 2) - 2) or len(x) <= 4:
             logzilla.error(f"Phone \n\n{x}\n{copx}\n\n")
-            x = copx
+            return copx
     except Exception:
         pass
 
