@@ -53,7 +53,7 @@ def fetch_data(sgw: SgWriter):
             city = store["Suburb"].split(",")[-1].strip()
             state = store["State"]
             zip_code = store["Postcode"]
-            country_code = "NZ"
+            country_code = "AU"
             phone = store["Phone"]
             store_number = store["Id"]
             location_type = store["StoreTypeName"]
