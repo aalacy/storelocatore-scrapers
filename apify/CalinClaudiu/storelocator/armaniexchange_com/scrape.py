@@ -178,7 +178,6 @@ def parse(data):
                     )
                 )
         k["hours"] = "; ".join(j)
-        print(k["hours"])
     except Exception as e:
         logzilla.error("hours", exc_info=e)
         k["hours"] = SgRecord.MISSING
