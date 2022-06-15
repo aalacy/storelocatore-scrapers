@@ -3,7 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
+import json
+from bs4 import BeautifulSoup as bs
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -39,7 +40,7 @@ def fetch_data():
                 latitude=_[0],
                 longitude=_[1],
                 locator_domain=locator_domain,
-                hours_of_operation=_[7],
+                hours_of_operation="; ".join(bs(_[7], "lxml").stripped_strings),
                 raw_address=raw_address,
             )
 
