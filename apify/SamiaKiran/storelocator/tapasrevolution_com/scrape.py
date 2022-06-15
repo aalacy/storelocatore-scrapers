@@ -41,15 +41,19 @@ def fetch_data():
                 raw_address = str(temp).split("Address:</h2>")[1].split("</p>")[0]
             raw_address = raw_address.split(">")[1]
             temp = temp.get_text(separator="|", strip=True).replace("|", " ").lower()
-            location_name = soup.find("h2").text
-
+            location_name = (
+                soup.find("h2")
+                .text.replace("Now open -", "")
+                .replace("Now OPEN -", "")
+                .replace("nOW OPEN -", "")
+            )
             hours_of_operation = temp.split("opening hours")[1].split("bookings")[0]
-            if "we" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("we")[0]
+            if "we do not" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("we do not")[0]
             if "aperitivo" in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("aperitivo")[0]
             hours_of_operation = hours_of_operation.replace(":", "")
-            phone = temp
+            phone = temp.split("phone:")[1].split("e-mail")[0]
             phone = phone.split()
             try:
                 phone = phone[0] + " " + phone[1] + " " + phone[2]
@@ -72,6 +76,10 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            street_address = street_address.replace("Tapas Revolution", "").replace(
+                city, ""
+            )
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,
