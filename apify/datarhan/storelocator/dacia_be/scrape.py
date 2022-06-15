@@ -77,7 +77,7 @@ def fetch_data():
                     page_url=page_urls[start_url.split("/")[2]],
                     location_name=poi["name"],
                     street_address=poi["streetAddress"],
-                    city=poi["locality"],
+                    city=poi["locality"].split(",")[0],
                     state="",
                     zip_postal=poi.get("postalCode"),
                     country_code=poi["country"],
