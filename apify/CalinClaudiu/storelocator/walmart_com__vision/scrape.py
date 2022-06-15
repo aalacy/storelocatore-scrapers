@@ -101,7 +101,7 @@ def other_source(state):
                 sec = get_json(driver.page_source)
                 allcities = sec["directory"]["cityData"]["cities"]
             except Exception as e:
-                logger.error(f"{driver.page_source}",exc_info = e)
+                logger.error(f"{driver.page_source}", exc_info=e)
                 raise
             for city in allcities:
                 data = str(list(i for i in city.items()))
