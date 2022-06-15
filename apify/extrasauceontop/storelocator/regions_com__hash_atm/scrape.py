@@ -2,8 +2,9 @@ import re
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape import simple_scraper_pipeline as sp
+import html
 
 
 def extract_json(html_string):
@@ -41,19 +42,22 @@ def get_data():
     page_urls = []
     session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_2(),
+        expected_search_radius_miles=5,
+        max_search_results=25,
     )
 
     for search_code in search:
-
+        search.found_nothing()
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
             + search_code
             + "&type=branch"
         )
 
-        response = session.get(url).text
-
+        response_stuff = session.get(url)
+        response = response_stuff.text
         first_objects = extract_json(response)
         soup = bs(response, "html.parser")
         grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
@@ -94,38 +98,46 @@ def get_data():
             country_code = "US"
             store_number = location["itemId"]
             location_type = "atm"
-            location_type_check = location["type"]
+            location_type_check = location["type"].lower()
 
             if page_url != "<MISSING>":
-                page_url = page_url.lower()
-                if page_url in page_urls:
-                    continue
-
-                response = session.get("https://" + page_url).text
-                if (
-                    "ATM Location and Features" not in response
-                    and "-atm-" not in page_url
-                ):
-                    continue
-                other_check = "passing"
-                json_objects = extract_json(response)
-
-                for item in json_objects:
-                    if "name" not in item.keys():
+                try:
+                    page_url = page_url.lower()
+                    if page_url in page_urls:
                         continue
-                    else:
-                        try:
-                            phone = item["telephone"].replace("+", "")
-                        except Exception:
-                            phone = "<MISSING>"
-                            pass
 
-                hours_soup = bs(response, "html.parser")
-                lis = hours_soup.find_all("li")
+                    response_stuff = session.get("https://" + page_url)
+                    response = response_stuff.text
 
-                for li in lis:
-                    if "ATM Hours" in li.text.strip():
-                        hours = li.text.strip().replace("ATM Hours: ", "")
+                    if (
+                        "ATM Location and Features" not in response
+                        and "-atm-" not in page_url
+                    ):
+                        continue
+                    other_check = "passing"
+                    json_objects = extract_json(response)
+
+                    for item in json_objects:
+                        if "name" not in item.keys():
+                            continue
+                        else:
+                            try:
+                                phone = item["telephone"].replace("+", "")
+                            except Exception:
+                                phone = "<MISSING>"
+                                pass
+
+                    hours_soup = bs(response, "html.parser")
+                    lis = hours_soup.find_all("li")
+
+                    for li in lis:
+                        if "ATM Hours" in li.text.strip():
+                            hours = li.text.strip().replace("ATM Hours: ", "")
+
+                except Exception:
+                    phone = "<MISSING>"
+                    hours = "<MISSING>"
+
             else:
                 phone = "<MISSING>"
                 hours = "<MISSING>"
@@ -134,20 +146,22 @@ def get_data():
             if location_type_check != "atm" and other_check != "passing":
                 continue
 
+            hours = hours.replace("<br/>", " ").strip()
+
             yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
+                "locator_domain": html.unescape(locator_domain),
+                "page_url": html.unescape(page_url),
+                "location_name": html.unescape(location_name),
                 "latitude": latitude,
                 "longitude": longitude,
-                "city": city,
+                "city": html.unescape(city),
                 "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
+                "street_address": html.unescape(address),
+                "state": html.unescape(state),
+                "zip": html.unescape(zipp),
                 "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
+                "location_type": html.unescape(location_type),
+                "hours": html.unescape(hours),
                 "country_code": country_code,
             }
 

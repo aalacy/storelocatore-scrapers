@@ -50,7 +50,9 @@ def fetch_data(sgw: SgWriter):
             if (
                 "coming soon"
                 in str(store_sel.xpath('//div[@class="clearfix"]//text()')[:5]).lower()
-            ):
+            ) or "coming fall 2022" in str(
+                store_sel.xpath('//div[@class="clearfix"]//text()')[:5]
+            ).lower():
                 continue
         except:
             pass

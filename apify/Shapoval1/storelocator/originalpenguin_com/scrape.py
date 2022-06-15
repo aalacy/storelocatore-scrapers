@@ -45,6 +45,8 @@ def fetch_data(sgw: SgWriter):
 
     js = r.json()
     for j in js["locations"]:
+
+        page_url = "https://www.originalpenguin.com/pages/find-a-store"
         line = "".join(j.get("visibleAddress")).replace("\n", "").strip()
         a = usaddress.tag(line, tag_mapping=tag)[0]
         street_address = f"{j.get('address1')} {j.get('address2')}".strip()
@@ -59,15 +61,31 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name")
         latitude = j.get("lat")
         longitude = j.get("lng")
-        tmp = ["fri", "mon", "sat", "sun", "thu", "tue", "wed"]
-        _tmp = []
-        for i in tmp:
-            days = i
-            time = j.get("hours").get("hoursOfOperation").get(i)
-            line = f"{days} {time}"
-            _tmp.append(line)
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        page_url = "https://www.originalpenguin.com/pages/find-a-store"
+        hours = j.get("hours")
+        hours_of_operation = "<MISSING>"
+        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        tmp = []
+        if "hoursOfOperation" in hours:
+            for d in days:
+                day = str(d).capitalize()
+                time = hours.get("hoursOfOperation").get(f"{d}")
+                line = f"{day} {time}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+        r = session.get(
+            "https://api.zenlocator.com/v1/apps/app_7tx9r8kr/init?widget=MAP"
+        )
+        js = r.json()["hours"]
+        for j in js:
+            hours_id = j.get("id")
+            _tmp = []
+            if hours_id == hours:
+                for d in days:
+                    day = str(d).capitalize()
+                    time = j.get("hoursOfOperation").get(f"{d}")
+                    line = f"{day} {time}"
+                    _tmp.append(line)
+                hours_of_operation = "; ".join(_tmp)
 
         row = SgRecord(
             locator_domain=locator_domain,

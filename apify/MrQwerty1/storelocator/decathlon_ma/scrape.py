@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     links = tree.xpath("//a[@class='card']/@href")
 
     for t in text:
-        if '"lat"' not in t:
+        if '"lat"' not in t or not links:
             continue
         j = json.loads(t.split(");")[0].replace("&quot;", "'"))
         location_name = j.get("title")
