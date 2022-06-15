@@ -819,10 +819,27 @@ def fix_comma(x):
 
 
 def fix_ph(x):
+    x = str(x).strip()
+    lenp = len(x)
+    copx = x
     try:
-        return x.split(":")[0]
+        x = x.split(":")[0]
     except Exception:
-        return x
+        pass
+
+    try:
+        x = x.rsplit("-", 1)[0]
+    except Exception:
+        pass
+
+    try:
+        if len(x) < ((lenp / 2) - 2) or len(x) <= 3:
+            logzilla.error(f"Phone \n\n{x}\n{copx}\n\n")
+            return copx
+    except Exception:
+        pass
+
+    return x
 
 
 def scrape():

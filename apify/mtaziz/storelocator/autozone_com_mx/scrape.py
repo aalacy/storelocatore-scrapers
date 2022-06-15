@@ -1,4 +1,3 @@
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -6,14 +5,11 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tenacity import retry, stop_after_attempt
-import tenacity
 from datetime import datetime
 from lxml import html
-import time
 import ssl
-import random
 import json
+from sgselenium import SgChrome
 
 
 logger = SgLogSetup().get_logger(logger_name="autozone_com_mx")
@@ -37,17 +33,6 @@ headers = {
 }
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
-def get_response(url):
-    with SgRequests() as http:
-        response = http.get(url, headers=headers)
-        time.sleep(random.randint(3, 7))
-        if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
-            return response
-        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
-
-
 def convert_time_to_p(time_str):
     converted_time = None
     d = datetime.strptime(time_str, "%H%M")
@@ -67,15 +52,18 @@ def get_hoo(hoo_json):
     return ", ".join(hoo)
 
 
-def fetch_records(lat, lng, sgw: SgWriter):
+def fetch_records(lat, lng, search_mx, sgw: SgWriter, driver):
     try:
         url = f"https://www.autozone.com.mx/ubicaciones/search-embed.html?q={lat},{lng}"
-        r = get_response(url)
-        sel = html.fromstring(r.text, "lxml")
+        logger.info(f"PullContentFor: {url}")
+        driver.get(url)
+        pgsrc = driver.page_source
+        sel = html.fromstring(pgsrc, "lxml")
         lis = sel.xpath('//ol[contains(@class, "location-list-results")]/li')
         latlng_data = "".join(sel.xpath('//script[@id="js-map-config-dir-map"]/text()'))
         latlng_js = json.loads(latlng_data)
         locs = latlng_js["locs"]
+        logger.info(f"StoreCount: {len(locs)} | {url}")
 
         for idx, l in enumerate(lis):
             purl = l.xpath('.//a[contains(@href, ".html")]/@href')[0]
@@ -108,6 +96,7 @@ def fetch_records(lat, lng, sgw: SgWriter):
             store_number = locs[idx]["id"]
             latitude = locs[idx]["latitude"]
             longitude = locs[idx]["longitude"]
+            search_mx.found_location_at(latitude, longitude)
             logger.info(f"Latitude: {latitude}")
 
             location_type = SgRecord.MISSING
@@ -158,10 +147,14 @@ def fetch_data(sgw: SgWriter):
         use_state=False,
     )
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        task = [executor.submit(fetch_records, lat, lng, sgw) for lat, lng in search_mx]
-        for future in as_completed(task):
-            future.result()
+    with SgChrome() as driver:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            task = [
+                executor.submit(fetch_records, lat, lng, search_mx, sgw, driver)
+                for lat, lng in search_mx
+            ]
+            for future in as_completed(task):
+                future.result()
 
 
 def scrape():

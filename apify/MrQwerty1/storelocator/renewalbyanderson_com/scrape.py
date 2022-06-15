@@ -56,16 +56,6 @@ def get_data(page_url, sgw: SgWriter):
             inter = inter.lower()
             if "(" in inter:
                 inter = inter.split("(")[0].strip()
-            if "showroom closed" in inter:
-                inter = "Closed"
-            if "/" in inter:
-                inter = inter.split("/")[0].strip()
-            if "ment" in inter and "pm " not in inter:
-                continue
-            if ". please" in inter:
-                inter = inter.split(". please")[0].strip()
-            if "or by" in inter:
-                inter = inter.split("or by")[0].strip()
 
             _tmp.append(f"{day}: {inter}")
 
