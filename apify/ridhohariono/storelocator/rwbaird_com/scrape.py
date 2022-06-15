@@ -107,22 +107,27 @@ def fetch_data():
                         .text.strip()
                     )
                 except:
-                    location_name = (
-                        store.find(
-                            "span", {"data-tag": "qa-modernwithtopbar-header-city"}
-                        )
-                        .text.replace(",", "")
-                        .strip()
+                    location_name = store.find(
+                        "span", {"data-tag": "qa-modernwithtopbar-header-city"}
                     )
+                    if not location_name:
+                        location_name = ""
+                    else:
+                        location_name = location_name.text.replace(",", "").strip()
                 addr = info["address"]
                 street_address = (
                     addr["streetAddress"]
                     .replace("One Boulder Plaza,", "")
-                    .replace(", Southgatge Shopping Center", "")
+                    .replace(", Southgate Shopping Center", "")
+                    .replace("Market Tower", "")
+                    .replace(",Waukesha", "")
                     .strip()
                     .rstrip(",")
+                    .strip()
                 )
                 city = addr["addressLocality"]
+                if not location_name:
+                    location_name = city
                 state = addr["addressRegion"]
                 zip_postal = addr["postalCode"]
                 country_code = addr["addressCountry"]

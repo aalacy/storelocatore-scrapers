@@ -1,3 +1,5 @@
+import re
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -5,19 +7,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
-from sgscrape.sgpostal import parse_address, International_Parser
-
-
-def get_international(line):
-    adr = parse_address(International_Parser(), line)
-    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-        "None", ""
-    ).strip()
-    city = adr.city
-    state = adr.state
-    postal = adr.postcode
-
-    return street_address, city, state, postal
 
 
 def get_urls():
@@ -40,7 +29,7 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//h1[contains(@class, 'pub__h1')]/text()")
     ).strip()
     lines = tree.xpath(
-        "//h2[./strong[contains(text(), 'Address')]]/following-sibling::p[1]/text()"
+        "//h2[./strong[contains(text(), 'Address')]]/following-sibling::p[1]/text()|//p[./strong[contains(text(), 'Address')]]/following-sibling::p/text()"
     )
     lines = list(filter(None, [line.strip() for line in lines]))
     if "T:" in lines[-1]:
@@ -56,20 +45,55 @@ def get_data(page_url, sgw: SgWriter):
             + raw_address[raw_address.index(")") + 1 :]
         )
     raw_address = raw_address.replace(",,", ",").replace(", ,", ",")
-    street_address, city, state, postal = get_international(raw_address)
+    street_address, csz = SgRecord.MISSING, SgRecord.MISSING
+    for li in lines:
+        if li[0].isdigit():
+            street_address = li
+            continue
+        if re_state.findall(li) or re_postal.findall(li):
+            csz = li
 
-    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
-    try:
+    if street_address == SgRecord.MISSING:
+        street_address = lines[0]
+
+    if street_address.endswith(","):
+        street_address = street_address[:-1]
+    state = "".join(re_state.findall(csz))
+    postal = "".join(re_postal.findall(csz))
+    city = csz.replace(postal, "").replace(state, "").strip()
+
+    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href|//iframe/@src"))
+    if "/@" in text:
         latitude = text.split("@")[1].split(",")[0]
         longitude = text.split("@")[1].split(",")[1]
-    except IndexError:
+    elif "embed?" in text:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    else:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     hours = tree.xpath(
-        "//h4[./strong[contains(text(), 'Store')]]/following-sibling::p/text()"
+        "//h4[./strong[contains(text(), 'Store')]]/following-sibling::p/text()|//h3[./strong[contains(text(), 'Store')]]/following-sibling::p/text()"
     )
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = ";".join(hours)
+
+    if not hours:
+        _tmp = []
+        _hours = tree.xpath(
+            "//p[./strong[contains(text(), 'Hours')]]/following-sibling::p"
+        )
+        for h in _hours:
+            day = "".join(h.xpath("./strong/text()")).strip()
+            inter = "".join(h.xpath("./text()")).replace("-", "").strip()
+            if not inter:
+                continue
+            _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+
+    if ";*" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split(";*")[0].strip()
 
     row = SgRecord(
         page_url=page_url,
@@ -79,9 +103,7 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code="AU",
-        store_number=SgRecord.MISSING,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
@@ -95,13 +117,15 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
+    re_state = re.compile(r"[A-Z]{2,3}")
+    re_postal = re.compile(r"\d{4}")
     locator_domain = "https://www.ikea.com/au"
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
