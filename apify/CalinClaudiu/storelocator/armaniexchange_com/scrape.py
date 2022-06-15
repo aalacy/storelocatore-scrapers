@@ -149,6 +149,17 @@ def parse(data):
     except Exception:
         pass
 
+    def timeConvert(hr):
+        hr = str(hr)
+        if len(hr) > 3:
+            hr1 = hr[:2]
+            hr2 = hr[2:]
+            return str(hr1 + ":" + hr2)
+        else:
+            hr1 = hr[:1]
+            hr2 = hr[1:]
+            return str(hr1 + ":" + hr2)
+
     try:
         j = []
         k["hours"] = soup.find("div", {"data-days": True})["data-days"]
@@ -161,17 +172,9 @@ def parse(data):
                     str(
                         i["day"]
                         + ": "
-                        + str(
-                            str(int(i["intervals"][0]["start"]) / 100)
-                            + ":"
-                            + str(int(i["intervals"][0]["start"]) % 100)
-                        )
+                        + str(str(timeConvert(i["intervals"][0]["start"])))
                         + "-"
-                        + str(
-                            str(int(i["intervals"][0]["end"]) / 100)
-                            + ":"
-                            + str(int(i["intervals"][0]["end"]) % 100)
-                        )
+                        + str(str(timeConvert(i["intervals"][0]["end"])))
                     )
                 )
         k["hours"] = "; ".join(j)
