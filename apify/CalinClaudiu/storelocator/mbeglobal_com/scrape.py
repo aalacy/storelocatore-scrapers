@@ -123,6 +123,13 @@ def ret_record(record):
     state = parsed.state if parsed.state else MISSING
     zip_postal = parsed.postcode if parsed.postcode else MISSING
     raw_address = re.sub("[\t\r\n ]+", " ", str(raw_address).strip())
+
+    if city == MISSING:
+        try:
+            city = data1[-1]
+        except Exception:
+            pass
+
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
