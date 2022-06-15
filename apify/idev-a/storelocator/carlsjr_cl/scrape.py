@@ -94,12 +94,14 @@ def fetch_data():
                         times = list(_hr2.find_parent().stripped_strings)[-1]
                         if times:
                             hours.append(f"Sunday: {times}")
-                    driver.get(
+                    url = (
                         map_url
                         + sp1.select_one("div.elementor-widget-google_maps").iframe[
                             "src"
                         ]
                     )
+                    logger.info(url)
+                    driver.get(url)
                     WebDriverWait(driver, 10).until(url_has_at())
                     coord = (
                         driver.current_url.split("/@")[1].split("/data")[0].split(",")

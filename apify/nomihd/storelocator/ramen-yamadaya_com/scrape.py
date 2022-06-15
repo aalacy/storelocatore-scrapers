@@ -25,21 +25,32 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
 }
 
-json_data = {
-    "operationName": "restaurantWithLocations",
-    "variables": {
-        "restaurantId": 12468,
-    },
-    "extensions": {
-        "operationId": "PopmenuClient/28869e45cf93d362482ad02c04d4f587",
-    },
-}
-
 
 def fetch_data():
     # Your scraper here
 
     with SgRequests() as session:
+        js_req = session.get(
+            "https://www.ramen-yamadaya.com/webpack/production/consumer-bundle.modern_consumer.84c4abe37cb67d1980f6.js",
+            headers=headers,
+        )
+        ID = (
+            js_req.text.split('"restaurantWithLocations":"')[1]
+            .strip()
+            .split('"')[0]
+            .strip()
+        )
+        log.info(ID)
+
+        json_data = {
+            "operationName": "restaurantWithLocations",
+            "variables": {
+                "restaurantId": 12468,
+            },
+            "extensions": {
+                "operationId": "PopmenuClient/" + ID,
+            },
+        }
         stores_req = session.post(
             "https://www.ramen-yamadaya.com/graphql", headers=headers, json=json_data
         )
@@ -50,7 +61,11 @@ def fetch_data():
             locator_domain = website
 
             location_name = store["name"]
-            page_url = "https://www.ramen-yamadaya.com/" + store["slug"]
+            if "downtown-los-angeles" == store["slug"]:
+                page_url = "https://www.ramen-yamadaya.com/menu-dtla"
+            else:
+                page_url = "https://www.ramen-yamadaya.com/" + store["slug"]
+
             location_type = "<MISSING>"
 
             street_address = store["streetAddress"]
@@ -69,7 +84,7 @@ def fetch_data():
                 curr_time = hour.split(" ", 1)[1].strip()
                 if day in hours_dict:
                     time = hours_dict[day]
-                    hours_dict[day] = time + ", " + curr_time
+                    hours_dict[day] = curr_time + ", " + time
                 else:
                     hours_dict[day] = curr_time
 

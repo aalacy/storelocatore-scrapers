@@ -54,11 +54,8 @@ def get_data():
             )
         ]
 
-    for url in region_urls:
-        log.info("url: " + url)
-        with SgFirefox(
-            block_third_parties=True, proxy_country="fr", is_headless=False
-        ) as driver:
+        for url in region_urls:
+            log.info("url: " + url)
             driver.get(url)
             response = driver.page_source
             soup = bs(response, "html.parser")
@@ -76,6 +73,7 @@ def get_data():
                     driver.get(sub_url)
                     response = driver.page_source
                     json_objects = extract_json(response)
+                    json_objects[1]["search"]["data"]["stores"]
                 except Exception:
                     driver.get(sub_url)
                     response = driver.page_source
@@ -97,8 +95,11 @@ def get_data():
                     store_number = location["storeId"]
                     address = location["address"]["address1"].strip()
 
-                    if address[-1] == "0":
-                        address = address[:-2]
+                    try:
+                        if address[-1] == "0":
+                            address = address[:-2]
+                    except Exception:
+                        address = "<MISSING>"
 
                     state = "<MISSING>"
                     zipp = location["address"]["postalCode"]
@@ -116,7 +117,7 @@ def get_data():
                             phone = a_tag["href"].replace("tel:", "")
                             break
 
-                    location_type = "<MISSING>"
+                    location_type = location["banner"]
                     country_code = "France"
 
                     if page_url != "https://www.carrefour.fr/magasin/":
@@ -145,7 +146,7 @@ def get_data():
 
                     else:
                         hours = "<MISSING>"
-
+                    log.info(location_name)
                     yield {
                         "locator_domain": locator_domain,
                         "page_url": page_url,
@@ -165,7 +166,6 @@ def get_data():
 
 
 def scrape():
-
     try:
         proxy_pass = os.environ["PROXY_PASSWORD"]
 
