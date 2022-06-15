@@ -28,7 +28,7 @@ def get_page_urls():
         url = start_url + str(x) + "/?s"
 
         try:
-            with SgRequests as session:
+            with SgRequests() as session:
                 response = session.get(url, headers=headers).text
 
         except Exception:
@@ -63,7 +63,8 @@ def get_page_urls():
 
         for link in links:
             final_links.append(link)
-
+    log.info("links")
+    log.info(len(final_links))
     return final_links
 
 
