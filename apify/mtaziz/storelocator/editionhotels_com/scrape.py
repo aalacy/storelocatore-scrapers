@@ -108,7 +108,7 @@ def fetch_data_for_non_api_based_child_brands():
     total = 0
     items = []
     regions_submit_search_urls = get__regions_submit_search_urls()
-    with SgChrome(is_headless=True) as driver:
+    with SgChrome(is_headless=True, driver_wait_timeout=180) as driver:
         for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
             page_number_second = 1
             url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
