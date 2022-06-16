@@ -12,7 +12,7 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or "<MISSING>"
     state = adr.state
     postal = adr.postcode
     country = adr.country
@@ -39,13 +39,19 @@ def fetch_data(sgw: SgWriter):
             d.xpath(".//div[@class='contact-address']/text()")
         ).strip()
         street_address, city, state, postal, country = get_international(raw_address)
+        if city[0].isdigit():
+            postal = city
+            city = SgRecord.MISSING
+        if city[-1].isdigit():
+            postal = city.split()[-1]
+            city = city.replace(postal, "").strip()
         phone = (
             "".join(d.xpath(".//div[@class='contact-tel']/text()"))
             .replace("TEL:", "")
             .strip()
         )
         text = "".join(d.xpath(".//div[@class='contact-others']/a/@href"))
-        longitude, latitude = get_coords(text)
+        latitude, longitude = get_coords(text)
 
         row = SgRecord(
             page_url=page_url,

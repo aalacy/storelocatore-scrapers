@@ -20,13 +20,14 @@ def fetch_data(sgw: SgWriter):
     for b in block:
 
         page_url = "".join(b.xpath(".//@href"))
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         location_name = "".join(
             tree.xpath('//h1[@class="hero__heading heading"]/text()')
         )
+        if location_name.find("COMING SOON") != -1:
+            continue
         adr = "".join(
             tree.xpath(
                 '//p[.//a[contains(@href, "tel")]]/preceding-sibling::p[1]//text()'

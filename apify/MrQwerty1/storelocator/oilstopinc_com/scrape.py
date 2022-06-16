@@ -24,17 +24,20 @@ def get_urls():
     r = session.get("https://oilstopinc.com/locations/", headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='locations-table']/@href")
+    return tree.xpath(
+        "//td[@class='locations-indent']/a[contains(@href, 'oil-') and ./text()]/@href"
+    )
 
 
 def get_data(page_url, sgw: SgWriter):
-    if page_url.find("oil") == -1:
-        return
     if page_url.startswith("/"):
         page_url = f"https://oilstopinc.com{page_url}"
 
     r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    try:
+        tree = html.fromstring(r.text)
+    except:
+        return
     location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
     line = tree.xpath("//*[@class='tlocations']//text()")
     line = list(filter(None, [l.strip() for l in line]))
@@ -87,7 +90,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

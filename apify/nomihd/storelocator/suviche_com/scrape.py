@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgpostal import sgpostal as parser
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "suviche.com"
@@ -15,60 +15,43 @@ headers = {
 }
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.suviche.com/sushi-ceviche-restaurant-locations-miami-beach-fort-lauderdale"
+    search_url = "https://suviche.com/locations/"
 
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath('//div[@class="adrs-box"]')
+        stores = search_sel.xpath(
+            '//div[@class="wpb_wrapper"][./div[@class="wpb_text_column wpb_content_element  title-location"]]'
+        )
 
         for store in stores:
 
-            page_url = "".join(
-                store.xpath('.//div[@class="adrs-rt-txt"]/a[@class="fancybox"]/@href')
-            ).strip()
-            log.info(page_url)
-            page_res = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(page_res.text)
-
+            page_url = search_url
             locator_domain = website
 
             location_name = "".join(
-                store.xpath('.//div[@class="adrs-rt-txt"]/a[@class="fancybox"]/@title')
+                store.xpath(
+                    'div[@class="wpb_text_column wpb_content_element  title-location"]//h2//text()'
+                )
             ).strip()
             raw_address = list(
                 filter(
-                    str, [x.strip() for x in store.xpath("./div[p]/p[not(a)]//text()")]
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath(
+                            "div[@class='wpb_text_column wpb_content_element '][1]/div/p//text()"
+                        )
+                    ],
                 )
             )
 
-            raw_address = " ".join(raw_address).strip().split("Find us")[0].strip()
+            raw_address = "".join(raw_address).strip()
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
@@ -84,11 +67,7 @@ def fetch_data():
 
             store_number = "<MISSING>"
 
-            phone = "".join(
-                store.xpath(
-                    './/div[@class="adrs-rt-txt"]/span[@class="adrs-ph-no"]//text()'
-                )
-            ).strip()
+            phone = "".join(store.xpath('.//div[@class="iwithtext"]//text()')).strip()
 
             location_type = "<MISSING>"
 
@@ -98,15 +77,20 @@ def fetch_data():
                     [
                         x.strip()
                         for x in store.xpath(
-                            './/div[@class="time-box"]/div[@class="desc"]/p//text()'
+                            "div[@class='wpb_text_column wpb_content_element '][2]/div/p/text()"
                         )
                     ],
                 )
             )
-            hours_of_operation = "; ".join(hours)
+            hours_of_operation = (
+                "; ".join(hours)
+                .replace(
+                    "Find us on the third base line across from sections 22 & 23.", ""
+                )
+                .strip()
+            )
 
-            map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
-            latitude, longitude = get_latlng(map_link)
+            latitude, longitude = "<MISSING>", "<MISSING>"
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -131,7 +115,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

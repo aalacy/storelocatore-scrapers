@@ -1,5 +1,4 @@
 import json5
-import httpx
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -10,12 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
     api = "https://www.pakasak.com/e107_plugins/stores/store_locator.php"
-    try:
-        r = session.get(api)
-        if r.status_code != 200:
-            raise
-    except:
-        r = httpx.get(api, verify=False)
+    r = session.get(api)
 
     tree = html.fromstring(r.text)
     text = "".join(

@@ -46,6 +46,9 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         item = BeautifulSoup(req.text, "lxml")
 
+        if "coming soon" in item.h1.text.lower():
+            continue
+
         phone = (
             item.find("a", {"href": re.compile(r"tel.+")})
             .text.replace("Call", "")

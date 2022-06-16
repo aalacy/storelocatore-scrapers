@@ -1,92 +1,108 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+session = SgRequests()
+website = "graeters_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+DOMAIN = "https://www.graeters.com"
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    locator_domain = 'https://www.graeters.com/'
-    ext = 'stores/locations-list'
+    if True:
+        url = "https://www.graeters.com/sitemap.xml"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("loc")
+        for loc in loclist:
+            if "/retail-stores" in loc.text:
+                page_url = loc.text
+                log.info(page_url)
+                r = session.get(page_url, headers=headers)
+                if "Permanently Closed" in r.text:
+                    continue
+                soup = BeautifulSoup(r.text, "html.parser")
+                location_name = soup.find("h1").text
+                raw_address = (
+                    r.text.split("located at")[1]
+                    .split("and try")[0]
+                    .replace("\n", " ")
+                    .replace("431476", "43147")
+                    .replace("4504 0", "45040")
+                )
+                try:
+                    phone = soup.find("a", {"class": "location-phone"}).text
+                except:
+                    phone = soup.select("a[href*=tel]")[2].text
+                hours_of_operation = (
+                    soup.findAll("ul")[7]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                coords = (
+                    soup.select_one("a[href*=maps]")["href"].split("/")[-1].split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+                pa = parse_address_intl(raw_address)
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
 
-    session = SgRequests()
-    req = session.get(locator_domain+ext, headers = HEADERS)
-    base = BeautifulSoup(req.text,"lxml")
+                city = pa.city
+                city = city.strip() if city else MISSING
 
-    hrefs = base.find(class_="column main").find_all("a")
-    link_list = []
-    for a in hrefs:
-        href = a['href']
-        if "retail-stores/" in href:
-            street = str(a).split('> ')[1].split(",")[0]
-            link_list.append([locator_domain+"stores/"+href, street])
+                state = pa.state
+                state = state.strip() if state else MISSING
 
-    all_store_data = []
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-    for link_row in link_list:
-        link = link_row[0]
-        req = session.get(link, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
-        coords = base.find(class_="location-button action primary")["href"].split("/")[-1].split(",")
-
-        lat = coords[0]
-        longit = coords[1]
-
-        phone_number = base.find(class_="location-phone").text.strip()
-
-        location_name = base.h1.text.strip()
-
-        street_address = link_row[1].replace("Towne","Town").replace("W. ","West ").replace("E. ","East ").replace("N. ","North ").replace("S. ","South ").replace("147 Easton","142 Easton")
-        if street_address == "6509 Bardstown Road":
-            city = "Louisville"
-            state = "KY"
-            zip_code = "40291"
-        else:
-            addy = base.find(class_="location-address").text.replace("Hwy","Highway").replace("Pike","Pk").replace(" St "," Street ").replace(" Rd "," Road ").replace("N. ","North ").replace(" S. "," South ").replace(" W High"," West High").replace(".,","").replace(street_address,"").strip()
-
-            if addy[:1] == "," or addy[:1] == ".":
-                addy = addy[1:].strip()
-            city, state, zip_code = addy_ext(addy)
-
-        if city == "Suite 116 Beachwood":
-            city = "Beachwood"
-            street_address = street_address + " Suite 116"
-
-        hours = " ".join(list(base.find(class_="widget block block-static-block").ul.stripped_strings)).replace("Temporarily No Bakery","").strip()
-
-        country_code = 'US'
-        page_url = link
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

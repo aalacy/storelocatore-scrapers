@@ -5,10 +5,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import json
-from sglogging import SgLogSetup
-from fuzzywuzzy import process
-
-logger = SgLogSetup().get_logger("phoenix")
+from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -20,7 +17,6 @@ base_url = "https://www.phoenix.edu/api/plct/3/uopx/locations?type=site&page.siz
 
 
 def fetch_data():
-    data = []
     with SgRequests() as session:
         g_hours = []
         sp1 = bs(session.get(loc_url, headers=_headers).text, "lxml")
@@ -36,33 +32,25 @@ def fetch_data():
             g_hours = list(bs(ss["campusData"]["hours"], "lxml").stripped_strings)
             if "temporarily closed" in " ".join(g_hours):
                 g_hours = ["temporarily closed"]
-        locations = session.get(base_url, headers=_headers).json()["results"]
-        for loc in locations:
-            _ = loc["attributes"]
-            street_address = _["addressLine2"]
-            if _.get("addressLine3"):
-                street_address += " " + _["addressLine3"]
-            phone = ""
-            if _.get("phoneLocal"):
-                phone = _.get("phoneLocal").replace(".", "").replace("-", "").strip()
-            if not phone and _.get("phoneTollFree"):
-                phone = _.get("phoneTollFree").replace(".", "").replace("-", "").strip()
-            data.append(
-                SgRecord(
-                    page_url=loc_url,
-                    location_name=_["altName"],
-                    street_address=street_address,
-                    city=_["city"],
-                    state=_["stateProvince"],
-                    zip_postal=_["postalCode"],
-                    latitude=_["latitude"],
-                    longitude=_["longitude"],
-                    country_code=loc["countryCode"],
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(g_hours),
-                )
-            )
+        _ = ss["campusData"]["formattedAddress"]
+        street_address = _["addressLine2"]
+        if _.get("addressLine3"):
+            street_address += " " + _["addressLine3"]
+        phone = ss["campusData"]["extensionField"]["PHONE_LOCAL"]
+        yield SgRecord(
+            page_url=loc_url,
+            location_name=ss["campusData"]["name"],
+            street_address=street_address,
+            city=_["city"],
+            state=_["stateProvince"],
+            zip_postal=_["postalCode"],
+            latitude=_["latitude"],
+            longitude=_["longitude"],
+            country_code=_["country"],
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation="; ".join(g_hours),
+        )
 
         locs = sp1.select("div.campus-dir-item")
         for loc in locs:
@@ -78,7 +66,11 @@ def fetch_data():
                     .replace("-", "")
                     .strip()
                 )
-            addr = loc.select_one("div.campus-dir-item__location a").text.split(",")
+            raw_address = loc.select_one("div.campus-dir-item__location a").text.strip()
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             coord = ["", ""]
             href = loc.select_one("div.campus-dir-item__location a")["href"]
             try:
@@ -88,13 +80,13 @@ def fetch_data():
                     coord = href.split("query=")[1].split("&")[0].split(",")
                 except:
                     pass
-            record = SgRecord(
+            yield SgRecord(
                 page_url="https://www.phoenix.edu/campus-locations.html#additional-campus-directory",
                 location_name=loc.h4.text.strip(),
-                street_address=addr[0].replace("\r\n", ""),
-                city=addr[1],
-                state=addr[-1].strip().split()[0],
-                zip_postal=addr[-1].strip().split()[-1],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="US",
@@ -103,24 +95,18 @@ def fetch_data():
                 hours_of_operation="; ".join(hours),
             )
 
-            street_only = [rec.street_address().lower() for rec in data]
-            matched_records = process.extract(
-                record.street_address().lower(), street_only, limit=1
-            )
-            if not matched_records:
-                data.append(record)
-            else:
-                for x, _rec in enumerate(data):
-                    if _rec.street_address().lower() == matched_records[-1][0]:
-                        data[x] = record
-                        break
-
-        return data
-
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.CITY, SgRecord.Headers.PHONE}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

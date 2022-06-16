@@ -9,7 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/no/no/stores/"
     domain = "ikea.com/no"
@@ -76,7 +76,14 @@ def fetch_data():
             else:
                 phone = loc_dom.xpath(
                     '//p[strong[contains(text(), "Adresse og telefon:")]]/following-sibling::p[1]/text()'
-                )[0]
+                )
+                phone = phone[0] if phone else ""
+                if not phone:
+                    phone = loc_dom.xpath(
+                        '//p[a[@href="https://freetrailer.com/no/"]]/text()'
+                    )
+                    phone = phone[-1].split("telefon")[-1].strip()[:-1] if phone else ""
+
         geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
         if "/@" in geo:
             geo = geo.split("/@")[-1].split(",")[:2]
@@ -105,6 +112,10 @@ def fetch_data():
         if not hoo:
             hoo = dom.xpath(
                 '//h2[contains(text(), "Åpningstider")]/following-sibling::p/text()'
+            )
+        if not hoo:
+            hoo = dom.xpath(
+                '//p[strong[contains(text(), "Varehuset")]]/following-sibling::p[1]//text()'
             )
         hoo = " ".join(hoo).split("Rest")[0].strip()
 

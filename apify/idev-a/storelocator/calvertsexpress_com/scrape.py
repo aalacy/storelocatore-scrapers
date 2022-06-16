@@ -23,12 +23,17 @@ def fetch_data():
             if _["address2"]:
                 street_address += " " + _["address2"]
             hours = []
-            hours.append(f"Mon - Fri: {_['hours1']}")
-            hours.append(f"Sat: {_['hours2']}")
-            hours.append(f"Sun: {_['hours3']}")
+            location_name = _["name"]
+            if "TEMPORARILY CLOSED" in location_name:
+                location_name = location_name.split("-")[0].strip()
+                hours = ["TEMPORARILY CLOSED"]
+            else:
+                hours.append(f"Mon - Fri: {_['hours1']}")
+                hours.append(f"Sat: {_['hours2']}")
+                hours.append(f"Sun: {_['hours3']}")
             yield SgRecord(
                 page_url=_["web"],
-                location_name=_["name"],
+                location_name=location_name,
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],

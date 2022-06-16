@@ -6,6 +6,8 @@ from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 import re
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("baptisthealth")
 
@@ -28,12 +30,17 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             phone = ""
+            raw_address = ""
             if sp1.select_one("div.footer-address"):
                 _addr = list(sp1.select_one("div.footer-address").stripped_strings)
-                addr = parse_address_intl(" ".join(_addr[:-1]))
+                raw_address = " ".join(_addr[:-1])
+                addr = parse_address_intl(raw_address)
                 phone = _addr[-1]
             else:
-                addr = parse_address_intl(" ".join(sp1.address.stripped_strings))
+                raw_address = " ".join(
+                    sp1.select_one("div.contact_info p a").stripped_strings
+                )
+                addr = parse_address_intl(raw_address)
                 phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -62,11 +69,12 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

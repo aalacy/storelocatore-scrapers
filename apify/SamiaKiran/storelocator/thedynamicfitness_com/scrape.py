@@ -14,7 +14,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://thedynamicfitness.com/"
+DOMAIN = "https://thedynamicfitness.com"
 MISSING = SgRecord.MISSING
 
 
@@ -29,16 +29,17 @@ def fetch_data():
                 page_url = loc["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                temp = (
-                    soup.findAll("section", {"data-element_type": "section"})[7]
-                    .get_text(separator="|", strip=True)
-                    .split("|")
+                temp = "<h1" + r.text.split("<h1")[2].split("</section>")[0]
+                temp = BeautifulSoup(temp, "html.parser")
+                hours_of_operation = (
+                    temp.get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .split("Staff Hours")[1]
                 )
-                hours_of_operation = " ".join(x for x in temp[2:-2])
-                location_name = soup.find("h1").text
-                phone = temp[0]
-                address = temp[1]
+                temp = temp.get_text(separator="|", strip=True).split("|")
+                location_name = temp[0]
+                phone = temp[1]
+                address = temp[2]
                 address = address.replace(",", " ")
                 address = usaddress.parse(address)
                 i = 0
@@ -77,7 +78,7 @@ def fetch_data():
                     zip_postal=zip_postal.strip(),
                     country_code=country_code,
                     store_number=MISSING,
-                    phone=phone.strip(),
+                    phone=phone,
                     location_type=MISSING,
                     latitude=MISSING,
                     longitude=MISSING,

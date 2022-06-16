@@ -19,6 +19,23 @@ locator_domain = "https://ipark.com"
 base_url = "https://ipark.com/wp-admin/admin-ajax.php?action=set_all_markers&filters%5B%5D=locations&nonce=8e8a914d40"
 
 
+def _p(val):
+    if (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
@@ -42,17 +59,30 @@ def fetch_data():
                 "lxml",
             )
             raw_address = loc.select_one("div.garage-address").text.strip()
+            if "United States" not in raw_address:
+                raw_address += ", United States"
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            if not city and "Brooklyn" in raw_address:
+                city = "Brooklyn"
+            if "Long Island City" in raw_address:
+                city = "Long Island City"
+            if city and city == "36Th":
+                city = ""
+                street_address = raw_address.split(",")[0]
             phone = ""
             if loc.find("strong", string=re.compile(r"Phone Number:")):
-                phone = list(
+                for pp in list(
                     loc.find("strong", string=re.compile(r"Phone Number:"))
                     .find_parent()
                     .stripped_strings
-                )[-1]
+                ):
+                    if _p(pp):
+                        phone = pp
+                        break
             hours = []
             _hr = loc.find("strong", string=re.compile(r"Operation Hours:"))
             if _hr:
@@ -60,9 +90,9 @@ def fetch_data():
             yield SgRecord(
                 page_url=loc.select_one("div.garage-link a")["href"],
                 store_number=_[3],
-                location_name=_[4],
-                street_address=_[6],
-                city=addr.city,
+                location_name=_[4].replace("&#8211;", "-"),
+                street_address=street_address.replace("&#8211;", "-"),
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 latitude=_[1],

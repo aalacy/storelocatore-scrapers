@@ -50,7 +50,6 @@ def fetch_data(sgw: SgWriter):
 
         slug = "".join(b.xpath('.//a[contains(text(), "Webpage")]/@href'))
         page_url = f"{locator_domain}{slug}"
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
         location_name = (
@@ -74,8 +73,11 @@ def fetch_data(sgw: SgWriter):
             "None", ""
         ).strip()
         text = "".join(tree.xpath('//iframe[@loading="lazy"]/@data-lazy-src'))
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+        try:
+            latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         country_code = "US"
         state = a.get("state")
         postal = a.get("ZipCode")
@@ -87,13 +89,17 @@ def fetch_data(sgw: SgWriter):
                 )
             )
             .replace("\n", "")
+            .replace("May 19th, 2022: CLOSED", "")
             .strip()
         ) or "<MISSING>"
         if hours_of_operation == "<MISSING>":
-            hours_of_operation = "".join(
-                tree.xpath(
-                    '//p[./strong[text()="Regular Hours"]]/following-sibling::p/text()'
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//p[./strong[text()="Regular Hours"]]/following-sibling::p/text()'
+                    )
                 )
+                or "<MISSING>"
             )
         tmphours = (
             " ".join(
@@ -128,11 +134,30 @@ def fetch_data(sgw: SgWriter):
         phone = (
             " ".join(
                 tree.xpath(
-                    '//h3[contains(text(), "Address")]/following-sibling::p/a/text()'
+                    '//div[./h3[text()="Location Info"]]//a[contains(@href, "tel")]/text()'
                 )
             )
             or "<MISSING>"
         )
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h3[./strong[text()="Hours"]]/following-sibling::p/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        hours_of_operation = hours_of_operation.replace("Temporary Hours", "").strip()
+        if hours_of_operation.find("Open") != -1:
+            hours_of_operation = hours_of_operation.split("Open")[0].strip()
+        cms = "".join(tree.xpath('//h1[contains(text(), "Coming Soon")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
+        if hours_of_operation.find("Regular Hours") != -1:
+            hours_of_operation = hours_of_operation.split("Regular Hours")[1].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

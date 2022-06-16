@@ -6,7 +6,7 @@ from sglogging import SgLogSetup
 import re
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("lifestance")
 
@@ -18,24 +18,20 @@ _headers = {
 def fetch_data():
     locator_domain = "https://lifestance.com/"
     base_url = "https://lifestance.com/location-sitemap.xml"
-    with SgRequests(
-        proxy_country="us", dont_retry_status_codes_exceptions=set([400, 403])
-    ) as session:
+    with SgRequests(proxy_country="us") as session:
         locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "url loc"
         )
         logger.info(f"{len(locations)} locations found")
-        total_cnt = 0
         for link in locations:
             page_url = link.text.strip()
+            if "telehealth" in page_url.lower():
+                continue
             logger.info(f"{page_url}")
-            response = session.get(page_url, headers=_headers)
-            sp1 = bs(response.text, "lxml")
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             location_name = sp1.select_one("h1.h1").text.strip()
-            street_address = city = state = zip_postal = ""
+            street_address = city = ""
             if sp1.select_one("div.self-center div.p"):
-                total_cnt += 1
-                logger.info(f"[{total_cnt}] in total")
                 _addr = list(sp1.select_one("div.self-center div.p").stripped_strings)
                 raw_address = " ".join(_addr)
                 addr = parse_address_intl(raw_address)
@@ -46,16 +42,15 @@ def fetch_data():
                 if not city:
                     if len(_addr) > 1:
                         city = _addr[1].split(",")[0].strip()
-                    else:
-                        city = raw_address.split(",")[-2].split()[-1]
-                state = addr.state
-                zip_postal = addr.postcode
+
             else:
                 ln = location_name.split("–")
                 raw_address = ln[-1].strip() + " " + ln[0].strip()
-                street_address = ln[-1]
-                city = ln[0].split(",")[0].strip()
-                state = ln[0].split(",")[-1].strip()
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                city = addr.city
 
             _hr = sp1.find("h2", string=re.compile(r"Hours Of Operation"))
             hours = []
@@ -69,19 +64,26 @@ def fetch_data():
                 phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             try:
                 coord = (
-                    sp1.select_one("main figure a img")["src"]
+                    sp1.select_one("main figure a img")["data-lazy-src"]
                     .split("false%7C")[1]
                     .split(",+")
                 )
             except:
-                coord = ["", ""]
+                try:
+                    coord = (
+                        sp1.select_one("main figure a img")["src"]
+                        .split("false%7C")[1]
+                        .split(",+")
+                    )
+                except:
+                    coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
-                state=state,
-                zip_postal=zip_postal,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,

@@ -3,133 +3,93 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import json
 
 website = "pizzahut.fi"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+    "authority": "www.pizzahut.fi",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
     "sec-ch-ua-mobile": "?0",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
-
-
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://pizzahut.fi/ravintolat/"
+    search_url = "https://pizzahut.fi/en/store-locator.html"
     search_res = session.get(search_url, headers=headers)
-    search_sel = lxml.html.fromstring(search_res.text)
-    stores = search_sel.xpath(
-        '//div[@class="col-sm-6 py-3 px-5 toimipiste_item"]/a/@href'
+    json_str = (
+        search_res.text.split("window.pageData=")[1].strip().split("};")[0].strip()
+        + "}"
     )
-
-    for store_url in stores:
-
-        page_url = store_url
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
-
+    stores = json.loads(json_str)["chainStores"]["msg"]
+    for store in stores:
         locator_domain = website
-        location_name = "".join(store_sel.xpath("//div/h2/text()")).strip()
-
-        temp_address = store_sel.xpath(
-            '//div[./p[1][text()="Osoite"]]/p[position()>1]/text()'
+        location_name = store["title"]["en_US"]
+        page_url = (
+            "https://pizzahut.fi/en/store-locator/"
+            + location_name.replace(" ", "_").strip()
+            + ".html"
         )
-        add_list = []
-        for temp in temp_address:
-            if "p." != "".join(temp).strip():
-                add_list.append("".join(temp).strip())
-            else:
-                break
 
-        street_address = ", ".join(add_list[:-1]).strip()
-
-        city = "<MISSING>"
+        raw_address = store["address"]["formatted"].strip()
+        street_address = raw_address.split(",")[0].strip()
+        city = store["address"]["city"]
         state = "<MISSING>"
-        zip = "<MISSING>"
-        if "," in add_list[-1].strip():
-            city = add_list[-1].strip().split(",")[-1].strip()
-            zip = add_list[-1].strip().split(",")[0].strip()
-        else:
-            city = add_list[-1].strip().split(" ")[-1].strip()
-            zip = add_list[-1].strip().split(" ")[0].strip()
+        zip = raw_address.split(",")[1].strip().split(" ")[0].strip()
+        country_code = store["address"]["countryCode"]
 
-        if zip.isalpha():
-            zip = "<MISSING>"
-
-        country_code = "FI"
-
-        phone = "".join(
-            store_sel.xpath('//div[./p[1][text()="Osoite"]]/p/a/text()')
-        ).strip()
-        store_number = "<MISSING>"
+        phone = store["contact"]["phone"]
+        store_number = store["id"]
 
         location_type = "<MISSING>"
 
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//div[./p[1][text()="Avoinna"]]/p[position()>1]/text()'
-                    )
-                ],
-            )
-        )
-        if len(hours) <= 0:
-            hours = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//div[./p[1][text()="Avoinna"]]/pre[1]/text()'
-                        )
-                    ],
-                )
-            )
+        hours_list = []
+        try:
+            hours = store["openingHours"][0]
+            if "es" in hours:
+                hours = hours["es"]
+            elif "en" in hours:
+                hours = hours["en"]
+            for index in range(0, len(hours)):
+                if index == 0:
+                    day = "Sun"
+                if index == 1:
+                    day = "Mon"
+                if index == 2:
+                    day = "Tue"
+                if index == 3:
+                    day = "Wed"
+                if index == 4:
+                    day = "Thu"
+                if index == 5:
+                    day = "Fri"
+                if index == 6:
+                    day = "Sat"
 
-        hours_of_operation = (
-            "; ".join(hours)
-            .strip()
-            .replace("\r\n", "; ")
-            .strip()
-            .replace("\t", "")
-            .strip()
-            .replace("; ;", ";")
-            .strip()
-        )
-        map_link = "".join(store_sel.xpath('//a[contains(@href,"maps/embed")]/@href'))
+                tim = hours[index][0]
 
-        latitude, longitude = get_latlng(map_link)
+                hours_list.append(day + ": " + tim)
+        except:
+            pass
+
+        hours_of_operation = "; ".join(hours_list).strip()
+        latitude = store["address"]["latLng"]["lat"]
+        longitude = store["address"]["latLng"]["lng"]
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -145,6 +105,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
@@ -152,7 +113,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

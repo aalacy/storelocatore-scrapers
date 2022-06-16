@@ -4,6 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "davycoldstorage.net"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -24,31 +26,32 @@ def fetch_data():
         "//section[contains(@class,'elementor-section elementor-inner-section')]//p[@class='elementor-heading-title elementor-size-default']"
     )
     maps = stores_sel.xpath(
-        '//iframe[@loading="lazy" and contains(@src,"maps/embed?")]/@src'
+        '//div[@class="textwidget custom-html-widget"]/iframe[contains(@src,"maps/embed?")]/@src'
     )
+    phone_numbers = stores_sel.xpath('//a[contains(@href,"Tel:")]/text()')
     index = 0
     for store in stores:
         if len("".join(store.xpath("text()")).strip()) > 0 and (
             "".join(store.xpath("text()")).strip()[0].isalpha()
             or "".join(store.xpath("text()")).strip()[0].isdigit()
         ):
-            if "P:" in "".join(store.xpath("text()")).strip():
+            if (
+                "P:" in "".join(store.xpath("text()")).strip()
+                or "E:" in "".join(store.xpath("text()")).strip()
+            ):
                 continue
             page_url = search_url
             location_name = "DAVY COLD STORAGE"
             location_type = "<MISSING>"
             locator_domain = website
 
-            raw_info = store.xpath("text()")
-            street_address = raw_info[0].strip()
+            raw_info = "".join(store.xpath("text()")).strip().split(",")
+            street_address = raw_info[0].strip().rsplit(" ", 1)[0].strip()
 
-            city = raw_info[1].strip().split(",")[0].strip()
-            state = raw_info[1].strip().split(",")[1].strip().split(" ", 1)[0].strip()
-            zipp = raw_info[1].strip().split(",")[1].strip().split(" ", 1)[-1].strip()
-            phone = stores_sel.xpath('//a[contains(@href,"Tel:")]/text()')
-            if len(phone) > 0:
-                phone = phone[0].strip()
-
+            city = raw_info[0].strip().rsplit(" ", 1)[-1].strip()
+            state = raw_info[1].strip().split(" ", 1)[0].strip()
+            zipp = raw_info[1].strip().split(" ", 1)[-1].strip()
+            phone = phone_numbers[index]
             hours = stores_sel.xpath('//table[contains(@id,"uael-table-id-")]//tr')
             hours_list = []
             for hour in hours:
@@ -88,7 +91,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

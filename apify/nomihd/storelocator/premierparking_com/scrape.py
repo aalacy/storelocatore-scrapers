@@ -67,17 +67,22 @@ def fetch_data():
 
                 try:
                     city = store["location"]["city"]
+                    if not city:
+                        city = formatted_addr.city
                 except:
                     city = formatted_addr.city
                     pass
                 try:
                     state = store["location"]["state"]
+                    if not state:
+                        state = formatted_addr.state
                 except:
                     state = formatted_addr.state
-                    pass
 
                 try:
                     zip = store["location"]["postal_code"]
+                    if not zip:
+                        zip = formatted_addr.postcode
                 except:
                     zip = formatted_addr.postcode
 

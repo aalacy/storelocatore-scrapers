@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,142 +13,68 @@ headers = {
 logger = SgLogSetup().get_logger("ballarddesigns_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
-    url = "https://www.ballarddesigns.com/BallardDesigns/US/CustomerService/store-locations/content-path"
+    url = "https://www.ballarddesigns.com/wcsstore/images/BallardDesigns/_media/locations/store-location-info.json"
     r = session.get(url, headers=headers)
     website = "ballarddesigns.com"
     typ = "<MISSING>"
     country = "US"
-    logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '<h3 id="location-title' in line:
-            items = line.split('<h3 id="location-title')
-            for item in items:
-                if 'Store">' in item:
-                    locs.append(
-                        "https://www.ballarddesigns.com"
-                        + item.split('<a href="')[1].split('"')[0]
-                    )
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = "<MISSING>"
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        CS = False
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'page-header hidden-mobile">' in line2:
-                name = line2.split('page-header hidden-mobile">')[1].split(
-                    " Information"
-                )[0]
-            if '<p><a href="tel:+' in line2:
-                phone = line2.split('<p><a href="tel:+')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                if phone != "":
-                    phone = line2.split('"telephone": "')[1].split('"')[0]
-                lat = line2.split('"latitude":')[1].split(",")[0].strip()
-                lng = line2.split('"longitude":')[1].split("}")[0].strip()
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if "coming soon" in line2:
-                CS = True
-            if "Regular Store Hours:</h5>" in line2:
-                try:
-                    hours = (
-                        line2.split("Regular Store Hours:</h5>")[1]
-                        .split("<!-- <p>")[1]
-                        .split("</p> -->")[0]
-                        .replace("<br />", "; ")
-                        .replace("<br>", "; ")
-                    )
-                except:
-                    hours = (
-                        line2.split("Regular Store Hours:</h5>")[1]
-                        .split("</div>")[0]
-                        .strip()
-                        .replace("<p>", "")
-                        .replace("</p>", "")
-                    )
-                hours = (
-                    hours.replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("\t", "")
-                    .replace("<br />", "; ")
-                    .replace("<br>", "; ")
-                )
-        if "</p></div>" in hours:
-            hours = hours.split("</p></div>")[0]
-        if phone == "":
-            phone = "<MISSING>"
-        if CS:
-            hours = "Coming Soon"
-        hours = hours.replace("<!--", "").replace("-->", "")
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if '"storePageURL": "' in line:
+            loc = (
+                "https://www.ballarddesigns.com/"
+                + line.split('"storePageURL": "')[1].split('"')[0]
+            )
+        if '"storeName": "' in line:
+            name = line.split('"storeName": "')[1].split('"')[0]
+        if '"storeCode": "' in line:
+            store = line.split('"storeCode": "')[1].split('"')[0]
+        if '"address1": "' in line:
+            add = line.split('"address1": "')[1].split('"')[0]
+        if '"address2": "' in line:
+            add = add + " " + line.split('"address2": "')[1].split('"')[0]
+            add = add.strip()
+        if '"city": "' in line:
+            city = line.split('"city": "')[1].split('"')[0]
+        if '"stateAbbr": "' in line:
+            state = line.split('"stateAbbr": "')[1].split('"')[0]
+        if '"zipCode": "' in line:
+            zc = line.split('"zipCode": "')[1].split('"')[0]
+        if '"telephone": "' in line:
+            phone = line.split('"telephone": "')[1].split('"')[0]
+        if '"latitude": ' in line:
+            lat = line.split('"latitude": ')[1].split(",")[0]
+        if '"longitude":' in line:
+            lng = (
+                line.split('"longitude":')[1]
+                .strip()
+                .replace("\r", "")
+                .replace("\n", "")
+            )
+            hours = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("conoco_com")
 
@@ -9,36 +12,68 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+usstates = [
+    "AK",
+    "AL",
+    "AR",
+    "AS",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DC",
+    "DE",
+    "FL",
+    "GA",
+    "GU",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MP",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "PR",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UM",
+    "UT",
+    "VA",
+    "VI",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+]
 
 
 def fetch_data():
-    ids = []
     for x in range(10, 65, 2):
         for y in range(-60, -170, -2):
             logger.info(str(x) + "," + str(y))
@@ -51,7 +86,6 @@ def fetch_data():
             )
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
                 if '"uri":"' in line:
                     items = line.split('"uri":"')
                     for item in items:
@@ -83,35 +117,40 @@ def fetch_data():
                             hours = "<MISSING>"
                             if phone == "":
                                 phone = "<MISSING>"
-                            mx = ["COA", "SIN", "SON", "CHI", "MX", "NL"]
-                            if store not in ids and state not in mx:
-                                if (
-                                    "JUVENTINO" not in loc
-                                    and "LAZARO" not in loc
-                                    and "BENITO" not in loc
-                                ):
-                                    yield [
-                                        website,
-                                        loc,
-                                        name,
-                                        add,
-                                        city,
-                                        state,
-                                        zc,
-                                        country,
-                                        store,
-                                        phone,
-                                        typ,
-                                        lat,
-                                        lng,
-                                        hours,
-                                    ]
-                                    ids.append(store)
+                            if state in usstates:
+                                country = "US"
+                            else:
+                                if int(lat.split(".")[0]) >= 45:
+                                    country = "CA"
+                                else:
+                                    country = "MX"
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
