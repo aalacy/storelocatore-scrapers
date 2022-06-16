@@ -58,6 +58,8 @@ def fetch_records(search):
                 phone = ""
                 if store.get("phones"):
                     phone = store["phones"][0]
+                    if phone == "NO PHONE LINE":
+                        phone = ""
 
                 _streat = (
                     "-".join(store["name"].split())
@@ -73,6 +75,11 @@ def fetch_records(search):
                 page_url = f'https://www.massimodutti.com/us/store-locator/{_state}/{_streat}/{store["latitude"]},{store["longitude"]}/{store["id"]}'
 
                 search.found_location_at(store["latitude"], store["longitude"])
+
+                zip_postal = store["zipCode"]
+                if zip_postal == "0":
+                    zip_postal = ""
+
                 yield SgRecord(
                     page_url=page_url,
                     store_number=store["id"],
@@ -80,7 +87,7 @@ def fetch_records(search):
                     street_address=" ".join(store["addressLines"]),
                     city=store["city"],
                     state=store["state"],
-                    zip_postal=store["zipCode"],
+                    zip_postal=zip_postal,
                     latitude=store["latitude"],
                     longitude=store["longitude"],
                     phone=phone,
@@ -96,7 +103,9 @@ def fetch_records(search):
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, max_search_distance_miles=100000
+        country_codes=SearchableCountries.ALL,
+        max_search_distance_miles=100000,
+        expected_search_radius_miles=500,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
