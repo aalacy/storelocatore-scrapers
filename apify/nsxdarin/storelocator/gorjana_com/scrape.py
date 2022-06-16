@@ -101,7 +101,11 @@ def fetch_data():
                     "Mon-Thurs: 11AM - 8PM; Fri-Sat: 10AM - 8PM; Sun: 11AM - 8PM"
                 )
             hours = hours.replace("PMT", "PM,T").replace("PMS", "PM,S")
-            if "Mon" not in hours_of_operation and "Sun" not in hours_of_operation and "Sat" not in hours_of_operation:
+            if (
+                "Mon" not in hours_of_operation
+                and "Sun" not in hours_of_operation
+                and "Sat" not in hours_of_operation
+            ):
                 tempphone = hours_of_operation
                 hours_of_operation = phone
                 phone = tempphone
