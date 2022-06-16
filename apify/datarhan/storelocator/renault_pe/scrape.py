@@ -40,20 +40,23 @@ def fetch_data():
                 './/h5[contains(text(), "Venta")]/following-sibling::div[1]/ul[1]/li//text()'
             )
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
-            phone = poi_html.xpath('.//div[@class="phone"]/a/text()')[0]
+            phone = poi_html.xpath('.//div[@class="phone"]/a/text()')[0].split("/")[0]
             if phone == "null":
                 phone = ""
             types = poi_html.xpath(
                 './/div[@class="subsidiary-card-body"]/ul/li/h5/text()'
             )
             location_type = ", ".join([e.strip() for e in types if e.strip()])
+            if "venta" not in location_type.lower():
+                continue
+            city = addr.city
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=url,
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=r["name"],
                 zip_postal="",
                 country_code="PE",

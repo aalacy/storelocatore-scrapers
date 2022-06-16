@@ -65,6 +65,8 @@ def fetch_data():
             r = session.get(url, headers=headers)
             dealers = json.loads(r.content)["dealer"]
             logger.info(f"found {len(dealers)} dealers")
+            if "dealerCode" not in r.content:
+                search.found_nothing()
             for dealer in dealers:
                 store_number = handle_missing(dealer["dealerCode"])
                 website = "dodge.com"
