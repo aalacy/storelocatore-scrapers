@@ -10,6 +10,7 @@ def get_data():
     session = SgRequests()
     page_urls = []
     for search_lat, search_lon in search:
+        search_found = False
         url = (
             "https://platform.cloud.coveo.com/rest/search/v2?sitecoreItemUri=sitecore%3A%2F%2Fweb%2F%7BC020E446-D3F3-4E7C-BAF2-EEB5B6D0E0B9%7D%3Flang%3Den%26amp%3Bver%3D1&siteName=Famous%20Footwear&actionsHistory=%5B%5D&referrer=https%3A%2F%2Fwww.famousfootwear.com%2F&analytics=%7B%22clientId%22%3A%227c598e48-42e1-251a-f99f-99acdec5d752%22%2C%22documentLocation%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2Fstores%3Ficid%3Dftr_store_click_storefinder%22%2C%22documentReferrer%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2F%22%2C%22pageId%22%3A%22%22%7D&visitorId=7c598e48-42e1-251a-f99f-99acdec5d752&isGuestUser=false&aq=(%24qf(function%3A'dist(%40latitude%2C%20%40longitude%2C%20"
             + str(search_lat)
@@ -29,9 +30,6 @@ def get_data():
         }
         response = session.post(url, headers=headers).json()
 
-        if len(response) == 0:
-            search.found_nothing()
-
         for location in response["results"]:
             locator_domain = "famousfootwear.com"
             page_url = "famousfootwear.com" + location["raw"]["storedetailurl"]
@@ -50,7 +48,7 @@ def get_data():
             location_type = location["raw"]["objecttype"]
             latitude = location["raw"]["latitude"]
             longitude = location["raw"]["longitude"]
-
+            search_found = True
             hours = (
                 "Mon "
                 + location["raw"]["mondayhours"]
@@ -90,6 +88,9 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
+
+        if search_found is False:
+            search.found_nothing()
 
 
 def scrape():
