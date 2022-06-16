@@ -66,7 +66,7 @@ def fetch_data():
                 continue
             phone = ""
             if sp1.select_one("span.phone-list"):
-                phone = sp1.select_one("span.phone-list").text.strip()
+                phone = sp1.select_one("span.phone-list").text.split("/")[0].strip()
             hours = []
             for hh in _["openingHoursSpecification"]:
                 day = hh["dayOfWeek"]
