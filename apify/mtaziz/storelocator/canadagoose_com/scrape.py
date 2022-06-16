@@ -225,7 +225,7 @@ def fetch_data(sgw: SgWriter):
         tasks = []
         task_us = [
             executor.submit(fetch_records, idx, api_url, sgw)
-            for idx, api_url in enumerate(API_ENDPOINT_URLS[6:10])
+            for idx, api_url in enumerate(API_ENDPOINT_URLS[0:])
         ]
         tasks.extend(task_us)
         for future in as_completed(tasks):

@@ -110,6 +110,7 @@ def fetch_records_nonusa(idx, api_url, sgw: SgWriter):
             continue
         store_number = j.get("fid") or MISSING
         phone = j.get("local_phone") or MISSING
+
         latitude = js_markers[idx1].get("lat") or MISSING
         longitude = js_markers[idx1].get("lng") or MISSING
         location_type = j.get("location_type") or MISSING
@@ -188,6 +189,13 @@ def fetch_records_america(zipcode, search, current_country, sgw: SgWriter):
                 continue
             store_number = j.get("fid") or MISSING
             phone = j.get("local_phone") or MISSING
+
+            if "(405) 275-4467 54" in phone:
+                phone = "(405) 275-4467"
+
+            if "(540) 463-3478 223" in phone:
+                phone = "(540) 463-3478"
+
             latitude = js_markers[idx1].get("lat") or MISSING
             longitude = js_markers[idx1].get("lng") or MISSING
             logger.info(f"[{idx1}] [({latitude}, {longitude}) ]")

@@ -53,7 +53,7 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name") or "<MISSING>"
         ad = "".join(a.get("addressSecondary"))
         street_address = a.get("address") or "<MISSING>"
-        country_code = "CH"
+        country_code = "CL"
         city = ad.split(",")[0].strip()
         latitude = a.get("location").get("lat")
         longitude = a.get("location").get("lng")
