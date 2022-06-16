@@ -12,7 +12,7 @@ _headers = {
 }
 
 locator_domain = "https://yallamedi.com/"
-base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=LWNLRVTLHRRHVYID&center=33.6611,-117.673&coordinates=32.85727179225715,-116.13766064453085,34.45748789640433,-119.20833935546833&multi_account=false&page={}&pageSize=1000"
+base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=LWNLRVTLHRRHVYID&center=33.6611,-117.673&coordinates=0.85727179225715,-90.0,90.0,-180.0&multi_account=false&page={}&pageSize=100"
 hr_obj = {
     "1": "Monday",
     "2": "Tuesday",

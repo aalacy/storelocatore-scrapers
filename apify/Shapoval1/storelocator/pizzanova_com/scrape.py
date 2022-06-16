@@ -1,41 +1,16 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://pizzanova.com"
-    api_url = "https://pizzanova.com/store-locator/"
+    api_url = "https://weborders.pizzanova.com/PNAPI/order/store-locator/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
@@ -44,79 +19,97 @@ def fetch_data():
     tree = html.fromstring(r.text)
     block = tree.xpath('//option[contains(text(), "Please")]/following-sibling::option')
     for b in block:
-        slug = "".join(b.xpath(".//@value"))
-        if slug.find(" ") != -1:
-            slug = slug.replace(" ", "_")
-        page_url = f"https://pizzanova.com/store-locator/?city={slug}"
-        session = SgRequests()
+        city = "".join(b.xpath(".//@value"))
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "*/*",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://weborders.pizzanova.com",
+            "Connection": "keep-alive",
+            "Referer": "https://weborders.pizzanova.com/PNAPI/order/store-locator/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
         }
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        div = tree.xpath('//div[@class="location-information"]')
-        for d in div:
-            location_name = "<MISSING>"
-            street_address = "".join(d.xpath(".//h2/text()"))
-            phone = "<MISSING>"
-            city = page_url.split("=")[1]
-            state = "<MISSING>"
-            country_code = "CA"
-            store_number = "<MISSING>"
-            ll = "".join(
-                d.xpath('//preceding::script[contains(text(), "var PNStores")]/text()')
-            )
-            latitude = (
-                ll.split(street_address)[1]
-                .split("]")[0]
-                .replace('",', "")
-                .strip()
-                .split(",")[0]
-            )
-            longitude = (
-                ll.split(street_address)[1]
-                .split("]")[0]
-                .replace('",', "")
-                .strip()
-                .split(",")[1]
-            )
-            location_type = "<MISSING>"
-            hours_of_operation = (
-                " ".join(
-                    d.xpath(
-                        './/strong[contains(text(), "HOURS OF OPERATION:")]/following-sibling::text()'
-                    )
+
+        data = {
+            "cityName": f"{city}",
+        }
+
+        r = session.post(
+            "https://weborders.pizzanova.com/PNAPI/order/getStoreListByCity",
+            headers=headers,
+            data=data,
+        )
+        js = r.json()
+        for j in js:
+            info = j.get("screenMsg")
+            if not info:
+                continue
+            a = html.fromstring(info)
+
+            page_url = "https://weborders.pizzanova.com/PNAPI/order/store-locator/"
+            div = a.xpath('//div[@class="location-information"]')
+            for d in div:
+
+                ad = "".join(d.xpath(".//h2/text()"))
+                a = parse_address(International_Parser(), ad)
+                street_address = (
+                    f"{a.street_address_1} {a.street_address_2}".replace(
+                        "None", ""
+                    ).strip()
+                    or "<MISSING>"
                 )
-                .replace("\n", "")
-                .strip()
-            )
-            postal = "<MISSING>"
+                state = a.state or "<MISSING>"
+                country_code = "CA"
+                city = a.city or "<MISSING>"
+                hours_of_operation = (
+                    " ".join(
+                        d.xpath(
+                            './/strong[contains(text(), "HOURS OF OPERATION")]/following-sibling::text()'
+                        )
+                    )
+                    .replace("\n", " ")
+                    .strip()
+                )
+                hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+                hours_of_operation = (
+                    hours_of_operation.replace("Monday", "Monday ")
+                    .replace("Tuesday", "Tuesday ")
+                    .replace("Wednesday", "Wednesday ")
+                    .replace("Thursday", "Thursday ")
+                    .replace("Friday", "Friday ")
+                    .replace("Saturday", "Saturday ")
+                    .replace("Sunday", "Sunday ")
+                    .strip()
+                )
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=SgRecord.MISSING,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=SgRecord.MISSING,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=SgRecord.MISSING,
+                    location_type=SgRecord.MISSING,
+                    latitude=SgRecord.MISSING,
+                    longitude=SgRecord.MISSING,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=ad,
+                )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

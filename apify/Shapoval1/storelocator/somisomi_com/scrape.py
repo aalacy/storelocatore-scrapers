@@ -1,39 +1,13 @@
-import csv
 import usaddress
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data():
-    rows = []
     locator_domain = "https://www.somisomi.com"
     api_url = "https://www.somisomi.com/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw/find.ajax?gridAppId=691d9f7c-e5ae-45f7-80d2-dd4da634f76d&instance=wixcode-pub.588edeff9198d27630ab073685d1f3a85b52f122.eyJpbnN0YW5jZUlkIjoiOGRiODM4NDAtZTM3Zi00MjgwLWFjZDAtNmRmODAwMzQyNmQ2IiwiaHRtbFNpdGVJZCI6IjdmNTg2Njk0LTQ5OTEtNGIyOC1hMmRiLTZjNDRjMzk3MTU0YiIsInVpZCI6bnVsbCwicGVybWlzc2lvbnMiOm51bGwsImlzVGVtcGxhdGUiOmZhbHNlLCJzaWduRGF0ZSI6MTYxNTQwNjg1NzkxOCwiYWlkIjoiMmI4NDk2MjctOWUwOC00NmFlLWEyZjYtZDlhZTBjMDE1MmQzIiwiYXBwRGVmSWQiOiJDbG91ZFNpdGVFeHRlbnNpb24iLCJpc0FkbWluIjpmYWxzZSwibWV0YVNpdGVJZCI6IjM3NjM4MmIzLTM2ZTEtNDRkNy1hZDNjLTg4NzI3YzQ2ODcyMyIsImNhY2hlIjpudWxsLCJleHBpcmF0aW9uRGF0ZSI6bnVsbCwicHJlbWl1bUFzc2V0cyI6IlNob3dXaXhXaGlsZUxvYWRpbmcsQWRzRnJlZSxIYXNEb21haW4sSGFzRUNvbW1lcmNlIiwidGVuYW50IjpudWxsLCJzaXRlT3duZXJJZCI6ImQ0OGYzZDhhLTBiNGQtNGE4MC05NTEwLTBhZWM1ZWNmN2Q3OCIsImluc3RhbmNlVHlwZSI6InB1YiIsInNpdGVNZW1iZXJJZCI6bnVsbH0=&viewMode=site"
     session = SgRequests()
@@ -98,48 +72,43 @@ def get_data():
             or "<MISSING>"
         )
         city = a.get("city")
-        if city.find("Downtown San") != -1:
-            city = city.split("Downtown")[1].strip()
+        if city.find("Promenade Santa Monica") != -1:
+            city = "Santa Monica"
+            street_address = street_address + " " + "Promenade"
         state = a.get("state") or "<MISSING>"
-        if street_address.find("1456") != -1:
-            street_address = ad.split("  ")[0]
-            city = ad.split("  ")[1].split(",")[0]
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
         location_name = j.get("title")
         phone = j.get("phone") or "<MISSING>"
         page_url = "https://www.somisomi.com/locations-title"
         latitude = j.get("latitude")
         longitude = j.get("longitude")
-        location_type = "<MISSING>"
-        hours_of_operation = "".join(j.get("hours")).replace("\n", "").strip()
+        hours_of_operation = "".join(j.get("hours")).replace("\n", " ").strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-        rows.append(row)
-    return rows
-
-
-def scrape():
-    data = get_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

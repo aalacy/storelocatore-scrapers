@@ -88,11 +88,13 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"]),
-        location_name=sp.MappingField(mapping=["location_name"]),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
         latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
         longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
+            mapping=["street_address"], is_required=False, part_of_record_identity=True
         ),
         city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
         state=sp.MappingField(mapping=["state"], is_required=False),

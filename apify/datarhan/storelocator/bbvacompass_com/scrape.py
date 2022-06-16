@@ -1,145 +1,85 @@
-import csv
-import json
-from w3lib.url import add_or_replace_parameter
-
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "bbvausa.com"
+    start_url = "https://apps.pnc.com/locator-api/locator/api/v1/locator/browse"
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "X-App-Key": "pyHnMuBXUM1p4AovfkjYraAJp6",
+        "Origin": "https://apps.pnc.com",
+    }
+    data = session.get(start_url, headers=hdr).json()
+    for state, state_data in data.items():
+        for p in state_data["locations"]:
+            for e in p["locationDetails"]:
+                poi_url = f'https://apps.pnc.com/locator-api/locator/api/v2/location/details/{e["externalId"]}'
+                poi = session.get(poi_url, headers=hdr)
+                code = poi.status_code
+                while code != 200:
+                    session = SgRequests()
+                    poi = session.get(poi_url, headers=hdr)
+                    code = poi.status_code
+                poi = poi.json()
+                page_url = f'https://apps.pnc.com/locator/location-details/{poi["address"]["county"]}/{poi["address"]["city"]}/{poi["slsNumber"]}/{poi["externalId"]}/{poi["address"]["city"]}'
+                street_address = poi["address"]["address1"]
+                if poi["address"]["address2"]:
+                    street_address += ", " + poi["address"]["address2"]
+                phone = [
+                    e["contactInfo"]
+                    for e in poi["contactInfo"]
+                    if e["contactType"] == "Internal Phone"
+                ]
+                phone = phone[0] if phone else ""
+                hoo = []
+                if poi["services"][0]["hoursByDayIndex"]:
+                    for e in poi["services"][0]["hoursByDayIndex"]:
+                        day = e["dayName"]
+                        opens = e["hours"][0]["open"]
+                        if opens:
+                            hoo.append(f"{day} {opens} {e['hours'][0]['close']}")
+                        else:
+                            hoo.append(f"{day} closed")
+                hoo = " ".join(hoo)
 
-    items = []
-    scraped_items = []
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=poi["locationName"],
+                    street_address=street_address,
+                    city=poi["address"]["city"],
+                    state=poi["address"]["state"],
+                    zip_postal=poi["address"]["zip"],
+                    country_code="",
+                    store_number=poi["locationId"],
+                    phone=phone,
+                    location_type=poi["locationType"]["locationTypeDesc"],
+                    latitude=poi["address"]["latitude"],
+                    longitude=poi["address"]["longitude"],
+                    hours_of_operation=hoo,
+                )
 
-    DOMAIN = "bbvausa.com"
-
-    start_url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=7d3f010c5d39e1427b1ef79803fb493e&jsLibVersion=v1.7.2&sessionTrackingEnabled=true&input=bbva%20near%20me&experienceKey=bbvaconfig&version=PRODUCTION&filters=%7B%22c_bBVAType%22%3A%7B%22%24eq%22%3A%22BBVA%20Branch%22%7D%7D&facetFilters=%7B%7D&verticalKey=locations&limit=20&offset=20&queryId=f37ed31f-3bfc-48c6-8f6c-adeecca8e95e&locale=en&referrerPageUrl=&source=STANDARD"
-
-    response = session.get(start_url)
-    data = json.loads(response.text)
-    all_locations = data["response"]["results"]
-    for offset in range(0, data["response"]["resultsCount"] + 20, 20):
-        response = session.get(
-            add_or_replace_parameter(start_url, "offset", str(offset))
-        )
-        data = json.loads(response.text)
-        all_locations += data["response"]["results"]
-
-    for poi in all_locations:
-        location_name = poi["data"].get("c_bBVAName")
-        if not location_name:
-            location_name = poi["data"]["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["data"]["address"]["line1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["data"]["address"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["data"]["address"]["region"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["data"]["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["data"]["address"]["countryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["data"]["id"]
-        phone = poi["data"]["mainPhone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = poi["data"]["c_bBVAType"][0]
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if poi["data"].get("cityCoordinate"):
-            latitude = poi["data"]["cityCoordinate"]["latitude"]
-            longitude = poi["data"]["cityCoordinate"]["longitude"]
-        elif poi["data"].get("displayCoordinate"):
-            latitude = poi["data"]["displayCoordinate"]["latitude"]
-            longitude = poi["data"]["displayCoordinate"]["longitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        if poi["data"].get("hours"):
-            for day, hours in poi["data"]["hours"].items():
-                if type(hours) == str:
-                    continue
-                if day == "holidayHours":
-                    continue
-                if hours.get("openIntervals"):
-                    hours_of_operation.append(
-                        "{} {} - {}".format(
-                            day,
-                            hours["openIntervals"][0]["start"],
-                            hours["openIntervals"][0]["end"],
-                        )
-                    )
-                if hours.get("isClosed"):
-                    hours_of_operation.append("{} - closed".format(day))
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
-
-        store_url = poi["data"].get("url")
-        if not store_url:
-            store_url = "https://www.bbvausa.com/USA/{}/{}/{}/".format(
-                state, city, street_address
-            )
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
-            items.append(item)
-
-    return items
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

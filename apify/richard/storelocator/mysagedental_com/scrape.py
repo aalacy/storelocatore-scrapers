@@ -1,58 +1,18 @@
-import csv
-
-from bs4 import BeautifulSoup
-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
+import lxml.html
 
 URL = "https://mysagedental.com/"
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+website = "mysagedental.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetch_data():
     # store data
-    locations_ids = []
-    locations_titles = []
-    street_addresses = []
-    cities = []
-    states = []
-    zip_codes = []
-    latitude_list = []
-    longitude_list = []
-    phone_numbers = []
-    hours = []
-    countries = []
-    location_types = []
-    page_urls = []
-    data = []
 
     base_link = "https://mysagedental.com/wp-admin/admin-ajax.php?action=load_locations"
 
@@ -60,7 +20,7 @@ def fetch_data():
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()["locations"]
+    stores = session.get(base_link, headers=headers).json()["locations_all"]
 
     for store in stores:
         # Store ID
@@ -71,11 +31,22 @@ def fetch_data():
 
         # Name
         location_title = store["title"]
+        if "coming soon" in location_title.lower():
+            continue
 
         # Page url
-        page_url = URL + location_title.lower().replace("east boca", "boca").replace(
-            "hallandale beach", "hallandale"
-        ).split("at 7")[0].strip().replace(" ", "-")
+        page_url = (
+            URL
+            + location_title.lower()
+            .split("(")[0]
+            .replace("east boca", "boca")
+            .replace("hallandale beach", "hallandale")
+            .split("at 7")[0]
+            .strip()
+            .replace(" ", "-")
+            .replace(".", "-")
+            .strip()
+        )
 
         # Street
         street_address = store["address_1"].strip()
@@ -103,85 +74,56 @@ def fetch_data():
             lon = "<MISSING>"
 
         # Hour
-        try:
-            req = session.get(page_url, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            hour = base.find(class_="hours").get_text(" ").strip()
-        except:
+        log.info(page_url)
+        req = session.get(page_url, headers=headers)
+        if not isinstance(req, SgRequestError):
+            req_sel = lxml.html.fromstring(req.text)
+            hours = req_sel.xpath('//ul[@class="hours"]/li')
+            hours_list = []
+            for hour in hours:
+                hours_list.append(":".join(hour.xpath("text()")).strip())
+
+            hour = "; ".join(hours_list).strip()
+
+        else:
             page_url = "https://mysagedental.com/find-locations/"
             hour = "<INACCESSIBLE>"
 
         # Country
         country = "US"
 
-        # Store data
-        locations_ids.append(location_id)
-        locations_titles.append(location_title)
-        street_addresses.append(street_address)
-        states.append(state)
-        zip_codes.append(zipcode)
-        hours.append(hour)
-        latitude_list.append(lat)
-        longitude_list.append(lon)
-        phone_numbers.append(phone)
-        cities.append(city)
-        countries.append(country)
-        location_types.append(location_type)
-        page_urls.append(page_url)
-
-    for (
-        locations_title,
-        page_url,
-        street_address,
-        city,
-        state,
-        zipcode,
-        phone_number,
-        latitude,
-        longitude,
-        hour,
-        location_id,
-        country,
-        location_type,
-    ) in zip(
-        locations_titles,
-        page_urls,
-        street_addresses,
-        cities,
-        states,
-        zip_codes,
-        phone_numbers,
-        latitude_list,
-        longitude_list,
-        hours,
-        locations_ids,
-        countries,
-        location_types,
-    ):
-        data.append(
-            [
-                URL,
-                page_url,
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                country,
-                location_id,
-                phone_number,
-                location_type,
-                latitude,
-                longitude,
-                hour,
-            ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=page_url,
+            location_name=location_title,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipcode,
+            country_code=country,
+            store_number=location_id,
+            phone=phone,
+            location_type=location_type,
+            latitude=lat,
+            longitude=lon,
+            hours_of_operation=hour,
         )
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

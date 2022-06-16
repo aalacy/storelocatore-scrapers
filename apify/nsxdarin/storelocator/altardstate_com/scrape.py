@@ -31,21 +31,30 @@ def fetch_data():
         lat = item["latitude"]
         lng = item["longitude"]
         zc = item["postalCode"]
-        phone = item["phone"]
-        hours = str(item["storeHours"])
-        hours = (
-            hours.split("<td>", 1)[1]
-            .replace("\n", "")
-            .replace("\r", "")
-            .replace("\t", "")
-        )
-        hours = hours.replace("</td>    </tr>    <tr>        <td>", "; ")
-        hours = (
-            hours.replace("</td><td>", ": ")
-            .replace("</td></tr><tr><td>", "; ")
-            .replace("</td>    </tr></table>", "")
-            .replace("</td></tr></tbody></table>", "")
-        )
+        try:
+            phone = item["phone"]
+        except:
+            phone = "<MISSING>"
+        try:
+            hours = str(item["storeHours"])
+        except:
+            hours = "<MISSING>"
+        try:
+            hours = (
+                hours.split("<td>", 1)[1]
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("\t", "")
+            )
+            hours = hours.replace("</td>    </tr>    <tr>        <td>", "; ")
+            hours = (
+                hours.replace("</td><td>", ": ")
+                .replace("</td></tr><tr><td>", "; ")
+                .replace("</td>    </tr></table>", "")
+                .replace("</td></tr></tbody></table>", "")
+            )
+        except:
+            hours = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

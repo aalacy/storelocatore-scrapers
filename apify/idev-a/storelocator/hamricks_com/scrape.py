@@ -1,9 +1,10 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("hamricks")
 
@@ -12,58 +13,45 @@ _headers = {
 }
 
 locator_domain = "https://www.hamricks.com"
-base_url = "https://www.hamricks.com/store-locator"
+base_url = "https://api.storepoint.co/v1/1614339b632284/locations?rq"
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
     with SgRequests() as session:
-        links = (
-            session.get(base_url, headers=_headers)
-            .text.split("var infowindow =")[0]
-            .split("contentString[")
-        )
-        logger.info(f"{len(links)} found")
-        for link in links:
-            _ = bs(link.split("]")[1].split(";")[0], "lxml")
-            if "=" not in _.text:
-                continue
-            page_url = _.a["href"]
-            logger.info(page_url)
-            addr = list(_.select_one("div#bodyContent p").stripped_strings)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            phone = ""
-            if sp1.select_one("div.StoreInfo.FGothamBold"):
-                phone = sp1.select_one("div.StoreInfo.FGothamBold").text.strip()
-            temp = list(sp1.select("div.StoreInfo")[-1].stripped_strings)
+        locations = session.get(base_url, headers=_headers).json()["results"][
+            "locations"
+        ]
+        for _ in locations:
+            addr = parse_address_intl(_["streetaddress"])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             hours = []
-            for hh in temp:
-                if "please shop" in hh:
-                    break
-                hours.append(hh)
-            coord = (
-                sp1.select_one("div.CommercialBtn a")["href"]
-                .split("/@")[1]
-                .split("/data")[0]
-                .split(",")
-            )
+            for day in days:
+                day = day.lower()
+                if _.get(day):
+                    hours.append(f"{day}: {_[day]}")
             yield SgRecord(
-                page_url=page_url,
-                location_name=_.h5.text.strip().replace("\\'", "'"),
-                street_address=addr[-2].replace("•", " "),
-                city=addr[-1].split(",")[0].strip(),
-                state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                page_url="https://www.hamricks.com/find-a-store/",
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
-                phone=phone,
-                latitude=coord[0],
-                longitude=coord[1],
+                phone=_["phone"],
+                latitude=_["loc_lat"],
+                longitude=_["loc_long"],
                 locator_domain=locator_domain,
+                raw_address=_["streetaddress"],
                 hours_of_operation=": ".join(hours).replace("–", "-"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
