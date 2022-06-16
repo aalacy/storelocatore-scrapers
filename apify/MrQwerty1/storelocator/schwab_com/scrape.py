@@ -1,135 +1,78 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    urls = []
-    session = SgRequests()
-
-    start = [
-        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_abc.aspx?",
-        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_defghil.aspx?",
-        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_mn.aspx?",
-        "https://client.schwab.com/Public/BranchLocator/ViewAllBranches_opqrstuvw.aspx?",
-    ]
-
-    for s in start:
-        r = session.get(s)
-        tree = html.fromstring(r.content)
-        links = tree.xpath("//a[@class='popup']/@href")
-        urls += links
-
-    return urls
-
-
-def get_data(page_url):
-    session = SgRequests()
-
-    locator_domain = "https://www.schwab.com/"
-
-    r = session.get(page_url)
-    if r.status_code == 404:
-        return
-    tree = html.fromstring(r.text)
-    location_name = "".join(
-        tree.xpath(
-            "//h2[@id='ctl00_wpMngr_BranchDetail_BranchDetails_dynPageTitle']/text()"
-        )
-    ).strip()
-    line = tree.xpath(
-        "//p[@id='ctl00_wpMngr_BranchDetail_BranchDetails_brAddress']/text()"
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=40
     )
-    line = list(filter(None, [l.strip() for l in line]))
-    street_address = line[0]
-    line = line[1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line[:2].strip()
-    postal = line[2:].strip()
-    country_code = "US"
-    store_number = page_url.split("=")[-1]
-    phone = tree.xpath("//span[@data-active='mobile']/text()")[0].strip()
-    location_type = "Branch"
-    latitude, longitude = "<MISSING>", "<MISSING>"
+    for lat, lng in search:
 
-    _tmp = []
-    tr = tree.xpath("//div[@id='hours-furl-content']/table[@class='hours']//tr")
-    for t in tr:
-        _tmp.append(" ".join(t.xpath("./td/text()")).strip())
+        api = f"https://client.schwab.com/public/branchlocator/Locator.ashx?lat={lat}&lang={lng}&brnchtype=undefined"
+        r = session.get(api, headers=headers)
+        js = r.json()["BranchesOutForMap"]
+        if js is None:
+            continue
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = "Closed"
+        for j in js:
+            street_address = j.get("BranchAddr") or ""
+            if "coming" in street_address.lower():
+                continue
+            city = j.get("City")
+            state = j.get("State")
+            postal = j.get("Zipcode")
+            country_code = "US"
+            store_number = j.get("BranchID")
+            location_name = j.get("BranchName")
+            page_url = f"https://client.schwab.com/public/branchlocator/branchdetails.aspx?branchid={store_number}"
+            location_type = j.get("Type")
+            phone = j.get("GeneralAppointmentPhone")
+            latitude = j.get("Latitude")
+            longitude = j.get("Longitude")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-    return row
+            _tmp = []
+            hours = j.get("WeeklyBranchTimes") or []
+            for h in hours:
+                day = h.get("Day")
+                start = h.get("Open")
+                end = h.get("Close")
+                _tmp.append(f"{day}: {start}-{end}")
 
+            hours_of_operation = ";".join(_tmp)
 
-def fetch_data():
-    out = []
-    urls = get_urls()
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                location_type=location_type,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.schwab.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

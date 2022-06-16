@@ -1,139 +1,172 @@
-import csv
+import json
 import re
+import usaddress
 
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sglogging import sglog
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    urls = []
-    session = SgRequests()
-    r = session.get("https://www.rightathome.net/states")
-    tree = html.fromstring(r.content)
-    states = tree.xpath("//ul[@class='state-list']/li/a/@href")
-    for state in states:
-        if state.startswith("/"):
-            state = f"https://www.rightathome.net{state}"
-
-        r = session.get(state)
-        tree = html.fromstring(r.text)
-        links = tree.xpath("//div[@class='col-sm-8']/h5[@class='entry-title']/a/@href")
-        urls += links
-
-    return urls
-
-
-def get_data(u):
-    session = SgRequests()
-    r = session.get(u)
-    tree = html.fromstring(r.text)
-    regex = r"(\d{5}$|\d{5}-\d+?$)"
-    locator_domain = "https://www.rightathome.net"
-    location_name = (
-        "".join(tree.xpath("//p[@class='page-description']/text()"))
-        .replace("-", "")
-        .strip()
-    )
-    line = tree.xpath("//div[@style='float:left']")[0].xpath(".//text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    i = 0
-    for l in line:
-        if re.findall(regex, l):
-            break
-        i += 1
-
-    part_line = line[i]
-    street_address = ", ".join(line[:i])
-    city = part_line.split(",")[0].strip()
-    if not location_name:
-        location_name = f"Right at Home in {city}"
-    state = part_line.split(",")[1].strip()[:2]
-    postal = part_line.split(",")[1].split()[-1]
-    phone = tree.xpath("//div[@class='mobiletel']/a/text()")[0]
     try:
-        text = "".join(tree.xpath("//script[contains(text(),'@type')]/text()"))
-        latitude = re.findall(r'"latitude": "(\d{2,3}.\d+)"', text)[0]
-        longitude = re.findall(r'"longitude": "(-?\d{2,3}.\d+)"', text)[0]
-    except:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    page_url = u
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        adr1 = a.get("address1") or ""
+        adr2 = a.get("address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("postal")
+    except usaddress.RepeatedLabelError:
+        adr = line.split(",")
+        state, postal = adr.pop().strip().split()
+        city = adr.pop().strip()
+        street_address = ",".join(adr)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    s = set()
-    urls = get_urls()
+def get_additional(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            line = tuple(row[2:6])
-            if row and line not in s:
-                s.add(line)
-                out.append(row)
+    line = tree.xpath("//div[@class='para' and ./a]//text()")
+    line = list(filter(None, [li.strip() for li in line]))
+    adr = line[: line.index("Phone:")]
+    raw_address = ", ".join(adr)
+    try:
+        phone = tree.xpath(".//a[contains(@href, 'tel:')]/text()")[0].strip()
+    except IndexError:
+        phone = SgRecord.MISSING
 
-    return out
+    return raw_address, phone
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+    )
+    for lat, lng in search:
+        api = f"https://www.rightathome.net/location-finder?lat={lat}&lng={lng}"
+        r = session.get(api)
+        tree = html.fromstring(r.text)
+        divs = tree.xpath("//div[@class='search-result']")
+
+        for d in divs:
+            location_name = "".join(d.xpath(".//h4/a/text()")).strip()
+            page_url = "".join(d.xpath(".//h4/a/@href"))
+            phone = "".join(
+                d.xpath(".//a[contains(@href, 'tel:')]/strong/text()")
+            ).strip()
+
+            _tmp = []
+            black = [
+                "licence",
+                "license",
+                "number",
+                "ahccs",
+                "hcs",
+                "hha",
+                "ahca",
+                "registration",
+                "certification",
+                "personal",
+                "lic ",
+                "provider",
+                "#np",
+                "rsa",
+            ]
+            lines = d.xpath(
+                ".//div[@class='para']/p/a/text()|.//div[@class='para']/p/a/p/text()"
+            )
+            for line in lines:
+                iscontinue = False
+                t = line.replace("\xa0", " ").lower().strip()
+                for b in black:
+                    if b in t:
+                        iscontinue = True
+                if not t or iscontinue:
+                    continue
+                _tmp.append(line.replace("\xa0", " ").strip().replace("\n", " "))
+
+            raw_address = ", ".join(_tmp).replace(",,", ",")
+            incorrect = "".join(re.findall(regex, raw_address))
+            if incorrect:
+                correct = incorrect[:2] + " " + incorrect[2:]
+                raw_address = re.sub(regex, correct, raw_address)
+
+            if not raw_address:
+                raw_address, phone = get_additional(page_url)
+
+            street_address, city, state, postal = get_address(raw_address)
+
+            try:
+                text = "".join(d.xpath(".//script[@type='application/ld+json']/text()"))
+                j = json.loads(text, strict=False)
+                g = j.get("geo") or {}
+                latitude = g.get("latitude")
+                longitude = g.get("longitude")
+            except:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                raw_address=raw_address,
+                locator_domain=locator_domain,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    regex = r"([A-Z]{2}\d{5})"
+    locator_domain = "https://www.rightathome.net/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="rightathome.net")
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

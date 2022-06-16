@@ -30,9 +30,9 @@ def get_urls():
 def get_data(page_url, sgw: SgWriter):
     try:
         r = session.get(page_url)
+        tree = html.fromstring(r.text)
     except:
         return
-    tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")[-1]).strip()
     try:
@@ -94,7 +94,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

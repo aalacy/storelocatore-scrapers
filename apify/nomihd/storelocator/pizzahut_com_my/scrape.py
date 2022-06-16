@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -6,8 +7,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
-from sgscrape.simple_utils import parallelize
-from sgzip.dynamic import DynamicGeoSearch
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sgpostal import sgpostal as parser
 
 website = "pizzahut.com.my"
@@ -29,107 +30,117 @@ headers = {
 }
 
 
-def fetch_records_for(tup):
-    coords, session = tup
-    lat = coords[0]
-    lng = coords[1]
-    log.info(f"pulling records for coordinates: {lat,lng}")
-    # Your scraper here
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
-    search_url = "https://apiapse1.phdvasia.com/v1/product-hut-fe/localizations"
-    params = (
-        ("location", f"{lng},{lat}"),
-        ("order_type", "C"),
-        ("limit", "1000"),
-        ("openingHour", "1"),
-    )
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
 
-    stores_req = session.get(search_url, headers=headers, params=params)
-    stores = []
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
-    try:
-        stores = json.loads(stores_req.text)["data"]["items"]
-    except:
-        pass
+        lat = coord[0]
+        lng = coord[1]
+        log.info(f"pulling data for coordinates: {lat},{lng}")
+        search_url = "https://apiapse1.phdvasia.com/v1/product-hut-fe/localizations"
+        params = (
+            ("location", f"{lng},{lat}"),
+            ("order_type", "C"),
+            ("limit", "1000"),
+            ("openingHour", "1"),
+        )
 
-    return stores
-
-
-def process_record(raw_results_from_one_coordinate):
-    stores = raw_results_from_one_coordinate
-    for store in stores:
-        if store["active"] != 1:
-            continue
-        page_url = "<MISSING>"
-        locator_domain = website
-        location_name = store["name"]
-        log.info(location_name)
-        raw_address = store["address"]
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
-
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
-
-        country_code = "MY"
-        store_number = store["id"]
-        phone = store.get("phone", "<MISSING>")
-
-        location_type = "<MISSING>"
-
-        hours_of_operation = "<MISSING>"
+        stores_req = self.__http.get(search_url, headers=headers, params=params)
         try:
-            hours_of_operation = (
-                store["opening_hours"][0]["opening"]
-                + " - "
-                + store["opening_hours"][0]["closing"]
-            )
+            stores = json.loads(stores_req.text)["data"]["items"]
+            for store in stores:
+                page_url = "<MISSING>"
+                locator_domain = website
+                location_name = store["name"]
+                log.info(location_name)
+                raw_address = store["address"]
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
+
+                country_code = "MY"
+                store_number = store["id"]
+                phone = store.get("phone", "<MISSING>")
+
+                location_type = "<MISSING>"
+
+                hours_of_operation = "<MISSING>"
+                try:
+                    hours_of_operation = (
+                        store["opening_hours"][0]["opening"]
+                        + " - "
+                        + store["opening_hours"][0]["closing"]
+                    )
+                except:
+                    pass
+                latitude = store["lat"]
+                longitude = store["long"]
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+
         except:
             pass
-        latitude = store["lat"]
-        longitude = store["long"]
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
 
 
 def scrape():
     log.info("Started")
-    count = 0
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+    )
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        with SgRequests() as session:
-            search = DynamicGeoSearch(country_codes=["MY"])
-            results = parallelize(
-                search_space=[(coord, session) for coord in search],
-                fetch_results_for_rec=fetch_records_for,
-                processing_function=process_record,
-                max_threads=8,  # tweak to see what's fastest
+        with SgRequests() as http:
+            search_iter = _SearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=["MY"],
             )
-            for rec in results:
-                writer.write_row(rec)
-                count = count + 1
 
-    log.info(f"No of records being processed: {count}")
+            for rec in par_search.run():
+                writer.write_row(rec)
+
     log.info("Finished")
 
 

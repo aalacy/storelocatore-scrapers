@@ -1,125 +1,66 @@
-import csv
-
-from concurrent import futures
+import json
+from urllib.parse import unquote
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://good2gostores.com/locations")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//h4/a/@href")
-
-
-def get_data(page_url):
-    locator_domain = "https://good2gostores.com/"
-    session = SgRequests()
+def fetch_data(sgw: SgWriter):
+    page_url = "https://good2gostores.com/locations/"
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1[@class='col-xs-12']/text()")).strip()
-    line = "".join(tree.xpath("//*[./i[@class='fa fa-location-arrow']]/text()")).strip()
-    line = line.split(",")
-    street_address = ", ".join(line[:-2]).strip() or "<MISSING>"
-    city = line[-2].strip()
-    part = line[-1].strip()
-    state = part.split()[0]
-    postal = part.split()[1]
-    country_code = "US"
-    store_number = (
-        "".join(
-            tree.xpath("//div[@class='col-xs-12' and contains(text(), '#')]/text()")
+    text = "".join(
+        tree.xpath(
+            "//div[@data-elfsight-google-maps-options]/@data-elfsight-google-maps-options"
         )
-        .strip()
-        .replace("#", "")
     )
-    phone = (
-        "".join(tree.xpath("//a[./i[@class='fa fa-phone']]/text()")).strip()
-        or "<MISSING>"
-    )
-    latitude = "".join(tree.xpath("//span[@data-lat]/@data-lat")) or "<MISSING>"
-    longitude = "".join(tree.xpath("//span[@data-lat]/@data-lng")) or "<MISSING>"
-    location_type = "<MISSING>"
+    js = json.loads(unquote(text))["markers"]
 
-    _tmp = []
-    tr = tree.xpath("//table[@class='hours-table']//tr")
+    for j in js:
+        location_name = j.get("infoTitle") or ""
+        store_number = location_name.split("#")[-1]
+        raw_address = j.get("position") or ""
+        line = raw_address.split(", ")
+        state, postal = line.pop().split()
+        city = line.pop()
+        street_address = ", ".join(line)
+        if not street_address:
+            street_address = " ".join(city.split()[:-2])
+            city = " ".join(city.split()[-2:])
+        phone = j.get("infoPhone")
+        geo = j.get("coordinates") or ""
+        latitude, longitude = geo.split(", ")
+        hours_of_operation = j.get("infoWorkingHours") or ""
+        if "Fuel Pumps" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Fuel Pumps")[0].strip()
+        if hours_of_operation.endswith(","):
+            hours_of_operation = hours_of_operation[:-1]
 
-    for t in tr:
-        day = "".join(t.xpath("./td[1]//text()")).strip()
-        time = "".join(t.xpath("./td[2]//text()")).strip()
-        _tmp.append(f"{day}: {time}")
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://good2gostores.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

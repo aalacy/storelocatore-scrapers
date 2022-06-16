@@ -31,7 +31,7 @@ def fetch_data(sgw: SgWriter):
         state = ad.split(",")[1].split()[0].strip()
         postal = ad.split(",")[1].split()[-1].strip()
         country_code = "US"
-        city = ad.split(",")[1].split()[-1].strip()
+        city = ad.split(",")[0].split()[-1].strip()
         latitude = (
             "".join(
                 d.xpath(f'.//following::script[contains(text(), "{strslug}")]/text()')

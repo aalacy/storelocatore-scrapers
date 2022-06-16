@@ -75,7 +75,12 @@ def fetch_data():
             )
             temp_phone = phones[index].strip().split("',")[0].strip()
 
-            store_dict[temp_name.replace("Click & Collect - ", "").strip()] = (
+            store_dict[
+                temp_name.replace("Click & Collect - ", "")
+                .strip()
+                .replace("Click & collect - ", "")
+                .strip()
+            ] = (
                 temp_addr,
                 temp_phone,
             )

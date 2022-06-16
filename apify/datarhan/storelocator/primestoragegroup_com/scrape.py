@@ -40,11 +40,15 @@ def fetch_data():
         phone = poi["@graph"][0]["telephone"]
         if not phone:
             phone = loc_dom.xpath('//address/a[contains(@href, "tel")]/text()')[0]
-        hoo = " ".join(poi["@graph"][0]["openingHours"])
+        hoo = poi["@graph"][0].get("openingHours")
         if not hoo:
             hoo = loc_dom.xpath('//div[@id="hours-popper"]//text()')
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hoo = " ".join(hoo).split("Access Hours:")[-1].strip()
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo).split("Access Hours:")[-1].strip()
+        if "sa " not in hoo:
+            hoo += " sa closed"
+        if "su " not in hoo:
+            hoo += " su closed"
 
         item = SgRecord(
             locator_domain=domain,

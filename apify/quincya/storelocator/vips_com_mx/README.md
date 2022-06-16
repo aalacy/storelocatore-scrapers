@@ -1,0 +1,1 @@
+--ignore CountryCodeFillRateChecker --ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator (Data confirmed on website)

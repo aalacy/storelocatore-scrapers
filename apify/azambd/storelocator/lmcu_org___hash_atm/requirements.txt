@@ -3,5 +3,6 @@ sglogging==0.0.4
 sgselenium==0.1.4
 selenium==3.141.0
 webdriver_manager==3.4.2
-sgscrape==0.2.4
-sgzip==0.10.4
+sgscrape==0.2.9
+sgzip==0.10.15
+tenacity==7.0.0

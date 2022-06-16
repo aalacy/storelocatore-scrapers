@@ -30,6 +30,8 @@ def fetch_data():
         name = js["name"]
         if "OUTLET" in name:
             name = "Talbots Outlet"
+        elif "CLEARANCE" in name:
+            name = "Talbots Clearance Store"
         else:
             name = "Talbots"
 

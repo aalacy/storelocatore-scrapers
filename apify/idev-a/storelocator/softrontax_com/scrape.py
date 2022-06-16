@@ -5,6 +5,7 @@ from sglogging import SgLogSetup
 import dirtyjson as json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("softrontax")
 
@@ -15,32 +16,38 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 
 
 def fetch_data():
-    locator_domain = "https://www.softrontax.com/"
-    base_url = "https://www.softrontax.com/_next/static/chunks/pages/location-22a8ddac067343e939d8.js"
-    with SgRequests() as session:
-        locations = json.loads(
-            session.get(base_url, headers=_headers)
-            .text.split("(d(7757),")[1]
-            .split(",a=d(7294)")[0]
-            .strip()[:-1]
+    locator_domain = "https://www.softrontax.com"
+    base_url = "https://www.softrontax.com/location"
+    with SgRequests(verify_ssl=False) as http:
+        locations = bs(http.get(base_url, headers=_headers), "lxml").select(
+            "div.container div.column li a"
         )
-        for _ in locations:
-            hours = []
-            for x, hh in enumerate(_["times"]):
-                hours.append(f"{days[x]}: {hh}")
-            yield SgRecord(
-                page_url="https://www.softrontax.com/location",
-                street_address=_["address"],
-                city=_["city"].split(",")[0].strip(),
-                state=_["city"].split(",")[-1].strip(),
-                zip_postal=_["pcode"],
-                latitude=_["lat"],
-                longitude=_["lng"],
-                country_code="CA",
-                phone=_["pnumber"].split("/")[0],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+        for loc in locations:
+            url = locator_domain + loc["href"]
+            locs = json.loads(
+                bs(http.get(url, headers=_headers).text, "lxml")
+                .select_one("script#__NEXT_DATA__")
+                .string
+            )["props"]["pageProps"]["location_data"]
+            for _ in locs:
+                hours = []
+                for x, hh in enumerate(_["times"]):
+                    hours.append(f"{days[x]}: {hh}")
+                yield SgRecord(
+                    page_url=f"https://www.softrontax.com/location/{_['id']}",
+                    location_name=_["locationtitle"],
+                    street_address=_["address"],
+                    city=_["city"].split(",")[0].strip(),
+                    state=_["city"].split(",")[-1].strip(),
+                    zip_postal=_["pcode"],
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    country_code="CA",
+                    phone=_["pnumber"].split("/")[0],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
+            break
 
 
 if __name__ == "__main__":
@@ -48,9 +55,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LONGITUDE,
-                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
                 }
             )
         )

@@ -10,7 +10,6 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.ikea.lv/en"
     api_url = "https://www.ikea.lv/en/page/contactsriga"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -33,7 +32,7 @@ def fetch_data(sgw: SgWriter):
     ad = (
         "".join(
             tree.xpath(
-                '//strong[contains(text(), "Address")]/following-sibling::text()[3]'
+                '//strong[contains(text(), "Address")]/following-sibling::text()[2]'
             )
         )
         .replace("\n", "")
@@ -62,6 +61,9 @@ def fetch_data(sgw: SgWriter):
         .replace("\n", "")
         .strip()
     )
+    cls = "".join(tree.xpath('//span[contains(text(),"are closed")]/text()'))
+    if cls:
+        hours_of_operation = "Closed"
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -84,7 +86,6 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.ikea.lt/en"
     api_url = "https://www.ikea.lt/en/contactsvilnius"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -95,7 +96,6 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
         page_url = f"https://www.ikea.lt{slug}"
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 

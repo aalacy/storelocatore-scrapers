@@ -56,7 +56,7 @@ def extract_address(location: str) -> Dict[str, str]:
 def extract_hours(operatinghours: str) -> Optional[str]:
     if operatinghours:
         operatinghours = operatinghours.replace("\n", "")
-        operatinghours = operatinghours.replace("\r", "")
+        operatinghours = operatinghours.replace("\r", " ")
         internal_br = "(?<=[a-zA-Z])<br>(?=[a-zA-Z])"
         hours = regEx.sub(internal_br, ", ", operatinghours).strip()
         tags = regEx.compile("<.*?>")

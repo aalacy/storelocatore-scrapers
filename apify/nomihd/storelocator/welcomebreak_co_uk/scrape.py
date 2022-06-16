@@ -48,25 +48,31 @@ def fetch_data():
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath("//article")
+        stores = search_sel.xpath("//div[@class='c-content-posts__post']")
 
         for _, store in enumerate(stores, 1):
 
-            page_url = "".join(store.xpath(".//div/a[not(img)]/@href"))
+            page_url = "".join(
+                store.xpath(".//a[@class='c-cta__anchor']/@href")
+            ).strip()
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
             locator_domain = website
 
-            location_name = "".join(store.xpath(".//div/a[not(img)]/text()")).strip()
+            location_name = "".join(
+                store.xpath(".//h2[@class='c-cta__heading']/text()")
+            ).strip()
 
             full_address = list(
                 filter(
                     str,
                     [
                         x.strip()
-                        for x in store_sel.xpath('//p[strong/text()="Address:"]/text()')
+                        for x in store_sel.xpath(
+                            '//p[@class="c-heading__subheading "]/text()'
+                        )
                     ],
                 )
             )[0].strip()
@@ -89,17 +95,14 @@ def fetch_data():
 
             store_number = "<MISSING>"
 
-            phone = (
-                "".join(store_sel.xpath('//p[strong/text()="Contact:"]/text()'))
-                .split(",")[0]
-                .split("Tel:")[1]
-                .strip()
-            )
+            phone = "<MISSING>"
 
             location_type = "<MISSING>"
 
             hours_of_operation = "<MISSING>"
-            map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
+            map_link = "".join(
+                store_sel.xpath('//a[contains(text()," Get directions")]/@href')
+            )
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(

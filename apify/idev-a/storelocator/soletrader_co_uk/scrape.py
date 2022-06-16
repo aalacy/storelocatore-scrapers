@@ -9,35 +9,41 @@ _headers = {
 }
 
 locator_domain = "https://www.soletrader.co.uk"
-base_url = "https://www.soletrader.co.uk/modules/staff/ajax.aspx?Longitude=-0.137502&Latitude=51.497662&RangeInMiles=9999&F=GetClosestLocations"
+base_url = "https://www.soletrader.co.uk/ajax/store-locator/?searchText=&pagesize=1000&pageNumber={}"
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def fetch_data():
     with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()
-        for _ in locations:
-            phone = _["Phone"]
-            if phone == "N/A":
-                phone = ""
-            hours = []
-            for hh in _.get("OpenHours", []):
-                hours.append(f"{hh['DayName']}: {hh['From']} - {hh['To']}")
-            page_url = locator_domain + _["CustomUrl"]
-            yield SgRecord(
-                page_url=page_url,
-                store_number=_["DealerId"],
-                location_name=_["Address1"],
-                street_address=_["Address2"],
-                city=_["City"],
-                state=_.get("State"),
-                zip_postal=_["Zip"],
-                latitude=_["Latitude"],
-                longitude=_["Longitude"],
-                country_code="UK",
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+        page = 1
+        while True:
+            data = session.get(base_url.format(page), headers=_headers).json()
+            if data["pagination"]["hasNextPage"]:
+                page += 1
+            for _ in data["results"]:
+                hours = []
+                for x, day in enumerate(days):
+                    for hh in _.get("inventoryLocationOpenHours", []):
+                        if hh["day"] == x:
+                            hours.append(f"{day}: {hh['openTime']} - {hh['closeTime']}")
+                page_url = locator_domain + _["url"]
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=_["name"],
+                    street_address=_["address2"],
+                    city=_["city"],
+                    state=_.get("region"),
+                    zip_postal=_["postalCode"],
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    country_code=_["country"],
+                    phone=_.get("phoneNumber"),
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
+
+            if not data["pagination"]["hasNextPage"]:
+                break
 
 
 if __name__ == "__main__":
