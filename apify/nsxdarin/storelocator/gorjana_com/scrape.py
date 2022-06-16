@@ -100,6 +100,17 @@ def fetch_data():
                 hours_of_operation = (
                     "Mon-Thurs: 11AM - 8PM; Fri-Sat: 10AM - 8PM; Sun: 11AM - 8PM"
                 )
+            hours_of_operation = hours_of_operation.replace("PMT", "PM,T").replace(
+                "PMS", "PM,S"
+            )
+            if (
+                "Mon" not in hours_of_operation
+                and "Sun" not in hours_of_operation
+                and "Sat" not in hours_of_operation
+            ):
+                tempphone = hours_of_operation
+                hours_of_operation = phone
+                phone = tempphone
             if state != "<MISSING>":
                 yield SgRecord(
                     locator_domain=DOMAIN,
