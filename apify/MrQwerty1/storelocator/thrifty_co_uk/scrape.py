@@ -18,6 +18,9 @@ def fetch_data(sgw: SgWriter):
             city = j.get("city") or ""
             if "(" in city:
                 city = city.split("(")[0].strip()
+            if "," in city:
+                city = city.split(",")[0].strip()
+            city = city.replace("COMMERCIAL", "").replace("4WD AND TRUCK", "").strip()
             state = j.get("state")
             postal = j.get("postal_code") or ""
             if str(postal) == "0":

@@ -1,3 +1,5 @@
+import json
+
 from lxml import html
 from concurrent import futures
 from sgscrape.sgrecord import SgRecord
@@ -6,6 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sglogging import sglog
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
@@ -21,32 +24,67 @@ def get_international(line):
     return street_address, city, state, postal
 
 
-def get_urls(coords):
-    lat, lng = coords
-    data = {"lat": lat, "lng": lng}
-    r = session.post(
-        "https://www.nandos.co.za/eat/restaurant_search_results",
-        headers=headers,
-        data=data,
+def get_urls():
+    urls = set()
+    countries = [
+        SearchableCountries.SOUTH_AFRICA,
+        SearchableCountries.BOTSWANA,
+        SearchableCountries.NAMIBIA,
+        SearchableCountries.SWAZILAND,
+    ]
+    search = DynamicGeoSearch(
+        country_codes=countries,
+        expected_search_radius_miles=200,
     )
-    tree = html.fromstring(r.text)
 
-    return tree.xpath("//section[@id='results-list']/div/a/@href")
+    for lat, lng in search:
+        data = {"lat": lat, "lng": lng}
+        r = session.post(
+            "https://www.nandos.co.za/eat/restaurant_search_results",
+            headers=headers,
+            data=data,
+        )
+        tree = html.fromstring(r.text)
+        text = "".join(
+            tree.xpath(
+                "//script[contains(text(), 'window.mapData.items.push(')]/text()"
+            )
+        )
+        if not text:
+            search.found_nothing()
+
+        tt = text.split("window.mapData.items.push(")
+        tt.pop(0)
+
+        logger.info(f"{(lat, lng)}: {len(tt)}")
+        for t in tt:
+            j = json.loads(t.split(");")[0])
+            slug = j.get("id_name")
+            url = f"https://www.nandos.co.za/eat/restaurant/{slug}"
+            urls.add(url)
+            la = j.get("latitude")
+            ln = j.get("longitude")
+            search.found_location_at(la, ln)
+
+    return urls
 
 
-def get_data(slug, sgw: SgWriter):
-    page_url = f"https://www.nandos.co.za{slug}"
+def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
-    if r.status_code == 404:
+    logger.info(f"{page_url}: {r}")
+    if r.status_code != 200:
         return
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     raw_address = "".join(tree.xpath("//h1/following-sibling::ul/li[1]//text()"))
     street_address, city, state, postal = get_international(raw_address)
-    phone = "".join(
-        tree.xpath("//h1/following-sibling::ul/li/a[contains(@href, 'tel:')]/text()")
-    )
+    try:
+        phone = tree.xpath(
+            "//h1/following-sibling::ul/li/a[contains(@href, 'tel:')]/text()"
+        )[0].strip()
+    except IndexError:
+        phone = SgRecord.MISSING
     latitude = "".join(tree.xpath("//div[@data-lat]/@data-lat"))
     longitude = "".join(tree.xpath("//div[@data-lat]/@data-lng"))
     hours_of_operation = ";".join(
@@ -73,22 +111,10 @@ def get_data(slug, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = set()
-    countries = [
-        SearchableCountries.SOUTH_AFRICA,
-        SearchableCountries.BOTSWANA,
-        SearchableCountries.NAMIBIA,
-        SearchableCountries.SWAZILAND,
-    ]
-    search = DynamicGeoSearch(
-        country_codes=countries,
-        expected_search_radius_miles=200,
-    )
-    for p in search:
-        for u in get_urls(p):
-            urls.add(u)
+    urls = get_urls()
+    logger.info(f"{len(urls)} URLs to crawl")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -96,6 +122,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
+    logger = sglog.SgLogSetup().get_logger(logger_name="nandos.co.za")
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
