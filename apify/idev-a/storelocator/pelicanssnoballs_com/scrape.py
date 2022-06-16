@@ -20,6 +20,7 @@ def _phone(val):
         .replace(")", "")
         .replace("-", "")
         .replace(" ", "")
+        .replace("•", "")
         .strip()
         .isdigit()
     )
@@ -65,12 +66,15 @@ def fetch_data():
                     soup.select_one("div.avia_textblock p").stripped_strings
                 )
                 if phone_block and _phone(phone_block[0]):
-                    phone = phone_block[0]
+                    phone = phone_block[0].replace("•", "")
 
                 hours_of_operation = "; ".join(hours)
                 if "currently closed" in hours_of_operation:
                     hours_of_operation = "Closed"
-                if "Daily Veterans" in hours_of_operation:
+                if (
+                    "Daily Veterans" in hours_of_operation
+                    or "daily closed" in hours_of_operation.lower()
+                ):
                     hours_of_operation = ""
 
                 yield SgRecord(

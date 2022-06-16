@@ -38,21 +38,35 @@ def fetch_data():
             logger.info(locator_domain + url["href"])
             driver.get(locator_domain + url["href"])
             locations += [
-                loc.a["href"]
+                loc
                 for loc in bs(driver.page_source, "lxml").select("div.m-store-teaser")
             ]
 
         logger.info(f"{len(locations)} locations")
-        for page_url in locations:
+        for loc in locations:
+            page_url = loc.a["href"]
             logger.info(f"[***] {page_url}")
             driver.get(page_url)
             sp1 = bs(driver.page_source, "lxml")
             if driver.current_url == base_url:
                 continue
-            _ = json.loads(sp1.find("script", type="application/ld+json").string)
+            try:
+                _ = json.loads(sp1.find("script", type="application/ld+json").string)
+            except:
+                addr = loc.p.text.strip().split(",")
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=loc.span.text.strip(),
+                    locator_domain=locator_domain,
+                    street_address=" ".join(addr[:-2]),
+                    city=addr[-1].split("/")[0],
+                    zip_postal=addr[-2],
+                    country_code="Spain",
+                )
+                continue
             phone = ""
             if sp1.select_one("span.phone-list"):
-                phone = sp1.select_one("span.phone-list").text.strip()
+                phone = sp1.select_one("span.phone-list").text.split("/")[0].strip()
             hours = []
             for hh in _["openingHoursSpecification"]:
                 day = hh["dayOfWeek"]

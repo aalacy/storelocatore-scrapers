@@ -65,6 +65,8 @@ def fetch_data():
             r = session.get(url, headers=headers)
             dealers = json.loads(r.content)["dealer"]
             logger.info(f"found {len(dealers)} dealers")
+            if "dealerCode" not in r.content:
+                search.found_nothing()
             for dealer in dealers:
                 store_number = handle_missing(dealer["dealerCode"])
                 website = "dodge.com"
@@ -82,6 +84,7 @@ def fetch_data():
                 phone = handle_missing(dealer["phoneNumber"])
                 lat = handle_missing(dealer["dealerShowroomLatitude"])
                 lng = handle_missing(dealer["dealerShowroomLongitude"])
+                search.found_location_at(lat, lng)
                 hours = parse_hours(dealer["departments"]["sales"]["hours"])
                 yield SgRecord(
                     locator_domain=website,
@@ -100,6 +103,7 @@ def fetch_data():
                     hours_of_operation=hours,
                 )
         except:
+            search.found_nothing()
             pass
 
 
