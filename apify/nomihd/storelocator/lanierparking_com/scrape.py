@@ -49,6 +49,7 @@ class _SearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
+        found_nothing,
     ) -> Iterable[SgRecord]:
 
         lat = coord[0]
