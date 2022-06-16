@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import SgRecordID
 
 def get_params():
     out = dict()
-    r = session.get(page_url, headers=headers)
+    r = session.get("https://support.vodafone.com.gh/h/retailshop/", headers=headers)
     tree = html.fromstring(r.text)
     option = tree.xpath("//select[@id='selectedRegion']/option")
     option.pop(0)
