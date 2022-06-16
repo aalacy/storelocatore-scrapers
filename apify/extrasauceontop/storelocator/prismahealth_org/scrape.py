@@ -12,7 +12,7 @@ def get_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         granularity=Grain_8(),
-        max_search_distance_miles=1000,
+        max_search_distance_miles=100,
     )
 
     with SgChrome(
@@ -108,6 +108,7 @@ def scrape():
         data_fetcher=get_data,
         field_definitions=field_defs,
         log_stats_interval=15,
+        duplicate_streak_failure_factor=-1,
     )
     pipeline.run()
 

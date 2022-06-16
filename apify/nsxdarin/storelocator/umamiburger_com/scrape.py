@@ -37,19 +37,41 @@ def fetch_data():
         soupstr = str(soup.find("script", id="popmenu-apollo-state"))
         items = soupstr.split('"RestaurantLocation:')
         for item in items:
-            if "Coming Soon!" not in item and "POPMENU_" not in item:
+            if (
+                "Coming Soon!" not in item
+                and "POPMENU_APOLLO_STATE" not in item
+                and '"id":' in item
+            ):
                 try:
                     page_url = BASE_URL + item.split('"slug":"')[1].split('"')[0]
+                except:
+                    page_url = "<MISSING>"
+                try:
                     location_name = item.split('"name":"')[1].split('"')[0]
+                except:
+                    location_name = "<MISSING>"
+                try:
                     raw_address = (
                         item.split('"fullAddress":"')[1]
                         .split('"')[0]
                         .replace("\n", ", ")
                         .strip()
                     )
+                except:
+                    raw_address = ""
+                try:
                     city = item.split('"city":"')[1].split('"')[0]
+                except:
+                    city = "<MISSING>"
+                try:
                     state = item.split('"state":"')[1].split('"')[0]
+                except:
+                    state = "<MISSING>"
+                try:
                     zip_postal = item.split('"postalCode":"')[1].split('"')[0]
+                except:
+                    zip_postal = "<MISSING>"
+                try:
                     street_address = (
                         item.split('"streetAddress":"')[1]
                         .split('"')[0]
@@ -58,16 +80,23 @@ def fetch_data():
                         .strip()
                     )
                 except:
-                    continue
-                country_code = item.split('"country":"')[1].split('"')[0]
+                    street_address = "<MISSING>"
+                try:
+                    country_code = item.split('"country":"')[1].split('"')[0]
+                except:
+                    country_code = "<MISSING>"
                 try:
                     phone = item.split('"displayPhone":"')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
                 location_type = MISSING
                 store_number = item.split('"id":')[1].split(",")[0]
-                latitude = item.split('"lat":')[1].split(",")[0]
-                longitude = item.split('"lng":')[1].split(",")[0]
+                try:
+                    latitude = item.split('"lat":')[1].split(",")[0]
+                    longitude = item.split('"lng":')[1].split(",")[0]
+                except:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
                 hoo = ""
                 try:
                     hoo = (
@@ -80,23 +109,24 @@ def fetch_data():
                     pass
                 hours_of_operation = hoo.strip()
                 log.info("Append {} => {}".format(location_name, street_address))
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+                if "null" not in latitude and "<MISSING>" not in street_address:
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_postal,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
 
 
 def scrape():
