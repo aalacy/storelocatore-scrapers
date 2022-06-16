@@ -108,7 +108,14 @@ def fetch_data():
                 except:
                     pass
                 hours_of_operation = hoo.strip()
+                if "\\n" in street_address:
+                    street_address = street_address.split("\\n")[0]
+                if "\n" in street_address:
+                    street_address = street_address.split("\n")[0]
                 log.info("Append {} => {}".format(location_name, street_address))
+                if 'isLocationClosed":true' in item:
+                    hoo = "Temporarily Closed"
+                    location_name = location_name + " - Temporarily Closed"
                 if "null" not in latitude and "<MISSING>" not in street_address:
                     yield SgRecord(
                         locator_domain=DOMAIN,
