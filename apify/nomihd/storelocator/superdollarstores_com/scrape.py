@@ -12,12 +12,18 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 session = SgRequests()
 headers = {
-    "Proxy-Connection": "keep-alive",
-    "Cache-Control": "max-age=0",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "Connection": "keep-alive",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
 }
 
 
@@ -29,7 +35,7 @@ def fetch_data():
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
     stores_list = search_sel.xpath(
-        '//div[@id="listings"]//div[contains(@class,"lsrow")]'
+        '//div[@class="elementor-widget-wrap elementor-element-populated"][.//a[contains(text(),"Click to view the ad")]]'
     )
 
     for store in stores_list:
@@ -37,21 +43,26 @@ def fetch_data():
         page_url = search_url
         locator_domain = website
 
-        location_name = "".join(store.xpath(".//h3/span/text()")).strip()
+        location_name = "".join(
+            store.xpath(
+                ".//h3[@class='elementor-heading-title elementor-size-default']/text()"
+            )
+        ).strip()
 
-        address_info = list(
+        store_info = list(
             filter(
                 str,
-                store.xpath('.//p[@class="address"]//text()'),
+                store.xpath(
+                    './/div[@class="elementor-widget-container"][./p/a[contains(text(),"Click to view the ad")]]/p/text()'
+                ),
             )
         )
 
-        street_address = " ".join(address_info[:-4]).strip(" ,")
-
-        city = address_info[-4].strip(" ,")
-
-        state = address_info[-2].strip(" ,")
-        zip = address_info[-1].strip(" ,")
+        raw_address = store_info[0].split(",")
+        street_address = ", ".join(raw_address[:-3]).strip()
+        city = raw_address[-3].strip()
+        state = raw_address[-2].strip()
+        zip = raw_address[-1].strip()
 
         country_code = "US"
 
@@ -60,24 +71,17 @@ def fetch_data():
             store_number = location_name.rsplit(" ", 1)[-1].strip()
         except:
             pass
-        phone = "".join(
-            store.xpath(
-                './/div[contains(@class,"telephone")]/span[@class="output"]/text()'
-            )
-        ).strip()
+        phone = store_info[1].strip().replace("Telephone:", "").strip()
 
         location_type = "<MISSING>"
 
-        hours_of_operation = "".join(
-            store.xpath(
-                './/span[contains(text(),"Hours of Operation")]/following-sibling::span/text()'
-            )
-        ).strip()
+        hours_of_operation = (
+            store_info[-1].strip().replace("Hours of Operation:", "").strip()
+        )
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
-        raw_address = "<MISSING>"
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -93,7 +97,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 

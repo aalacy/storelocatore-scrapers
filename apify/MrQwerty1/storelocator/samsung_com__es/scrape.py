@@ -71,7 +71,20 @@ def fetch_data(sgw: SgWriter):
             store_number = j.get("id")
             location_name = j.get("name")
             location_type = j.get("brandType")
-            phone = j.get("phone")
+            phone = j.get("phone") or ""
+            phone = phone.replace("T:", "").strip()
+            if phone == "0":
+                phone = SgRecord.MISSING
+
+            black_list = ["/", "     ", "ext", "–", "Dahili", ",", "|", "-", "l"]
+            for b in black_list:
+                if b in phone:
+                    t = phone.split(b)
+                    if len(t[0].strip()) < 6:
+                        phone = " ".join(phone.replace(b, "").split())
+                    else:
+                        phone = t[0].strip()
+
             latitude = j.get("latitude")
             longitude = j.get("longitude")
 

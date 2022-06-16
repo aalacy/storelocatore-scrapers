@@ -79,13 +79,14 @@ def get_data(zipps, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     postals = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=1,
-        max_search_results=5,
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=10,
+        expected_search_radius_miles=10,
         granularity=Grain_1_KM(),
+        max_search_results=5,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
         for future in futures.as_completed(future_to_url):
             future.result()

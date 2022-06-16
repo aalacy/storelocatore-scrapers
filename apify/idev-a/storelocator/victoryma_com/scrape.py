@@ -46,7 +46,7 @@ def get_country_by_code(code=""):
         return "<MISSING>"
 
 
-@retry(stop=stop_after_attempt(5), wait=wait_random(min=2, max=6))
+@retry(stop=stop_after_attempt(10), wait=wait_random(min=30, max=90))
 def _info(_):
     hours = []
     _addr = []
@@ -91,13 +91,13 @@ def _info(_):
         raw_address,
         street_address,
         addr.state,
-        addr.postcode,
+        zip_postal,
     )
 
 
 def fetch_data():
     for lat, lng in coords:
-        with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="ca") as session:
             locations = session.get(base_url.format(lat, lng), headers=_headers).json()
             logger.info(f"[{lat, lng}] {len(locations)}")
             for _ in locations:
@@ -126,7 +126,7 @@ def fetch_data():
                     store_number=_["id"],
                     location_name=_["store"].replace("&#8211;", "-"),
                     street_address=street_address,
-                    city=_["city"].replace(",", ""),
+                    city=_["city"].replace(",", "").split("/")[0],
                     state=state,
                     zip_postal=zip_postal,
                     latitude=_["lat"],

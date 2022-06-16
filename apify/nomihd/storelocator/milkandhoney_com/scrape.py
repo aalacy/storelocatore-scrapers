@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import us
 
@@ -82,18 +82,7 @@ def fetch_data():
         )
 
         locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
-        if (
-            "Coming Soon"
-            in "".join(
-                store_sel.xpath('//div[@class="location-page"]//strong/text()')
-            ).strip()
-        ):
-            continue
-        location_name = "".join(store_sel.xpath("//title/text()")).strip()
-
+        location_name = "".join(store.xpath("h2/text()")).strip()
         store_info = list(
             filter(
                 str,
@@ -108,45 +97,62 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
+        location_type = "<MISSING>"
         phone = "".join(store.xpath('.//a[contains(@href,"tel")]/text()')).strip()
-        if not phone:
-            phone = list(
+        hours_of_operation = "<MISSING>"
+        latitude, longitude = "<MISSING>", "<MISSING>"
+
+        if len(page_url) > 0:
+            log.info(page_url)
+
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
+            if (
+                "Coming Soon"
+                in "".join(
+                    store_sel.xpath('//div[@class="location-page"]//strong/text()')
+                ).strip()
+            ):
+                continue
+
+            location_name = "".join(store_sel.xpath("//title/text()")).strip()
+
+            if not phone:
+                phone = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                f'//*[contains(text(),"{zip}")]/text()'
+                            )
+                        ],
+                    )
+                )
+                if len(phone) > 0:
+                    phone = phone[-1].strip()
+                else:
+                    phone = "<MISSING>"
+
+            hours = list(
                 filter(
                     str,
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            f'//*[contains(text(),"{zip}")]/text()'
+                            '//li[contains(.//strong/text(),"day")]//text()'
                         )
                     ],
                 )
             )
-            if len(phone) > 0:
-                phone = phone[-1].strip()
-            else:
-                phone = "<MISSING>"
 
-        location_type = "<MISSING>"
+            hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+            if hours_of_operation.count("Check back soon") == 7:
+                hours_of_operation = "<MISSING>"
 
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//li[contains(.//strong/text(),"day")]//text()'
-                    )
-                ],
-            )
-        )
+            map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 
-        hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
-        if hours_of_operation.count("Check back soon") == 7:
-            hours_of_operation = "<MISSING>"
-
-        map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
-
-        latitude, longitude = get_latlng(map_link)
+            latitude, longitude = get_latlng(map_link)
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -170,7 +176,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

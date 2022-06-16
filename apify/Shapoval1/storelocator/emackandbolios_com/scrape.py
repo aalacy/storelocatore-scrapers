@@ -1,124 +1,120 @@
-import csv
+import re
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://emackandbolios.com"
     page_url = "https://emackandbolios.com/locations/"
-    location_type = "<MISSING>"
     session = SgRequests()
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//div[./div/h2[contains(text(), "New York")]]/following-sibling::section/div/div/div[.//p] | //div[./div/h2[contains(text(), "New York")]]/following-sibling::section/div/div/div[.//span]'
-    )
+    div = tree.xpath('//div[@class="elementor-text-editor elementor-clearfix"]/*')
     for d in div:
-
-        street_address = "<MISSING>"
-        phone = "<MISSING>"
-        city = "<MISSING>"
-        postal = "<MISSING>"
-        state = "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
+        info = d.xpath(".//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        if not info:
+            continue
         location_name = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        if len(info) == 4:
+            location_name = "".join(info[0]).strip()
+        ad = " ".join(info)
+        ph = re.findall(r"[\d]{3}-[\d]{3}-[\d]{4}", ad) or "<MISSING>"
+        phone = "".join(ph[0]).replace("<", "").strip() or "<MISSING>"
+        if ad.find(f"{phone}") != -1:
+            ad = ad.split(f"{phone}")[0].strip()
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        if street_address == "Coming Soon":
+            continue
+        if street_address.find("02-658-1131") != -1:
+            street_address = street_address.replace("02-658-1131", "").strip()
+            phone = "02-658-1131"
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        if postal == "508-945-5506":
+            postal = "<MISSING>"
+            phone = "508-945-5506"
+        country_code = "US"
+        if (
+            ad.find("Seoul") != -1
+            or ad.find("Daejeon") != -1
+            or ad.find("Gyeonggi-do") != -1
+            or ad.find("Busan") != -1
+        ):
+            country_code = "Korea"
+        if ad.find("Bangkok") != -1 or ad.find("Siam Center 1st Floor") != -1:
+            country_code = "Thailand"
+        if (
+            ad.find("Tsuen Wan") != -1
+            or ad.find("Wanchai") != -1
+            or ad.find("26 Cochrane Street, Central") != -1
+        ):
+            country_code = "Hong Kong"
+        if (
+            ad.find("Ningbo") != -1
+            or ad.find("Nanjing") != -1
+            or ad.find("Kumming") != -1
+            or ad.find("Kumming") != -1
+            or ad.find("Taiyuan") != -1
+        ):
+            country_code = "China"
+        if ad.find("Malaysia") != -1 or ad.find("Johor Bahru") != -1:
+            country_code = "Malaysia"
+        if ad.find("Manila") != -1:
+            country_code = "PH"
+        if ad.find("Singapore") != -1 or ad.find("West Wing") != -1:
+            country_code = "SG"
+        city = a.city or "<MISSING>"
+        if "Brooklyn" in ad:
+            city = "Brooklyn"
+        if city == "Las Vegas":
+            street_address = "Area 15"
+        if street_address == "<MISSING>" and city == "<MISSING>":
+            continue
         hours_of_operation = "<MISSING>"
-        ad = d.xpath(".//text()")
-        ad = list(filter(None, [a.strip() for a in ad]))
-        if len(ad) == 5:
-            location_name = "".join(ad[0]).strip()
-            street_address = "".join(ad[1]).strip()
-            city = "".join(ad[2]).split(",")[0].strip()
-            state = "".join(ad[2]).split(",")[1].strip()
-            phone = "".join(ad[3]).strip()
-        if len(ad) == 4 and "".join(ad).find("Hard") == -1:
-            location_name = "".join(ad[0]).strip()
-            street_address = "".join(ad[1]).strip()
-            city = "".join(ad[2]).split(",")[0].strip()
-            state = "".join(ad[2]).split(",")[1].strip()
-            phone = "".join(ad[3]).strip()
-        if "".join(ad).find("Las Vegas") != -1:
-            city = "".join(ad[0])
-            street_address = "".join(ad[1])
-        if "".join(ad).find("Upper Darby") != -1:
-            city = "".join(ad[1]).split(",")[0].strip()
-            state = "".join(ad[1]).split(",")[1].strip()
-            hours_of_operation = "".join(ad[0])
-        if "".join(ad).find("Aventura") != -1:
-            location_name = "".join(ad[0])
-            city = "".join(ad[1]).split(",")[0].strip()
-            state = "".join(ad[1]).split(",")[1].strip()
-        if location_name.find("Midtown") != -1:
-            phone = "<MISSING>"
-        if location_name.find("Coming") != -1:
-            phone = "<MISSING>"
-            hours_of_operation = "".join(ad[0])
-            location_name = "".join(ad[1])
-            street_address = "<MISSING>"
-        if "".join(ad).find("Hard") != -1:
-            location_name = "".join(ad[0]).strip()
-            city = "".join(ad[1]).split(",")[0].strip()
-            state = "".join(ad[1]).split(",")[1].strip()
-            phone = "".join(ad[2]).strip()
+        if city == "Pembroke Pines":
+            hours_of_operation = "Coming Soon"
+        if ad.find(f"{phone}") != -1:
+            ad = ad.replace(f"{phone}", "").strip()
+        ad = ad.replace("508-945–5506", "").strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

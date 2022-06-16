@@ -1,4 +1,6 @@
+import json
 from sgscrape.sgrecord import SgRecord
+from lxml import html
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
@@ -29,6 +31,20 @@ def fetch_data(sgw: SgWriter):
         ll = j.get("field_geolocation")
         latitude = ll.get("lat") or "<MISSING>"
         longitude = ll.get("lng") or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        js_block = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+        js = json.loads(js_block)
+        try:
+            postal = (
+                js.get("props")
+                .get("pageProps")
+                .get("nodeContent")
+                .get("fieldAddress")
+                .get("postalCode")
+            )
+        except AttributeError:
+            postal = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -37,7 +53,7 @@ def fetch_data(sgw: SgWriter):
             street_address=street_address,
             city=city,
             state=state,
-            zip_postal=SgRecord.MISSING,
+            zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
             phone=SgRecord.MISSING,

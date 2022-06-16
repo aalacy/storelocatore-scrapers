@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -23,27 +24,49 @@ def fetch_data():
     for poi_html in all_locations:
         page_url = poi_html.xpath('.//a[@data-gt-action="view-dealer"]/@href')[0]
         page_url = urljoin(start_url, page_url)
+        phone = poi_html.xpath('.//a[@data-gt-action="call-dealer"]/text()')
+        phone = phone[0].split(",")[0].split("/")[0] if phone else ""
         location_name = poi_html.xpath(".//h2/text()")[0]
         raw_address = poi_html.xpath('.//li[@class="address"]/text()')[0]
         zip_code = poi_html.xpath(".//@data-gt-dealerzipcode")[0]
-        phone = poi_html.xpath('.//a[@data-gt-action="call-dealer"]/text()')
-        phone = phone[0].split(",")[0].split("/")[0] if phone else ""
+        street_address = raw_address.split(" - ")[0]
+        if zip_code == "123456":
+            zip_code = raw_address.split(", ")[2]
+            street_address = ", ".join(raw_address.split(", ")[:2])
+        city = raw_address.split(" - ")[1]
+        latitude = ""
+        longitude = ""
+
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath('//div[@class="bottom-hours-item col-lg-4 "]/ul//text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]) if hoo else ""
+        poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
+        if poi:
+            poi = json.loads(poi[0])
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            phone = poi["telephone"].split(", ")[0]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_address.split(" - ")[0],
-            city=raw_address.split(" - ")[1],
+            street_address=street_address,
+            city=city,
             state="",
             zip_postal=zip_code,
             country_code="RO",
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
         )
 
         yield item
