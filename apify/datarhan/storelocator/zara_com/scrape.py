@@ -19,7 +19,6 @@ def fetch_data():
         url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
             all_coords.current_country(), lat, lng
         )
-        print(url)
         all_locations = session.get(url, headers=hdr).json()
         if not all_locations:
             all_coords.found_nothing()
