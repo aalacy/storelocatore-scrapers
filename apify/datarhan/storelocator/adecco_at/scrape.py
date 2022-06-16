@@ -25,6 +25,8 @@ def fetch_data():
     ]
     for url in all_locations:
         page_url = urljoin(start_url, url)
+        if "adecco.at/Kontakt" not in page_url:
+            continue
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 

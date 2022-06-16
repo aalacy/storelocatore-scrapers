@@ -41,6 +41,7 @@ def fetch_data():
                 )
                 phone = raw_address[-1]
                 raw_address = " ".join(raw_address[:-2])
+                raw_address = raw_address.replace("\n", " ")
                 hour_list = soup.findAll("div", {"class": "tfs-hours-info"})
                 hours_of_operation = ""
                 for hour in hour_list:
@@ -56,15 +57,20 @@ def fetch_data():
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING
 
-                city = pa.city
-                city = city.strip() if city else MISSING
+                city = location_name.split()[0]
+                state = MISSING
 
-                state = pa.state
-                state = state.strip() if state else MISSING
+                zip_postal = raw_address.split()
+                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
+                zip_postal = (
+                    zip_postal.replace("Road", "")
+                    .replace("Street,", "")
+                    .replace("Centre", "")
+                )
+                if "Mall Hammersmith" in zip_postal:
+                    zip_postal = MISSING
+                street_address = street_address.replace(zip_postal, "")
 
-                zip_postal = pa.postcode
-                zip_postal = zip_postal.strip() if zip_postal else MISSING
-                raw_address = raw_address
                 country_code = "UK"
                 yield SgRecord(
                     locator_domain=DOMAIN,

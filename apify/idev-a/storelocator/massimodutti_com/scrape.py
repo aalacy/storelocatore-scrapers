@@ -96,7 +96,9 @@ def fetch_records(search):
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, max_search_distance_miles=100000
+        country_codes=SearchableCountries.ALL,
+        max_search_distance_miles=100000,
+        expected_search_radius_miles=500,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
