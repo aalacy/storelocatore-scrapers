@@ -16,7 +16,7 @@ def get_phones(page_url):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.IRELAND], expected_search_radius_miles=20
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=20
     )
     for _zip in search:
         api = f"http://www.maceni.co.uk/stores/markers/{_zip}/2000/"
