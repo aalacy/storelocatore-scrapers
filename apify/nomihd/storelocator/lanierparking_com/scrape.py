@@ -148,8 +148,8 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
-            raise
-            # pass
+            found_nothing()
+            pass
 
 
 def scrape():
