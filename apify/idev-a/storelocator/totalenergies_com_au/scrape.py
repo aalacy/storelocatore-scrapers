@@ -76,7 +76,13 @@ def fetch_data():
                             phone = ""
 
                         if phone:
-                            phone = phone.split(",")[0]
+                            if "@" in phone or str(phone) == "0" or str(phone) == "1":
+                                phone = ""
+                            else:
+                                phone = phone.split(",")[0].split(";")[0].split("/")[0]
+                                if phone.startswith("???."):
+                                    phone = phone.replace("???.", "")
+                                phone = phone.split("?")[0].strip()
 
                         city = addr["city"]
                         zip_postal = addr.get("zipcode")
