@@ -1,7 +1,7 @@
-import json
-from sgscrape import simple_scraper_pipeline as sp
 from sgselenium import SgChrome
+import json
 import ssl
+from sgscrape import simple_scraper_pipeline as sp
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -32,52 +32,56 @@ def extract_json(html_string):
 
 
 def get_data():
+    url = "https://www.moesitaliansandwiches.com/newburyport"
     with SgChrome(block_third_parties=False) as driver:
-        driver.get("https://www.zorbaz.com/locationz")
-        response = driver.page_source
+        driver.get(url)
+        response = (
+            driver.page_source.replace('" + "', " + ")
+            .replace('\\"', "'")
+            .replace("\\n", " ")
+        )
 
-    json_objects = extract_json(response.split("APOLLO_STATE")[1])[0]
-    for key in json_objects.keys():
-        if "RestaurantLocation:" in key:
-            location = json_objects[key]
+    json_objects = extract_json(response.split("window.POPMENU_APOLLO_STATE = ")[1])
 
-            locator_domain = "zorbaz.com"
-            page_url = "https://www.zorbaz.com/locationz"
-            location_name = location["name"]
-            latitude = location["lat"]
-            longitude = location["lng"]
-            city = location["city"]
-            store_number = key.split(":")[1]
-            address = location["streetAddress"]
-            state = location["state"]
-            zipp = location["postalCode"]
-            phone = location["phone"]
-            location_type = "<MISSING>"
-            country_code = "US"
+    for location in json_objects[0][
+        "restaurantWithLocationsQuery:{'ssr':true,'variables':{'restaurantId':3689}}"
+    ]["restaurant"]["locations"]:
+        locator_domain = "www.moesitaliansandwiches.com"
+        page_url = "https://www.moesitaliansandwiches.com/" + location["slug"]
+        location_name = location["name"]
+        latitude = location["lat"]
+        longitude = location["lng"]
+        city = location["city"]
+        store_number = location["id"]
+        address = location["streetAddress"]
+        state = location["state"]
+        zipp = location["postalCode"]
+        phone = location["phone"]
+        location_type = "<MISSING>"
+        country_code = "US"
 
-            hours_parts = location["schemaHours"]
-            hours = ""
-            for part in hours_parts:
-                hours = hours + part + ", "
+        hours = ""
+        for part in location["schemaHours"]:
+            hours = hours + part + ", "
 
-            hours = hours[:-2]
+        hours = hours[:-2]
 
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
 def scrape():

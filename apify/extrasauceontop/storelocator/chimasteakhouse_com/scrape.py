@@ -33,18 +33,40 @@ def get_data():
 
         locator_domain = "www.chimasteakhouse.com"
 
-        address_parts = location_soup.find(
-            "div", attrs={"class": "content"}
-        ).text.strip()
+        try:
+            address_parts = location_soup.find(
+                "div", attrs={"class": "content"}
+            ).text.strip()
+
+        except Exception:
+            address_parts = (
+                location_soup.find(
+                    "div", attrs={"class": "elementor-text-editor elementor-clearfix"}
+                )
+                .find("ul")
+                .find("li")
+                .text.strip()
+            )
 
         location_name = city = address_parts.split("\n")[1].split(", ")[0]
         store_number = "<MISSING>"
         address = address_parts.split("\n")[0]
         state = address_parts.split("\n")[1].split(", ")[1].split(" ")[0]
         zipp = address_parts.split("\n")[1].split(", ")[1].split(" ")[1]
-        phone = location_soup.find("a", attrs={"class": "big-font"}).text.strip()
+        try:
+            phone = location_soup.find("a", attrs={"class": "big-font"}).text.strip()
+        except Exception:
+
+            a_tags = location_soup.find_all("a")
+            for a_tag in a_tags:
+                try:
+                    if "tel:" in a_tag["href"]:
+                        phone = a_tag.text.strip()
+                        break
+                except Exception:
+                    continue
         location_type = "<MISSING>"
-        hours_bits = location_soup.find_all("p", attrs={"class": "small-font"})
+        hours_bits = location_soup.find_all("p")
 
         hours_parts = []
         for part in hours_bits:
