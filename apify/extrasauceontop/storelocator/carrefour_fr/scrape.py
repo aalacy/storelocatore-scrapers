@@ -37,6 +37,7 @@ def extract_json(html_string):
 
 
 def get_data():
+    page_urls = []
     log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
     url = "https://www.carrefour.fr/magasin"
     with SgFirefox(
@@ -105,6 +106,9 @@ def get_data():
                     zipp = location["address"]["postalCode"]
 
                     log.info("page_url: " + page_url)
+                    if page_url in page_urls:
+                        continue
+                    page_urls.append(page_url)
                     driver.get(page_url)
                     phone_response = driver.page_source
 
