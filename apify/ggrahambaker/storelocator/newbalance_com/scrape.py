@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
@@ -21,12 +20,13 @@ locator_domain = "https://www.newbalance.com/"
 class ExampleSearchIteration(SearchIteration):
     def do(
         self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        coord,
+        zipcode,
+        current_country,
+        items_remaining,
+        found_location_at,
+        found_nothing,
+    ):
         with SgRequests(proxy_country="us") as session:
             x = coord[0]
             y = coord[1]
@@ -40,6 +40,8 @@ class ExampleSearchIteration(SearchIteration):
             res_json = session.get(url, headers=HEADERS).json()["markers"]
 
             logger.info(f"[{current_country}] [{x, y}] {len(res_json)}")
+            if len(res_json) == 0:
+                found_nothing()
 
             for loc in res_json:
                 found_location_at(loc["lat"], loc["lng"])

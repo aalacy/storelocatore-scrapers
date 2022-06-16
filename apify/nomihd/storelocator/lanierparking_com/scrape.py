@@ -130,6 +130,7 @@ class _SearchIteration(SearchIteration):
                     store_json["Lat"],
                     store_json["Lng"],
                 )
+                found_location_at(latitude, longitude)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
