@@ -55,7 +55,9 @@ def fetch_data():
 
             locator_domain = website
 
-            location_name = store["geomodifier"]
+            location_name = store["name"]
+            if "coming soon" in location_name.lower():
+                continue
             street_address = store["address"]["line1"].strip()
             if "line2" in store["address"] and store["address"]["line2"]:
                 street_address = (

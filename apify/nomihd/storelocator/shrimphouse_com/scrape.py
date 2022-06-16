@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -15,153 +14,90 @@ headers = {
 }
 
 
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
-
-
 def fetch_data():
     # Your scraper here
     with SgRequests() as session:
         search_res = session.get(
-            "https://www.shrimphouse.com/page-sitemap.xml", headers=headers
+            "https://www.shrimphouse.com/locations/", headers=headers
         )
 
-        stores_sel = lxml.html.fromstring(
-            search_res.text.split('.xsl"?>')[1]
-            .strip()
-            .replace("<![CDATA[", "")
-            .replace("]]>", "")
+        stores_sel = lxml.html.fromstring(search_res.text)
+
+        stores = stores_sel.xpath(
+            "//div[@class='locationsRowItemDetailsContent']/a/@href"
         )
 
-        stores = stores_sel.xpath("//url")
+        for store_url in stores:
+            page_url = store_url
+            log.info(page_url)
 
-        for store in stores:
-            info = ", ".join(store.xpath(".//text()")).strip()
-            if info.count("/wp-content/uploads/") == 7:
-                page_url = "".join(store.xpath("loc/text()")).strip()
-                log.info(page_url)
+            page_res = session.get(page_url, headers=headers)
 
-                page_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(page_res.text)
 
-                store_sel = lxml.html.fromstring(page_res.text)
+            locator_domain = website
 
-                locator_domain = website
+            location_name = "".join(
+                store_sel.xpath('//div[@class="entry-header-menu"]/h1/text()')
+            ).strip()
 
-                location_name = "".join(
-                    store_sel.xpath('//div[@class="entry-header-menu"]/h1/text()')
-                ).strip()
-
-                raw_info = store_sel.xpath(
-                    '//div[@class="entry-content"]//div[@class="wpb_wrapper"][.//a[contains(text(),"Get directions")] and p]'
+            raw_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="entry-content"]//div[@class="wpb_wrapper"]//p//text()'
+                        )
+                    ],
                 )
+            )
+            raw_address = raw_info[:2]
 
-                phone = "<MISSING>"
-                temp_address = []
-                if len(raw_info) > 0:
-                    temp_address = raw_info[0].xpath("p/text()")
-                    phone = (
-                        "".join(raw_info[0].xpath(".//a[@href]/text()"))
-                        .strip()
-                        .replace("Get directions", "")
-                        .strip()
-                    )
+            street_address = raw_address[0].strip()
+            if len(street_address) > 0 and street_address[-1] == ",":
+                street_address = "".join(street_address[:-1]).strip()
 
-                add_list = []
-                for add in temp_address:
-                    if "(" not in add:
-                        add_list.append(add)
+            city = raw_address[-1].strip().split(",")[0].strip()
+            state = raw_address[-1].strip().split(",")[-1].strip().split(" ")[0].strip()
+            zip = raw_address[-1].strip().split(",")[-1].strip().split(" ")[-1].strip()
 
-                raw_address = ", ".join(add_list).strip()
-                formatted_addr = parser.parse_address_usa(raw_address)
-                street_address = formatted_addr.street_address_1
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
+            country_code = "US"
 
-                if street_address is not None:
-                    street_address = street_address.replace("Ste", "Suite")
-                city = formatted_addr.city
-                state = formatted_addr.state
-                zip = formatted_addr.postcode
+            phone = raw_info[2].strip()
+            store_number = "<MISSING>"
 
-                country_code = "US"
+            location_type = "<MISSING>"
 
-                store_number = "<MISSING>"
-
-                location_type = "<MISSING>"
-
-                hours = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//div[@class="wpb_wrapper" and contains(h3/text(),"Hours of Operation")]/p[not(span)]//text()'
-                            )
-                        ],
-                    )
-                )
-                hours_of_operation = (
-                    "; ".join(hours)
-                    .split("Holiday Hour")[0]
-                    .replace("Hours of Operation", "")
-                    .strip(" ;")
-                    .strip()
-                    .replace(":;", ":")
-                    .strip()
-                    .split("; Easter Sunday")[0]
-                    .strip()
-                )
-                if page_url == "https://shrimphouse.com/new-braunfels-creekside/":
+            hours_of_operation = "<MISSING>"
+            for index in range(0, len(raw_info)):
+                if "Hours:" == raw_info[index]:
                     hours_of_operation = (
-                        hours_of_operation + "; Friday – Saturday: 11am-9:30pm"
+                        "; ".join(raw_info[index + 1 :])
+                        .strip()
+                        .replace(":;", ":")
+                        .strip()
                     )
 
-                map_link = "".join(
-                    store_sel.xpath('.//strong/a[contains(@href,"maps")]/@href')[0]
-                )
-                latitude, longitude = get_latlng(map_link)
-                if latitude == "<MISSING>":
-                    map_link = "".join(
-                        store_sel.xpath('.//strong/a[contains(@href,"maps")]/@href')[-1]
-                    )
-                    latitude, longitude = get_latlng(map_link)
+            latitude, longitude = "<MISSING>", "<MISSING>"
 
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
