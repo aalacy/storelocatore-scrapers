@@ -246,6 +246,8 @@ def fetch_data(sgw: SgWriter):
                 digit = str(re.search(r"\d", street_address))
                 start = int(digit.split("(")[1].split(",")[0])
                 street_address = street_address[start:]
+        if "Wi" in street_address[-3:]:
+            street_address = street_address.replace(", East Wi", ", East Wing")
 
         if state == "Las":
             state = "NV"
@@ -266,6 +268,15 @@ def fetch_data(sgw: SgWriter):
             state = "FL"
             city = "Boca Raton"
             zip_code = "33431"
+
+        if city == "Las":
+            state = "NV"
+            city = "Las Vegas"
+
+        if "Costa Mesa" in location_name:
+            city = "Costa Mesa"
+            state = "CA"
+            zip_code = "92626"
 
         country_code = "US"
         if "8060 Cambie" in street_address:

@@ -21,11 +21,13 @@ def fetch_data(sgw: SgWriter):
         else:
             page_url = api
 
+        if d.xpath(".//p[contains(text(), 'Opening')]"):
+            continue
+
         location_name = d.xpath(
             ".//div[count(./p)=1 and not(.//a[contains(text(), 'VISIT')])]/p//text()"
         )[0].strip()
-        if "opening" in location_name.lower():
-            continue
+
         line = d.xpath(".//div[count(./p)>1]//text()")
         line = list(filter(None, [l.replace("\ufeff", "").strip() for l in line]))
 

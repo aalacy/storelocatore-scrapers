@@ -56,7 +56,7 @@ def fetch_data():
             city = "".join(city_sel.xpath("./button/span/text()"))
             log.info(city)
 
-            stores = city_sel.xpath('.//div[@data-pf-type="Column"][not(img)]')
+            stores = city_sel.xpath('.//div[@data-pf-type="Column"][not(.//img)]')
             store_names = city_sel.xpath(
                 './/div[@data-pf-type="TabsMenu"]//button/span/text()'
             )
@@ -79,6 +79,7 @@ def fetch_data():
                 )
 
                 raw_address = " ".join(store_info)
+                log.info(raw_address)
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:
