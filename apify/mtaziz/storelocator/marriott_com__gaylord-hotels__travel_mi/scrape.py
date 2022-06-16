@@ -27,7 +27,7 @@ else:
 MISSING = SgRecord.MISSING
 MAX_WORKERS = 6
 
-OMAIN = "marriott.com/gaylord-hotels/travel.mi"
+DOMAIN = "marriott.com/gaylord-hotels/travel.mi"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
 logger = SgLogSetup().get_logger("marriott_com__gaylord-hotels__travel_mi")
 
