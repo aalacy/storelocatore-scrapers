@@ -67,8 +67,7 @@ def fetch_location(page_url, d, driver, sgw):
         if matches:
             latitude = matches.group(2)
             longitude = matches.group(3)
-            
-    
+
     row = SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,
