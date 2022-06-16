@@ -67,6 +67,7 @@ class ExampleSearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,  # noqa
         found_location_at: Callable[[float, float], None],
+        found_nothing: Callable[[], None],
     ) -> Iterable[SgRecord]:
 
         hdr = {
@@ -74,7 +75,7 @@ class ExampleSearchIteration(SearchIteration):
         }
 
         def getPoint(session, hdr):
-            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=false&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
+            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
                 current_country, coord[0], coord[1]
             )
             data = session.get(url, headers=hdr)
@@ -99,13 +100,15 @@ class ExampleSearchIteration(SearchIteration):
             found_location_at(foundLat, foundLng)
             found += 1
             yield record
+        if found == 0:
+            found_nothing()
 
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
-        expected_search_radius_miles=5,
+        expected_search_radius_miles=10,
     )
 
     with SgWriter(
