@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -55,6 +55,61 @@ def revert_c_map(val):
     return val.lower()
 
 
+def _v(val):
+    if val:
+        return (
+            val.replace("&#xa0;", " ")
+            .replace("&#xa0", " ")
+            .replace("&#xb0;", "°")
+            .replace("&#xb4;", "'")
+            .replace("&#xba;", "º")
+            .replace("&#xc1;", "Á")
+            .replace("&#xc2;", "Â")
+            .replace("&#xc3;", "Ã")
+            .replace("&#xc4;", "Ä")
+            .replace("&#xc5;", "Å")
+            .replace("&#xc7;", "Ç")
+            .replace("&#xc8;", "È")
+            .replace("&#xc9;", "É")
+            .replace("&#xdf;", "ß")
+            .replace("&#xdc;", "Ü")
+            .replace("&#xd6;", "Ö")
+            .replace("&#xd7;", "×")
+            .replace("&#xd8;", "Ø")
+            .replace("&#xe0;", "à")
+            .replace("&#xe1;", "á")
+            .replace("&#xe2;", "â")
+            .replace("&#xe3;", "ã")
+            .replace("&#xe4;", "ä")
+            .replace("&#xe5;", "å")
+            .replace("&#xe6;", "æ")
+            .replace("&#xe7;", "ç")
+            .replace("&#xe8;", "è")
+            .replace("&#xe9;", "é")
+            .replace("&#xf2;", "ò")
+            .replace("&#xf3;", "ó")
+            .replace("&#xf6;", "ö")
+            .replace("&#xf7;", "÷")
+            .replace("&#xf8;", "ø")
+            .replace("&#xf9;", "ù")
+            .replace("&#xf1;", "ñ")
+            .replace("&#xfa;", "ú")
+            .replace("&#xfb;", "û")
+            .replace("&#xfc;", "ü")
+            .replace("&#xfd;", "ý")
+            .replace("&#x85;", "...")
+            .replace("&#x92;", "'")
+            .replace("&#x93;", '"')
+            .replace("&#x94;", '"')
+            .replace("&#x96;", "-")
+            .replace("&#x9a;", "š")
+            .replace("&amp;", "&")
+            .strip()
+        )
+    else:
+        return ""
+
+
 class ExampleSearchIteration(SearchIteration):
     def __init__(self, app_key):
         self.app_key = app_key
@@ -66,6 +121,7 @@ class ExampleSearchIteration(SearchIteration):
         current_country,
         items_remaining,
         found_location_at,
+        found_nothing,
     ):
         with SgRequests() as session:
             locations = bs(
@@ -78,6 +134,8 @@ class ExampleSearchIteration(SearchIteration):
                 "lxml",
             ).select("poi")
             logger.info(f"[{current_country}] found: {len(locations)}")
+            if len(locations) == 0:
+                found_nothing()
             for _ in locations:
                 page_url = "https://www.thenorthface.co.uk/store-locator.html"
                 street_address = _.address1.text.strip()
@@ -85,19 +143,30 @@ class ExampleSearchIteration(SearchIteration):
                     street_address += " " + _.address2.text.strip()
 
                 state = _.state.text.strip() if _.state else _.province.text.strip()
-                location_type = "the north face"
+                location_type = ""
                 north_store = _.northface.text.strip() if _.northface else ""
                 if str(north_store) == "1":
                     location_type = "the north face store"
                 outlet_store = _.outletstore.text.strip() if _.outletstore else ""
                 if str(outlet_store) == "1":
                     location_type = "the north face outletstore"
+                retail_store = _.retailstore.text.strip() if _.retailstore else ""
+                if str(retail_store) == "1":
+                    location_type = "authorized retailers"
 
+                if not location_type:
+                    icon = _.icon.text.strip() if _.icon else ""
+                    if icon == "RetailStore" or icon == "default":
+                        location_type = "authorized retailers"
+                    elif icon == "Outletstore":
+                        location_type = "the north face outletstore"
                 phone = (
-                    _.phone.text.strip().split("or")[0].split(";")[0].split("and")[0]
+                    _.phone.text.strip().split("or")[0].split("and")[0]
                     if _.phone is not None and _.phone.text.strip() != "TBD"
                     else "<MISSING>"
                 )
+                if phone == "0":
+                    phone = ""
 
                 hours = []
                 if _.m and _.m.text.strip():
@@ -121,18 +190,18 @@ class ExampleSearchIteration(SearchIteration):
                     found_location_at(latitude, longitude)
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.select_one("name").text.strip(),
-                    street_address=street_address,
-                    city=_.city.text.strip(),
-                    state=state,
+                    location_name=_v(_.select_one("name").text.strip()),
+                    street_address=_v(street_address),
+                    city=_v(_.city.text.strip()),
+                    state=_v(state),
                     zip_postal=_.postalcode.text.strip(),
                     country_code=_.country.text.strip(),
-                    phone=phone,
+                    phone=_v(phone).split(";")[0],
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation=_v("; ".join(hours).replace("---", ", ")),
                 )
 
 
@@ -143,7 +212,16 @@ if __name__ == "__main__":
         c_list = [revert_c_map(cc) for cc in countries.keys()]
         with SgWriter(
             SgRecordDeduper(
-                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+                SgRecordID(
+                    {
+                        SgRecord.Headers.LATITUDE,
+                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.PHONE,
+                    }
+                )
+                .with_truncate(SgRecord.Headers.LATITUDE, 3)
+                .with_truncate(SgRecord.Headers.LONGITUDE, 3),
+                duplicate_streak_failure_factor=1000,
             )
         ) as writer:
             search_maker = DynamicSearchMaker(

@@ -108,6 +108,7 @@ def fetch_data():
                         sp1.select("iframe")[-1]["src"]
                         .split("!2d")[1]
                         .split("!3m")[0]
+                        .split("!2m")[0]
                         .split("!3d")[::-1]
                     )
                 except:

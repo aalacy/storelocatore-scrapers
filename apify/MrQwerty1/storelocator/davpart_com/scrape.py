@@ -35,7 +35,8 @@ def get_data(param, sgw: SgWriter):
     city = j.get("city")
     state = j.get("province_state")
     postal = j.get("postal_code")
-    country_code = j.get("country")
+    country_code = j.get("country") or ""
+    country_code = country_code.replace("Australia", "CA")
     location_name = j.get("name")
     phone = j.get("contact_phone")
     latitude = j.get("latitude")

@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 from urllib.parse import urlparse
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -11,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 import ssl
-
+import html as ht
 
 try:
     _create_unverified_https_context = (
@@ -29,7 +31,7 @@ logger = SgLogSetup().get_logger("sephora_cz")  # noqa
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
 }
-MAX_WORKERS = 10
+MAX_WORKERS = 5
 
 LOCATION_URLS_GRID = [
     "https://www.sephora.ae/en/store",
@@ -255,6 +257,27 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             raw_address = MISSING
         if raw_address == "000000":
             raw_address = MISSING
+
+        # Clean and making unsescaped for Germany's address
+        # "D&uuml;sseldorf" needs to be transformed to Düsseldorf
+        if country_code == "DE":
+            raw_address = raw_address.split("+")[0].strip()
+            raw_address = ht.unescape(raw_address)
+            location_name = ht.unescape(location_name)
+            sta_additional_info_rmved = sta_additional_info_rmved.split("+")[0].strip()
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
+        if country_code == "CZ":
+            raw_address = ht.unescape(raw_address)
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
+
+        if country_code in ["ES", "DK", "FR", "SE", "PT", "PL", "IT"]:
+            raw_address = ht.unescape(raw_address)
+            location_name = ht.unescape(location_name)
+            sta_additional_info_rmved = ht.unescape(sta_additional_info_rmved)
+            city = ht.unescape(city)
 
         idx += 1
         item = SgRecord(

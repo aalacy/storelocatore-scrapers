@@ -37,7 +37,7 @@ def get_data(slug, sgw: SgWriter):
     longitude = g.get("longitude")
     hours_of_operation = ";".join(
         tree.xpath(
-            "//h3[contains(text(), 'Öffnungszeiten')]/following-sibling::p/text()"
+            "//h3[contains(text(), 'Opening Hours')]/following-sibling::p/text()"
         )
     )
 

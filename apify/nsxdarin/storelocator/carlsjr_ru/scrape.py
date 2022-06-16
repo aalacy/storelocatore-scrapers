@@ -27,7 +27,7 @@ def fetch_data():
         coords = []
         r = session.get(url, headers=headers)
         website = "carlsjr.ru"
-        loc = "<MISSING>"
+        loc = url
         typ = "<MISSING>"
         country = "RU"
         phone = "<MISSING>"

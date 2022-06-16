@@ -18,7 +18,7 @@ def fetch_data():
     start_url = "https://www.allenedmonds.com/stores"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     with SgFirefox() as driver:
         for code in all_codes:
@@ -47,6 +47,8 @@ def fetch_data():
                 loc_dom = etree.HTML(loc_response.text)
 
                 location_name = loc_dom.xpath("//h1/text()")[0]
+                if "ONLINE" in location_name:
+                    continue
                 raw_address = loc_dom.xpath(
                     '//div[@class="StoreListResult_address"]/span/text()'
                 )

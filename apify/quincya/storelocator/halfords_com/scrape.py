@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
         )
         city = store["city"]
         try:
-            state = store["stateCode"]
+            state = store["stateCode"].split("(off")[0].strip()
         except:
             state = ""
         words = ["Middlesex", "Essex"]

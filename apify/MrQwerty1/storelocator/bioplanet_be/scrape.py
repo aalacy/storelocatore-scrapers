@@ -35,6 +35,8 @@ def get_data(store_number, sgw: SgWriter):
     number = a.get("houseNumber") or ""
     street_address = f"{name} {number}".replace("-", "").strip()
     city = a.get("cityName") or ""
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = a.get("postalcode")
     country_code = "BE"
     try:

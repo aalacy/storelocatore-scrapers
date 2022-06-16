@@ -64,7 +64,8 @@ def fetch_data():
             phone = phone[:-1]
         hoo = loc_dom.xpath(
             '//i[@class="fas fa-clock"]/following-sibling::div[1]/text()'
-        )[-1]
+        )
+        hoo = [e.strip() for e in hoo if e.strip()][0]
         with SgFirefox() as driver:
             driver.get(page_url)
             sleep(15)

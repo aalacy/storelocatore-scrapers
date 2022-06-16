@@ -34,15 +34,21 @@ def fetch_data():
                 f"https://www.nh-hotels.com/rest/datalayer/hotelPage/{store_number}",
                 headers=hdr,
             ).json()
+            street_address = poi["address"]["street"]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+            zip_code = poi["address"]["postalCode"]
+            if zip_code:
+                zip_code = zip_code.split("Mey")[0].split("Flu")[0].split("San")[0]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["name"],
-                street_address=poi["address"]["street"],
+                street_address=street_address,
                 city=poi["city"],
                 state="",
-                zip_postal=poi["address"]["postalCode"],
+                zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number=store_number,
                 phone=poi["contact"]["phone"],

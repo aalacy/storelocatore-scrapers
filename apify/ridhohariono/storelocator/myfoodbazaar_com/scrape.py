@@ -65,7 +65,10 @@ def fetch_data():
         location_type = MISSING
         latitude = row["latitude"]
         longitude = row["longitude"]
-        hours_of_operation = row["hourInfo"]
+        if "hourInfo" not in row:
+            hours_of_operation = MISSING
+        else:
+            hours_of_operation = row["hourInfo"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

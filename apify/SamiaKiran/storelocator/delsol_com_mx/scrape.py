@@ -6,6 +6,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -39,9 +40,28 @@ def get_data(loc):
     log.info(location_name)
     city = strip_accents(loc["city"])
     state = strip_accents(loc["state"])
+
+    raw_address = street_address + " " + city + " " + state
+    pa = parse_address_intl(raw_address)
+
+    street_address = pa.street_address_1
+    street_address = street_address if street_address else MISSING
+
+    zip_postal = pa.postcode
+    zip_postal = zip_postal.strip() if zip_postal else MISSING
+    zip_postal = zip_postal.replace("C.P.", "")
     latitude = loc["latitud"]
     longitude = loc["longitud"]
-    return location_name, street_address, city, state, latitude, longitude
+    return (
+        location_name,
+        street_address,
+        city,
+        state,
+        zip_postal,
+        latitude,
+        longitude,
+        raw_address,
+    )
 
 
 def fetch_data():
@@ -76,8 +96,10 @@ def fetch_data():
                             street_address,
                             city,
                             state,
+                            zip_postal,
                             latitude,
                             longitude,
+                            raw_address,
                         ) = get_data(loc)
                         yield SgRecord(
                             locator_domain=DOMAIN,
@@ -86,14 +108,15 @@ def fetch_data():
                             street_address=street_address,
                             city=city,
                             state=state,
-                            zip_postal=MISSING,
+                            zip_postal=zip_postal,
                             country_code=country_code,
                             store_number=MISSING,
                             phone=phone,
                             location_type=MISSING,
                             latitude=latitude,
                             longitude=longitude,
-                            hours_of_operation=MISSING,
+                            hours_of_operation="<INACCESIBLE>",
+                            raw_address=raw_address,
                         )
                 else:
                     (
@@ -101,8 +124,10 @@ def fetch_data():
                         street_address,
                         city,
                         state,
+                        zip_postal,
                         latitude,
                         longitude,
+                        raw_address,
                     ) = get_data(loclist)
                     yield SgRecord(
                         locator_domain=DOMAIN,
@@ -111,14 +136,15 @@ def fetch_data():
                         street_address=street_address,
                         city=city,
                         state=state,
-                        zip_postal=MISSING,
+                        zip_postal=zip_postal,
                         country_code=country_code,
                         store_number=MISSING,
                         phone=phone,
                         location_type=MISSING,
                         latitude=latitude,
                         longitude=longitude,
-                        hours_of_operation=MISSING,
+                        hours_of_operation="<INACCESIBLE>",
+                        raw_address=raw_address,
                     )
 
 

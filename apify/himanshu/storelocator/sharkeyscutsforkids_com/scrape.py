@@ -1,3 +1,4 @@
+import re
 import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -22,6 +23,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     for idx in range(1, 4):
+        pattern = re.compile(r"\s\s+")
         url = "https://sharkeyscutsforkids.com/locations/page/" + str(idx)
         r = session.get(url, headers=headers)
         if r.status_code != 200:
@@ -52,16 +54,17 @@ def fetch_data():
                 raw_address = (
                     street_address + " " + city + " " + state + " " + zip_postal
                 )
-                raw_address = raw_address.replace("\n", " ").replace("ðŸ“", "")
+                raw_address = raw_address.replace("ðŸ“", "")
+                raw_address = re.sub(pattern, "\n", raw_address)
+                raw_address = raw_address.replace("\n", " ")
             else:
                 location_name = loc.find("h2").text
                 phone = loc.select_one("a[href*=tel]").text
                 raw_address = (
-                    soup.findAll("h2")[1]
-                    .text.replace(",", "")
-                    .replace("ðŸ“", "")
-                    .replace("\n", " ")
+                    soup.findAll("h2")[1].text.replace(",", "").replace("ðŸ“", "")
                 )
+                raw_address = raw_address.split("\n")
+                raw_address = " ".join(raw_address)
 
                 pa = parse_address_intl(raw_address)
 

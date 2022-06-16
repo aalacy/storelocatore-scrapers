@@ -1,66 +1,95 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def get_urls():
-    urls = []
-    r = session.get("https://fabricland.ca/sitemap.xml", headers=headers)
-    tree = html.fromstring(r.content)
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
+    city = adr.city or SgRecord.MISSING
+    state = adr.state or SgRecord.MISSING
+    postal = adr.postcode or SgRecord.MISSING
 
-    for u in tree.xpath("//loc[contains(text(), 'storelocator')]/text()"):
-        if u.count("/") == 6:
-            urls.append(u)
-
-    return urls
-
-
-def get_coords_from_embed(text):
-    try:
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    return latitude, longitude
+    return street, city, state, postal
 
 
-def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url, headers=headers)
-    if r.status_code != 200:
-        return
+def get_cities(state):
+    data = {
+        "action": "stores-by-region",
+        "region": state,
+        "lang": "en",
+    }
 
-    tree = html.fromstring(r.text)
-    location_name = "".join(tree.xpath("//title/text()")).split("Store")[0].strip()
-    line = tree.xpath(
-        "//div[img[contains(@src, 'pin.')]]/following-sibling::div[1]/p/text()"
-    )
-    line = list(filter(None, [li.strip() for li in line]))
+    r = session.post(api, data, headers=headers)
+    return r.json()["stores"].keys()
 
-    city, state = line.pop().split(", ")
-    street_address = ", ".join(line)
-    if "(" in street_address:
-        street_address = street_address.split("(")[0].strip()
-    if street_address.endswith(","):
-        street_address = street_address[:-1]
+
+def get_states():
+    data = {
+        "action": "all-stores",
+        "lang": "en",
+    }
+    r = session.post(api, data=data, headers=headers)
+    return r.json()["stores"].keys()
+
+
+def get_ids():
+    ids = set()
+    for state in get_states():
+        for city in get_cities(state):
+            data = {
+                "action": "stores-by-city",
+                "region": state,
+                "city": city,
+                "lang": "en",
+            }
+            r = session.post(api, data=data, headers=headers)
+            js = r.json()["stores"]
+
+            for j in js:
+                ids.add(j.get("id"))
+
+    return ids
+
+
+def get_data(store_number, sgw: SgWriter):
+    data = {
+        "action": "get-store",
+        "lang": "en",
+        "id": store_number,
+    }
+    r = session.post(api, data=data, headers=headers)
+    j = r.json()["store"]
+
+    location_name = j.get("translated_name")
+    page_url = f"https://fabricville.com/pages/store-details/{store_number}"
+    raw_address = j.get("maps_address")
+    street_address, city, state, postal = get_international(raw_address)
     country_code = "CA"
-    phone = "".join(tree.xpath("//a[@class='pnumber']/text()")).strip()
-    text = "".join(tree.xpath("//iframe/@src"))
-    latitude, longitude = get_coords_from_embed(text)
+    phone = j.get("phone")
+    latitude = j.get("lat")
+    longitude = j.get("lng")
 
     _tmp = []
-    hours = tree.xpath("//div[span[@class='store__days']]")
-    for h in hours:
-        day = "".join(h.xpath(".//text()")).strip()
-        inter = "".join(h.xpath("./following-sibling::div[1]//text()")).strip()
-        _tmp.append(f"{day}: {inter}")
-        if "Sunday" in day:
-            break
-
+    h = j.get("opening_hours") or {}
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    for day in days:
+        inter = h.get(day)
+        _tmp.append(f"{day.capitalize()}: {inter}")
     hours_of_operation = ";".join(_tmp)
 
     row = SgRecord(
@@ -69,11 +98,14 @@ def get_data(page_url, sgw: SgWriter):
         street_address=street_address,
         city=city,
         state=state,
+        zip_postal=postal,
         country_code=country_code,
+        store_number=store_number,
         latitude=latitude,
         longitude=longitude,
         phone=phone,
         locator_domain=locator_domain,
+        raw_address=raw_address,
         hours_of_operation=hours_of_operation,
     )
 
@@ -81,18 +113,29 @@ def get_data(page_url, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = get_urls()
+    ids = get_ids()
 
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    locator_domain = "https://fabricland.ca/"
+    locator_domain = "https://fabricville.com/"
+    api = "https://app.fabricville.com/api/store-locator/ajax"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Origin": "https://fabricville.com",
+        "Connection": "keep-alive",
+        "Referer": "https://fabricville.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
     }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:

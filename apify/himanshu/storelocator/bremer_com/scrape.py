@@ -1,56 +1,54 @@
-import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     }
-    base_url = "https://www.bremer.com"
-    r = session.get("https://www.bremer.com/api/locator/search/branches,atms/37.0901202,-95.71336969999999/10000/1/10000",headers=headers)
-    data = r.json()["data"]["locationDetailsSearchResponse"]
-    return_main_object = []
-    for i in range(len(data)):
-        store_data = data[i]
-        store = []
-        store.append("https://www.bremer.com")
-        store.append(store_data["title"])
-        store.append(store_data["address"]["address1"])
-        store.append(store_data["address"]["city"])
-        store.append(store_data["address"]["state"])
-        store.append(store_data["address"]["zip"])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
-        store.append("bremer bank")
-        store.append(store_data["coordinates"]["latitude"])
-        store.append(store_data["coordinates"]["longitude"])
-        store.append("<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+    r = session.get(
+        "https://web-api.bremer.com/v1/places?coordinates[latitude]=45.4651346&coordinates[longitude]=-94.2515552&radius=2000&operator=bremer&branch=true",
+        headers=headers,
+    )
+    data = r.json()["bremer"]
+    for store_data in data:
+        hours_of_operation = ""
+        raw_hours = store_data["branch_features"]["hours"]["lobbyHours"]
+        for day in raw_hours:
+            try:
+                hours = raw_hours[day][0]["open"] + "-" + raw_hours[day][0]["close"]
+            except:
+                hours = "Closed"
+            hours_of_operation = (hours_of_operation + " " + day + " " + hours).strip()
+        link = "https://www.bremer.com/locations/" + store_data[
+            "title"
+        ].lower().replace(" ", "-")
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain="https://www.bremer.com",
+                page_url=link,
+                location_name=store_data["title"],
+                street_address=store_data["address"]["address1"],
+                city=store_data["address"]["city"],
+                state=store_data["address"]["state"],
+                zip_postal=store_data["address"]["zip"],
+                country_code="US",
+                store_number=store_data["branch_features"]["id"],
+                phone=store_data["branch_features"]["phoneLobby"],
+                location_type="",
+                latitude=store_data["coordinates"]["latitude"],
+                longitude=store_data["coordinates"]["longitude"],
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-scrape()
- 
 
-
-
-
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

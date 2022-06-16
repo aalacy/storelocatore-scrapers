@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -17,20 +16,15 @@ def fetch_data():
 
     all_locations = dom.xpath('//a[contains(text(), "View Location")]/@href')
     for page_url in all_locations:
-        with SgFirefox() as driver:
-            driver.get(page_url)
-            loc_dom = etree.HTML(driver.page_source)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
         location_name = loc_dom.xpath('//h1/span[@class="heading"]/text()')[0]
         raw_adr = loc_dom.xpath(
             '//h2[contains(text(), "Address")]/following-sibling::p/text()'
         )
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
-        geo = (
-            loc_dom.xpath('//a[contains(@href, "maps?ll")]/@href')[0]
-            .split("ll=")[-1]
-            .split("&")[0]
-            .split(",")
-        )
+        latitude = loc_dom.xpath("//@data-lat")[0]
+        longitude = loc_dom.xpath("//@data-lng")[0]
         hoo = loc_dom.xpath(
             '//h2[contains(text(), "Lobby Hours")]/following-sibling::p/text()'
         )
@@ -45,12 +39,12 @@ def fetch_data():
             city=raw_adr[-1].split(", ")[0],
             state=raw_adr[-1].split(", ")[-1].split()[0],
             zip_postal=raw_adr[-1].split(", ")[-1].split()[-1],
-            country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=geo[0],
-            longitude=geo[1],
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 

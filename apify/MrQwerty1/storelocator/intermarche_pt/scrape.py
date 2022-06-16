@@ -33,8 +33,13 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
     postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
+    if " " in postal:
+        postal = postal.split()[0].strip()
     country_code = "PT"
-    phone = "".join(tree.xpath("//a[@itemprop='telephone']/text()")).strip()
+    try:
+        phone = tree.xpath("//a[@itemprop='telephone']/text()")[0].strip()
+    except IndexError:
+        phone = SgRecord.MISSING
     store_number = "".join(tree.xpath("//div[@id='pos-map']/@data-pos"))
     latitude = "".join(tree.xpath("//div[@id='pos-map']/@data-latitude"))
     longitude = "".join(tree.xpath("//div[@id='pos-map']/@data-longitude"))

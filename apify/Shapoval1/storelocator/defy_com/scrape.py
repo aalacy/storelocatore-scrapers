@@ -31,14 +31,17 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        hours_of_operation = (
-            " ".join(tree.xpath('//div[@class="park-hour"]//text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                " ".join(tree.xpath('//div[@class="park-hour"]//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        except:
+            hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

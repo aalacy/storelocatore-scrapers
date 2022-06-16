@@ -30,6 +30,10 @@ def fetch_data():
                 closes = e["closingTime"]["formattedHour"]
                 hoo.append(f"{day}: {opens} - {closes}")
         hoo = " ".join(hoo)
+        latitude = poi["geoPoint"]["latitude"]
+        latitude = latitude if latitude and latitude != "0.0" else ""
+        longitude = poi["geoPoint"]["longitude"]
+        longitude = longitude if longitude and longitude != "0.0" else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -43,8 +47,8 @@ def fetch_data():
             store_number="",
             phone="",
             location_type="",
-            latitude=poi["geoPoint"]["latitude"],
-            longitude=poi["geoPoint"]["longitude"],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 

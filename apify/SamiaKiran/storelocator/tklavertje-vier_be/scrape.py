@@ -37,6 +37,16 @@ def fetch_data():
                 .replace("|", " ")
                 .split("T:")
             )
+            if loc.find("a", {"class", "btn"}):
+                coords = (
+                    loc.find("a", {"class", "btn"})["href"].split("@")[1].split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+            else:
+                latitude = MISSING
+                longitude = MISSING
+
             hours_of_operation = (
                 loc.find("ul", {"class": "openingsuren"})
                 .get_text(separator="|", strip=True)
@@ -73,8 +83,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
