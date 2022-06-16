@@ -76,6 +76,8 @@ def fetch_data():
         log.debug(f"{count}. stores = {len(stores)}")
 
         for store in stores:
+            if store.get("open_status") == "unknown":
+                continue
             location_name = store.get("name")
             store_number = store.get("id")
             location_type = store.get("site_brand")
@@ -125,7 +127,7 @@ def fetch_data():
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()

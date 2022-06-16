@@ -396,6 +396,13 @@ def old_brands(x):
         return x
 
 
+try:
+    from HTMLParser import HTMLParser  # noqa
+except ImportError:
+    from html.parser import HTMLParser  # noqa
+hPars = HTMLParser()  # noqa
+
+
 def fix_india(x):
     if x.count("<") == x.count(">"):
         x = list(x)
@@ -411,10 +418,10 @@ def fix_india(x):
             if not inside:
                 copy.append(whatis)
         if len(copy) > 0:
-            return "".join(copy)
-        return "".join(x)
+            return hPars.unescape("".join(copy))
+        return hPars.unescape("".join(x))
     else:
-        return "".join(x)
+        return hPars.unescape("".join(x))
 
 
 def scrape():
@@ -443,16 +450,18 @@ def scrape():
         street_address=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "streetAddress"],
             is_required=False,
+            value_transform=lambda x: hPars.unescape(x),
             part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressLocality"],
             is_required=False,
+            value_transform=lambda x: hPars.unescape(x),
         ),
         state=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressRegion"],
             is_required=False,
-            value_transform=lambda x: x.replace("None", "<MISSING>"),
+            value_transform=lambda x: hPars.unescape(x).replace("None", "<MISSING>"),
         ),
         zipcode=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "postalCode"],
