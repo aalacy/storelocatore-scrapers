@@ -29,9 +29,12 @@ def fetch_data(sgw: SgWriter):
 
         raw_data = base.find(id="popmenu-apollo-state").contents[0]
         js = (
-            raw_data.split("STATE =")[1].split(']},"CustomPageSelectedLocation')[0]
+            raw_data[
+                raw_data.find(" = ")
+                + 2 : raw_data.rfind(']},"CustomPageSelectedLocation')
+            ]
             + "]}}"
-        )
+        ).replace('" + "', "")
         store_data = json.loads(js)
 
         locator_domain = "https://www.110grill.com/"
@@ -41,7 +44,7 @@ def fetch_data(sgw: SgWriter):
                 store = store_data[loc]
                 location_name = store["name"]
                 street_address = store["streetAddress"]
-                city = store["city"]
+                city = store["city"].replace("MA", "").strip()
                 state = store["state"]
                 zip_code = store["postalCode"]
                 country_code = "US"
