@@ -74,7 +74,7 @@ class ExampleSearchIteration(SearchIteration):
         }
 
         def getPoint(session, hdr):
-            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
+            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=false&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
                 current_country, coord[0], coord[1]
             )
             data = session.get(url, headers=hdr)
@@ -105,12 +105,12 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_2(),
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=5,
     )
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
         with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:
