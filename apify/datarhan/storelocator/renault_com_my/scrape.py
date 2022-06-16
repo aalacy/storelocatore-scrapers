@@ -12,43 +12,40 @@ from sgpostal.sgpostal import parse_address_intl
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://renault.com.cy/home/showroom-garage/"
-    domain = "renault.com.cy"
+    start_url = "https://www.renault.com.my/showroom-service-centres"
+    domain = "renault.com.my"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    data = session.get(
+        "https://www.renault.com.my/showroom-services-map-data", headers=hdr
+    ).json()
 
-    all_locations = dom.xpath('//div[@class="avia_textblock"]/table/tbody/tr')
-    for poi_html in all_locations:
-        location_name = poi_html.xpath(".//td/strong/text()")[0].replace(":", "")
-        if "Showroom" not in location_name:
-            continue
-        raw_data = poi_html.xpath("./td[1]/text()")
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-        if not raw_data:
-            raw_data = poi_html.xpath("./td[1]/p[2]/text()")
-            raw_data = [e.strip() for e in raw_data if e.strip()]
-        raw_address = ", ".join(raw_data)
+    for poi in data["showroomAndService"]:
+        raw_address = poi["address"]
         addr = parse_address_intl(raw_address)
-        hoo = poi_html.xpath("./td[2]/text()")
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        types = etree.HTML(poi["services"]).xpath("//text()")
+        location_type = ", ".join([e.strip() for e in types])
+        hoo = etree.HTML(poi["timing"]).xpath("//text()")
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
-            location_name=location_name,
-            street_address=raw_data[0],
+            location_name=poi["name"],
+            street_address=street_address,
             city=addr.city,
-            state=addr.state,
+            state="",
             zip_postal=addr.postcode,
-            country_code="CY",
-            store_number="",
-            phone="",
-            location_type="",
-            latitude="",
-            longitude="",
+            country_code="MY",
+            store_number=poi["id"],
+            phone=poi["phone"],
+            location_type=location_type,
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hoo,
         )
 

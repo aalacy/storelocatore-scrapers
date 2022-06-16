@@ -40,8 +40,9 @@ def fetch_data():
             coordlist = (
                 driver.page_source.split('data-stores="{', 1)[1]
                 .split('}"', 1)[0]
-                .split("{")
+                .split("{")[1:]
             )
+
             for div in storelist:
                 tdlist = div.findAll("td")
                 col1 = re.sub(pattern, "\n", tdlist[0].text).lstrip().splitlines()
@@ -63,16 +64,22 @@ def fetch_data():
                 if title in streetlist:
                     continue
                 streetlist.append(title)
-                lat = link.split("lat=", 1)[1].split("&", 1)[0]
-                longt = link.split("long=", 1)[1]
+
                 if "View Map" in phone:
                     phone = "<MISSING>"
                 lat = "<MISSING>"
                 longt = "<MISSING>"
                 for coord in coordlist:
-                    coord = coord.replace("\n", "").lstrip()
+                    coord = (
+                        coord.replace("\n", "")
+                        .replace("\t", "")
+                        .lstrip()
+                        .replace("&quot;", '"')
+                    )
+                    coord = "{" + coord.split("}", 1)[0] + "}"
+
                     try:
-                        coord = "{" + coord.split("}", 1)[0] + "}"
+
                         coord = json.loads(coord)
 
                         if title.strip() == coord["name"]:
@@ -81,6 +88,8 @@ def fetch_data():
                             break
                     except:
                         pass
+                if len(str(lat)) < 4:
+                    lat = longt = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.applied.com/",
                     page_url=link,
