@@ -42,13 +42,19 @@ def fetch_data():
                 street_address += " " + addr.street_address_2
             phone = (
                 poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
-                .split(":")[1]
+                .split(":")[-1]
                 .split("/")[0]
             )
             hoo = dom.xpath(
                 '//p[b[contains(text(), "OPENING TIMES")]]/following-sibling::p//text()'
             )
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            location_type = " ".join(poi_html.xpath("./td[2]/span/@title")).replace(
+                "<br>", ""
+            )
+            country_code = start_url.split("/")[2].split(".")[-1]
+            if country_code == "com":
+                country_code = "ci"
 
             item = SgRecord(
                 locator_domain=domain,
@@ -58,10 +64,10 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=country_code,
                 store_number="",
                 phone=phone,
-                location_type="",
+                location_type=location_type,
                 latitude="",
                 longitude="",
                 hours_of_operation=hoo,
@@ -75,7 +81,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
             )
         )
     ) as writer:

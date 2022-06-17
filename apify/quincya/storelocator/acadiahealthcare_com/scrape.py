@@ -1,41 +1,15 @@
-import csv
-
+import json
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.acadiahealthcare.com/acadia-locations/search/?q=&r=any&almscroll=1#page1"
 
@@ -46,59 +20,48 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
+    js = str(base).split('locations":')[1].split(',"categories":')[0]
+    store_data = json.loads(js)
 
-    items = base.find_all(class_="result")
     locator_domain = "acadiahealthcare.com"
 
-    for base in items:
-        link = base.find(class_="links").find_all("a")[-1]["href"]
+    for store in store_data:
 
-        location_name = base.find(class_="name").text.strip()
-
-        raw_address = list(base.find(class_="address").stripped_strings)
-        street_address = " ".join(raw_address[:-1]).strip()
-        city = raw_address[-1].split(",")[0].strip()
-        state = raw_address[-1].split(",")[1].split()[0].strip()
-        zip_code = raw_address[-1].split(",")[1].split()[1].strip()
+        location_name = store["name"]
+        street_address = store["address"]
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["zip"]
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = store["id"]
         location_type = "<MISSING>"
-        try:
-            phone = base.find(class_="phone").text.strip()
-            if not phone:
-                phone = "<MISSING>"
-        except:
-            phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        phone = store["phone"]
+        hours_of_operation = ""
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        link = store["pageUrl"]
+        if not link:
+            link = base_link
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
