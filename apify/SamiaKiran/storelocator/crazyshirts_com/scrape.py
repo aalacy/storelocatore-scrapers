@@ -1,6 +1,5 @@
 import json
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgselenium import SgChrome
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -37,7 +36,6 @@ def fetch_data():
         api_url = "https://www.crazyshirts.com/api/commerce/storefront/locationUsageTypes/SP/locations/?startIndex=0&pageSize=1000&includeAttributeDefinition=true"
         r = session.get(api_url, headers=headers)
         loclist = json.loads(r.text)["items"]
-        soup = BeautifulSoup(r.text, "html.parser")
         for loc in loclist:
             location_name = loc["locationTypes"][0]["name"]
             store_number = loc["code"]
