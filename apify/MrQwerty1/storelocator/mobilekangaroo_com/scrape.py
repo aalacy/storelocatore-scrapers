@@ -1,21 +1,38 @@
-from sgpostal.sgpostal import parse_address_intl
-import re
-from lxml import html
-import random
 import ssl
+import random
 import time
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from lxml import html
+from xml.etree import ElementTree as ET
+from sgpostal.sgpostal import parse_address_intl
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-ssl._create_default_https_context = ssl._create_unverified_context
+website = "https://mobilekangaroo.com"
+MISSING = SgRecord.MISSING
+
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+}
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def driver_sleep(driver, time=2):
@@ -31,71 +48,90 @@ def random_sleep(driver, start=5, limit=3):
     driver_sleep(driver, random.randint(start, start + limit))
 
 
-website = "https://mobilekangaroo.com"
-page_url = f"{website}/locations"
-MISSING = SgRecord.MISSING
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+def request_with_retries(url):
+    return session.get(url, headers=headers)
 
 
-def get_phone(Source):
-    phone = MISSING
+def get_XML_root(text):
+    return ET.fromstring(text)
 
-    if Source is None or Source == "":
-        return phone
 
-    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
-        phone = match
-        return phone
-    return phone
+def XML_url_pull(url):
+    response = request_with_retries(url)
+    data = get_XML_root(
+        response.text.replace('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"', "")
+    )
+    links = []
+    for url in get_XML_object_variable(data, "sitemap", [], True):
+        links.append(get_XML_object_variable(url, "loc"))
+    return links
+
+
+def XML_url_pull2(url):
+    response = request_with_retries(url)
+    data = get_XML_root(
+        response.text.replace('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"', "")
+    )
+    links = []
+    for url in get_XML_object_variable(data, "url", [], True):
+        links.append(get_XML_object_variable(url, "loc"))
+    return links
+
+
+def get_XML_object_variable(Object, varNames, noVal=MISSING, noText=False):
+    Object = [Object]
+    for varName in varNames.split("."):
+        value = []
+        for element in Object[0]:
+            if varName == element.tag:
+                value.append(element)
+        if len(value) == 0:
+            return noVal
+        Object = value
+
+    if noText:
+        return Object
+    if len(Object) == 0 or Object[0].text is None:
+        return MISSING
+    return Object[0].text
 
 
 def fetch_stores():
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
-        driver.get(page_url)
-        random_sleep(driver)
-        mainColumns = driver.find_elements_by_xpath(
-            './/div[contains(@class, "bubble-element RepeatingGroup")]'
-        )
+    links = XML_url_pull(f"{website}/sitemap.xml")
+    page_urls = []
+    for link in links:
+        if "locations" in link or "index" in link:
+            continue
+        links2 = XML_url_pull2(link)
+        if len(links2) < 2:
+            continue
+        links2 = links2[:1]
+        page_urls.extend(links2)
+    return page_urls
 
-        itemXpath = (
-            './/div[contains(@class, "bubble-element GroupItem group-item entry-")]'
-        )
-        for mainColumn in mainColumns:
-            rows = mainColumn.find_elements_by_xpath(itemXpath)
-            sameCount = 0
-            lastCount = len(rows)
-            if lastCount < 5:
-                continue
-            while True:
-                sameCount = sameCount + 1
-                driver.execute_script(
-                    "return arguments[0].scrollIntoView(true);", rows[len(rows) - 1]
-                )
-                rows = mainColumn.find_elements_by_xpath(itemXpath)
 
-                if lastCount < len(rows):
-                    sameCount = 0
-                    lastCount = len(rows)
-                if sameCount > 4:
-                    break
-                random_sleep(driver)
-        body = html.fromstring(driver.page_source, "lxml")
+def stringify_nodes(body, xpath):
+    nodes = body.xpath(xpath)
+    values = []
+    for node in nodes:
+        for text in node.itertext():
+            text = text.strip()
+            if text:
+                values.append(text)
+    if len(values) == 0:
+        return MISSING
+    return " ".join((" ".join(values)).split())
 
-        stores = []
-        for item in body.xpath(itemXpath):
-            contents = item.xpath('.//div[@class="content"]/text()')
-            if len(contents) == 0:
-                continue
-            stores.append(contents)
-        return stores
-    return []
+
+def get_raw_lat_lng(arr):
+    try:
+        if len(arr) == 0:
+            return MISSING, MISSING, MISSING
+        value = arr[0].split("/@")[1].split(",")
+        raw = arr[0].split("/place/")[1].split("/")[0].replace("+", " ")
+        return raw, value[0], value[1]
+    except:
+        return MISSING, MISSING, MISSING
 
 
 def get_address(raw_address):
@@ -118,41 +154,46 @@ def get_address(raw_address):
             if zip_postal is None or len(zip_postal) == 0:
                 zip_postal = MISSING
             return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"address err: {e}")
+    except:
         pass
     return MISSING, MISSING, MISSING, MISSING
 
 
-def fetch_data():
-    stores = fetch_stores()
-    log.info(f"Total stores = {len(stores)}")
+def fetch_data(driver):
+    page_urls = fetch_stores()
+    log.info(f"Total page urls = {len(page_urls)}")
 
-    country_code = "US"
+    count = 0
+    store_number = MISSING
     location_type = MISSING
-    latitude = "<INACCESSIBLE>"
-    longitude = "<INACCESSIBLE>"
+    country_code = "US"
 
-    for store in stores:
-        location_name = store[0].replace("\\xa", "").strip()
-        raw_address = store[1].replace("\\xa", "").strip()
-        hours_of_operation = store[2].replace("\\xa", "").strip()
-
-        if "mon -" in raw_address.lower() or "mon-" in raw_address.lower():
-            hoo = raw_address
-            raw_address = hours_of_operation
-            hours_of_operation = hoo
-
-        phone = get_phone(store[3])
-        street_address, city, state, zip_postal = get_address(raw_address)
-        store_number = (
-            f"{location_name}_{zip_postal}".lower()
-            .replace(" ", "_")
-            .replace("_" + MISSING.lower(), "")
+    for page_url in page_urls:
+        count = count + 1
+        log.info(f"{count}. scrapping {page_url} ...")
+        driver.get(page_url)
+        random_sleep(driver)
+        body = html.fromstring(driver.page_source, "lxml")
+        location_name = (
+            stringify_nodes(body, "//title").replace("Mobile Kangaroo - ", "").strip()
         )
+        phone = stringify_nodes(
+            body, '//div[contains(@class, "bubble-element Text clickable-element")]'
+        )
+        raw_address, latitude, longitude = get_raw_lat_lng(
+            body.xpath('//a[contains(@href, "maps/place")]/@href')
+        )
+        hours_of_operation = stringify_nodes(
+            body, '//div[contains(text(), ":00") or contains(text(), ":30")]'
+        )
+        street_address, city, state, zip_postal = get_address(raw_address)
+
+        if latitude == MISSING or longitude == MISSING:
+            log.info(f"{count}, missing lat {page_url}")
+            continue
 
         yield SgRecord(
-            locator_domain="mobilekangaroo.com",
+            locator_domain=website,
             store_number=store_number,
             page_url=page_url,
             location_name=location_name,
@@ -168,17 +209,17 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
-    return []
 
 
 def scrape():
-    log.info(f"Start crawling {website} ...")
+    log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        for rec in fetch_data():
-            writer.write_row(rec)
+    with SgChrome(is_headless=True, driver_wait_timeout=10) as driver:
+        with SgWriter(
+            deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)
+        ) as writer:
+            for rec in fetch_data(driver):
+                writer.write_row(rec)
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
 
