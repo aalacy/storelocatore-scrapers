@@ -7,6 +7,7 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+import datetime
 
 website = "pizzahut.fr"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -73,9 +74,9 @@ def fetch_data():
 
                 temp_date = hour["open"].split("T")[0].strip()
                 day = datetime.datetime.strptime(temp_date, "%Y-%m-%d").strftime("%A")
-                ftime = hour["open"].split("T")[0].strip().split(":00.000Z")[0].strip()
+                ftime = hour["open"].split("T")[1].strip().split(":00.000Z")[0].strip()
                 to_time = (
-                    hour["close"].split("T")[0].strip().split(":00.000Z")[0].strip()
+                    hour["close"].split("T")[1].strip().split(":00.000Z")[0].strip()
                 )
                 hours_list.append(day + ":" + ftime + " - " + to_time)
 
