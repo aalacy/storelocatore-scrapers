@@ -75,17 +75,20 @@ def grab_json(soup):
 
 def get_json(url, escalation):
     data = None
-    with SgChrome(proxy_provider_escalation_order=escalation) as driver:
-        driver.get(url)
-        time.sleep(5)
-        text = driver.page_source
-        soup = b4(text, "lxml")
-        son = soup.find_all("script")
-        for i in reversed(son):
-            if "REDUX_INITIAL_STATE" in i.text:
-                data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
-    if data:
-        return json.loads(data)
+    try:
+        with SgChrome(proxy_provider_escalation_order=escalation) as driver:
+            driver.get(url)
+            time.sleep(5)
+            text = driver.page_source
+            soup = b4(text, "lxml")
+            son = soup.find_all("script")
+            for i in reversed(son):
+                if "REDUX_INITIAL_STATE" in i.text:
+                    data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
+            if data:
+                return json.loads(data)
+    except Exception as e:
+        logger.error("blocked", exc_info=e)
     return None
 
 
