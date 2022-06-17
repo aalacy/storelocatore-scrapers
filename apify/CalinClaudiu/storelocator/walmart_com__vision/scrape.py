@@ -73,22 +73,22 @@ def grab_json(soup):
             return json.loads(data)["store"]
 
 
-def get_json(url,escalation):
+def get_json(url, escalation):
     data = None
     try:
-        with SgChrome(proxy_provider_escalation_order = escalation) as driver:
-        driver.get(url)
-        time.sleep(5)
-        text = driver.page_source
-        soup = b4(text, "lxml")
-        son = soup.find_all("script")
-        for i in reversed(son):
-            if "REDUX_INITIAL_STATE" in i.text:
-                data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
-        if data:
-            return json.loads(data)
+        with SgChrome(proxy_provider_escalation_order=escalation) as driver:
+            driver.get(url)
+            time.sleep(5)
+            text = driver.page_source
+            soup = b4(text, "lxml")
+            son = soup.find_all("script")
+            for i in reversed(son):
+                if "REDUX_INITIAL_STATE" in i.text:
+                    data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
+            if data:
+                return json.loads(data)
     except Exception as e:
-        logger.error(f"blocked", exc_info = e)
+        logger.error(f"blocked", exc_info=e)
     return None
 
 
@@ -106,23 +106,23 @@ def other_source(state):
     url = "https://www.walmart.com/store/directory"
     son = None
     while not son and retries < MaxRetries:
-        son = get_json(url,deesca)
+        son = get_json(url, deesca)
         retries += 1
     if not son:
-        son = get_json(url,esca)
-    
+        son = get_json(url, esca)
+
     allstates = son["directory"]["stateList"]
     for county in allstates:
         retries = 0
         url2 = str(
-                "https://www.walmart.com/store/directory/"
-                + str(county["code"]).lower().strip().replace(" ", "-")
-            )
+            "https://www.walmart.com/store/directory/"
+            + str(county["code"]).lower().strip().replace(" ", "-")
+        )
         sec = None
         while not sec and retries < MaxRetries:
-            sec = get_json(url2,deesca)
+            sec = get_json(url2, deesca)
         if not sec:
-            sec = get_json(url2,esca)
+            sec = get_json(url2, esca)
         allcities = sec["directory"]["cityData"]["cities"]
         for city in allcities:
             data = str(list(i for i in city.items()))
@@ -133,31 +133,31 @@ def other_source(state):
                     continue
                 else:
                     url3 = str(
-                                str(
-                                    "https://www.walmart.com/store/directory/"
-                                    + county["code"].lower()
-                                    + "/"
-                                    + city["city"].lower().strip().replace(" ", "-")
-                                )
-                            )
+                        str(
+                            "https://www.walmart.com/store/directory/"
+                            + county["code"].lower()
+                            + "/"
+                            + city["city"].lower().strip().replace(" ", "-")
+                        )
+                    )
                     tri = None
                     retries = 0
                     while not tri and retries < MaxRetries:
-                        sec = get_json(url3,deesca)
+                        sec = get_json(url3, deesca)
                     if not tri:
-                        tri = get_json(url3,esca)
+                        tri = get_json(url3, esca)
                     stores = tri["directory"]["storeData"]["stores"]
                     for store in stores:
                         state.push_request(
-                                    SerializableRequest(
-                                        url=str("/store/" + str(store["storeId"]))
-                                    )
-                                )
+                            SerializableRequest(
+                                url=str("/store/" + str(store["storeId"]))
+                            )
+                        )
 
             elif "storeId" in data:
                 state.push_request(
-                        SerializableRequest(url=str("/store/" + str(city["storeId"])))
-                    )
+                    SerializableRequest(url=str("/store/" + str(city["storeId"])))
+                )
     return True
 
 
