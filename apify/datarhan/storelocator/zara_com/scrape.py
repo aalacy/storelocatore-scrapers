@@ -30,7 +30,7 @@ def fetch_data():
             state = poi.get("state")
             if state == "--":
                 state = ""
-            if state.isdigit():
+            if state and state.isdigit():
                 state = ""
             zip_code = poi["zipCode"]
             if zip_code and str(zip_code.strip()) == "0":
