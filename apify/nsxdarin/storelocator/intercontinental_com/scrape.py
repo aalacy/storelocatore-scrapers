@@ -15,7 +15,11 @@ headers = {
 
 
 def fetch_data():
-    locs = []
+    locs = [
+        "https://www.ihg.com/intercontinental/hotels/us/en/bangkok/bkkhb/hoteldetail",
+        "https://www.ihg.com/intercontinental/hotels/us/en/hachimantai/axtap/hoteldetail",
+        "https://www.ihg.com/intercontinental/hotels/us/en/cannes/ceqha/hoteldetail",
+    ]
     url = "https://www.ihg.com/intercontinental/content/us/en/hotel-directory."
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -27,7 +31,7 @@ def fetch_data():
         Retry = True
         logger.info(loc)
         rc = 0
-        while Retry and rc <= 5:
+        while Retry and rc <= 10:
             rc = rc + 1
             Retry = False
             logger.info(str(rc))

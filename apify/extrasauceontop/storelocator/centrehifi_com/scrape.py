@@ -15,7 +15,9 @@ def get_data():
     url = "https://www.centrehifi.com/en/store-locator/"
     class_name = "popup-language-header"
 
-    with SgChrome() as driver:
+    with SgChrome(
+        block_third_parties=False,
+    ) as driver:
         driver.get(url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CLASS_NAME, class_name))
@@ -166,4 +168,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

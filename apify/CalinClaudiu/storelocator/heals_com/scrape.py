@@ -63,6 +63,18 @@ def parse_store(k, session):
     except Exception:
         k["hours"] = "<MISSING>"
 
+    if not k["phone"] or k["phone"] == "<MISSING>" or len(str(k["phone"])) <= 4:
+        try:
+            h = soup.find_all("p")
+            i = 0
+            while i < len(h):
+                if "phone" in h[i].text.lower():
+                    k["phone"] = h[i + 1].text.strip()
+                    i = len(h)
+                i += 1
+        except Exception:
+            k["phone"] = "<MISSING>"
+
     return k
 
 

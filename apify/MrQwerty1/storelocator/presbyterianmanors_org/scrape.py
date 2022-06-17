@@ -1,37 +1,11 @@
-import csv
 import usaddress
 
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def get_address(line):
@@ -64,34 +38,27 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.presbyterianmanors.org/"
-    page_url = "https://www.presbyterianmanors.org/our-communities"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
+
     divs = tree.xpath(
         "//div[@class='c-table-body']|//div[@class='oc-single-detail-block w-row']//div[@class='three-quarters left-align']"
     )
 
     for d in divs:
         location_name = "".join(
-            d.xpath(".//h4[@class='oc-single-detail-header']//text()")
+            d.xpath(".//div[@class='oc-single-detail-header']//text()")
         ).strip()
 
         line = d.xpath(".//p[@class='oc-para']/text()")
@@ -100,44 +67,36 @@ def fetch_data():
         street_address, city, state, postal = get_address(line)
         street_address = street_address.replace("Â", "").strip()
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//span[@class='oc-phone-number']/text()")).strip()
-            or "<MISSING>"
-        )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+        phone = "".join(d.xpath(".//span[@class='oc-phone-number']/text()")).strip()
+
+        location_type = SgRecord.MISSING
         if d.xpath("./preceding-sibling::div//em"):
             location_type = "Coming Soon"
 
-        hours_of_operation = "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            location_type=location_type,
+            phone=phone,
+            locator_domain=locator_domain,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.presbyterianmanors.org/"
+    page_url = "https://www.presbyterianmanors.org/our-communities"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

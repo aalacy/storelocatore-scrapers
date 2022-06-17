@@ -23,6 +23,7 @@ def fetch_data():
         }
         all_locations = session.get(start_url.format(code), headers=hdr)
         if not all_locations.text.strip():
+            all_codes.found_nothing()
             continue
         for poi in all_locations.json():
             hoo = []
@@ -43,6 +44,9 @@ def fetch_data():
             if not zip_code:
                 zip_code = loc_dom.xpath('//div[@class="hours-block"]/p[1]/text()')
             zip_code = zip_code[0].split()[-1]
+            all_codes.found_location_at(
+                poi["position"]["latitude"], poi["position"]["longitude"]
+            )
 
             item = SgRecord(
                 locator_domain=domain,

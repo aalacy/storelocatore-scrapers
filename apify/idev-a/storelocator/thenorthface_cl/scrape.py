@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
-import time
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -14,20 +12,37 @@ locator_domain = "https://www.thenorthface.cl"
 base_url = "https://www.thenorthface.cl/tiendas"
 json_url = r"https://www.thenorthface.cl/graphql\?query\=query\+GetCmsPage"
 
+headers = {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "authorization": "",
+    "content-type": "application/json",
+    "referer": "https://www.thenorthface.cl/tiendas",
+    "store": "the_north_face_store_view",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+    "x-magento-cache-id": "null",
+}
+
 
 def fetch_data():
-    with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
-        time.sleep(2)
+        driver.wait_for_request(json_url, timeout=30)
         soup = bs(driver.page_source, "lxml")
-        locations = soup.select("div.store-card")
+        locations = soup.select("main div.main-page-ioz div.pagebuilder-column")
         for _ in locations:
             p = _.select("p")
             coord = p[3].a["href"].split("/@")[1].split("/data")[0].split(",")
             location_name = p[0].text.strip()
-            city = ""
-            if "–" in location_name or "-" in location_name:
-                city = location_name.split("-")[0].split("–")[0].strip()
+            city = location_name.split("-")[0].split("–")[0].strip()
+            if (
+                "Costanera Center" in city
+                or "Parque Arauco" in city
+                or "Mall Sport" in city
+                or "Alto Las Condes" in city
+            ):
+                city = ""
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,

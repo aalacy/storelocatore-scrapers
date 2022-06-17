@@ -27,11 +27,13 @@ def fetch_data():
             SearchableCountries.USA,
             SearchableCountries.PUERTO_RICO,
         ],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
         start_url = f"https://back-scus.azurewebsites.net/branch-locator/find/defaultView?config=%7B%22coords%22%3A%5B{lat}%2C{lng}%5D%7D&globalSearch=true"
         all_locations = session.get(start_url.format(lat, lng), headers=hdr).json()
+        if not all_locations:
+            all_coords.found_nothing()
         for poi in all_locations:
             hoo = ""
             if poi.get("schedule"):
@@ -48,21 +50,30 @@ def fetch_data():
             zip_code = poi["location"]["zipcode"]
             if zip_code and street_address:
                 street_address = street_address.split(zip_code)[0]
+            city = (
+                poi["location"]["city"].split(",")[0] if poi["location"]["city"] else ""
+            )
+            phone = poi.get("contactData", {}).get("phoneNumber")
+            if phone:
+                phone = phone.split("/")[0].split("Fax")[0].split("int")[0]
+            latitude = poi["location"]["coordinates"][1]
+            longitude = poi["location"]["coordinates"][0]
+            all_coords.found_location_at(latitude, longitude)
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi.get("urlDetailPage"),
                 location_name=poi.get("name"),
                 street_address=street_address,
-                city=poi["location"]["city"],
+                city=city,
                 state="",
                 zip_postal=zip_code,
                 country_code=poi["location"]["country"],
                 store_number=poi["poicode"],
-                phone=poi.get("contactData", {}).get("phoneNumber"),
+                phone=phone,
                 location_type=poi["objectType"]["code"],
-                latitude=poi["location"]["coordinates"][1],
-                longitude=poi["location"]["coordinates"][0],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
             )
 
@@ -73,7 +84,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             ),
             duplicate_streak_failure_factor=-1,
         )

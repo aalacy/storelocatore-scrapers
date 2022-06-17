@@ -50,12 +50,12 @@ def para(url):
         k["title"] = "<MISSING>"
 
     try:
-        k["latitude"] = soup.find("meta", {"property": "og:latitude"})["content"]
+        k["latitude"] = soup.find("meta", {"property": "latitude"})["content"]
     except Exception:
         k["latitude"] = "<MISSING>"
 
     try:
-        k["longitude"] = soup.find("meta", {"property": "og:longitude"})["content"]
+        k["longitude"] = soup.find("meta", {"property": "longitude"})["content"]
     except Exception:
         k["longitude"] = "<MISSING>"
 

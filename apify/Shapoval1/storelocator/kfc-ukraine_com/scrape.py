@@ -43,6 +43,10 @@ def fetch_data(sgw: SgWriter):
             .replace("Дом торговли", "")
             .strip()
         )
+        if ad.count(",") == 2:
+            city = ad.split(",")[-1].strip()
+            street_address = " ".join(ad.split(",")[:-1])
+            postal = "<MISSING>"
         store_number = "".join(d.xpath("./@data-id"))
         latitude = "".join(d.xpath("./@data-lat"))
         longitude = "".join(d.xpath("./@data-lng"))
