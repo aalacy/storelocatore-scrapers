@@ -34,14 +34,14 @@ def get_data():
 
             try:
                 if response[0]["Message"] == "Zip Code Not Found":
-                    # search.found_nothing()
+                    search.found_nothing()
                     continue
 
             except Exception:
                 pass
 
-            # if len(response) == 0:
-            #     search.found_nothing()
+            if len(response) == 0:
+                search.found_nothing()
 
             for location in response:
                 locator_domain = "www.servicemasterclean.com"
