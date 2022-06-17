@@ -26,9 +26,13 @@ def fetch_data():
         if "Showroom" not in location_name:
             continue
         raw_data = poi_html.xpath("./td[1]/text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        if not raw_data:
+            raw_data = poi_html.xpath(".//td/p[1]/text()")
+            raw_data = [e.strip() for e in raw_data if e.strip()]
         if not raw_data:
             raw_data = poi_html.xpath("./td[1]/p[2]/text()")
-        raw_data = [e.strip() for e in raw_data]
+            raw_data = [e.strip() for e in raw_data if e.strip()]
         raw_address = ", ".join(raw_data)
         addr = parse_address_intl(raw_address)
         hoo = poi_html.xpath("./td[2]/text()")
@@ -49,9 +53,36 @@ def fetch_data():
             latitude="",
             longitude="",
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item
+
+        raw_data_2 = poi_html.xpath(".//td/p[2]/text()")
+        if raw_data_2:
+            raw_data_2 = [e.strip() for e in raw_data_2 if e.strip()]
+            raw_address = ", ".join(raw_data_2)
+            addr = parse_address_intl(raw_address)
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=start_url,
+                location_name=location_name,
+                street_address=raw_data_2[0],
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="CY",
+                store_number="",
+                phone="",
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation=hoo,
+                raw_address=raw_address,
+            )
+
+            yield item
 
 
 def scrape():
