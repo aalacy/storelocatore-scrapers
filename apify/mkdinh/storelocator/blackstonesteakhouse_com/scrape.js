@@ -51,7 +51,6 @@ Apify.main(async () => {
         country_code: 'US',
         store_number: MISSING,
         phone: phone || MISSING,
-        location_type: MISSING,
         latitude: lat || MISSING,
         longitude: lng || MISSING,
         hours_of_operation: hours_of_operation || MISSING,
