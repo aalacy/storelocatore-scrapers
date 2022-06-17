@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import us
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "signaturebank.bank"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -56,7 +58,9 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath('//div[contains(@class,"d-1of2 ")]')
+    store_list = search_sel.xpath(
+        '//div[@class="content__block content__block-map d-1of2"]'
+    )
 
     for store in store_list:
 
@@ -64,14 +68,12 @@ def fetch_data():
 
         locator_domain = website
 
-        store_info = list(
+        full_address = list(
             filter(
                 str,
                 [x.strip() for x in store.xpath(".//div[./h3]//li[1]//text()")],
             )
         )
-
-        full_address = store_info
 
         street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
@@ -107,7 +109,7 @@ def fetch_data():
             0
         ].strip()
 
-        raw_address = "<MISSING>"
+        raw_address = ", ".join(full_address).strip().replace(",,", ",").strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -131,7 +133,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
