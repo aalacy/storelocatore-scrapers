@@ -9,6 +9,8 @@ from sglogging import sglog
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+# set deduper on PageUrlId
+
 MISSING = SgRecord.MISSING
 website = "wyndhamhotels.com/wyndham"
 propertyUrl = "https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=501200&pageNumber=1&brandId=ALL&countryCode="
