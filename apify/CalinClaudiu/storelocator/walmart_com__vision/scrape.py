@@ -88,7 +88,7 @@ def get_json(url, escalation):
             if data:
                 return json.loads(data)
     except Exception as e:
-        logger.error(f"blocked", exc_info=e)
+        logger.error("blocked", exc_info=e)
     return None
 
 
