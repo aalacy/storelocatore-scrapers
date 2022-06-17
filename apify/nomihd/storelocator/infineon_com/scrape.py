@@ -41,13 +41,16 @@ def fetch_data():
             page_url = "https://www.infineon.com/cms/en/about-infineon/company/find-a-location/"
             locator_domain = website
 
-            location_name = store["name"].strip()
+            location_name = store.get("name", None)
 
             street_address = store["address"].strip()
             if "address2" in store and store["address2"].strip():
                 street_address = street_address + " " + store["address2"].strip()
 
             city = store["city"].strip()
+            if not location_name:
+                location_name = city
+
             if "state" in store:
                 state = store["state"].strip()
             else:
@@ -66,8 +69,15 @@ def fetch_data():
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
+
             zip = formatted_addr.postcode
             if zip:
                 zip = zip.replace("B-1011 34742", "34742").strip()
@@ -76,7 +86,13 @@ def fetch_data():
             if state == "<MISSING>":
                 state = formatted_addr.state
 
-            location_type = "<MISSING>"
+            type_list = []
+            if "types" in store:
+                types = store["types"]
+                for typ in types:
+                    type_list.append(typ["name"])
+
+            location_type = ", ".join(type_list).strip()
 
             hours_of_operation = "<MISSING>"
             latitude = store["latitude"]
