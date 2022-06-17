@@ -36,9 +36,9 @@ def fetch_data():
                 location_name = loc.find("h3").text
                 log.info(location_name)
                 address = loc.find("p")
-                phone = soup.select_one("a[href*=tel]").text
+                phone = loc.select_one("a[href*=tel]").text
                 longitude, latitude = (
-                    soup.find("span", {"itemprop": "map"})
+                    loc.find("span", {"itemprop": "map"})
                     .text.split("!2d", 1)[1]
                     .split("!2m", 1)[0]
                     .split("!3d")
@@ -84,11 +84,10 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
-                phone = soup.select_one("a[href*=tel]").text
                 country_code = "US"
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=url,
+                    page_url=link_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
