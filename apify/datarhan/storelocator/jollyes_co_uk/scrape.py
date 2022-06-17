@@ -1,5 +1,3 @@
-import json
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -10,40 +8,42 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "jollyes.co.uk"
-    start_url = "https://api.jollyes.co.uk/api/ext/aureatelabs/storeList"
 
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
-    for poi in data["result"]:
-        page_url = "https://www.jollyes.co.uk/store/{}".format(poi["uid"])
+    data = session.get("https://www.jollyes.co.uk/api/ext/story-blok/get-stores").json()
+    for poi in data["result"]["StoreItems"]["items"]:
+        page_url = f"https://www.jollyes.co.uk/store/{poi['slug']}"
         hoo = []
-        for key, value in poi.items():
+        for key, value in poi["content"]["storeTime"][0].items():
             if "Opening" in key:
                 day = key.replace("Opening", "")
                 if value:
                     opens = value[:2] + ":" + value[2:]
-                    closes = poi["{}Closing".format(day)]
+                    closes = poi["content"]["storeTime"][0]["{}Closing".format(day)]
                     closes = closes[:2] + ":" + closes[2:]
                     hoo.append(f"{day} {opens} - {closes}")
                 else:
                     hoo.append(f"{day} closed")
         hoo = " ".join(hoo) if hoo else ""
+        latitude = poi["content"]["location"][0]["latitude"]
+        longitude = poi["content"]["location"][0]["longitude"]
+        if latitude == "100":
+            latitude = ""
+            longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["streetAddress"],
-            city=poi["city"],
-            state=poi["county"],
-            zip_postal=poi["postCode"],
+            location_name=poi["content"]["name"],
+            street_address=poi["content"]["location"][0]["streetAddress"],
+            city=poi["content"]["location"][0]["city"],
+            state=poi["content"]["location"][0]["county"],
+            zip_postal=poi["content"]["location"][0]["postCode"],
             country_code="",
-            store_number="",
-            phone=poi["phoneNumber"],
+            store_number=poi["content"]["warehouseId"],
+            phone=poi["content"]["phoneNumber"],
             location_type="",
-            latitude=poi["map"]["latitude"],
-            longitude=poi["map"]["longitude"],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 
