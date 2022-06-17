@@ -1,3 +1,4 @@
+from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -27,8 +28,9 @@ def fetch_data():
                 items = line.split('"Title\\":\\"')
                 for item in items:
                     if '"LocationNumber' in item:
+
                         country = "US"
-                        typ = "<MISSING>"
+
                         website = "trinity-health.org"
                         phone = item.split('LocationPhoneNum\\":\\"')[1].split("\\")[0]
                         hours = "<MISSING>"
@@ -41,6 +43,7 @@ def fetch_data():
                             "https://www.trinity-health.org/"
                             + item.split('DirectUrl\\":\\"')[1].split('\\"')[0]
                         )
+
                         store = loc.rsplit("Id=", 1)[1]
                         try:
                             lat = item.split('"Latitude\\":\\"')[1].split("\\")[0]
@@ -81,6 +84,24 @@ def fetch_data():
                             state = "<MISSING>"
                         if zc == "":
                             zc = "<MISSING>"
+
+                        r = session.get(loc, headers=headers)
+                        tree = html.fromstring(r.text)
+                        try:
+                            typ = (
+                                "".join(
+                                    tree.xpath(
+                                        '//script[contains(text(), "moduleInstanceData")]//text()'
+                                    )
+                                )
+                                .split("ih-field-locationnamelink")[1]
+                                .split("20target")[0]
+                                .strip()
+                            )
+                            typ = typ.split("href=%22")[1].split("%22%")[0].strip()
+                        except:
+                            typ = "<MISSING>"
+
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,

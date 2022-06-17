@@ -34,10 +34,15 @@ def get_data():
 
         try:
             if response[0]["Message"] == "Zip Code Not Found":
+                search.found_nothing()
                 continue
 
         except Exception:
             pass
+
+        if len(response) == 0:
+            search.found_nothing()
+
         for location in response:
             locator_domain = "www.servicemasterclean.com"
             page_url = "https://www.servicemasterclean.com" + location["Path"]
@@ -67,7 +72,7 @@ def get_data():
                 try:
                     with SgFirefox(
                         block_third_parties=False,
-                        is_headless=False,
+                        is_headless=True,
                     ) as driver:
                         driver.get(page_url)
                         element = driver.find_element_by_id(

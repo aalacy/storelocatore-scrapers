@@ -1,53 +1,37 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.converse.com.ar/encontrar-un-local/"
+    start_url = "https://backend.converse.com.ar/shop-api/minorista/stores"
     domain = "converse.com.ar"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath(
-        '//div[@class="su-column-inner su-u-clearfix su-u-trim" and h3]'
-    )
-    for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h3/text()")[0]
-        raw_data = poi_html.xpath(".//p/text()")
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-        hoo = " ".join([e for e in raw_data if "hs." in e])
-        raw_address = ", ".join([e for e in raw_data if "hs." not in e][:-1])
-        addr = parse_address_intl(raw_address)
-        street_address = raw_address.replace(", Buenos Aires", "")
-
+    all_locations = session.get(start_url, headers=hdr).json()
+    for poi in all_locations:
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=addr.city,
-            state="",
-            zip_postal=addr.postcode,
+            page_url="https://converse.com.ar/stores",
+            location_name=poi["name"],
+            street_address=poi["address"],
+            city="",
+            state=poi["province"]["name"],
+            zip_postal="",
             country_code="AR",
-            store_number="",
-            phone=raw_data[-1],
+            store_number=poi["code"],
+            phone=poi["phone"],
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation=hoo,
-            raw_address=raw_address,
+            hours_of_operation="",
+            raw_address="",
         )
 
         yield item

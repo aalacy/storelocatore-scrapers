@@ -58,10 +58,12 @@ def fetch_data():
                 json_url = sp1.select_one("div.js-yext-info")["data-yext-url"]
                 _ = session.get(json_url, headers=_headers).json()["response"]
                 hours = []
-                for hh in _["hours"].split(","):
-                    day = int(hh.split(":")[0]) - 1
-                    hr = f"{hh.split(':')[1]}:{hh.split(':')[2]} am - {hh.split(':')[3]}:{hh.split(':')[4]} pm"
-                    hours.append(f"{days[day]}: {hr}")
+                if _["hours"]:
+                    for hh in _["hours"].split(","):
+                        day = int(hh.split(":")[0]) - 1
+                        hr = f"{hh.split(':')[1]}:{hh.split(':')[2]} am - {hh.split(':')[3]}:{hh.split(':')[4]} pm"
+                        hours.append(f"{days[day]}: {hr}")
+
                 if _.get("displayLat"):
                     latitude = _["displayLat"]
                     longitude = _["displayLng"]

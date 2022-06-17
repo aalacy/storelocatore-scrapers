@@ -9,7 +9,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def get_data():
     initial_url = "https://www.sytner.co.uk/dealer-locator/?postcode=london&distance=0&franchiseHash="
 
-    with SgChrome() as driver:
+    with SgChrome(block_third_parties=False) as driver:
         driver.get(initial_url)
 
         html = driver.page_source
@@ -116,4 +116,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
