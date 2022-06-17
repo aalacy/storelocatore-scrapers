@@ -42,6 +42,7 @@ Apify.main(async () => {
 
       const poi = {
         locator_domain,
+        location_type,
         location_name: location_name || MISSING,
         street_address: street_address || MISSING,
         city: city || MISSING,
