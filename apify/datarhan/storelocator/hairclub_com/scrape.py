@@ -28,10 +28,8 @@ def fetch_data():
         for poi in all_locations.json():
             hoo = []
             for e in poi["availability"]:
-                if poi.get("openingHour"):
-                    hoo.append(
-                        f'{e["day"]}: {poi["openingHour"]} - {poi["closingHour"]}'
-                    )
+                if e.get("openingHour"):
+                    hoo.append(f'{e["day"]}: {e["openingHour"]} - {e["closingHour"]}')
                 else:
                     hoo.append(f'{e["day"]}: closed')
             hoo = " ".join(hoo)
