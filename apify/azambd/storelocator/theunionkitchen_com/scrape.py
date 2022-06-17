@@ -65,9 +65,7 @@ def fetch_data():
             .replace(";\n", "")
             .strip()
         )
-        with open("theunionkitchen.txt", "w", encoding="utf-8") as output:
-            print(jsontext, file=output)
-        print(f"JSON: {jsontext}\n\n")
+
         data = json.loads(jsontext)
         res_id_nodes = data["CustomPageSection:82228"]["locations"]
         for rl in res_id_nodes:
