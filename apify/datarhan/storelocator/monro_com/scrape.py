@@ -21,6 +21,8 @@ def fetch_data():
         response = session.get(start_url.format(lat, lng))
         data = json.loads(response.text)
         all_locations = data["data"]
+        if not all_locations:
+            all_coordinates.found_nothing()
 
         for poi in all_locations:
             location_name = poi["BrandDisplayName"]
@@ -62,6 +64,7 @@ def fetch_data():
             page_url = "https://locations.monro.com/{}/{}/{}".format(
                 state, city.replace("Leroy", "Le-roy"), street_address.replace(" ", "-")
             )
+            all_coordinates.found_location_at(latitude, longitude)
 
             item = SgRecord(
                 locator_domain=domain,
