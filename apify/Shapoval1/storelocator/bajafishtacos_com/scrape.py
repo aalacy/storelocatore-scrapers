@@ -20,7 +20,6 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         location_name = "".join(d.xpath(".//preceding::h1[1]//text()"))
-        location_type = "<MISSING>"
         street_address = (
             "".join(
                 d.xpath('.//h3[text()="ADDRESS"]/following-sibling::p[1]/text()[1]')
@@ -39,7 +38,6 @@ def fetch_data(sgw: SgWriter):
         postal = ad.split(",")[1].split()[1].strip()
         country_code = "US"
         city = ad.split(",")[0].strip()
-        store_number = "<MISSING>"
         text = "".join(d.xpath('.//preceding::a[contains(@href, "maps")][1]/@href'))
         try:
             if text.find("ll=") != -1:
