@@ -213,9 +213,20 @@ def fetch_data(sgw: SgWriter):
             zip_code = "22602"
         if "532 Main Street" in street_address:
             zip_code = "83467"
+        if "Chilliwack" in str(raw_data):
+            city = "Chilliwack"
         if "3479 N Hwy 126" in street_address:
             latitude = "41.3222502"
             longitude = "-112.03147530000001"
+        if not latitude:
+            latitude = re.findall(r'latitude":"[0-9]{2}\.[0-9]+', str(base))[0].split(
+                ":"
+            )[1][1:]
+            longitude = (
+                re.findall(r'longitude":".+[0-9]{2,3}\.[0-9]+', str(base))[0]
+                .split(":")[1][1:]
+                .strip()
+            )
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         hours_of_operation = (

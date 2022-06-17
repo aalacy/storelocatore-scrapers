@@ -38,11 +38,12 @@ def fetch_data(sgw: SgWriter):
                     (By.CLASS_NAME, "store-list__scroll-container")
                 )
             )
+            time.sleep(60)
         except:
+            driver.get(base_link)
             time.sleep(60)
 
         soup = BeautifulSoup(driver.page_source, "lxml")
-
         grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
 
         for grid in grids:
@@ -63,13 +64,14 @@ def fetch_data(sgw: SgWriter):
             driver.get(page_url)
             log.info("Pull content => " + page_url)
             try:
-                WebDriverWait(driver, 20).until(
+                WebDriverWait(driver, 30).until(
                     EC.presence_of_element_located(
                         (By.CLASS_NAME, "store-details-store-hours__content")
                     )
                 )
             except:
-                time.sleep(20)
+                driver.get(page_url)
+                time.sleep(30)
 
             location_soup = BeautifulSoup(driver.page_source, "lxml")
 
