@@ -11,11 +11,11 @@ def fetch_data(sgw: SgWriter):
     api_url = "https://rushbowls.com/locations"
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(),'')]/text()"))
-    text = text.split("var locations =")[1].split("];")[0] + "]"
+    text = "".join(tree.xpath("//script[contains(text(), 'var locations =')]/text()"))
+    text = text.split("var locations =")[1].split("}};")[0] + "}}"
     js = json.loads(text)
 
-    for j in js:
+    for j in js.values():
         street_address = (
             f"{j.get('fran_address') or ''} {j.get('fran_address_2') or ''}".strip()
         )
@@ -30,30 +30,31 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("id")
         page_url = j.get("fran_web_address")
         location_name = j.get("fran_location_name")
-        phone = j.get("fran_phone")
+        phone = j.get("fran_phone") or ""
         if "coming" in phone.lower():
             phone = SgRecord.MISSING
         latitude = j.get("fran_latitude")
         longitude = j.get("fran_longitude")
 
         _tmp = []
-        source = j.get("fran_hours") or "<html></html>"
-        root = html.fromstring(source)
-        hours = root.xpath("//text()")
+        source = j.get("gmb_hours") or "[]"
+        hours = json.loads(source)
         for h in hours:
-            if (
-                not h.strip()
-                or "COVID" in h
-                or "2021" in h
-                or "July" in h
-                or "4/4" in h
-                or "Holiday" in h
-                or "Thanks" in h
-            ):
-                continue
-            if "*" in h or "Under" in h or "Hours" in h or h[0].isdigit():
-                break
-            _tmp.append(h.strip())
+            day = h.get("openDay")
+            s = h.get("openTime")
+            e = h.get("closeTime")
+            if isinstance(s, dict):
+                start = (
+                    str(s.get("hours")).zfill(2) + ":" + str(s.get("minutes")).zfill(2)
+                )
+                end = (
+                    str(e.get("hours")).zfill(2) + ":" + str(e.get("minutes")).zfill(2)
+                )
+                inter = f"{start}-{end}"
+            else:
+                inter = f"{s}-{e}"
+
+            _tmp.append(f"{day}: {inter}")
 
         hours_of_operation = ";".join(_tmp)
         status = j.get("status") or ""
