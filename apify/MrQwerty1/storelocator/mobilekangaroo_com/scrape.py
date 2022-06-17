@@ -89,7 +89,7 @@ def get_XML_object_variable(Object, varNames, noVal=MISSING, noText=False):
             return noVal
         Object = value
 
-    if noText == True:
+    if noText:
         return Object
     if len(Object) == 0 or Object[0].text is None:
         return MISSING
