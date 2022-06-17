@@ -20,7 +20,7 @@ def fetch_data():
     for lat, lng in all_coordinates:
         response = session.get(start_url.format(lat, lng))
         data = json.loads(response.text)
-        all_locations += data["data"]
+        all_locations = data["data"]
 
         for poi in all_locations:
             location_name = poi["BrandDisplayName"]
