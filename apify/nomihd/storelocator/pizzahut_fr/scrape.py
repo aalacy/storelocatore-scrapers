@@ -42,59 +42,49 @@ def fetch_data():
 
         page_url = "https://www.pizzahut.fr" + store_url
         log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
-        store_json = json.loads(
-            "".join(
-                store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            ).strip()
-        )
+        store_number = page_url.split("/fr-1/")[1].split("-")[0].strip()
+
+        API_URL = f"https://api.pizzahut.io/v1/hut?sector=fr-1&hutId={store_number}&openDays=7"
+
+        store_res = session.get(API_URL, headers=headers)
+
+        store_json = json.loads(store_res.text)
 
         locator_domain = website
         location_name = store_json["name"]
 
-        street_address = store_json["address"]["streetAddress"]
-        city = store_json["address"]["addressLocality"]
-        if "Arrondissement" in city:
-            city = city.split(" ")[0].strip()
-
-        state = store_json["address"]["addressRegion"]
-        zip = store_json["address"]["postalCode"]
+        street_address = store_json["address"]["lines"][0]
+        city = "<MISSING>"
+        state = store_json["address"]["lines"][1]
+        zip = store_json["address"]["postcode"]
 
         country_code = "FR"
 
-        phone = store_json["telephone"]
-        store_number = store_json["branchCode"]
+        phone = store_json["phone"]
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
         hours_list = []
         try:
-            temp_dict = {}
-            hours = store_json["openingHours"]
+            hours = store_json["hours"]["web"]["scheduled"]
             for hour in hours:
-                day = hour.split(" ", 1)[0].strip()
-                time = ""
-                if day in temp_dict:
-                    time = (
-                        temp_dict[day].split("-")[0].strip()
-                        + " - "
-                        + hour.split("-")[-1].strip()
-                    )
-                    temp_dict[day] = time
-                else:
-                    temp_dict[day] = hour.split(" ", 1)[-1].strip()
-                    time = hour.split(" ", 1)[-1].strip()
+                if hour["disposition"] != "collection":
+                    continue
 
-            for dy in temp_dict.keys():
-                hours_list.append(dy + ": " + temp_dict[dy])
+                temp_date = hour["open"].split("T")[0].strip()
+                day = datetime.datetime.strptime(temp_date, "%Y-%m-%d").strftime("%A")
+                ftime = hour["open"].split("T")[0].strip().split(":00.000Z")[0].strip()
+                to_time = (
+                    hour["close"].split("T")[0].strip().split(":00.000Z")[0].strip()
+                )
+                hours_list.append(day + ":" + ftime + " - " + to_time)
 
         except:
             pass
 
         hours_of_operation = "; ".join(hours_list).strip()
-        latitude = store_json["geo"]["latitude"]
-        longitude = store_json["geo"]["longitude"]
+        latitude = store_json["latitude"]
+        longitude = store_json["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
