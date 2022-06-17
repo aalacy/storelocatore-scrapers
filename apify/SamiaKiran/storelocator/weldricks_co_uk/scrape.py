@@ -25,7 +25,7 @@ def fetch_data():
         url = "https://www.weldricks.co.uk/branches"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "sitemap"}).findAll("li")
+        loclist = soup.findAll("div", {"class": "mb-gap"})[-1].findAll("li")
         for loc in loclist:
             page_url = loc.find("a")["href"]
             log.info(page_url)
@@ -48,14 +48,14 @@ def fetch_data():
             location_name = soup.find("h1").text
             temp = soup.findAll("div", {"class": "large-third"})
             location_type = MISSING
+            soup = BeautifulSoup(r.text, "html.parser")
             hours_of_operation = (
-                temp[1]
+                soup.find("div", {"class": "mb-gap"})
+                .findAll("p")[-2]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .replace("Opening Times", "")
                 .replace("Bank Holidays CLOSED", "")
-                .replace("|", "")
-                .replace("|", "")
             )
             if "branch is now closed" in hours_of_operation:
                 continue
