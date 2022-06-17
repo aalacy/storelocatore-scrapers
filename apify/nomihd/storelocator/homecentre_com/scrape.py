@@ -60,7 +60,7 @@ def fetch_data():
                 street_address = store["address"]["line1"]
 
                 city = store["address"]["region"]["name"]
-                street_address = street_address.split(', '+city)[0].strip()
+                street_address = street_address.split(", " + city)[0].strip()
                 state = "<MISSING>"
                 zip = store["address"]["postalCode"]
 
