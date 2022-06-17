@@ -12,23 +12,23 @@ Apify.main(async () => {
       const script = $('script[type="application/ld+json"]').get(0).lastChild.data;
       const data = JSON.parse(script)['subOrganization'][0];
 
-      locator_domain = 'blackstonesteakhouse.com';
-      location_type = data['@type'];
-      location_name = data['name'];
+      const locator_domain = 'blackstonesteakhouse.com';
+      const location_type = data['@type'];
+      const location_name = data['name'];
 
-      address = data['address'];
-      street_address = address['streetAddress'];
-      city = address['addressLocality'];
-      state = address['addressRegion'];
-      zip = address['postalCode'];
+      const address = data['address'];
+      const street_address = address['streetAddress'];
+      const city = address['addressLocality'];
+      const state = address['addressRegion'];
+      const zip = address['postalCode'];
 
-      map = $('.gmaps');
-      lat = map.attr('data-gmaps-lat');
-      lng = map.attr('data-gmaps-lng');
+      const map = $('.gmaps');
+      const lat = map.attr('data-gmaps-lat');
+      const lng = map.attr('data-gmaps-lng');
 
-      phone = data['telephone'];
+      const phone = data['telephone'];
 
-      hours = [];
+      const hours = [];
       $('#intro p').each(function (i) {
         if (i) {
           const el = $(this);
@@ -38,7 +38,7 @@ Apify.main(async () => {
           hours.push(`${day}: ${time}`);
         }
       });
-      hours_of_operation = hours.join(', ');
+      const hours_of_operation = hours.join(', ');
 
       const poi = {
         locator_domain,
