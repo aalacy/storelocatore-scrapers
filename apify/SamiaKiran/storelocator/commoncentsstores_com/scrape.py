@@ -38,7 +38,7 @@ def fetch_data():
             )
             r = session.get(url, headers=headers)
             soup = BeautifulSoup(r, "html.parser")
-            loclist = soup.findAll("div", string=re.compile("Location Info"))
+            loclist = soup.findAll("div", string=re.compile("View Map and Info"))
             for loc in loclist:
                 page_url = DOMAIN + loc["href"]
                 log.info(page_url)
