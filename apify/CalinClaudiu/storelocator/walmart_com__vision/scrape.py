@@ -73,65 +73,88 @@ def grab_json(soup):
             return json.loads(data)["store"]
 
 
-def get_json(text):
-    soup = b4(text, "lxml")
-    son = soup.find_all("script")
-    for i in reversed(son):
-        if "REDUX_INITIAL_STATE" in i.text:
-            data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
-            return json.loads(data)
+def get_json(url, escalation):
+    data = None
+    with SgChrome(proxy_provider_escalation_order=escalation) as driver:
+        driver.get(url)
+        time.sleep(5)
+        text = driver.page_source
+        soup = b4(text, "lxml")
+        son = soup.find_all("script")
+        for i in reversed(son):
+            if "REDUX_INITIAL_STATE" in i.text:
+                data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
+    if data:
+        return json.loads(data)
+    return None
 
 
 def other_source(state):
+    retries = 0
+    MaxRetries = 5
+    deesca = [
+        None,
+        "http://groups-SHADER+BUYPROXIES94952:{}@proxy.apify.com:8000/",
+        "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/",
+    ]
+    esca = [
+        "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/",
+    ]
     url = "https://www.walmart.com/store/directory"
-    with SgChrome() as driver:
-        driver.get(url)
-        time.sleep(5)
-        with open("fml.txt", mode="w", encoding="utf-8") as file:
-            file.write(str(driver.page_source))
-        son = get_json(driver.page_source)
-        allstates = son["directory"]["stateList"]
-        for county in allstates:
-            driver.get(
-                "https://www.walmart.com/store/directory/"
-                + str(county["code"]).lower().strip().replace(" ", "-")
-            )
-            time.sleep(3)
-            try:
-                sec = get_json(driver.page_source)
-                allcities = sec["directory"]["cityData"]["cities"]
-            except Exception as e:
-                logger.error(f"{driver.page_source}", exc_info=e)
-                raise
-            for city in allcities:
-                data = str(list(i for i in city.items()))
-                if "storeCount" in data:
-                    if city["city"] == "St. Peters":
-                        state.push_request(SerializableRequest(url="/store/5421"))
-                        state.push_request(SerializableRequest(url="/store/5427"))
-                        continue
-                    else:
-                        driver.get(
-                            str(
-                                "https://www.walmart.com/store/directory/"
-                                + county["code"].lower()
-                                + "/"
-                                + city["city"].lower().strip().replace(" ", "-")
+    son = None
+    while not son and retries < MaxRetries:
+        son = get_json(url, deesca)
+        retries += 1
+    if not son:
+        son = get_json(url, esca)
+
+    allstates = son["directory"]["stateList"]
+    for county in allstates:
+        retries = 0
+        url2 = str(
+            "https://www.walmart.com/store/directory/"
+            + str(county["code"]).lower().strip().replace(" ", "-")
+        )
+        sec = None
+        while not sec and retries < MaxRetries:
+            sec = get_json(url2, deesca)
+        if not sec:
+            sec = get_json(url2, esca)
+        allcities = sec["directory"]["cityData"]["cities"]
+        for city in allcities:
+            data = str(list(i for i in city.items()))
+            if "storeCount" in data:
+                if city["city"] == "St. Peters":
+                    state.push_request(SerializableRequest(url="/store/5421"))
+                    state.push_request(SerializableRequest(url="/store/5427"))
+                    continue
+                else:
+                    url3 = str(
+                        str(
+                            "https://www.walmart.com/store/directory/"
+                            + county["code"].lower()
+                            + "/"
+                            + city["city"].lower().strip().replace(" ", "-")
+                        )
+                    )
+                    tri = None
+                    retries = 0
+                    while not tri and retries < MaxRetries:
+                        sec = get_json(url3, deesca)
+                    if not tri:
+                        tri = get_json(url3, esca)
+                    stores = tri["directory"]["storeData"]["stores"]
+                    for store in stores:
+                        state.push_request(
+                            SerializableRequest(
+                                url=str("/store/" + str(store["storeId"]))
                             )
                         )
-                        tri = get_json(driver.page_source)
-                        stores = tri["directory"]["storeData"]["stores"]
-                        for store in stores:
-                            state.push_request(
-                                SerializableRequest(
-                                    url=str("/store/" + str(store["storeId"]))
-                                )
-                            )
 
-                elif "storeId" in data:
-                    state.push_request(
-                        SerializableRequest(url=str("/store/" + str(city["storeId"])))
-                    )
+            elif "storeId" in data:
+                state.push_request(
+                    SerializableRequest(url=str("/store/" + str(city["storeId"])))
+                )
     return True
 
 
