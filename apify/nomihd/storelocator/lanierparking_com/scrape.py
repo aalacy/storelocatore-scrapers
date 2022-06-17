@@ -49,6 +49,7 @@ class _SearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
+        found_nothing,
     ) -> Iterable[SgRecord]:
 
         lat = coord[0]
@@ -130,6 +131,7 @@ class _SearchIteration(SearchIteration):
                     store_json["Lat"],
                     store_json["Lng"],
                 )
+                found_location_at(latitude, longitude)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -147,8 +149,8 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
-            raise
-            # pass
+            found_nothing()
+            pass
 
 
 def scrape():

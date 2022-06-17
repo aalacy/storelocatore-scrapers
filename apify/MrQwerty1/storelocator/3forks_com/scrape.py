@@ -1,38 +1,11 @@
-import csv
 import usaddress
 
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_address(line):
@@ -55,7 +28,6 @@ def get_address(line):
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -66,97 +38,72 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.3forks.com/locations/")
+def fetch_data(sgw: SgWriter):
+    api = "https://www.3forks.com/locations/"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
+    divs = tree.xpath("//div[div[@class='wpb_text_column loc-name top']]")
 
-    return tree.xpath("//a[@class='w-btn us-btn-style_3 icon_none']/@href")
+    for d in divs:
+        line = d.xpath(
+            ".//p[strong[contains(text(), 'ADDRESS')]]/following-sibling::p[1]/text()"
+        )
+        line = list(filter(None, [li.strip() for li in line]))
+        raw_address = " ".join(line)
+        if "(" in raw_address:
+            raw_address = (
+                raw_address.split("(")[0].strip()
+                + " "
+                + raw_address.split(")")[-1].strip()
+            )
 
+        street_address, city, state, postal = get_address(raw_address)
+        country_code = "US"
+        location_name = "".join(d.xpath(".//a[@class='mobile-link']/h3/text()")).strip()
+        page_url = "".join(d.xpath(".//a[@class='mobile-link']/@href"))
+        phone = "".join(d.xpath(".//p[@class='phone']/text()")).strip()
 
-def get_data(page_url):
-    locator_domain = "https://www.3forks.com/"
+        hours = d.xpath(
+            ".//p[strong[contains(text(), 'HOURS')]]/following-sibling::p[1]/text()"
+        )
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours_of_operation = ";".join(hours)
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+        if ";Bar" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split(";Bar")[0].strip()
 
-    location_name = tree.xpath("//h1/text()")[0].strip()
-    line = tree.xpath("//p[./strong[text()='ADDRESS']]/following-sibling::p[1]/text()")
-    line = " ".join(list(filter(None, [l.strip() for l in line])))
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+            locator_domain=locator_domain,
+        )
 
-    street_address, city, state, postal = get_address(line)
-    if ")" in city:
-        city = city.split(")")[-1].strip()
-
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//p[./strong[contains(text(), 'PHONE')]]/text()")).strip()
-        or "<MISSING>"
-    )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    hours = tree.xpath("//p[./strong[text()='HOURS']]/following-sibling::p[1]/text()")
-    for h in hours:
-        if "Bar" in h:
-            break
-        if h.strip():
-            _tmp.append(h.strip())
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.3forks.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
