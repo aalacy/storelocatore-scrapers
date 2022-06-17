@@ -1,129 +1,83 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-from sglogging import sglog
+import json
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
-import re
-
-DOMAIN = "powerpetroleum.co.uk"
-BASE_URL = "https://www.powerpetroleum.co.uk"
-LOCATION_URL = "https://powerpetroleum.co.uk/fuel-filling-stations/"
-HEADERS = {
-    "Accept": "*/*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
-}
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
-
-MISSING = "<MISSING>"
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://powerpetroleum.co.uk/"
+    api_url = "https://www.google.com/maps/d/u/0/embed?mid=1FdU4QYBZifAa4BTon9Ij4bKSOdYd9mZz&ehbc=2E312F&test&ll=50.87578480972796%2C0.071363343554669&z=10"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    cleaned = (
+        r.text.replace("\\t", " ")
+        .replace("\t", " ")
+        .replace("\\n]", "]")
+        .replace("\n]", "]")
+        .replace("\\n,", ",")
+        .replace("\\n", "#")
+        .replace('\\"', '"')
+        .replace("\\u003d", "=")
+        .replace("\\u0026", "&")
+        .replace("\\", "")
+        .replace("\xa0", " ")
+    )
 
-def pull_content(url):
-    log.info("Pull content => " + url)
-    HEADERS["Referer"] = url
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
-
-
-def fetch_data():
-    log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.select("p.txt-red.larger a")
-    for row in contents:
-        page_url = row["href"]
-        store = pull_content(page_url).find(
-            "div", {"class": "col-md-10 col-md-offset-1 txt-white z99"}
-        )
-        info = row.get_text(strip=True, separator="@@").split("@@")
-        location_name = info[0].strip()
-        addr = re.split(r"–|-", info[1].strip())
-        if len(addr) > 2:
-            street_address = addr[0].replace("\n", "")
-            city = addr[1].replace("\n", "")
-            state = MISSING
-            zip_postal = addr[2].replace("\n", "")
-        else:
-            street_address = MISSING
-            city = addr[0].replace("\n", "")
-            state = MISSING
-            zip_postal = addr[1].replace("\n", "")
+    locations = json.loads(
+        cleaned.split('var _pageData = "')[1].split('";</script>')[0]
+    )[1][6][0][12][0][13][0]
+    for l in locations:
+        page_url = "https://www.local-fuels.co.uk/locations"
+        location_name = "".join(l[5][0][1][0]).replace("u0027", "`")
+        info = str(l[5][1][1][0])
+        ad = info.split("#")[1].strip()
+        street_address = "<MISSING>"
+        city = "<MISSING>"
+        if ad.count("-") == 2:
+            street_address = ad.split("-")[0].strip()
+            city = ad.split("-")[1].strip()
+        if ad.count("-") == 1:
+            city = ad.split("-")[0].strip()
+        if ad.find(",") != -1:
+            street_address = ad.split(",")[0].strip()
+            city = ad.split(",")[1].split("-")[0].strip()
+        postal = ad.split("-")[-1].strip()
         country_code = "UK"
-        phone = store.find_next().text.strip()
-        store_number = MISSING
-        try:
-            hours_of_operation = (
-                store.find("h4", text="Opening Hours")
-                .find_next("p")
-                .text.replace("\n", ": ")
-                .replace("–", "-")
-                .strip()
-            )
-        except:
-            hours_of_operation = MISSING
-        latitude = MISSING
-        longitude = MISSING
-        if "Service Station" in location_name:
-            location_type = "Service Station"
-        else:
-            location_type = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
+        latitude = l[1][0][0][0]
+        longitude = l[1][0][0][1]
+        phone = info.split("#")[2].strip()
+        hours_of_operation = info.split("Opening Hours#")[1].split("#")[0].strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
-            zip_postal=zip_postal,
+            state=SgRecord.MISSING,
+            zip_postal=postal,
             country_code=country_code,
-            store_number=store_number,
+            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
-
-def scrape():
-    log.info("start {} Scraper".format(DOMAIN))
-    count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)
