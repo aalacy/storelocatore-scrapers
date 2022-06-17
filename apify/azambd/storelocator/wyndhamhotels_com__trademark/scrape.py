@@ -8,6 +8,9 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sglogging import sglog
 
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
 MISSING = "<MISSING>"
 website = "wyndhamhotels.com/wyndham"
 propertyUrl = "https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=501200&pageNumber=1&brandId=ALL&countryCode="
@@ -280,7 +283,10 @@ def scrape():
     count = 0
     start = time.time()
     results = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId),
+        duplicate_streak_failure_factor=-1,
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
             count = count + 1
