@@ -178,7 +178,7 @@ def fetch_data(driver):
             stringify_nodes(body, "//title").replace("Mobile Kangaroo - ", "").strip()
         )
         phone = stringify_nodes(
-            body, f'//div[contains(@class, "bubble-element Text clickable-element")]'
+            body, '//div[contains(@class, "bubble-element Text clickable-element")]'
         )
         raw_address, latitude, longitude = get_raw_lat_lng(
             body.xpath('//a[contains(@href, "maps/place")]/@href')
