@@ -51,7 +51,7 @@ def get_address(raw_address):
 
 def fetch_data():
 
-    with SgChrome(user_agent=user_agent) as driver:
+    with SgChrome(block_third_parties=False, user_agent=user_agent) as driver:
         driver.get(start_url)
         driver.implicitly_wait(30)
         htmlpage = driver.page_source
@@ -61,9 +61,11 @@ def fetch_data():
         jsontext = (
             jsons[0]
             .split("window.POPMENU_APOLLO_STATE = ")[1]
+            .split("window.POPMENU_SERVER_SIDE_MEMO")[0]
             .replace(";\n", "")
             .strip()
         )
+
         data = json.loads(jsontext)
         res_id_nodes = data["CustomPageSection:82228"]["locations"]
         for rl in res_id_nodes:
