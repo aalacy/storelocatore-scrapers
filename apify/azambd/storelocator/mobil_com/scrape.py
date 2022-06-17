@@ -31,11 +31,11 @@ def request_with_retries(lat1, lat2, lng1, lng2):
         store_number = store["LocationID"]
 
         location_name = store["LocationName"]
+        street_address = store["AddressLine1"]
         if store["AddressLine2"]:
             street_address += ", " + store["AddressLine2"]
 
         location_type = store["EntityType"]
-        street_address = store["AddressLine1"]
         city = store["City"]
         state = store["StateProvince"]
         zip_postal = store["PostalCode"]
