@@ -120,8 +120,6 @@ def get_data():
                 "country_code": country_code,
             }
 
-        return
-
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
