@@ -63,33 +63,36 @@ def fetch_data(sgw: SgWriter):
         except:
             phone = "<MISSING>"
 
-        hours_of_operation = (
-            base.find(class_="rich-text-block-3 w-richtext")
-            .text.replace("day", "day ")
-            .replace("am", "am ")
-            .replace("pm", "pm ")
-            .replace("PM", "PM ")
-            .replace("â\x80\x93", "")
-            .replace("â\x80\x8d", "")
-            .strip()
-        )
-        if "*" in hours_of_operation:
-            hours_of_operation = hours_of_operation[
-                : hours_of_operation.find("*")
-            ].strip()
-        if "We" in hours_of_operation:
-            hours_of_operation = hours_of_operation[
-                : hours_of_operation.find("We")
-            ].strip()
-        if "Please" in hours_of_operation:
-            hours_of_operation = hours_of_operation[
-                : hours_of_operation.find("Please")
-            ].strip()
+        try:
+            hours_of_operation = (
+                base.find(class_="rich-text-block-3 w-richtext")
+                .text.replace("day", "day ")
+                .replace("am", "am ")
+                .replace("pm", "pm ")
+                .replace("PM", "PM ")
+                .replace("â\x80\x93", "")
+                .replace("â\x80\x8d", "")
+                .strip()
+            )
+            if "*" in hours_of_operation:
+                hours_of_operation = hours_of_operation[
+                    : hours_of_operation.find("*")
+                ].strip()
+            if "We" in hours_of_operation:
+                hours_of_operation = hours_of_operation[
+                    : hours_of_operation.find("We")
+                ].strip()
+            if "Please" in hours_of_operation:
+                hours_of_operation = hours_of_operation[
+                    : hours_of_operation.find("Please")
+                ].strip()
 
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
-        if "closed for now" in base.text:
-            hours_of_operation = "Temporarily Closed"
+            if "closed for now" in base.text:
+                hours_of_operation = "Temporarily Closed"
+        except:
+            hours_of_operation = ""
 
         try:
             map_link = base.find(class_="button-23 w-button")["href"]
