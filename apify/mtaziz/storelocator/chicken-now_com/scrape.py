@@ -1,11 +1,9 @@
 from sgrequests import SgRequests
-from lxml import html
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import logging
 from bs4 import BeautifulSoup as bs
 import ssl
 
@@ -79,7 +77,6 @@ def get_hoo(tel_last_part):
 def fetch_data():
     urls = get_locs()
     for idx, purl in enumerate(urls[0:]):
-        items = []
         with SgRequests(proxy_country="us") as http:
             try:
                 r = http.get(purl)
