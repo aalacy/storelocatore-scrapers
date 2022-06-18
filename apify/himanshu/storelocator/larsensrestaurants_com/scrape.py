@@ -26,27 +26,39 @@ def fetch_data():
     r = session.get(url, headers=headers)
     base = BeautifulSoup(r.text, "lxml")
     items = base.find_all(class_="link-wrap")
+    js = str(base.find(id="popmenu-apollo-state"))
+
+    js_id = js.split("RestaurantLocation:")[1].split('"')[0]
+    js_city = js.split('city":"')[1].split('"')[0]
+    js_lat = js.split('lat":')[1].split(",")[0]
+    js_lng = js.split('lng":')[1].split(",")[0]
 
     loclist = base.find_all("script", attrs={"type": "application/ld+json"})
 
     for loc in loclist:
         store = json.loads(loc.contents[0])
 
-        location_name = store["name"]
         street_address = store["address"]["streetAddress"]
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
         zip_postal = store["address"]["postalCode"]
+        location_name = store["name"] + " - " + city
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = ""
         phone = store["telephone"]
         hours_of_operation = " ".join(store["openingHours"])
         location_type = ""
         latitude = ""
         longitude = ""
         for item in items:
+            if city == js_city:
+                store_number = js_id
+                latitude = js_lat
+                longitude = js_lng
+
             if city.lower() in item.text.lower():
                 page_url = DOMAIN + item.a["href"].replace("..", "")
+
         log.info(page_url)
         yield SgRecord(
             locator_domain=DOMAIN,
