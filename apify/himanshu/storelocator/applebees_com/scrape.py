@@ -36,7 +36,10 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat")
         longitude = j.get("lng")
         r = session.get(page_url, headers=headers)
-        js = r.json()[0]
+        try:
+            js = r.json()[0]
+        except:
+            continue
 
         phone = js.get("local_phone") or "<MISSING>"
         hours = []
