@@ -1,6 +1,5 @@
 from sgrequests import SgRequests
 from lxml import html
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -69,7 +68,8 @@ def get_hoo(tel_last_part):
                     .replace("\\", "")
                     .replace("]", "")
                 )
-        print(day, pm)
+        logger.info(f"Daytime: {day} {pm}")
+        (day, pm)
         day_pm = day + " " + pm
         hoo.append(day_pm)
     hoo = ", ".join(hoo)
@@ -83,9 +83,7 @@ def fetch_data():
         with SgRequests(proxy_country="us") as http:
             try:
                 r = http.get(purl)
-                sel = html.fromstring(r.text, "lxml")
                 text = r.text
-
                 tel_last_part = text.split("tel:")[-1]
                 tlp = tel_last_part.split('"')
                 tel = "".join(tlp[0].split()).replace("\\", "")
@@ -123,7 +121,6 @@ def fetch_data():
                 )
                 zc = zc_state.strip().split(" ")[-1]
                 state = zc_state.strip().split(" ")[0]
-                t = [location_name, street_address, city, zc, state]
                 hours_of_operation = get_hoo(tel_last_part)
                 raw_address = (
                     add_part2.split('[[\\"')[3]
@@ -157,7 +154,7 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
-                print(item.as_dict())
+                logger.info(f"[{idx}] ITEM: {item.as_dict()}")
                 yield item
             except:
                 pass
