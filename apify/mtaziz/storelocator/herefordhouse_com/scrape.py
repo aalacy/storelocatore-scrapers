@@ -9,7 +9,6 @@ from sgpostal.sgpostal import parse_address_usa
 import json
 import re
 from lxml import html
-from sgpostal.sgpostal import parse_address_usa
 
 DOMAIN = "herefordhouse.com"
 BASE_URL = "https://www.herefordhouse.com/"
@@ -74,11 +73,6 @@ def fetch_data():
                 sel = html.fromstring(r.text, "lxml")
                 raw_add = get_rawadd(sel)
                 hours_of_operation = get_hoo(sel)
-                street_address = "".join(
-                    sel.xpath('//*[contains(@class, "address-link")]/span/text()')
-                )
-                street_address = raw_add.split(" ")[-1]
-
                 pai = parse_address_usa(raw_add)
                 zip_postal = pai.postcode if pai.postcode is not None else ""
                 state = pai.state
