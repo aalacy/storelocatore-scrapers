@@ -23,12 +23,13 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
-    items = base.find(class_="page-list subpages-page-list").find_all("li")
+    items = base.find(class_="et_pb_row et_pb_row_2").find_all("p")
 
     locator_domain = "lemacaron-us.com"
 
     for item in items:
-
+        if "coming" in str(item).lower():
+            continue
         link = item.a["href"]
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -53,9 +54,14 @@ def fetch_data(sgw: SgWriter):
         try:
             raw_address = list(base.find(class_="text-fade px-2 mb-2").stripped_strings)
         except:
-            raw_address = list(
-                base.find(class_="w-wrapper location-details").p.stripped_strings
-            )[1:]
+            try:
+                raw_address = list(
+                    base.find(class_="w-wrapper location-details").p.stripped_strings
+                )[1:]
+            except:
+                raw_address = list(base.p.stripped_strings)
+        if not raw_address:
+            continue
         try:
             street_address = raw_address[0].split(". 2200")[0].strip()
             city = raw_address[1].strip().split(",")[0].strip()
@@ -64,7 +70,10 @@ def fetch_data(sgw: SgWriter):
                 state = raw_address[1].strip().split(",")[1].strip().split()[0]
             except:
                 continue
-            zip_code = raw_address[1].strip().split(",")[1].strip().split()[1]
+            try:
+                zip_code = raw_address[1].strip().split(",")[1].strip().split()[1]
+            except:
+                pass
         except:
             if len(raw_address) == 1:
                 raw_address = raw_address[0].split(",")
@@ -74,6 +83,24 @@ def fetch_data(sgw: SgWriter):
                 if "Texas" in street_address:
                     state = "TX"
                 zip_code = raw_address[-1].strip()
+
+        if "Suite 120" in city:
+            street_address = street_address + " Suite 120"
+            city = city.replace("Suite 120", "").strip()
+        street_address = street_address.replace("Mayfair mall", "").strip()
+        if "Mayfair mall" in city:
+            city = "Wauwatosa"
+            zip_code = "53226"
+        city = city.replace("We3st", "West")
+        if state.isdigit():
+            zip_code = state
+            state = ""
+        if city == "Jacksonville":
+            state = "FL"
+        if "NM" in zip_code:
+            zip_code = zip_code.replace("NM", "").strip()
+            state = "NM"
+
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
@@ -83,8 +110,20 @@ def fetch_data(sgw: SgWriter):
             phone = ""
         if "coming" in phone.lower():
             phone = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+
+        try:
+            map_str = base.find(
+                class_="et_pb_button et_pb_button_4 et_pb_bg_layout_light"
+            )["href"]
+            geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(map_str))[
+                0
+            ].split(",")
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
         try:
             hours_of_operation = (
                 base.find(class_="text-fade px-2 mb-3")
