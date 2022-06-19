@@ -49,6 +49,8 @@ def fetch_data():
     for store in stores:
 
         page_url = store["url"]
+        if not page_url:
+            continue
         locator_domain = website
 
         location_name = store["name"]

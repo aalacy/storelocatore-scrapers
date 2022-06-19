@@ -28,7 +28,10 @@ def fetch_data(sgw: SgWriter):
             l = b.get("ctas")
             if l is None:
                 continue
-            slug = l[0].get("link")
+            try:
+                slug = l[0].get("link")
+            except IndexError:
+                continue
             if str(slug).find("http") != -1:
                 continue
             ad = b.get("body")
