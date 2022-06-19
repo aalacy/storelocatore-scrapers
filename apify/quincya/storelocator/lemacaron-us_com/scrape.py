@@ -61,9 +61,8 @@ def fetch_data(sgw: SgWriter):
                 raw_address = list(base.p.stripped_strings)
         if not raw_address:
             continue
-        try:
-            re.search(r"\d+", raw_address[0]).group()
-        except:
+
+        if not re.search(r"\d", raw_address[0]):
             raw_address.pop(0)
 
         try:
@@ -94,6 +93,7 @@ def fetch_data(sgw: SgWriter):
         street_address = (
             street_address.replace("Mayfair mall", "")
             .replace("Westfield Century", "")
+            .replace("Wqoofield", "Woodfield")
             .strip()
         )
         if "Mayfair mall" in city:
