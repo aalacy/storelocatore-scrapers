@@ -18,7 +18,6 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://gocarwash.com/locations/"
     api_url = "https://gocarwash.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo5R0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABaMWvA"
 
     with SgRequests() as session:
