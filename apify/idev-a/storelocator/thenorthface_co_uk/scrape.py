@@ -121,6 +121,7 @@ class ExampleSearchIteration(SearchIteration):
         current_country,
         items_remaining,
         found_location_at,
+        found_nothing,
     ):
         with SgRequests() as session:
             locations = bs(
@@ -133,6 +134,8 @@ class ExampleSearchIteration(SearchIteration):
                 "lxml",
             ).select("poi")
             logger.info(f"[{current_country}] found: {len(locations)}")
+            if len(locations) == 0:
+                found_nothing()
             for _ in locations:
                 page_url = "https://www.thenorthface.co.uk/store-locator.html"
                 street_address = _.address1.text.strip()
@@ -140,19 +143,30 @@ class ExampleSearchIteration(SearchIteration):
                     street_address += " " + _.address2.text.strip()
 
                 state = _.state.text.strip() if _.state else _.province.text.strip()
-                location_type = "the north face"
+                location_type = ""
                 north_store = _.northface.text.strip() if _.northface else ""
                 if str(north_store) == "1":
                     location_type = "the north face store"
                 outlet_store = _.outletstore.text.strip() if _.outletstore else ""
                 if str(outlet_store) == "1":
                     location_type = "the north face outletstore"
+                retail_store = _.retailstore.text.strip() if _.retailstore else ""
+                if str(retail_store) == "1":
+                    location_type = "authorized retailers"
 
+                if not location_type:
+                    icon = _.icon.text.strip() if _.icon else ""
+                    if icon == "RetailStore" or icon == "default":
+                        location_type = "authorized retailers"
+                    elif icon == "Outletstore":
+                        location_type = "the north face outletstore"
                 phone = (
                     _.phone.text.strip().split("or")[0].split("and")[0]
                     if _.phone is not None and _.phone.text.strip() != "TBD"
                     else "<MISSING>"
                 )
+                if phone == "0":
+                    phone = ""
 
                 hours = []
                 if _.m and _.m.text.strip():
