@@ -200,7 +200,6 @@ def fetch_data():
                     phone = "<MISSING>"
                 raw_address = " ".join(raw_address)
                 raw_address = re.sub(pattern, "\n", raw_address).replace("\n", " ")
-                print(raw_address)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
