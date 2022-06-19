@@ -49,6 +49,16 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.startswith(":"):
             hours_of_operation = "".join(hours_of_operation[1:]).strip()
+        text = "".join(d.xpath(".//h3//a/@href"))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -62,8 +72,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=ad,
         )
