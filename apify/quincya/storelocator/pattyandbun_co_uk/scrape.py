@@ -46,6 +46,9 @@ def fetch_data(sgw: SgWriter):
             city_line = raw_address[1].strip()
             zip_code = " ".join(city_line.split()[-2:]).strip()
             city = " ".join(city_line.split()[:-2]).strip()
+        if "London" in street_address:
+            street_address = street_address.replace("London", "").strip()
+            city = "London"
 
         state = "<MISSING>"
         country_code = "GB"
@@ -64,23 +67,12 @@ def fetch_data(sgw: SgWriter):
             phone = "<MISSING>"
 
         try:
-            hours_of_operation = (
-                base.find(class_="rich-text-block-3 w-richtext")
-                .text.replace("day", "day ")
-                .replace("am", "am ")
-                .replace("pm", "pm ")
-                .replace("PM", "PM ")
-                .replace("â\x80\x93", "")
-                .replace("â\x80\x8d", "")
-                .strip()
-            )
+            hours_of_operation = " ".join(list(
+                base.find(class_="rich-text-block-3 w-richtext").stripped_strings
+            )).replace("\u200d ", "")
             if "*" in hours_of_operation:
                 hours_of_operation = hours_of_operation[
                     : hours_of_operation.find("*")
-                ].strip()
-            if "We" in hours_of_operation:
-                hours_of_operation = hours_of_operation[
-                    : hours_of_operation.find("We")
                 ].strip()
             if "Please" in hours_of_operation:
                 hours_of_operation = hours_of_operation[
