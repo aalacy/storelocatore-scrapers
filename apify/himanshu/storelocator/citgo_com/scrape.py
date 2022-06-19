@@ -1,5 +1,4 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
+from sgrequests import SgRequestError, SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -15,16 +14,8 @@ HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
-
-
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
 
 
 def build_hours(row):
@@ -50,46 +41,52 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
-        max_search_results=5,
+        max_search_distance_miles=20,
     )
     for zipcode in search:
         url = API_URL.format(zipcode)
         log.info("Pull content => " + url)
-        try:
-            stores = session.get(url, headers=HEADERS).json()
-        except:
-            continue
-        for row in stores["locations"]:
-            location_name = row["name"]
-            street_address = row["address"]
-            city = row["city"]
-            state = row["state"]
-            zip_postal = row["zip"]
-            country_code = row["country"]
-            phone = row["phone"]
-            hours_of_operation = build_hours(row)
-            location_type = MISSING
-            store_number = row["number"]
-            latitude = row["latitude"]
-            longitude = row["longitude"]
-            log.info("Append {} => {}".format(location_name, street_address))
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=LOCATION_URL,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        with SgRequests(
+            dont_retry_status_codes=([404]), retries_with_fresh_proxy_ip=2
+        ) as session:
+            try:
+                stores = session.get(url, headers=HEADERS)
+            except SgRequestError as e:
+                log.error(e.status_code)
+            if not stores["locations"]:
+                search.found_nothing()
+                continue
+            for row in stores.json()["locations"]:
+                location_name = row["name"]
+                street_address = row["address"]
+                city = row["city"]
+                state = row["state"]
+                zip_postal = row["zip"]
+                country_code = row["country"]
+                phone = row["phone"]
+                hours_of_operation = build_hours(row)
+                location_type = MISSING
+                store_number = row["number"]
+                latitude = row["latitude"]
+                longitude = row["longitude"]
+                search.found_location_at(latitude, longitude)
+                log.info("Append {} => {}".format(location_name, street_address))
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=LOCATION_URL,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
