@@ -1,7 +1,5 @@
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequestError, SgRequests
 from sglogging import sglog
-import sgrequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
