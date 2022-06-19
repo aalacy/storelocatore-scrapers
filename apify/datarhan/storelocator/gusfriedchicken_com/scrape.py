@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import USA_Best_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -30,7 +30,10 @@ def fetch_data(sgw: SgWriter):
         ad = (
             " ".join(tree.xpath('//*[contains(text(), "Store Address:")]//text()'))
             .replace("Store Address:", "")
-            .replace("\n", "")
+            .replace("\n", " ")
+            .replace("\r", " ")
+            .replace("AveHouston", "Ave Houston")
+            .replace("StNew", "St New")
             .strip()
         )
         ad = " ".join(ad.split())
@@ -41,7 +44,7 @@ def fetch_data(sgw: SgWriter):
         )
         if temp_closed:
             location_type = "temporarily closed"
-        a = parse_address(USA_Best_Parser(), ad)
+        a = parse_address(International_Parser(), ad)
         street_address = (
             f"{a.street_address_1} {a.street_address_2}".replace("None", "")
             .replace("The Mall At Peachtree Center", "")
@@ -52,9 +55,6 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "US"
         city = a.city or "<MISSING>"
-        if street_address == "117 San":
-            street_address = "117 San" + " " + str(city).split()[0].strip()
-            city = str(city).split()[1].strip()
         geo = tree.xpath('//a[@title="Google Maps link"]/@href')
         if not geo:
             geo = tree.xpath('//a[contains(@href, "maps")]/@href')

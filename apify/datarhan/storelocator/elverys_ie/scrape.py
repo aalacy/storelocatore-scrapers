@@ -33,7 +33,7 @@ def fetch_data():
         next_page = dom.xpath('//li[@class="next"]/a/@href')
 
     for url in all_locations:
-        page_url = urljoin(start_url, url)
+        page_url = urljoin(start_url, url).replace(" ", "%20")
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(
             loc_response.text.replace('17 O" Connell', "17 O Connell")
