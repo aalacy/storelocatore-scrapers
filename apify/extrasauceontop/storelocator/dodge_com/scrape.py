@@ -13,53 +13,21 @@ logger = SgLogSetup().get_logger("dodge_com")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
+    max_search_results=100,
+    expected_search_radius_miles=100,
 )
-
-
-def parse_hours(json_hours):
-    days = [
-        "sunday",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-    ]
-    hours = []
-    for day in days:
-        if json_hours[day]["closed"]:
-            hours.append(f"{day}: closed")
-        else:
-            open_time = (
-                json_hours[day]["open"]["time"] + " " + json_hours[day]["open"]["ampm"]
-            )
-            close_time = (
-                json_hours[day]["close"]["time"]
-                + " "
-                + json_hours[day]["close"]["ampm"]
-            )
-            hours.append(f"{day}: {open_time}-{close_time}")
-    return ", ".join(hours)
-
-
-def handle_missing(x):
-    if not x:
-        return "<MISSING>"
-    return x
 
 
 def get_data():
     for search_code in search:
         logger.info("Pulling Zip Code %s..." % search_code)
         url = (
-            "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode="
+            "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=500&resultsPage=1&resultsPerPage=100&zipCode="
             + search_code
         )
         try:
             r = session.get(url, headers=headers)
-            dealers = json.loads(r.content)["dealer"]
-            logger.info(f"found {len(dealers)} dealers")
+            dealers = r.json()["dealer"]
 
         except Exception:
             search.found_nothing()
@@ -124,7 +92,7 @@ def get_data():
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
         location_name=sp.MappingField(
             mapping=["location_name"], part_of_record_identity=True
         ),
