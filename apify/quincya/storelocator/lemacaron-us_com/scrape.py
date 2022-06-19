@@ -62,7 +62,7 @@ def fetch_data(sgw: SgWriter):
         if not raw_address:
             continue
         try:
-            num = re.search(r"\d+", raw_address[0]).group()
+            re.search(r"\d+", raw_address[0]).group()
         except:
             raw_address.pop(0)
 
