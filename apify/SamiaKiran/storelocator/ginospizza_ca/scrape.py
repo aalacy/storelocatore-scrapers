@@ -51,12 +51,9 @@ def fetch_data():
                 phone = address[-1]
                 raw_address = html.unescape(" ".join(address[:-2]))
                 address = raw_address.split(",")
-                if len(address) > 4:
-                    street_address = address[0] + " " + address[1]
-                else:
-                    street_address = address[0]
+                street_address = address[0]
                 zip_postal = address[-1]
-                state = MISSING
+                state = "ON"
                 street_address = street_address.replace(city, "")
                 hours_of_operation = (
                     soup.find("dl", {"class": "list--description gutter--top"})
