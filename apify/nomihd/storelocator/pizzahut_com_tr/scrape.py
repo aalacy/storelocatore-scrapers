@@ -63,7 +63,7 @@ def fetch_data():
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = raw_address.split("/")[-1].strip()
+        city = raw_address.split("/")[-1].strip().split(",")[-1].strip()
         state = store["townName"]
         zip = formatted_addr.postcode
 
