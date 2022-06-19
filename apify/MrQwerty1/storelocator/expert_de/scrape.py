@@ -1,3 +1,4 @@
+import ssl
 from sgscrape.sgrecord import SgRecord
 from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
@@ -90,6 +91,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.expert.de/"
     page_url = "https://www.expert.de/storefinder"
+    ssl._create_default_https_context = ssl._create_unverified_context
 
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
