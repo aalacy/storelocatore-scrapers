@@ -15,47 +15,43 @@ def fetch_data():
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath(
-        '//div[@class="locationBlock narrow"]/p[1]/a[@class="boldGreen"]/@href'
-    )
+    all_locations = dom.xpath('//h3[@class="blue mb-1"]/a/@href')
     for page_url in all_locations:
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h2[@class="header-location"]/text()')[
-            0
-        ].strip()
-        raw_address = loc_dom.xpath('//div[@class="loc-header-left"]/p/text()')
-        raw_address = [
-            elem.strip() for elem in raw_address if elem.strip() and "|" not in elem
-        ]
-        if len(raw_address) == 3:
-            raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
-        street_address = raw_address[0].strip()
-        city = raw_address[-1].split(", ")[0]
-        state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
-        phone = loc_dom.xpath('//div[@class="loc-header-left"]/p/a/text()')
-        phone = phone[0] if phone else ""
-        hoo = loc_dom.xpath('//h3[@id="hours"]/following-sibling::table[1]//text()')
-        hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else ""
+        location_name = loc_dom.xpath('//h3[@class="blue mb-1"]/text()')[0]
+        raw_data = loc_dom.xpath(
+            '//div[@class="location-info"]//p[@class="mb-1"]/text()'
+        )
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        if len(raw_data) == 3:
+            raw_data = [", ".join(raw_data[:2])] + raw_data[2:]
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+        hoo = loc_dom.xpath('//p[strong[contains(text(), "HOURS")]]/text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        geo = (
+            loc_dom.xpath("//iframe/@src")[-1]
+            .split("!2d")[1]
+            .split("!2m3")[0]
+            .split("!3d")
+        )
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
+            street_address=raw_data[0],
+            city=raw_data[1].split(",")[0],
+            state=raw_data[1].split(",")[1].split()[0],
+            zip_postal=raw_data[1].split(",")[1].split()[1],
             country_code="",
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation=hours_of_operation,
+            latitude=geo[1],
+            longitude=geo[0],
+            hours_of_operation=hoo,
         )
 
         yield item
