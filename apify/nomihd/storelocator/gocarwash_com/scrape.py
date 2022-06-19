@@ -32,38 +32,21 @@ def fetch_data():
             locator_domain = website
 
             location_name = store["title"].strip()
-            page_url = (
-                search_url
-                + location_name.lower().replace(" ", "-").replace(".", "").strip()
-                + "/"
-            )
             if "Coming Soon" in store["description"]:
                 continue
 
+            if store["description"] and len(store["description"]) > 0:
+                desc_sel = lxml.html.fromstring(store["description"])
+                page_url = "".join(
+                    desc_sel.xpath('//a[contains(.//text(),"View Menu")]/@href')
+                ).strip()
+                if len(page_url) > 0:
+                    if "http" not in page_url:
+                        page_url = "https://gocarwash.com" + page_url
+                else:
+                    page_url = None
+
             location_type = "<MISSING>"
-            log.info(page_url)
-            store_res = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_res.text)
-
-            phone = store_sel.xpath('//a[contains(@href,"tel:")]//text()')
-            if phone:
-                phone = phone[0].strip()
-            else:
-                phone = "<MISSING>"
-            hours = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath('//div[@class="timing"]//text()')
-                    ],
-                )
-            )
-            if hours:
-                hours_of_operation = "; ".join(hours)
-            else:
-                hours_of_operation = "<MISSING>"
-
             raw_address = store["address"]
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
@@ -78,11 +61,39 @@ def fetch_data():
                 state = state.replace(", Usa", "").strip()
 
             zip = formatted_addr.postcode
-            if not zip:
-                temp_address = "".join(
-                    store_sel.xpath('//div[@class="address"]/p/text()')
-                ).strip()
-                zip = temp_address.split(",")[-1].strip().split(" ")[-1].strip()
+
+            phone = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+
+            if page_url:
+                log.info(page_url)
+                store_res = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_res.text)
+
+                phone = store_sel.xpath('//a[contains(@href,"tel:")]//text()')
+                if phone:
+                    phone = phone[0].strip().replace("Coming Soon", "").strip()
+                else:
+                    phone = "<MISSING>"
+
+                hours = store_sel.xpath('//div[@class="timing"]')
+                if len(hours) > 0:
+                    hours = list(
+                        filter(
+                            str,
+                            [x.strip() for x in hours[0].xpath("p//text()")],
+                        )
+                    )
+                    hours_of_operation = "; ".join(hours)
+                else:
+                    hours_of_operation = "<MISSING>"
+
+                if not zip:
+                    temp_address = "".join(
+                        store_sel.xpath('//div[@class="address"]/p/text()')
+                    ).strip()
+                    zip = temp_address.split(",")[-1].strip().split(" ")[-1].strip()
+
             country_code = "US"
 
             store_number = store["id"]
