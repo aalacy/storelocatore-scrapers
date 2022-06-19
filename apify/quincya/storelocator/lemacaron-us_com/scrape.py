@@ -31,6 +31,7 @@ def fetch_data(sgw: SgWriter):
         if "coming" in str(item).lower():
             continue
         link = item.a["href"]
+        logger.info(link)
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
@@ -43,8 +44,6 @@ def fetch_data(sgw: SgWriter):
                 continue
         except:
             pass
-
-        logger.info(link)
 
         if "Contact" in location_name:
             location_name = (
@@ -62,6 +61,10 @@ def fetch_data(sgw: SgWriter):
                 raw_address = list(base.p.stripped_strings)
         if not raw_address:
             continue
+
+        if not re.search(r"\d", raw_address[0]):
+            raw_address.pop(0)
+
         try:
             street_address = raw_address[0].split(". 2200")[0].strip()
             city = raw_address[1].strip().split(",")[0].strip()
@@ -69,11 +72,11 @@ def fetch_data(sgw: SgWriter):
             try:
                 state = raw_address[1].strip().split(",")[1].strip().split()[0]
             except:
-                continue
+                state = ""
             try:
                 zip_code = raw_address[1].strip().split(",")[1].strip().split()[1]
             except:
-                pass
+                zip_code = ""
         except:
             if len(raw_address) == 1:
                 raw_address = raw_address[0].split(",")
@@ -87,7 +90,12 @@ def fetch_data(sgw: SgWriter):
         if "Suite 120" in city:
             street_address = street_address + " Suite 120"
             city = city.replace("Suite 120", "").strip()
-        street_address = street_address.replace("Mayfair mall", "").strip()
+        street_address = (
+            street_address.replace("Mayfair mall", "")
+            .replace("Westfield Century", "")
+            .replace("Wqoofield", "Woodfield")
+            .strip()
+        )
         if "Mayfair mall" in city:
             city = "Wauwatosa"
             zip_code = "53226"
@@ -100,14 +108,33 @@ def fetch_data(sgw: SgWriter):
         if "NM" in zip_code:
             zip_code = zip_code.replace("NM", "").strip()
             state = "NM"
+        if "STE" in city:
+            street_address = street_address + " " + city
+        if "10250 Santa" in street_address:
+            city = "Los Angeles"
+            state = "CA"
+            zip_code = "90067"
+        if "GA" in city:
+            state = city.split()[0]
+            zip_code = city.split()[1]
+            city = ""
 
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         try:
-            phone = base.find("a", {"href": re.compile(r"tel:")}).text
+            phone = base.find("a", {"href": re.compile(r"tel:")}).text.replace(" ", "")
         except:
-            phone = ""
+            try:
+                phone = (
+                    base.find(
+                        class_="et_pb_button et_pb_button_2 et_pb_bg_layout_light"
+                    )
+                    .text.replace("Phone", "")
+                    .strip()
+                )
+            except:
+                phone = ""
         if "coming" in phone.lower():
             phone = "<MISSING>"
 
