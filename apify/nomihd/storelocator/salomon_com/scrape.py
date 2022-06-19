@@ -85,10 +85,11 @@ def fetch_data():
                 hours = store_json.get("openingHoursSpecification", [])
                 hours_list = []
                 for hour in hours:
-                    days = hour["dayOfWeek"]
-                    for d in days:
-                        time = hour["opens"] + " - " + hour["closes"]
-                        hours_list.append(d + ":" + time)
+                    if "dayOfWeek" in hour:
+                        days = hour["dayOfWeek"]
+                        for d in days:
+                            time = hour["opens"] + " - " + hour["closes"]
+                            hours_list.append(d + ":" + time)
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
