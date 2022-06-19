@@ -6,6 +6,7 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+import re
 
 website = "jackwills.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -26,7 +27,7 @@ headers = {
 
 
 def fetch_data():
-    # Your scraper here
+    pattern = re.compile(r"\s\s+")
     search_url = "https://www.jackwills.com/stores/all"
     with SgRequests() as session:
         stores_req = session.get(search_url, headers=headers)
@@ -122,7 +123,6 @@ def fetch_data():
 
                 if phone == "N/A":
                     phone = "<MISSING>"
-
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -198,7 +198,9 @@ def fetch_data():
 
                 if phone == "N/A":
                     phone = "<MISSING>"
-
+                raw_address = " ".join(raw_address)
+                raw_address = re.sub(pattern, "\n", raw_address).replace("\n", " ")
+                print(raw_address)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
