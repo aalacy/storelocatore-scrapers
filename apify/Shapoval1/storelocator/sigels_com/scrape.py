@@ -1,188 +1,89 @@
-import csv
-import usaddress
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from urllib.parse import unquote
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
+    locator_domain = "https://sigels.com/"
+    api_url = "https://sigels.com/"
     session = SgRequests()
-    r = session.get("https://sigels.com/locations/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath('//a[contains(text(), "Contact Info")]/@href')
-
-
-def get_data(url):
-    locator_domain = "https://sigels.com"
-    page_url = f"{locator_domain}{url}"
-
-    session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-
-    ad = (
-        " ".join(
-            tree.xpath(
-                '//div[@class="elementor-text-editor elementor-clearfix"]/h2/following-sibling::p[1]/text()[2]'
-            )
-        )
-        .replace("\n", "")
+    js_block_l = tree.xpath("//script[contains(text(), 'web_data/sigel.json')]//text()")
+    js_block_l = list(filter(None, [a.strip() for a in js_block_l]))
+    js_block = (
+        "".join(js_block_l[1])
+        .split('= JSON.parse(decodeURIComponent("')[1]
+        .split('"));')[0]
         .strip()
     )
-    if ad == "":
-        ad = (
-            " ".join(
-                tree.xpath(
-                    '//div[@class="elementor-text-editor elementor-clearfix"]/h2/following-sibling::p[2]/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-    street_address = (
-        " ".join(
-            tree.xpath(
-                '//div[@class="elementor-text-editor elementor-clearfix"]/h2/following-sibling::p[1]/text()[1]'
-            )
-        )
-        .replace("\n", "")
-        .strip()
-    )
+    a = unquote(js_block)
+    js = json.loads(a)
+    for j in js["merchant_configs"]:
 
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    if street_address == "":
-        street_address = f"{a.get('address1')}".strip()
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_name = (
-        " ".join(
-            tree.xpath(
-                '//div[@class="elementor-text-editor elementor-clearfix"]/h2//text()'
-            )
+        b = j.get("merchant")
+        page_url = "<MISSING>"
+        location_name = b.get("name") or "<MISSING>"
+        ad = b.get("address").get("full_address")
+        location_type = b.get("merchant_type")
+        street_address = (
+            b.get("address").get("address_properties").get("street_address")
         )
-        .replace("\n", "")
-        .strip()
-    )
-    phone = "".join(
-        tree.xpath(
-            '//a[contains(@href, "tel")]/text() | //div[@class="elementor-text-editor elementor-clearfix"]/h2/following-sibling::p[1]/text()[3]'
-        )
-    )
-
-    longitude = "<MISSING>"
-    latitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        " ".join(
-            tree.xpath(
-                '//div[@class="elementor-text-editor elementor-clearfix"]/h2/following-sibling::p[2]/text()'
-            )
-        )
-        .replace("\n", "")
-        .strip()
-    )
-
-    if hours_of_operation.find("2960") != -1:
+        state = b.get("address").get("address_properties").get("state")
+        postal = b.get("address").get("address_properties").get("zip")
+        country_code = "US"
+        city = b.get("address").get("address_properties").get("city")
+        latitude = b.get("address").get("address_properties").get("lat")
+        longitude = b.get("address").get("address_properties").get("lng")
+        phone = b.get("phone_number")
         hours_of_operation = "<MISSING>"
+        hours = b.get("business_hours")
+        days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
+        tmp = []
+        if hours:
+            for d in days:
+                day = str(d).capitalize()
+                opens = hours.get(f"{d}").get("opening")
+                closes = hours.get(f"{d}").get("closing")
+                line = f"{day} {opens} - {closes}"
+                if opens is None and closes is None:
+                    line = f"{day} Closed"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
