@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
         )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
-        country_code = "CA"
+        country_code = "US"
         city = a.city or "<MISSING>"
         phone = (
             "".join(d.xpath('.//p[contains(text(), "Phone: ")]/strong[1]//text()'))
