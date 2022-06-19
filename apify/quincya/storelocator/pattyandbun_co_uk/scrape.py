@@ -67,9 +67,9 @@ def fetch_data(sgw: SgWriter):
             phone = "<MISSING>"
 
         try:
-            hours_of_operation = " ".join(list(
-                base.find(class_="rich-text-block-3 w-richtext").stripped_strings
-            )).replace("\u200d ", "")
+            hours_of_operation = " ".join(
+                list(base.find(class_="rich-text-block-3 w-richtext").stripped_strings)
+            ).replace("\u200d ", "")
             if "*" in hours_of_operation:
                 hours_of_operation = hours_of_operation[
                     : hours_of_operation.find("*")
