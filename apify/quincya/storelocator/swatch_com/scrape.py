@@ -14,7 +14,7 @@ from sgrequests import SgRequests
 log = sglog.SgLogSetup().get_logger("swatch.com")
 
 
-def scrape_item(item, found):
+def scrape_item(item, link, found):
 
     locator_domain = "https://www.swatch.com"
 
@@ -42,19 +42,41 @@ def scrape_item(item, found):
         store_number = item["ID"]
         phone = item["phone"]
         # ----------Location Type -----------#
-        brands = []
-        for b in item["brands"]:
-            brand = b["value"]
-            brands.append(brand)
-        location_type = (",").join(brands)
+        try:
+            brands = []
+            for b in item["brands"]:
+                brand = b["value"]
+                brands.append(brand)
+            location_type = (",").join(brands)
+        except:
+            location_type = "<MISSING>"
 
         latitude = item["lat"]
         longitude = item["lng"]
         if "." not in str(latitude):
             latitude = ""
             longitude = ""
-        link = locator_domain + item["detailsUrl"]
-        hours_of_operation = item["storeHours"]
+        hours_of_operation = ""
+        try:
+            hours_of_operation = item["storeHours"]
+        except:
+            try:
+                days = []
+                raw_hours = item["preRenderedStoreHours"]
+                for row in raw_hours:
+                    day = row["day"]
+                    if day in days:
+                        continue
+                    days.append(day)
+                    hours = row["hours"]
+                    if not hours:
+                        hours = "Closed"
+                    hours_of_operation = (
+                        hours_of_operation + " " + day + " " + hours
+                    ).strip()
+            except:
+                pass
+
         if not state:
             if "/united-states" in link:
                 state = (
@@ -108,6 +130,16 @@ def fetch_data(sgw: SgWriter):
     countries = base.find_all("span", attrs={"data-widget": "countrySelectorLocale"})
 
     found = []
+
+    # Locations possibly missing
+    locs = [
+        "https://www.swatch.com/fr-be/storedetails?sid=P7103",
+        "https://www.swatch.com/fi-fi/storedetails?sid=P15223",
+        "https://www.swatch.com/fr-fr/storedetails?sid=P13964",
+        "https://www.swatch.com/de-de/storedetails?sid=P11824",
+        "https://www.swatch.com/ru-ru/storedetails?sid=R822375",
+    ]
+
     for country in countries:
         code = country["data-locale"]
         if code in found:
@@ -143,65 +175,31 @@ def fetch_data(sgw: SgWriter):
             + "%3D"
         )
         items = session.get(c_link, headers=headers).json()["stores"]
+        log.info(len(items))
 
         for item in items:
-            try:
-                (
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                    found,
-                ) = scrape_item(item, found)
-            except:
-                continue
-
-            sgw.write_row(
-                SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=link,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_code,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+            link = (
+                stores_link.replace("/stores", "/") + "storedetails?sid=" + item["ID"]
             )
+            if link in locs:
+                continue
+            locs.append(link)
 
-    # Locations possibly missing
-    other_locs = [
-        "https://www.swatch.com/fr-be/storedetails?sid=P7103",
-        "https://www.swatch.com/fi-fi/storedetails?sid=P15223",
-        "https://www.swatch.com/fr-fr/storedetails?sid=P13964",
-        "https://www.swatch.com/de-de/storedetails?sid=P11824",
-        "https://www.swatch.com/ru-ru/storedetails?sid=R822375",
-    ]
-
-    for loc in other_locs:
+    log.info(len(locs))
+    for loc in locs:
+        try:
+            if loc.split("=")[-1] in found:
+                continue
+            found.append(loc.split("=")[-1])
+        except:
+            pass
         req = session.get(loc, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
-        item = json.loads(base.find(class_="b-storelocator")["data-store"])
         try:
+            item = json.loads(base.find(class_="b-storelocator")["data-store"])
             (
                 locator_domain,
-                link,
+                loc,
                 location_name,
                 street_address,
                 city,
@@ -215,14 +213,15 @@ def fetch_data(sgw: SgWriter):
                 longitude,
                 hours_of_operation,
                 found,
-            ) = scrape_item(item, found)
+            ) = scrape_item(item, loc, found)
         except:
+            log.info("Error..Skip!")
             continue
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=link,
+                page_url=loc,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -239,5 +238,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)

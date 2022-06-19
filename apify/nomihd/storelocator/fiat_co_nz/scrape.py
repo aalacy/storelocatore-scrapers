@@ -101,7 +101,9 @@ def fetch_data():
                     if phone == "no":
                         phone = "<MISSING>"
 
-                    phone = phone.split("/")[0].strip()
+                    if phone:
+                        phone = phone.split("/")[0].strip()
+
                     hours_list = []
                     if "openingHours" in store:
                         hours = store["openingHours"]
