@@ -1,3 +1,4 @@
+import json
 from sgrequests import SgRequestError, SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -50,13 +51,14 @@ def fetch_data():
             dont_retry_status_codes=([404]), retries_with_fresh_proxy_ip=2
         ) as session:
             try:
-                stores = session.get(url, headers=HEADERS)
+                req = session.get(url, headers=HEADERS)
             except SgRequestError as e:
                 log.error(e.status_code)
+            stores = json.loads(req.text)
             if not stores["locations"]:
                 search.found_nothing()
                 continue
-            for row in stores.json()["locations"]:
+            for row in stores["locations"]:
                 location_name = row["name"]
                 street_address = row["address"]
                 city = row["city"]
