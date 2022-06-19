@@ -1,3 +1,4 @@
+import ssl
 import json
 from sglogging import sglog
 from sgselenium import SgChrome
@@ -6,6 +7,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 website = "crazyshirts.com"

@@ -1,3 +1,4 @@
+import html
 import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -36,7 +37,7 @@ def fetch_data():
             temp = json.loads(temp)
             location_name = temp["name"]
             address = temp["address"]
-            street_address = address["streetAddress"]
+            street_address = html.unescape(address["streetAddress"])
             city = address["addressLocality"]
             state = address["addressRegion"]
             zip_postal = address["postalCode"]
@@ -62,6 +63,8 @@ def fetch_data():
             elif "branch is closed" in hours_of_operation:
                 continue
             elif "NA" in hours_of_operation:
+                hours_of_operation = MISSING
+            elif "Telephone" in hours_of_operation:
                 hours_of_operation = MISSING
             elif "temporarily closed" in hours_of_operation:
                 location_type = "Temporarily Closed"
