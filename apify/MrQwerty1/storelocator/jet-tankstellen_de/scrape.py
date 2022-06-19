@@ -19,11 +19,9 @@ def get_js(tree):
 
 def get_urls():
     urls = set()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.GERMANY], expected_search_radius_miles=10
-    )
+    search = DynamicZipSearch(country_codes=[SearchableCountries.GERMANY])
     for _zip in search:
-        api = f"https://www.jet-tankstellen.de/kraftstoff/filialfinder/?location={_zip}&place_id=&feature=&radius=20"
+        api = f"https://www.jet-tankstellen.de/kraftstoff/filialfinder/?location={_zip}&place_id=&feature=&radius=25"
         r = session.get(api, headers=headers)
         tree = html.fromstring(r.text)
         js = get_js(tree)

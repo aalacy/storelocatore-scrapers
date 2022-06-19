@@ -24,9 +24,8 @@ def fetch_data():
         '//a[contains(@href, "/stores/") and span[@class="pub__btn__inner"]]/@href'
     )
     for page_url in all_locations:
-        if "planning-studios" in page_url:
+        if "planning-studios" in page_url or "pickup" in page_url:
             continue
-
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         location_name = loc_dom.xpath("//h1/text()")[0]
