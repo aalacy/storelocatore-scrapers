@@ -2,7 +2,6 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
-import json
 
 session = SgRequests(dont_retry_status_codes=[500, 404])
 headers = {
