@@ -57,7 +57,9 @@ def get_data():
             phone = location_soup.find("a", attrs={"class": "big-font"}).text.strip()
         except Exception:
 
-            a_tags = location_soup.find_all("a")
+            a_tags = location_soup.find(
+                "div", attrs={"class": "elementor-text-editor elementor-clearfix"}
+            ).find_all("a")
             for a_tag in a_tags:
                 try:
                     if "tel:" in a_tag["href"]:
@@ -91,6 +93,8 @@ def get_data():
         longitude = lat_lon_part.split("!1d")[1].split("!2d")[1].split("!3")[0]
 
         country_code = "US"
+
+        hours = hours.split(", Sunday Lunch")[0].split(", Saturday Lunch")[0]
 
         yield {
             "locator_domain": locator_domain,
