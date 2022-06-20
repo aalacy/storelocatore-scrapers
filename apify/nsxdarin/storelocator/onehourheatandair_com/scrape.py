@@ -1,9 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("onehourheatandair_com")
-
 
 session = SgRequests()
 headers = {
@@ -13,39 +15,11 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.onehourheatandair.com/locations/"
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "View Website</a>" in line:
             stub = (
                 "https://www.onehourheatandair.com"
@@ -63,9 +37,7 @@ def fetch_data():
         typ = "Location"
         store = "<MISSING>"
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         hours = "<MISSING>"
         phone = "<MISSING>"
         zc = "<MISSING>"
@@ -97,12 +69,10 @@ def fetch_data():
                 zc = line2.split('<span itemprop="postalCode">')[1].split("<")[0]
             if "<title>" in line2:
                 name = line2.split(">")[1].split(" |")[0]
-            if '<span class="flex-middle margin-right-tiny">' in line2:
-                city = line2.split('<span class="flex-middle margin-right-tiny">')[
-                    1
-                ].split(",")[0]
+            if 'flex-middle margin-right-tiny">' in line2:
+                city = line2.split('flex-middle margin-right-tiny">')[1].split(",")[0]
                 state = (
-                    line2.split('<span class="flex-middle margin-right-tiny">')[1]
+                    line2.split('flex-middle margin-right-tiny">')[1]
                     .split("<")[0]
                     .rsplit(" ", 1)[1]
                 )
@@ -123,27 +93,29 @@ def fetch_data():
         if name != "":
             if add == "<MISSING>":
                 add = add2
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
