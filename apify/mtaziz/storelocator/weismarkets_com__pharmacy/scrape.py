@@ -85,7 +85,6 @@ def fetch_data():
     with SgChrome(block_third_parties=True, driver_wait_timeout=180) as driver:
         for idx, ln_sn_purl in enumerate(page_urls[0:]):
             location_name, store_number, page_url = ln_sn_purl
-            class_name2 = "hours-and-contact-header"
             driver.get(page_url)
             driver.implicitly_wait(5)
             logger.info(f"[{idx}] Pulling the data for {page_url}")  # noqa
