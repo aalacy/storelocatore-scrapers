@@ -1,10 +1,6 @@
-import random
 import ssl
 import time
 import json
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 from sgselenium.sgselenium import SgFirefox
 from sglogging import sglog
