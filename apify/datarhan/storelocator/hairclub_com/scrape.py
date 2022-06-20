@@ -23,14 +23,13 @@ def fetch_data():
         }
         all_locations = session.get(start_url.format(code), headers=hdr)
         if not all_locations.text.strip():
+            all_codes.found_nothing()
             continue
         for poi in all_locations.json():
             hoo = []
             for e in poi["availability"]:
-                if poi.get("openingHour"):
-                    hoo.append(
-                        f'{e["day"]}: {poi["openingHour"]} - {poi["closingHour"]}'
-                    )
+                if e.get("openingHour"):
+                    hoo.append(f'{e["day"]}: {e["openingHour"]} - {e["closingHour"]}')
                 else:
                     hoo.append(f'{e["day"]}: closed')
             hoo = " ".join(hoo)
@@ -43,6 +42,11 @@ def fetch_data():
             if not zip_code:
                 zip_code = loc_dom.xpath('//div[@class="hours-block"]/p[1]/text()')
             zip_code = zip_code[0].split()[-1]
+            all_codes.found_location_at(
+                poi["position"]["latitude"], poi["position"]["longitude"]
+            )
+            hoo = loc_dom.xpath('//div[@class="day-and-hour"]//text()')
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
