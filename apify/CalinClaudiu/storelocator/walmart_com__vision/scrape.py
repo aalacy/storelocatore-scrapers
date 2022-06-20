@@ -68,62 +68,97 @@ def api_get(start_url, headers, attempts, maxRetries):
 def grab_json(soup):
     son = soup.find_all("script")
     for i in reversed(son):
-        if "REDUX" in i.text:
+        if "REDUX_INITIAL_STATE" in i.text:
             data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
             return json.loads(data)["store"]
 
 
-def other_source(state):
-    url = "https://www.walmart.com/store/directory"
-    main = None
-    with SgChrome() as driver:
-        driver.get(url)
-        time.sleep(5)
-        main = driver.page_source
-        # main = SgRequests.raise_on_err(session.get(url, headers=headers)).text # noqa
-        try:
-            toprint = str(main.split("store-directory-container")[1])
-            logger.info(f"store-directory-container: {toprint}")  # noqa
-        except Exception:
-            pass
-        logger.info(f"{str(main)}")  # noqa
-        soup = b4(main, "lxml")
-        allstates = (
-            soup.find("div", {"class": "store-directory-container"})
-            .find("ul")
-            .find_all("a")
-        )
-        for county in allstates:
-            driver.get(str("https://www.walmart.com" + county["href"]))
-            sec = driver.page_source
+def get_json(url, escalation):
+    data = None
+    try:
+        with SgChrome(proxy_provider_escalation_order=escalation) as driver:
+            driver.get(url)
             time.sleep(5)
-            sec = b4(sec, "lxml")
-            allcities = (
-                sec.find("div", {"class": "store-directory-container"})
-                .find("ul")
-                .find_all("a")
-            )
-            for city in allcities:
-                if city["href"].count("/") > 2:
-                    if (
-                        str("https://www.walmart.com" + city["href"])
-                        == "https://www.walmart.com/store/directory/mo/st.-peters"
-                    ):
-                        state.push_request(SerializableRequest(url="/store/5421"))
-                        state.push_request(SerializableRequest(url="/store/5427"))
-                        continue
-                    driver.get(str("https://www.walmart.com" + city["href"]))
+            text = driver.page_source
+            soup = b4(text, "lxml")
+            son = soup.find_all("script")
+            for i in reversed(son):
+                if "REDUX_INITIAL_STATE" in i.text:
+                    data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
+            if data:
+                return json.loads(data)
+    except Exception as e:
+        logger.error("blocked", exc_info=e)
+    return None
 
-                    tri = driver.page_source
-                    tri = b4(tri, "lxml")
-                    recs = tri.find("ul", {"class": "store-list-ul"}).find_all(
-                        "a", {"class": "storeBanner"}
-                    )
-                    for rec in recs:
-                        state.push_request(SerializableRequest(url=rec["href"]))
+
+def other_source(state):
+    retries = 0
+    MaxRetries = 5
+    deesca = [
+        None,
+        "http://groups-SHADER+BUYPROXIES94952:{}@proxy.apify.com:8000/",
+        "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/",
+    ]
+    esca = [
+        "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/",
+    ]
+    url = "https://www.walmart.com/store/directory"
+    son = None
+    while not son and retries < MaxRetries:
+        son = get_json(url, deesca)
+        retries += 1
+    if not son:
+        son = get_json(url, esca)
+
+    allstates = son["directory"]["stateList"]
+    for county in allstates:
+        retries = 0
+        url2 = str(
+            "https://www.walmart.com/store/directory/"
+            + str(county["code"]).lower().strip().replace(" ", "-")
+        )
+        sec = None
+        while not sec and retries < MaxRetries:
+            sec = get_json(url2, deesca)
+        if not sec:
+            sec = get_json(url2, esca)
+        allcities = sec["directory"]["cityData"]["cities"]
+        for city in allcities:
+            data = str(list(i for i in city.items()))
+            if "storeCount" in data:
+                if city["city"] == "St. Peters":
+                    state.push_request(SerializableRequest(url="/store/5421"))
+                    state.push_request(SerializableRequest(url="/store/5427"))
+                    continue
                 else:
-                    state.push_request(SerializableRequest(url=city["href"]))
-        return True
+                    url3 = str(
+                        str(
+                            "https://www.walmart.com/store/directory/"
+                            + county["code"].lower()
+                            + "/"
+                            + city["city"].lower().strip().replace(" ", "-")
+                        )
+                    )
+                    tri = None
+                    retries = 0
+                    while not tri and retries < MaxRetries:
+                        sec = get_json(url3, deesca)
+                    if not tri:
+                        tri = get_json(url3, esca)
+                    stores = tri["directory"]["storeData"]["stores"]
+                    for store in stores:
+                        state.push_request(
+                            SerializableRequest(
+                                url=str("/store/" + str(store["storeId"]))
+                            )
+                        )
+
+            elif "storeId" in data:
+                state.push_request(
+                    SerializableRequest(url=str("/store/" + str(city["storeId"])))
+                )
+    return True
 
 
 def fetch_other(session, state):
@@ -269,47 +304,51 @@ def please_write(what):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    session = SgRequests(dont_retry_status_codes=set([404, 520]))
-    # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    state.get_misc_value("init", default_factory=lambda: other_source(state))
-    for item in fetch_other(session, state):
-        for reccz in gen_hours(transform_types(item)):
-            yield reccz
-    maxZ = search.items_remaining()
-    total = 0
-    foundNothing = True
-    for code in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        found = 0
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
-            + code
-            + "&distance=100"
-        )
-        try:
-            r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
-        except Exception:
-            r2 = api_get(url, headers, 15, 0, 15).json()
-        if r2["payload"]["nbrOfStores"]:
-            if int(r2["payload"]["nbrOfStores"]) > 0:
-                for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"]:
-                        if store["geoPoint"]["latitude"]:
-                            if store["geoPoint"]["longitude"]:
-                                foundNothing = False
-                                search.found_location_at(
-                                    store["geoPoint"]["latitude"],
-                                    store["geoPoint"]["longitude"],
-                                )
-                    for recc in gen_hours(transform_types(store)):
-                        yield recc
-        if foundNothing:
-            search.found_nothing()
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        total += found
-        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
+    with SgRequests(dont_retry_status_codes=set([404, 520])) as session:
+        # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
+        state.get_misc_value("init", default_factory=lambda: other_source(state))
+        for item in fetch_other(session, state):
+            for reccz in gen_hours(transform_types(item)):
+                yield reccz
+        maxZ = search.items_remaining()
+        total = 0
+        foundNothing = True
+        for code in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            found = 0
+            logger.info(("Pulling Zip Code %s..." % code))
+            url = (
+                "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
+                + code
+                + "&distance=100"
+            )
+            try:
+                r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
+            except Exception:
+                r2 = api_get(url, headers, 15, 0, 15).json()
+            if r2["payload"]["nbrOfStores"]:
+                if int(r2["payload"]["nbrOfStores"]) > 0:
+                    for store in r2["payload"]["storesData"]["stores"]:
+                        if store["geoPoint"]:
+                            if store["geoPoint"]["latitude"]:
+                                if store["geoPoint"]["longitude"]:
+                                    foundNothing = False
+                                    search.found_location_at(
+                                        store["geoPoint"]["latitude"],
+                                        store["geoPoint"]["longitude"],
+                                    )
+                        for recc in gen_hours(transform_types(store)):
+                            yield recc
+            if foundNothing:
+                search.found_nothing()
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+            )
+            total += found
+            logger.info(
+                f"{code} | found: {found} | total: {total} | progress: {progress}"
+            )
 
 
 def add_walmart(x):

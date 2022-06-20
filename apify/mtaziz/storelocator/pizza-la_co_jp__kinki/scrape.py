@@ -71,7 +71,7 @@ def get_level2_store_locator_urls(urls1):
             urls = [f"{BASE_URL}{i}" for i in slugs2]
             logger.info(f"Level2Count: {len(urls)}")
             urls2.extend(urls)
-        logger.info(f"Level2Count: {len(urls)}")
+        logger.info(f"Level2Count: {len(urls2)}")
         return urls2
 
 

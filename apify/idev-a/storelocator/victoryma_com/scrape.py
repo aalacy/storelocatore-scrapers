@@ -43,10 +43,10 @@ def get_country_by_code(code=""):
     elif code in ca_provinces_codes:
         return "CA"
     else:
-        return "<MISSING>"
+        return ""
 
 
-@retry(stop=stop_after_attempt(7), wait=wait_random(min=10, max=30))
+@retry(stop=stop_after_attempt(10), wait=wait_random(min=30, max=90))
 def _info(_):
     hours = []
     _addr = []
@@ -97,7 +97,7 @@ def _info(_):
 
 def fetch_data():
     for lat, lng in coords:
-        with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="ca") as session:
             locations = session.get(base_url.format(lat, lng), headers=_headers).json()
             logger.info(f"[{lat, lng}] {len(locations)}")
             for _ in locations:

@@ -1,114 +1,132 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
-from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-import dirtyjson as json
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import re
-import ssl
-import time
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
-logger = SgLogSetup().get_logger("royalbluegrocery")
-
-locator_domain = "https://www.royalbluegrocery.com/"
-base_url = "https://www.royalbluegrocery.com/locations"
-json_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt"
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def _pp(locs, street):
-    for loc in locs:
-        if (
-            " ".join(street.lower().split()[:2])
-            in loc.select_one("div.info-element-description span").text.lower()
-        ):
-            return loc.select("div.info-element-description span")[-1].text.strip()
+def fetch_data(sgw: SgWriter):
 
-    return ""
+    locator_domain = "https://www.royalbluegrocery.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.royalbluegrocery.com/_partials/wix-thunderbolt/dist/clientWorker.2533056c.bundle.min.js",
+        "Content-Type": "application/json",
+        "Authorization": "Y0qUsuowDb5WJCitWhRTm_un72VaafVavDnbZCY1cHY.eyJpbnN0YW5jZUlkIjoiNmUwYmIzNGEtYWU1ZC00YWIwLTlhMjktYjZlN2NmMTQ2ZGFjIiwiYXBwRGVmSWQiOiIxNDI3MWQ2Zi1iYTYyLWQwNDUtNTQ5Yi1hYjk3MmFlMWY3MGUiLCJtZXRhU2l0ZUlkIjoiMmU0Mzc4NmUtMTM0MS00MTJlLWE1NjYtODI0ZWNlYWRiYzQ2Iiwic2lnbkRhdGUiOiIyMDIyLTA2LTE3VDE4OjE0OjIwLjk0NFoiLCJkZW1vTW9kZSI6ZmFsc2UsImFpZCI6IjVlMDJmY2ViLTk1YzQtNDYzYS1iMjgyLTI2MjVjMzJjMjAzZSIsImJpVG9rZW4iOiI0MDQ4Y2IyNC1iZDFjLTBiOWUtM2Y0Zi0zNGE5MDFiOWQxZWEiLCJzaXRlT3duZXJJZCI6IjlhNDM5NzM3LTNmNTEtNGFhMS1iYjJhLTM5YWY0MDU5NjhmMSJ9",
+        "Alt-Used": "www.royalbluegrocery.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
 
+    params = {
+        "offset": "0",
+        "limit": "25",
+        "externalId": "b23ebc68-298b-4425-8597-b869aa68e9cf",
+        "state": "PUBLISHED",
+        "lang": "",
+    }
 
-def fetch_data():
-    with SgChrome(
-        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
-    ) as driver:
-        driver.get(base_url)
-        sp = bs(driver.page_source, "lxml")
-        _loc = sp.find(
-            "a", href=re.compile(r"https://www.royalbluegrocery.com/locations")
-        )
-        links = _loc.find_parent().find_parent().find_next_sibling("ul").select("li a")
-        locs = sp.select("div.gallery-item-container div.gallery-item-common-info")
-        for _ in links:
-            page_url = _["href"]
-            logger.info(page_url)
-            del driver.requests
-            time.sleep(1)
+    r = session.get(
+        "https://www.royalbluegrocery.com/pro-gallery-webapp/v1/galleries/5992eb9f-7173-4ca6-aaca-0b7229bb9d60",
+        params=params,
+        headers=headers,
+    )
+    js = r.json()["gallery"]["items"]
+    for j in js:
 
-            driver.get(page_url)
-            driver.wait_for_request(json_url)
-            ss = {}
-            info = {}
-            for rr in driver.iter_requests():
-                try:
-                    if json_url in rr.url:
-                        ss = json.loads(rr.response.body)["props"]["render"][
-                            "compProps"
-                        ]
-                        for key, val in ss.items():
-                            if val.get("mapData"):
-                                info = val["mapData"]["locations"][0]
-                                break
-                        if info:
-                            break
-                except:
-                    logger.warning("^^^ next url")
-            addr = info["address"].split(",")
-            sp1 = bs(driver.page_source, "lxml")
-            street_address = " ".join(addr[:-3])
-            data = []
-            h6_font = sp1.select("h6.font_6")
-            for h6 in h6_font:
-                if "every" in h6.text.lower() or "open" in h6.text.lower():
-                    data = list(h6.stripped_strings)
-                    if len(data) == 1:
-                        hours = data[0].split("•")[-1]
-                    else:
-                        hours = data[-1]
-
-                    break
-
-            phone = _pp(locs, street_address)
-            if not phone:
-                import pdb
-
-                pdb.set_trace()
-            yield SgRecord(
-                page_url=page_url,
-                location_name=_.text.strip(),
-                street_address=street_address,
-                city=addr[-3].strip(),
-                state=addr[-2].strip().split()[0].strip(),
-                zip_postal=addr[-2].strip().split()[-1].strip(),
-                country_code="US",
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation=hours.replace("\xa0", "").strip(),
-                raw_address=info["address"],
+        page_url = j.get("link").get("url")
+        location_name = j.get("title") or "<MISSING>"
+        location_name = str(location_name).replace("\\xa0", " ").strip()
+        phone = "".join(j.get("description")).split("\n")[1].strip()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        ad = "".join(tree.xpath('//p[contains(text(), "•")]/text()')) or "<MISSING>"
+        if ad == "<MISSING>":
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@class="_1Cu5u"]/following-sibling::div[1]//text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
             )
+            ad = " ".join(ad.split()) or "<MISSING>"
+        if ad == "<MISSING>":
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//div[@class="_1Cu5u"]/preceding-sibling::div[1]//text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            ad = " ".join(ad.split()) or "<MISSING>"
+        if ad.find("(") != -1:
+            ad = ad.split("(")[0].strip()
+        ad = ad.replace("210.957.0093", "").replace("•", "").strip()
+        ad = " ".join(ad.split())
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        info = tree.xpath(
+            '//div[@class="_1Q9if"]//text() | //div[@class="_2Hij5"]//text()'
+        )
+        info = list(filter(None, [b.strip() for b in info]))
+        tmp = []
+        for i in info:
+            if "OPEN" in i:
+                tmp.append(i)
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(tree.xpath('//h6[@class="font_6"]//text()'))
+                .replace("\n", "")
+                .replace("609 CONGRESS AVE", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("SEE") != -1:
+            hours_of_operation = hours_of_operation.split("SEE")[0].strip()
+        if hours_of_operation.count("•") == 1:
+            hours_of_operation = hours_of_operation.split("•")[1].strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
