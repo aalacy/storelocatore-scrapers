@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from sgpostal.sgpostal import parse_address_intl
@@ -126,9 +126,9 @@ def write_data(writer, locations):
         _ = loc["_source"]
         if "Coming Soon" in _["telephone"]:
             continue
-        street_address = _["street"]
+        _street_address = _["street"]
         if _["street_line_2"]:
-            street_address += " " + _["street_line_2"]
+            _street_address += ", " + _["street_line_2"]
 
         hours = []
         if _.get("opening_hours", {}):
@@ -139,13 +139,47 @@ def write_data(writer, locations):
                 end = hh.get(f"{day}_to")
                 hours.append(f"{day}: {start} - {end}")
 
-        raw_address = f"{street_address} {_['city']} {_['region']} {_['postcode']} {_['country']}".replace(
-            ",", ""
+        country_code = _["country"]
+        if country_code == "GB":
+            country_code = "United Kingdom"
+        if "Dublin" in _["city"] or "Dublin" in _["region"]:
+            country_code = "Ireland"
+        raw_address = f"{_street_address}, {_['city']}, {_['region']}, {_['postcode']}, {country_code}".replace(
+            "?", ""
         )
+
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+
+        city = _["city"].split(",")[0]
+        if city and street_address:
+            _city = city[0].upper() + city.lower()[1:]
+            if (
+                _city in street_address
+                and _city != "Peterborough"
+                and _city != "Oundle"
+                and _city != "Coventry"
+                and _city != "Lakeside"
+                and _city != "Chatham"
+                and _city != "Woldingham"
+            ):
+                street_address = street_address.split(_city)[0]
+
+        if street_address:
+            street_address = (
+                street_address.replace("Regatta Outlet Store", "")
+                .replace("Affinity Sterling Mills Outlet", "")
+                .replace("Lawrence Way Regatta Outlet", "")
+            )
+            if street_address.replace("-", "").strip().isdigit():
+                street_address = _street_address
+
+        phone = _["telephone"]
+
+        if phone and (phone.lower() == "tbc" or phone.lower() == "tba" or phone == "0"):
+            phone = ""
 
         writer.write_row(
             SgRecord(
@@ -153,13 +187,13 @@ def write_data(writer, locations):
                 store_number=_["store_id"],
                 location_name=_["name"],
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=_["postcode"],
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lon"],
-                country_code=_["country"],
-                phone=_["telephone"],
+                country_code=country_code,
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
@@ -170,7 +204,7 @@ def write_data(writer, locations):
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.PHONE}),
+            RecommendedRecordIds.GeoSpatialId,
             duplicate_streak_failure_factor=5000,
         )
     ) as writer:
