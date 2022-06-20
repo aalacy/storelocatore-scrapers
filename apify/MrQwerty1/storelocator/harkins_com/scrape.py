@@ -1,117 +1,54 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://cms.harkins.com/api/v1/theaters"
+    r = session.get(api, headers=headers)
+    js = r.json()
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    for jj in js:
+        for j in jj["theatres"]:
+            a = j["address_lines"][0]
+            street_address = a.get("address")
+            city = a.get("city")
+            state = a.get("state")
+            postal = a.get("zip")
+            country_code = "US"
+            store_number = j.get("id")
+            location_name = j.get("name")
+            slug = j.get("slugUrl")
+            page_url = f"https://www.harkins.com/theatres/{slug}"
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
 
-        for row in data:
-            writer.writerow(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+            )
 
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.harkins.com/locations")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//h3[contains(@id, 'theatre-')]/a/@href")
-
-
-def get_data(url):
-    locator_domain = "https://www.harkins.com/"
-    page_url = f"https://www.harkins.com{url}"
-    print(page_url)
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    line = tree.xpath("//div[@class='address']//text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    street_address = ", ".join(line[:-1]) or "<MISSING>"
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    phone = "".join(tree.xpath("//div[@class='phone']/a/text()")).strip() or "<MISSING>"
-
-    text = "".join(tree.xpath("//script[contains(text(), 'var myLatLng')]/text()"))
-    try:
-        latitude = text.split("var lat = '")[1].split("';")[0]
-        longitude = text.split("var lon = '")[1].split("';")[0]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    print(urls)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.harkins.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

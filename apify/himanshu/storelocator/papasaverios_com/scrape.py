@@ -32,7 +32,10 @@ def fetch_data():
             page_url = temp["href"]
             log.info(page_url)
             location_name = temp.text
-            phone = loc.select_one("a[href*=tel]").text
+            try:
+                phone = loc.select_one("a[href*=tel]").text
+            except:
+                phone = ""
             address = (
                 loc.find("li")
                 .find("p")
@@ -74,13 +77,23 @@ def fetch_data():
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
+                if not hours_of_operation:
+                    hours_of_operation = (
+                        temp.findAll("p")[1]
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
             except:
                 hours_of_operation = (
                     temp.findAll("p")[1]
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
+            if "Temporarily Closed" in temp.text:
+                hours_of_operation = "Temporarily Closed"
+            hours_of_operation = hours_of_operation.split("Delivery Fee")[0].strip()
             country_code = "US"
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
