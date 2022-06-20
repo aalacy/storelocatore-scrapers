@@ -3,12 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
-import time
 import json
 import ssl
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 try:
     _create_unverified_https_context = (
@@ -24,30 +21,7 @@ logger = SgLogSetup().get_logger("gaes")
 
 locator_domain = "https://www.gaes.es"
 base_url = "https://www.gaes.es/nuestros-centros-auditivos"
-
-
-def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-        is_headless=True,
-    ).driver()
-
-
-@retry(wait=wait_fixed(5), stop=stop_after_attempt(2))
-def get_bs(driver=None, url=None):
-    while True:
-        if not driver:
-            driver = get_driver()
-        try:
-            driver.get(url)
-            break
-        except:
-            time.sleep(1)
-            logger.info(f"retry {url}")
-            driver = None
-
-    return bs(driver.page_source, "lxml")
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
@@ -62,48 +36,67 @@ def fetch_data():
             .select("a")
         )
         for url in urls:
-            del driver.requests
             logger.info(locator_domain + url["href"])
             driver.get(locator_domain + url["href"])
             locations += [
-                loc.a["href"]
+                loc
                 for loc in bs(driver.page_source, "lxml").select("div.m-store-teaser")
             ]
 
-    driver = get_driver()
-    logger.info(f"{len(locations)} locations")
-    for page_url in locations:
-        logger.info(f"[***] {page_url}")
-        sp1 = get_bs(driver=driver, url=page_url)
-        if driver.current_url == base_url:
-            continue
-        _ = json.loads(sp1.find("script", type="application/ld+json").string)
-        phone = ""
-        if sp1.select_one("span.phone-list"):
-            phone = sp1.select_one("span.phone-list").text.strip()
-        hours = []
-        for hh in _["openingHoursSpecification"]:
-            day = hh["dayOfWeek"]
-            hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
-        addr = _["address"]
-        yield SgRecord(
-            page_url=page_url,
-            store_number=_["branchCode"],
-            location_name=_["name"],
-            street_address=addr["streetAddress"],
-            city=addr["addressLocality"],
-            state=addr["addressRegion"],
-            zip_postal=addr["postalCode"],
-            latitude=_["geo"]["latitude"],
-            longitude=_["geo"]["longitude"],
-            country_code="Spain",
-            phone=phone,
-            locator_domain=locator_domain,
-            hours_of_operation="; ".join(hours),
-        )
-
-    if driver:
-        driver.close()
+        logger.info(f"{len(locations)} locations")
+        for loc in locations:
+            page_url = loc.a["href"]
+            logger.info(f"[***] {page_url}")
+            driver.get(page_url)
+            sp1 = bs(driver.page_source, "lxml")
+            if driver.current_url == base_url:
+                continue
+            try:
+                _ = json.loads(sp1.find("script", type="application/ld+json").string)
+            except:
+                addr = loc.p.text.strip().split(",")
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=loc.span.text.strip(),
+                    locator_domain=locator_domain,
+                    street_address=" ".join(addr[:-2]),
+                    city=addr[-1].split("/")[0],
+                    zip_postal=addr[-2],
+                    country_code="Spain",
+                )
+                continue
+            phone = ""
+            if sp1.select_one("span.phone-list"):
+                phone = sp1.select_one("span.phone-list").text.split("/")[0].strip()
+            hours = []
+            temp = {}
+            if _.get("openingHoursSpecification"):
+                for hh in _["openingHoursSpecification"]:
+                    day = hh["dayOfWeek"]
+                    if not temp.get(day):
+                        temp[day] = []
+                    temp[day].append(f"{hh['opens']} - {hh['closes']}")
+            for day in days:
+                if temp.get(day):
+                    hours.append(f"{day}: {' | '.join(temp[day])}")
+                else:
+                    hours.append(f"{day}: Closed")
+            addr = _["address"]
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["branchCode"],
+                location_name=_["name"],
+                street_address=addr["streetAddress"],
+                city=addr["addressLocality"],
+                state=addr["addressRegion"],
+                zip_postal=addr["postalCode"],
+                latitude=_["geo"]["latitude"],
+                longitude=_["geo"]["longitude"],
+                country_code="Spain",
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
