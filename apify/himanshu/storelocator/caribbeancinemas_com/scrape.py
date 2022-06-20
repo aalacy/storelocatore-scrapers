@@ -1,48 +1,46 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("caribbeancinemas_com")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", newline="", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    elif "&q=" in map_link:
+        latitude = map_link.split("&q=")[1].split(",")[0].strip()
+        longitude = map_link.split("&q=")[1].split(",")[1].strip()
+    elif "?q=" in map_link:
+        latitude = map_link.split("?q=")[1].split(",")[0].strip()
+        longitude = map_link.split("?q=")[1].split(",")[1].strip().split("&")[0].strip()
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
-
     # it will used in store data.
     base_url = "https://caribbeancinemas.com/"
     locator_domain = "https://caribbeancinemas.com/"
@@ -67,123 +65,117 @@ def fetch_data():
 
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    footer = soup.find("footer").find("div", class_="three-fourth column")
+    stores_sel = lxml.html.fromstring(r.text)
 
-    for loc_url in footer.find_all(
-        lambda tag: (tag.name == "a")
-        and "ARUBA" != tag.text
-        and "PANAMA" != tag.text
-        and "TRINIDAD" != tag.text
-    ):
-        p_url = loc_url["href"].split("/")
-        if len(p_url) != 4:
-            page_url = "https:" + loc_url["href"]
-        else:
-            page_url = loc_url["href"]
-
-        if (
-            "caribbeancinemas.com" not in page_url
-            or "/?aruba" in page_url
-            or "/?trinidad" in page_url
-            or "penonome-cinemas" in page_url
-            or "santiago-cinemas" in page_url
-        ):
+    footer = stores_sel.xpath(
+        '//footer//div[contains(@class,"scale-with-grid one-fourth column")]'
+    )
+    for foot in footer:
+        if "advert" in "".join(foot.xpath("@id")).strip():
             continue
-        logger.info(page_url)
-        rr = session.get(page_url, headers=headers)
-        rr_soup = BeautifulSoup(rr.text, "lxml")
-        store_sel = lxml.html.fromstring(rr.text)
-        try:
-            coords = (
-                rr_soup.find_all("div", class_="section")[1]
-                .find("div", class_="column one-fourth1 column_column")
-                .find("iframe")
-            )
-            if coords is not None:
-                if len(coords["src"].split("!2d")) > 1:
-                    longitude = coords["src"].split("!2d")[1].split("!")[0].strip()
-                    latitude = coords["src"].split("!3d")[1].split("!")[0].strip()
+
+        urls = foot.xpath(".//a")
+        for u in urls:
+            url_text = "".join(u.xpath(".//text()")).strip()
+            if "ARUBA" != url_text and "PANAMA" != url_text and "TRINIDAD" != url_text:
+                p_url = "".join(u.xpath("@href")).strip().split("/")
+                if len(p_url) != 4:
+                    page_url = "https:" + "".join(u.xpath("@href")).strip()
                 else:
-                    latitude = coords["src"].split("=")[1].split(",")[0]
-                    longitude = coords["src"].split("=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+                    page_url = "".join(u.xpath("@href")).strip()
 
-            info = (
-                rr_soup.find("div", class_="sections_group")
-                .find("div", class_="items_group clearfix")
-                .find("div", {"id": "cineinfo"})
-            )
-            location_name = info.h4.text.strip()
+                if (
+                    "caribbeancinemas.com" not in page_url
+                    or "/?aruba" in page_url
+                    or "/?trinidad" in page_url
+                    or "penonome-cinemas" in page_url
+                    or "santiago-cinemas" in page_url
+                    or "guyana" in page_url
+                ):
+                    continue
+                logger.info(page_url)
+                rr = session.get(page_url, headers=headers)
+                rr_soup = BeautifulSoup(rr.text, "lxml")
+                store_sel = lxml.html.fromstring(rr.text)
+                try:
+                    coords = (
+                        rr_soup.find_all("div", class_="section")[0]
+                        .find("div", class_="column four-fifth")
+                        .find("iframe")
+                    )
+                    map_link = coords["src"]
+                    latitude, longitude = get_latlng(map_link)
 
-            list_phone = list(info.find("li", class_="phone").stripped_strings)
-            if list_phone != []:
-                phone = list_phone[0].strip()
-            else:
-                phone = "<MISSING>"
-            address = info.find("li", class_="address")
-            list_address = list(address.stripped_strings)
-            if list_address == []:
-                street_address = "<MISSING>"
-                city = page_url.split("/")[-2].split("-")[0].strip()
+                    info = (
+                        rr_soup.find("div", class_="sections_group")
+                        .find("div", class_="items_group clearfix")
+                        .find("div", {"id": "cineinfo"})
+                    )
+                    location_name = info.h2.text.strip()
 
-            else:
-                if len(list_address) > 1:
-                    location_name = list_address[0].strip()
-                    if len(list_address[-1].split(",")) > 1:
-                        street_address = " ".join(
-                            list_address[-1].split(",")[:-1]
-                        ).strip()
-                        city = "<MISSING>"
-                        state = "<MISSING>"
+                    list_phone = list(info.find("li", class_="phone").stripped_strings)
+                    if list_phone != []:
+                        phone = list_phone[0].strip()
                     else:
-                        if len(list_address[-1].split()) > 1:
-                            street_address = list_address[-1].strip()
+                        phone = "<MISSING>"
+                    address = info.find("li", class_="address")
+                    list_address = list(address.stripped_strings)
+                    if list_address == []:
+                        street_address = "<MISSING>"
+                        city = page_url.split("/")[-2].split("-")[0].strip()
+
+                    else:
+                        if len(list_address) > 1:
                             location_name = list_address[0].strip()
+                            if len(list_address[-1].split(",")) > 1:
+                                street_address = " ".join(
+                                    list_address[-1].split(",")[:-1]
+                                ).strip()
+                                city = "<MISSING>"
+                                state = "<MISSING>"
+                            else:
+                                if len(list_address[-1].split()) > 1:
+                                    street_address = list_address[-1].strip()
+                                    location_name = list_address[0].strip()
+                                else:
+                                    street_address = " ".join(
+                                        list_address[0].split()[3:]
+                                    ).strip()
+                                    location_name = " ".join(
+                                        list_address[0].split()[:3]
+                                    )
+                                city = "<MISSING>"
+                                state = "<MISSING>"
                         else:
-                            street_address = " ".join(
-                                list_address[0].split()[3:]
-                            ).strip()
-                            location_name = " ".join(list_address[0].split()[:3])
-                        city = "<MISSING>"
-                        state = "<MISSING>"
-                else:
-                    street_address = list_address[0].strip()
-                    location_name = "<MISSING>"
-                    city = "<MISSING>"
-                    state = "<MISSING>"
+                            street_address = list_address[0].strip()
+                            location_name = "<MISSING>"
+                            city = "<MISSING>"
+                            state = "<MISSING>"
 
-            if location_name == "<MISSING>":
-                location_name = "".join(
-                    store_sel.xpath('//div[@class="contact_box"]/h4/b/text()')
-                ).strip()
+                    if location_name == "<MISSING>":
+                        location_name = "".join(
+                            store_sel.xpath('//div[@class="contact_box"]/h2/b/text()')
+                        ).strip()
 
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
-            store = ["<MISSING>" if x == "" else x for x in store]
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zipp,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
-            return_main_object.append(store)
-
-        except:
-            continue
+                except:
+                    continue
 
     link = (
         soup.find("nav", {"id": "menu"})
@@ -194,20 +186,17 @@ def fetch_data():
         try:
             if "#MORE" != li.a["href"]:
                 page_url = "https:" + li.a["href"]
+                logger.info(page_url)
                 r_loc = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(r_loc.text)
                 soup_loc = BeautifulSoup(r_loc.text, "lxml")
                 coords = (
-                    soup_loc.find_all("div", class_="section")[1]
-                    .find("div", class_="column one-fourth1 column_column")
+                    soup_loc.find_all("div", class_="section")[0]
+                    .find("div", class_="column four-fifth")
                     .find("iframe")
                 )
-                if len(coords["src"].split("!2d")) > 1:
-                    longitude = coords["src"].split("!2d")[1].split("!")[0].strip()
-                    latitude = coords["src"].split("!3d")[1].split("!")[0].strip()
-                else:
-                    latitude = coords["src"].split("q=")[1].split(",")[0]
-                    longitude = coords["src"].split("q=")[1].split(",")[1].split("&")[0]
+                map_link = coords["src"]
+                latitude, longitude = get_latlng(map_link)
 
                 info = (
                     soup_loc.find("div", class_="sections_group")
@@ -217,6 +206,7 @@ def fetch_data():
                 phone = info.find("li", class_="phone").text.strip()
                 address = info.find("li", class_="address")
                 list_address = list(address.stripped_strings)
+
                 if len(list_address) > 1:
                     phone_list = re.findall(
                         re.compile(".?(\\(?\\d{3}\\D{0,3}\\d{3}\\D{0,3}\\d{4}).?"),
@@ -226,7 +216,7 @@ def fetch_data():
                     if phone_list == []:
                         location_name = list_address[0].strip()
                         tag_address = list_address[1].split(",")
-                        city = info.h4.text.strip()
+                        city = info.h2.text.strip()
                         if len(tag_address) > 1:
                             state = tag_address[-1].split()[0].strip()
                             zipp = tag_address[-1].split()[-1].strip()
@@ -237,13 +227,13 @@ def fetch_data():
                             zipp = "<MISSING>"
 
                     else:
-                        location_name = info.h4.text.strip()
+                        location_name = info.h2.text.strip()
                         street_address = list_address[0].split(",")[0].strip()
                         city = list_address[0].split(",")[1].strip()
                         state = list_address[0].split(",")[-1].split()[0].strip()
                         zipp = list_address[0].split(",")[-1].split()[-1].strip()
                 else:
-                    location_name = info.h4.text.strip()
+                    location_name = info.h2.text.strip()
                     street_address = ",".join(list_address[0].split(",")[:-2]).strip()
                     city = list_address[0].split(",")[-2].strip()
                     state = list_address[0].split(",")[-1].split()[0].strip()
@@ -262,38 +252,41 @@ def fetch_data():
                         store_sel.xpath('//div[@class="contact_box"]/h4/b/text()')
                     ).strip()
 
-                store = [
-                    locator_domain,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zipp,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                    page_url,
-                ]
-                store = ["<MISSING>" if x == "" else x for x in store]
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-
-                return_main_object.append(store)
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
         except:
             pass
 
-    return return_main_object
-
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
