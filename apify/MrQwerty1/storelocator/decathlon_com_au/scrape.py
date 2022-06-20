@@ -39,6 +39,7 @@ def fetch_data(sgw: SgWriter):
             .split('}]"')[0]
             .replace("\\r", "")
             .replace("\\", "")
+            .replace('""', '"')
             + "}]"
         )
         js = json.loads(text)
@@ -82,7 +83,13 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                     .lower()
                 )
-                if not h or "click" in h or "open" in h:
+                if (
+                    not h
+                    or "click" in h
+                    or "open" in h
+                    or "visit" in h
+                    or "normal" in h
+                ):
                     continue
                 _tmp.append(h.strip())
                 if "sunday" in h.lower():

@@ -19,16 +19,14 @@ def fetch_data(sgw: SgWriter):
         postal = j.get("zipCode")
         country_code = "US"
         store_number = j.get("id")
-        entity = j.get("entity")
-        if entity != "CHRISTUS":
-            continue
-        location_type = j.get("type")
+        location_type = j.get("entity")
         location_name = j.get("name")
         slug = j.get("url")
         page_url = f"https://www.christushealth.org{slug}"
         phone = j.get("phone")
         latitude = j.get("latitude")
         longitude = j.get("longitude")
+        hours_of_operation = "<INACCESSIBLE>"
 
         row = SgRecord(
             page_url=page_url,
@@ -43,6 +41,7 @@ def fetch_data(sgw: SgWriter):
             location_type=location_type,
             phone=phone,
             store_number=store_number,
+            hours_of_operation=hours_of_operation,
             locator_domain=locator_domain,
         )
 

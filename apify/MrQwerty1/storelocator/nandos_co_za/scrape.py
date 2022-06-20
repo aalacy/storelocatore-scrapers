@@ -121,16 +121,16 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     logger = sglog.SgLogSetup().get_logger(logger_name="nandos.co.za")
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     }
     locator_domain = "https://www.nandos.co.za/"
-    with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
-        )
-    ) as writer:
-        fetch_data(writer)
+    with SgRequests() as session:
+        with SgWriter(
+            SgRecordDeduper(
+                RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+            )
+        ) as writer:
+            fetch_data(writer)
