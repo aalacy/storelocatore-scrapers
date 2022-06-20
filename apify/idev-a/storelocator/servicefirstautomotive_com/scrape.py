@@ -3,7 +3,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch
 from sglogging import SgLogSetup
 import dirtyjson as json
 
@@ -21,10 +20,14 @@ _headers = {
 locator_domain = "https://www.caliber.com"
 base_url = "https://www.caliber.com/api/es/search"
 
+coords = [
+    (38.1052454, -122.2483726),
+]
+
 
 def data(lat, lng):
     return {
-        "size": "60",
+        "size": "6000",
         "query": {
             "bool": {
                 "must": {
@@ -34,7 +37,7 @@ def data(lat, lng):
                 },
                 "filter": {
                     "geo_distance": {
-                        "distance": "1000km",
+                        "distance": "5000km",
                         "center.latlong": {"lat": str(lat), "lon": str(lng)},
                     }
                 },
@@ -43,13 +46,10 @@ def data(lat, lng):
     }
 
 
-def fetch_records(search):
+def fetch_records():
     with SgRequests() as session:
-        maxZ = search.items_remaining()
         total = 0
-        for lat, lng in search:
-            if search.items_remaining() > maxZ:
-                maxZ = search.items_remaining()
+        for lat, lng in coords:
             logger.info(("Pulling Geo Code %s..." % lat, lng))
 
             res = None
@@ -61,7 +61,6 @@ def fetch_records(search):
                 continue
             total += len(locations)
             for store in locations:
-                search.found_location_at(store["latitude"], store["longitude"])
                 hours = []
                 if store.get("mondayHoursOpen"):
                     hours.append(
@@ -117,21 +116,14 @@ def fetch_records(search):
                     hours_of_operation="; ".join(hours),
                 )
 
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
-            )
+            logger.info(f"found: {len(locations)} | total: {total}")
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(country_codes=["us"], expected_search_radius_miles=50)
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
         )
     ) as writer:
-        for rec in fetch_records(search):
+        for rec in fetch_records():
             writer.write_row(rec)

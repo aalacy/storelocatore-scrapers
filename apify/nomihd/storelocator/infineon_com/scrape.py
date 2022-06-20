@@ -98,6 +98,9 @@ def fetch_data():
                     zip = phone.split(" ")[-1].strip()
                     phone = "<MISSING>"
 
+            if zip == phone:
+                phone = "<MISSING>"
+
             type_list = []
             if "types" in store:
                 types = store["types"]
