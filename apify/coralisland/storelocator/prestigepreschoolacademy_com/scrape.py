@@ -1,101 +1,80 @@
-import csv
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from lxml import etree
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "prestigepreschoolacademy_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-base_url = "https://www.prestigepreschoolacademy.com"
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-
-def validate(item):
-    if type(item) == list:
-        item = " ".join(item)
-    return item.strip()
-
-
-def get_value(item):
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
-
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.prestigepreschoolacademy.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    output_list = []
-    url = "https://www.prestigepreschoolacademy.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.71289&max_results=10&search_radius=50&autoload=1"
-    session = SgRequests()
-    request = session.get(url)
-    store_list = request.json()
-    for store in store_list:
-        output = []
-        output.append(base_url)  # url
-        page_url = store["url"]
-        if "https://www.prestigepreschoolacademy.com" not in page_url:
-            page_url = f"https://www.prestigepreschoolacademy.com{page_url}"
-        output.append(page_url)  # page_url
-        output.append(store["store"])  # location name
-        output.append(get_value(store["address"] + " " + store["address2"]))  # address
-        output.append(store["city"])  # city
-        output.append(store["state"])  # state
-        output.append(store["zip"])  # zipcode
-        output.append(store["country"])  # country code
-        output.append(store["id"])  # store_number
-        output.append(get_value(store["phone"]))  # phone
-        output.append("Prestige Preschool Academy")  # location type
-        output.append(store["lat"])  # latitude
-        output.append(store["lng"])  # longitude
-        h_temp = []
-        if store["hours"]:
-            store_hours = etree.HTML(store["hours"]).xpath(".//tr")
-            for hour in store_hours:
-                hour = validate(hour.xpath(".//text()"))
-                h_temp.append(hour)
-            store_hours = ", ".join(h_temp)
-        else:
-            store_hours = "<MISSING>"
-        output.append(store_hours)  # opening hours
-        output_list.append(output)
-    return output_list
+    if True:
+        url = "https://www.prestigepreschoolacademy.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.71289&max_results=10&search_radius=100&autoload=1"
+        loclist = session.get(url, headers=headers).json()
+        for loc in loclist:
+            location_name = loc["store"]
+            store_number = loc["id"]
+            phone = loc["phone"]
+            page_url = loc["url"]
+            log.info(page_url)
+            try:
+                street_address = loc["address"] + " " + loc["address2"]
+            except:
+                street_address = loc["address"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["zip"]
+            country_code = "US"
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            hours_of_operation = (
+                BeautifulSoup(loc["hours"], "html.parser")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
