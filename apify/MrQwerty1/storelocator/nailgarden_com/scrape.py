@@ -1,5 +1,6 @@
 import json
 import usaddress
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -68,12 +69,18 @@ def get_data(slug, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
+    if tree.xpath("//title[contains(text(), 'Coming Soon')]"):
+        return
     line = tree.xpath("//div[@class='sqs-block-content' and ./pre and ./p]/p/text()")
-    location_name = "".join(
-        tree.xpath(
-            "//div[@class='sqs-block-content' and ./pre and ./p]/pre/code/text()"
+    location_name = (
+        "".join(
+            tree.xpath(
+                "//div[@class='sqs-block-content' and ./pre and ./p]/pre/code/text()"
+            )
         )
-    ).strip()
+        .replace("\n", " ")
+        .strip()
+    )
     phone = line.pop()
     raw_address = line.pop(0).replace("\xa0", "")
     if "Hours" in line:
