@@ -2,5 +2,5 @@
 dirtyjson==1.0.7
 sglogging==0.0.4
 sgpostal==0.1.0
-sgrequests==0.3.8
+sgrequests==0.3.9
 sgscrape==0.3.1
