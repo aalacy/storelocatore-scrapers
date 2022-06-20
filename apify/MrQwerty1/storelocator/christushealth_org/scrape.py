@@ -26,6 +26,7 @@ def fetch_data(sgw: SgWriter):
         phone = j.get("phone")
         latitude = j.get("latitude")
         longitude = j.get("longitude")
+        hours_of_operation = "<INACCESSIBLE>"
 
         row = SgRecord(
             page_url=page_url,
@@ -40,6 +41,7 @@ def fetch_data(sgw: SgWriter):
             location_type=location_type,
             phone=phone,
             store_number=store_number,
+            hours_of_operation=hours_of_operation,
             locator_domain=locator_domain,
         )
 
