@@ -7,7 +7,6 @@ from sgselenium.sgselenium import SgChrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 from lxml import html
 import time
@@ -38,62 +37,64 @@ user_agent = (
 )
 
 
-def get_driver(url, class_name, timeout, driver=None):
-    if driver is not None:
-        driver.quit()
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-            WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(f"Fix the issue {url}:(")
-            continue
-    return driver
+# def get_driver(url, class_name, timeout, driver=None):
+#     if driver is not None:
+#         driver.quit()
+#     x = 0
+#     while True:
+#         x = x + 1
+#         try:
+#             driver = SgChrome(
+#                 executable_path=ChromeDriverManager().install(),
+#                 user_agent=user_agent,
+#                 is_headless=True,
+#             ).driver()
+#             driver.get(url)
+#             WebDriverWait(driver, timeout).until(
+#                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
+#             )
+#             break
+#         except Exception:
+#             driver.quit()
+#             if x == 10:
+#                 raise Exception(f"Fix the issue {url}:(")
+#             continue
+#     return driver
 
 
 def get_page_urls():
     base_url = "https://www.weismarkets.com/"
     class_name_main_nav = "main-navigation"
     timeout3 = 40
-    driver = get_driver(base_url, class_name_main_nav, timeout3)
-    stores_link_xpath = (
-        '//*[contains(@data-original-title, "Stores") and contains(@href, "stores#")]'
-    )
-    WebDriverWait(driver, 30).until(
-        EC.element_to_be_clickable((By.XPATH, stores_link_xpath))
-    )
-    driver.find_element_by_xpath(stores_link_xpath).click()
-    time.sleep(20)
-    logger.info("Store Clicked!")
-    logger.info("Pulling the data for store URL")
-    sel1 = html.fromstring(driver.page_source)
-    uls = sel1.xpath('//*[contains(@ng-if, "stores.length")]/li')
-    ln_sn_page_urls = []
-    for ul in uls:
-        ln = ul.xpath('.//span[@class="name"]/text()')
-        ln = " ".join("".join(ln).split())
-        ln_pu = ln.lower().replace(" ", "-")
-        sn = ul.xpath('.//span[@class="number"]/span/text()')[0]
-        sn = "".join(sn.split()).replace("#", "")
-        sn_pu = sn
+    with SgChrome(driver_wait_timeout=180) as driver:
+        driver.get(base_url)
+        # WebDriverWait(driver, timeout3).until(
+        #     EC.presence_of_element_located((By.CLASS_NAME, class_name_main_nav))
+        # )
+        stores_link_xpath = '//*[contains(@data-original-title, "Stores") and contains(@href, "stores#")]'
+        # WebDriverWait(driver, 30).until(
+        #     EC.element_to_be_clickable((By.XPATH, stores_link_xpath))
+        # )
+        driver.find_element_by_xpath(stores_link_xpath).click()
+        time.sleep(20)
+        logger.info("Store Clicked!")
+        logger.info("Pulling the data for store URL")
+        sel1 = html.fromstring(driver.page_source)
+        uls = sel1.xpath('//*[contains(@ng-if, "stores.length")]/li')
+        ln_sn_page_urls = []
+        for ul in uls:
+            ln = ul.xpath('.//span[@class="name"]/text()')
+            ln = " ".join("".join(ln).split())
+            ln_pu = ln.lower().replace(" ", "-")
+            sn = ul.xpath('.//span[@class="number"]/span/text()')[0]
+            sn = "".join(sn.split()).replace("#", "")
+            sn_pu = sn
 
-        grid_id = ul.xpath('.//span[contains(@id, "store-preview")]/@id')[0]
-        grid_id_pu = grid_id.replace("store-preview-", "").replace("--name", "")
-        pu = f"https://www.weismarkets.com/stores/{ln_pu}-{sn_pu}/{grid_id_pu}"
-        ln_sn_page_urls.append((ln, sn, pu))
-    return ln_sn_page_urls
+            grid_id = ul.xpath('.//span[contains(@id, "store-preview")]/@id')[0]
+            grid_id_pu = grid_id.replace("store-preview-", "").replace("--name", "")
+            pu = f"https://www.weismarkets.com/stores/{ln_pu}-{sn_pu}/{grid_id_pu}"
+            ln_sn_page_urls.append((ln, sn, pu))
+        return ln_sn_page_urls
 
 
 def fetch_data():
