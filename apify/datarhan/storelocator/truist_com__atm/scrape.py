@@ -15,9 +15,7 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA]
-    )
+    all_codes = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
     for lat, lng in all_codes:
         data = session.get(start_url.format(lat, lng), headers=hdr).json()
         if not data.get("location"):
