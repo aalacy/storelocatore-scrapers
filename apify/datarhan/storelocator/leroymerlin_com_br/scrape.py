@@ -48,7 +48,7 @@ def fetch_data():
                 ".", ""
             )
             phone = loc_dom.xpath('//dd[@itemprop="telephone"]/text()')
-            phone = phone[0].split("/")[0].split("(")[0] if phone else ""
+            phone = phone[0].split("/")[0].split("(")[0].split("ou")[0] if phone else ""
             geo = (
                 loc_dom.xpath('//iframe[@class="map"]/@src')[0]
                 .split("ll=")[-1]

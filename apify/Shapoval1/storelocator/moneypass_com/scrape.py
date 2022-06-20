@@ -122,7 +122,7 @@ def fetch_data(sgw: SgWriter):
             SearchableCountries.ITALY,
         ],
         max_search_distance_miles=300,
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=40,
         max_search_results=100,
     )
 

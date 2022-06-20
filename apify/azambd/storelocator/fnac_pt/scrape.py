@@ -46,9 +46,11 @@ def fetch_stores():
     with SgFirefox(block_third_parties=True) as driver:
         driver.get(store_url)
         random_sleep(driver, 20)
-        return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
-            "Store"
-        ]
+        jsontxt = (
+            driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
+        ).replace("&quot;", '"')
+        return json.loads(jsontxt)["Store"]
+
     return []
 
 

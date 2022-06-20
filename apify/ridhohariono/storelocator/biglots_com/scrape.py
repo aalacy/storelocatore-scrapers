@@ -91,7 +91,9 @@ def fetch_data():
         state = store["state"]
         zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
         country_code = soup.find("address", {"id": "address"})["data-country"]
-        store_number = MISSING
+        store_number = soup.find("button", {"class": "Hero-button js-favorite-store"})[
+            "value"
+        ]
         phone = soup.find("div", {"id": "phone-main"})
         if not phone:
             phone = MISSING

@@ -11,7 +11,7 @@ import json
 
 DOMAIN = "bssindustrial.co.uk"
 SITE_MAP = "https://www.bssindustrial.co.uk/sitemap.xml"
-JS_DATA = "https://www.bssindustrial.co.uk/path---branches-e99ca816691bdc2a162f.js"
+JS_DATA = "https://bssindustrial.co.uk/path---branches-d7502cd56dcc91933d10.js"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",

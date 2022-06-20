@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+import re
 
 logger = SgLogSetup().get_logger("gaes")
 
@@ -15,66 +16,46 @@ _headers = {
 }
 
 locator_domain = "https://www.amplifon.com"
-ss_urls = {
-    "IN": "https://www.amplifon.com/web/in/store-locator",
-}
-
+in_url = "https://www.amplifon.com/in/store-locator"
 hu_url = "https://www.amplifon.com/hu/sitemap.xml"
 pl_url = "https://www.amplifon.com/pl/sitemap.xml"
-
-
-def fetch_data():
-    with SgRequests() as session:
-        for country, base_url in ss_urls.items():
-            locations = json.loads(
-                session.get(base_url, headers=_headers)
-                .text.split("var shopLocator=")[1]
-                .split("var amplifonShopURL=")[0]
-                .strip()[:-1]
-            )
-            for _ in locations:
-                page_url = f"{base_url}/-/store/amplifon-point/{_['shopNumber']}/{_['shopNameForUrl'].lower()}/{_['cityForUrl'].lower()}/{_['addressForUrl'].lower()}"
-                if country == "country":
-                    page_url = base_url
-                state = _["province"]
-                if state == "0":
-                    state = ""
-                phone = _["phoneInfo1"]
-                if not phone:
-                    phone = _.get("phoneNumber1")
-                if not phone:
-                    phone = _.get("phoneNumber2")
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=_["shopName"],
-                    street_address=_["address"],
-                    city=_["city"],
-                    state=state,
-                    zip_postal=_["cap"],
-                    latitude=_["latitude"],
-                    longitude=_["longitude"],
-                    country_code=country,
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    hours_of_operation=_["openingTime"],
-                )
 
 
 def fetch_others():
     with SgRequests() as session:
         urls = {}
-        urls["hu"] = bs(session.get(hu_url, headers=_headers).text, "lxml").select(
-            "loc"
-        )
-        urls["pl"] = bs(session.get(pl_url, headers=_headers).text, "lxml").select(
-            "loc"
-        )
+        urls["in"] = []
+        for loc in (
+            bs(session.get(in_url, headers=_headers).text, "xml")
+            .find("h3", string=re.compile(r"Search by area"))
+            .find_next_sibling()
+            .select("li a")
+        ):
+            url = locator_domain + loc["href"]
+            logger.info(url)
+            locations = bs(session.get(url, headers=_headers).text, "xml").select(
+                "div.m-store-teaser a.d-block"
+            )
+            for _ in locations:
+                urls["in"].append(_["href"])
+        urls["hu"] = [
+            loc.text
+            for loc in bs(session.get(hu_url, headers=_headers).text, "lxml").select(
+                "loc"
+            )
+        ]
+        urls["pl"] = [
+            loc.text
+            for loc in bs(session.get(pl_url, headers=_headers).text, "lxml").select(
+                "loc"
+            )
+        ]
         for country, url1 in urls.items():
-            for url in url1:
-                page_url = url.text
+            for page_url in url1:
                 if (
                     "pl/nasze-gabinety/" not in page_url
                     and "hu/hallaskozpont-kereso/" not in page_url
+                    and "in/store-locator/" not in page_url
                 ):
                     continue
 
@@ -127,10 +108,6 @@ def fetch_others():
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-
         results = fetch_others()
         for rec in results:
             writer.write_row(rec)

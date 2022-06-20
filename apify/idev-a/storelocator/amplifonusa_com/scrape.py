@@ -33,7 +33,6 @@ logger = SgLogSetup().get_logger("amplifonusa")
 
 locator_domain = "https://www.amplifonusa.com"
 base_url = "https://www.amplifonusa.com/our-program/clinic-locator/search-results-page.ahhcgetStores.json?addr=&lat=47.7972338&long=-122.2029132"
-json_url = "https://pnapi.invoca.net/1686/na.jsonp?"
 
 
 def fetch_data():
@@ -55,7 +54,8 @@ def fetch_data():
             phone = ""
             lat = _["latitude"]
             lng = _["longitude"]
-            url = f"https://pnapi.invoca.net/1686/na.jsonp?network_id=1686&js_version=4.25.0&tag_id=1686%2F3823703601&request_data_shared_params=%7B%22calling_page%22%3A%22https%3A%2F%2Fwww.amplifonusa.com%2Four-program%2Fclinic-locator%2Fsearch-results-page%3Faddr%3D%26lat%3D{lat}%26long%3D{lng}%22%2C%22customer_journey%22%3A%22%2Four-program%2Fclinic-locator%2Fsearch-results-page%22%2C%22adobe_id%22%3A%2262252471091252517892297644018594141752%22%2C%22utm_medium%22%3A%22direct%22%2C%22utm_source%22%3A%22direct%22%2C%22invoca_id%22%3A%22i-58d53216-3d55-48c3-f4b7-6eafd324080c%22%2C%22inv_campaign_channel%22%3A%22other%22%2C%22inv_campaign_full%22%3A%22other%22%2C%22hhpCode%22%3A%22N%2FA%22%2C%22hhpName%22%3A%22N%2FA%22%2C%22gcm_uid%22%3Anull%2C%22business_unit%22%3Anull%2C%22channel%22%3Anull%2C%22CountryCode%22%3Anull%2C%22dealer%22%3Anull%2C%22format%22%3Anull%2C%22gclid%22%3Anull%2C%22gclsrc%22%3Anull%2C%22id%22%3Anull%2C%22inv_local_national%22%3Anull%2C%22keywordterm%22%3Anull%2C%22leadtype_destination_number%22%3Anull%2C%22mci%22%3Anull%2C%22msclkid%22%3Anull%2C%22name%22%3Anull%2C%22static_all_hours_destination%22%3Anull%2C%22static_in_hours_destination%22%3Anull%2C%22target%22%3Anull%2C%22type%22%3Anull%7D&client_messages=%7B%7D&client_info=%7B%22url%22%3A%22https%3A%2F%2Fwww.amplifonusa.com%2Four-program%2Fclinic-locator%2Fsearch-results-page%3Faddr%3D%26lat%3D{lat}%26long%3D{lng}%22%2C%22referrer%22%3A%22%22%2C%22cores%22%3A4%2C%22platform%22%3A%22Linux%20x86_64%22%2C%22screenWidth%22%3A1366%2C%22screenHeight%22%3A768%2C%22language%22%3A%22en-US%22%7D&request_data=%5B%7B%22request_id%22%3A%22%2B18778467074%22%2C%22advertiser_campaign_id_from_network%22%3A%22AMPLUNIV01%22%2C%22params%22%3A%7B%22static_all_hours_destination%22%3A%22%2B18778467074%22%2C%22invoca_detected_destination%22%3A%22%2B18778467074%22%7D%7D%2C%7B%22request_id%22%3A%22%2B18883090026%22%2C%22advertiser_campaign_id_from_network%22%3A%22AMPLUNIV01%22%2C%22params%22%3A%7B%22static_all_hours_destination%22%3A%22%2B18883090026%22%2C%22invoca_detected_destination%22%3A%22%2B18883090026%22%7D%7D%5D&destination_settings=%7B%22paramName%22%3A%22static_all_hours_destination%22%7D&jsoncallback=json_rr11&"
+            logger.info(f"{lat, lng}")
+            url = f"https://pnapi.invoca.net/1686/na.jsonp?network_id=1686&js_version=4.25.0&tag_id=1686%2F3823703601&request_data_shared_params=%7B%22calling_page%22%3A%22https%3A%2F%2Fwww.amplifonusa.com%2Four-program%2Fclinic-locator%2Fsearch-results-page%3Faddr%3D{_['city']}%26lat%3D{lat}%26long%3D{lng}%22%2C%22customer_journey%22%3A%22%2Four-program%2Fclinic-locator%2Fsearch-results-page%22%2C%22adobe_id%22%3A%2262252471091252517892297644018594141752%22%2C%22utm_medium%22%3A%22direct%22%2C%22utm_source%22%3A%22direct%22%2C%22invoca_id%22%3A%22i-58d53216-3d55-48c3-f4b7-6eafd324080c%22%2C%22inv_campaign_channel%22%3A%22other%22%2C%22inv_campaign_full%22%3A%22other%22%2C%22hhpCode%22%3A%22N%2FA%22%2C%22hhpName%22%3A%22N%2FA%22%2C%22gcm_uid%22%3Anull%2C%22business_unit%22%3Anull%2C%22channel%22%3Anull%2C%22CountryCode%22%3Anull%2C%22dealer%22%3Anull%2C%22format%22%3Anull%2C%22gclid%22%3Anull%2C%22gclsrc%22%3Anull%2C%22id%22%3Anull%2C%22inv_local_national%22%3Anull%2C%22keywordterm%22%3Anull%2C%22leadtype_destination_number%22%3Anull%2C%22mci%22%3Anull%2C%22msclkid%22%3Anull%2C%22name%22%3Anull%2C%22static_all_hours_destination%22%3Anull%2C%22static_in_hours_destination%22%3Anull%2C%22target%22%3Anull%2C%22type%22%3Anull%7D&client_messages=%7B%7D&client_info=%7B%22url%22%3A%22https%3A%2F%2Fwww.amplifonusa.com%2Four-program%2Fclinic-locator%2Fsearch-results-page%3Faddr%3D{_['city']}%26lat%3D{lat}%26long%3D{lng}%22%2C%22referrer%22%3A%22%22%2C%22cores%22%3A4%2C%22platform%22%3A%22Linux%20x86_64%22%2C%22screenWidth%22%3A1366%2C%22screenHeight%22%3A768%2C%22language%22%3A%22en-US%22%7D&request_data=%5B%7B%22request_id%22%3A%22%2B18778467074%22%2C%22advertiser_campaign_id_from_network%22%3A%22AMPLUNIV01%22%2C%22params%22%3A%7B%22static_all_hours_destination%22%3A%22%2B18778467074%22%2C%22invoca_detected_destination%22%3A%22%2B18778467074%22%7D%7D%2C%7B%22request_id%22%3A%22%2B18883090026%22%2C%22advertiser_campaign_id_from_network%22%3A%22AMPLUNIV01%22%2C%22params%22%3A%7B%22static_all_hours_destination%22%3A%22%2B18883090026%22%2C%22invoca_detected_destination%22%3A%22%2B18883090026%22%7D%7D%5D&destination_settings=%7B%22paramName%22%3A%22static_all_hours_destination%22%7D&jsoncallback=json_rr11&"
             try:
                 phone = json.loads(
                     http.get(url, headers=header1(lat, lng))
@@ -65,14 +65,19 @@ def fetch_data():
             except:
                 pass
 
-            street_address = _["address2"]
+            street_address = ""
+            if _.get("address1"):
+                street_address = _["address1"]
+
+            street_address += " " + _["address2"]
             if _["address3"]:
                 street_address += " " + _["address3"]
+
             yield SgRecord(
                 page_url="https://www.amplifonusa.com/our-program/clinic-locator",
                 store_number=_["id"],
                 location_name=_["shopname"],
-                street_address=street_address,
+                street_address=street_address.strip(),
                 city=_["city"],
                 state=_["state"],
                 zip_postal=_["postalcode"],

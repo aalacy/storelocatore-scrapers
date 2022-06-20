@@ -80,6 +80,7 @@ def fetch_data():
                 if "Los Angeles" in state:
                     if "CA" in city.split()[-1]:
                         state = "CA"
+                        city = city.replace("CA", "")
                 if country_code == "CA":
                     zip_postal = loc["address2"].split()
                     zip_postal = zip_postal[-2] + " " + zip_postal[-1]

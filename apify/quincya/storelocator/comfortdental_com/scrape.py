@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
             script = str(script).replace("%", "")
             break
 
-    js = script.split('"places":')[1].split(',"listing')[0]
+    js = script.split('"places":')[1].split(',"map_tabs')[0]
     stores = json.loads(js)
 
     for store_data in stores:

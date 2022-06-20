@@ -9,48 +9,76 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def get_data():
     initial_url = "https://www.sytner.co.uk/dealer-locator/?postcode=london&distance=0&franchiseHash="
 
-    with SgChrome() as driver:
+    with SgChrome(block_third_parties=False) as driver:
         driver.get(initial_url)
 
         html = driver.page_source
 
-    soup = bs(html, "html.parser")
+        soup = bs(html, "html.parser")
 
-    grids = soup.find_all("div", attrs={"class": "row-fluid row-t2crq"})
-    for grid in grids:
-        locator_domain = "sytner.co.uk"
-        page_url = grid.find("a", attrs={"title": "Full Details"})["href"]
-        location_name = grid.find("h3").text.strip()
-        address = grid.find("span", attrs={"class": "address-line1"}).text.strip()[:-1]
-        city = grid.find("span", attrs={"class": "address-city"}).text.strip()[:-1]
-        state = grid.find("span", attrs={"class": "address-county"}).text.strip()[:-1]
-        zipp = grid.find("span", attrs={"class": "address-postcode"}).text.strip()
-        country_code = "UK"
-        phone = grid.find("div", attrs={"class": "location-no"}).find("a")["href"]
-        phone = phone.split(":")[1]
+        grids = soup.find_all("div", attrs={"class": "row-fluid row-t2crq"})
+        for grid in grids:
+            locator_domain = "sytner.co.uk"
+            page_url = (
+                "https:" + grid.find("a", attrs={"title": "Full Details"})["href"]
+            )
+            location_name = grid.find("h3").text.strip()
+            address = grid.find("span", attrs={"class": "address-line1"}).text.strip()[
+                :-1
+            ]
+            city = grid.find("span", attrs={"class": "address-city"}).text.strip()[:-1]
+            state = grid.find("span", attrs={"class": "address-county"}).text.strip()[
+                :-1
+            ]
+            zipp = grid.find("span", attrs={"class": "address-postcode"}).text.strip()
+            country_code = "UK"
+            phone = grid.find("div", attrs={"class": "location-no"}).find("a")["href"]
+            phone = phone.split(":")[1]
 
-        location_type = grid.find("span").text.strip()
-        latitude = grid.find("a", attrs={"title": "View Location"})["data-latitude"]
-        longitude = grid.find("a", attrs={"title": "View Location"})["data-longitude"]
-        store_number = grid.find("a", attrs={"title": "View Location"})["data-id"]
-        hours = "<INACCESSIBLE>"
+            location_type = grid.find("span").text.strip()
+            latitude = grid.find("a", attrs={"title": "View Location"})["data-latitude"]
+            longitude = grid.find("a", attrs={"title": "View Location"})[
+                "data-longitude"
+            ]
+            store_number = grid.find("a", attrs={"title": "View Location"})["data-id"]
 
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+            driver.get(page_url)
+            hours_response = driver.page_source
+
+            try:
+                hours_soup = bs(hours_response, "html.parser")
+                hours_table = hours_soup.find("div", attrs={"class": "loc-hours-table"})
+
+                hours_days = hours_table.find_all("td", attrs={"class": "day"})
+                hours_times = hours_table.find_all("td", attrs={"class": "hours"})
+
+                hours = ""
+                for x in range(hours_days):
+                    day = hours_days[x]
+                    time = hours_times[x]
+                    hours = hours + day + " " + time + ", "
+
+                hours = hours[:-2]
+
+            except Exception:
+                hours = "<MISSING>"
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
 def scrape():
@@ -88,4 +116,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

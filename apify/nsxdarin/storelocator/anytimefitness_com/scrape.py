@@ -149,6 +149,8 @@ def fetch_data(sgw: SgWriter):
         )
         if status == "1" or status == "2":
             hours_of_operation = "Coming Soon"
+        if hours_of_operation != "<MISSING>":
+            hours_of_operation = hours_of_operation.replace("<MISSING>;", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
