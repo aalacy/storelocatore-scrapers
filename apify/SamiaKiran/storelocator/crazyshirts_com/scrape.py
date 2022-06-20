@@ -41,7 +41,7 @@ def fetch_data():
         r = session.get(api_url, headers=headers)
         loclist = json.loads(r.text)["items"]
         for loc in loclist:
-            location_name = loc["locationTypes"][0]["name"]
+            location_name = loc["name"]
             store_number = loc["code"]
             page_url = "https://www.crazyshirts.com/store-details?code=" + store_number
             log.info(page_url)
@@ -51,6 +51,7 @@ def fetch_data():
                 street_address = address["address1"] + " " + address["address2"]
             except:
                 street_address = address["address1"]
+            street_address.replace("Planet Hollywood Resort & Casino ", "")
             log.info(street_address)
             city = address["cityOrTown"]
             state = address["stateOrProvince"]
