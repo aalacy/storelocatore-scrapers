@@ -105,7 +105,7 @@ def fetch_locations(postal, search, driver, writer):
         longitude = location["longitude"]
 
         hours_of_operation = get_hours(store_number, soup)
-        
+
         search.found_location_at(latitude, longitude)
 
         writer.write_row(
@@ -134,11 +134,14 @@ def fetch_data():
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
-    ) as writer, Chrome(options=options, driver_executable_path=ChromeDriverManager().install()
+    ) as writer, Chrome(
+        options=options, driver_executable_path=ChromeDriverManager().install()
     ) as driver:
         driver.set_script_timeout(600)
         load_initial_page(driver)
-        search = DynamicZipSearch(country_codes=[SearchableCountries.USA],max_search_distance_miles=15)
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], max_search_distance_miles=15
+        )
         for postal in search:
             fetch_locations(postal, search, driver, writer)
 
