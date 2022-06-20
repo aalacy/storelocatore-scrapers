@@ -17,18 +17,20 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.content)
-    div = tree.xpath('//url/loc[contains(text(), "/convenience-stores/")]')
+    div = tree.xpath(
+        '//url/loc[contains(text(), "/convenience-stores/")] | //url/loc[contains(text(), "/auto-repair-shops/")]'
+    )
     for d in div:
 
         page_url = "".join(d.xpath(".//text()"))
         if page_url.count("/") != 5:
             continue
+        if page_url == "https://divinesauto.com/convenience-stores/palouse/":
+            page_url = "https://divinesauto.com/convenience-stores/"
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = "".join(tree.xpath("//title//text()"))
-        if location_name.find("-") != -1:
-            location_name = location_name.split("-")[0].strip()
+        location_name = "".join(tree.xpath("//h1//text()"))
         ad = (
             " ".join(
                 tree.xpath(
@@ -39,8 +41,6 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         ad = " ".join(ad.split())
-        if not ad:
-            continue
 
         a = parse_address(International_Parser(), ad)
         street_address = (
@@ -75,13 +75,50 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h3[./strong[contains(text(), "Hours")]]/following-sibling::p[1]//text()'
+                    '//h3[./strong[contains(text(), "Convenience Store Hours")]]/following-sibling::p[1]//text()'
                 )
             )
             .replace("\n", "")
             .strip()
         )
-        hours_of_operation = " ".join(hours_of_operation.split())
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h3[./strong[contains(text(), "Hours")]]/following-sibling::p[1]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if page_url == "https://divinesauto.com/convenience-stores/":
+            location_name = (
+                "".join(
+                    tree.xpath(
+                        '//p[@class="has-text-align-center convenience-store-box"]/text()[last()]'
+                    )
+                )
+                .split("–")[0]
+                .strip()
+            )
+            street_address = (
+                "".join(
+                    tree.xpath(
+                        '//p[@class="has-text-align-center convenience-store-box"]/text()[last()]'
+                    )
+                )
+                .split("–")[1]
+                .strip()
+            )
+        if (
+            street_address == "203 W. 3Rd Ave"
+            or street_address == "3725 S Grand Blvd"
+            or not street_address
+            or street_address == "<MISSING>"
+        ):
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
