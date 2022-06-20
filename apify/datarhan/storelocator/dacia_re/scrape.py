@@ -28,6 +28,7 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        city = addr.city if addr.city else location_name.replace("DACIA", "")
         phone = poi_html.xpath(".//h5/text()")[0].split(":")[-1]
         hoo = poi_html.xpath(".//p/span//text()")[2:]
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
@@ -45,7 +46,7 @@ def fetch_data():
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
             zip_postal=addr.postcode,
             country_code="RE",

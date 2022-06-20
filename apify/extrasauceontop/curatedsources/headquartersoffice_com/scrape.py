@@ -11,7 +11,6 @@ import time
 from bs4 import BeautifulSoup as bs
 
 ssl._create_default_https_context = ssl._create_unverified_context
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
@@ -29,7 +28,8 @@ def get_page_urls():
         url = start_url + str(x) + "/?s"
 
         try:
-            response = session.get(url, headers=headers).text
+            with SgRequests() as session:
+                response = session.get(url, headers=headers).text
 
         except Exception:
             log.info(url)
@@ -63,7 +63,8 @@ def get_page_urls():
 
         for link in links:
             final_links.append(link)
-
+    log.info("links")
+    log.info(len(final_links))
     return final_links
 
 
@@ -87,8 +88,9 @@ def new_map_page(driver):
     responses = []
     for item in test:
         if "base64" in item["name"] and "marker-list" in item["name"]:
-            response = session.get(item["name"]).json()
-            responses.append(response)
+            with SgRequests() as session:
+                response = session.get(item["name"]).json()
+                responses.append(response)
 
     for response in responses:
         for location in response["meta"]:
@@ -177,13 +179,13 @@ def old_map_page(driver):
     for item in test:
         if "base64" in item["name"]:
 
-            session = SgRequests()
-            url = item["name"]
-            try:
-                response = session.get(url).json()
+            with SgRequests() as session:
+                url = item["name"]
+                try:
+                    response = session.get(url).json()
 
-            except Exception:
-                continue
+                except Exception:
+                    continue
 
             if "markers" in response.keys():
                 break

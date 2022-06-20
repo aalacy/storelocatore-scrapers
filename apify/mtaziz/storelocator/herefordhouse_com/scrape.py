@@ -8,6 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgpostal.sgpostal import parse_address_usa
 import json
 import re
+from lxml import html
 
 DOMAIN = "herefordhouse.com"
 BASE_URL = "https://www.herefordhouse.com/"
@@ -19,39 +20,41 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-MISSING = "<MISSING>"
-
-
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
-
 
 def pull_content(url):
     log.info("Pull content => " + url)
     HEADERS["Referer"] = url
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
+
+
+def get_slug(test_dict, location_name):
+    url_v = ""
+    for k, v in test_dict.items():
+        if k.startswith("CustomPage:") and location_name == v["name"]:
+            url_v = "https://www.herefordhouse.com" + v["url"]
+    return url_v
+
+
+def get_hoo(sel):
+    divs = sel.xpath(
+        '//div[contains(@class, "hours")]/div[contains(@class, "hours-entry")]'
+    )
+    hoo = []
+    for div in divs:
+        dh = "".join(div.xpath(".//text()"))
+        dh = " ".join(dh.split())
+        hoo.append(dh)
+    hoo = ", ".join(hoo)
+    return hoo
+
+
+def get_rawadd(sel):
+    add = sel.xpath('//*[contains(@class, "address-link")]//text()')
+    add = [" ".join(i.split()) for i in add]
+    add = [i for i in add if i]
+    add1 = " ".join(add)
+    return add1
 
 
 def fetch_data():
@@ -62,47 +65,59 @@ def fetch_data():
     info = json.loads(info)
     for key, value in info.items():
         if key.startswith("RestaurantLocation:"):
-            page_url = BASE_URL + value["slug"]
-            location_name = value["name"]
-            raw_address = value["fullAddress"].replace("\n", ", ")
-            street_address = value["streetAddress"].replace("\n", ", ")
-            city = value["city"]
-            state = value["state"]
-            zip_postal = value["postalCode"]
-            country_code = value["country"]
-            phone = value["displayPhone"]
-            location_type = MISSING
-            store_number = value["id"]
-            latitude = value["lat"]
-            longitude = value["lng"]
-            hours_of_operation = (
-                ", ".join(value["schemaHours"])
-                .replace("Su", "Sunday:")
-                .replace("Mo", "Monday:")
-                .replace("Tu", "Tuesday:")
-                .replace("We", "Wednesday:")
-                .replace("Th", "Thursday:")
-                .replace("Fr", "Friday:")
-                .replace("Sa", "Saturday:")
-            )
-            log.info("Append {} => {}".format(location_name, street_address))
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+            with SgRequests() as http:
+                location_name = value["name"]
+                page_url = get_slug(info, location_name)
+
+                r = http.get(page_url, headers=HEADERS)
+                sel = html.fromstring(r.text, "lxml")
+                raw_add = get_rawadd(sel)
+                hours_of_operation = get_hoo(sel)
+                pai = parse_address_usa(raw_add)
+                zip_postal = pai.postcode if pai.postcode is not None else ""
+                state = pai.state
+                sta = ""
+                sta1 = pai.street_address_1
+                sta2 = pai.street_address_2
+                if sta1 is not None and sta2 is not None:
+                    sta = sta1 + ", " + sta2
+                elif sta1 is not None and sta2 is None:
+                    sta = sta1
+                elif sta1 is None and sta2 is not None:
+                    sta = sta2
+                else:
+                    sta = ""
+                city = pai.city
+                country_code = pai.country
+                phone = sel.xpath('//a[contains(@href, "tel:")]/@href')
+                phone = "".join(phone).replace("tel:", "")
+                store_number = value["id"]
+                try:
+                    latitude = value["lat"]
+                except:
+                    latitude = ""
+                try:
+                    longitude = value["lng"]
+                except:
+                    longitude = ""
+
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=sta,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type="",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_add,
+                )
 
 
 def scrape():
@@ -117,4 +132,5 @@ def scrape():
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
