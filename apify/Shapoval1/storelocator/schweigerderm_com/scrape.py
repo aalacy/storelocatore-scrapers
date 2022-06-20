@@ -40,11 +40,7 @@ def fetch_data(sgw: SgWriter):
             latitude = "<MISSING>"
             longitude = "<MISSING>"
         phone = (
-            "".join(
-                tree.xpath(
-                    '//h1/following-sibling::p[1]//a[contains(@href, "tel")]//text()'
-                )
-            )
+            "".join(tree.xpath('//li[@class="location_phone"]/a//text()'))
             or "<MISSING>"
         )
         hours_of_operation = (

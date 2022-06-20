@@ -1,96 +1,58 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://christushealth.org/"
-    api_url = "https://christushealth.org/~/locations/%7BFA392008-735A-4839-B72D-2E06304BCB4C%7D.ashx"
-
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["points"]
+def fetch_data(sgw: SgWriter):
+    api = "https://www.christushealth.org/api/doctorlocations/locations"
+    r = session.get(api, headers=headers)
+    js = r.json()["items"]
 
     for j in js:
-        loc = j.get("locations")
-        for l in loc:
-            locator_domain = url
-            street_address = (
-                f"{l.get('street')} {l.get('street2') or ''}".strip() or "<MISSING>"
-            )
-            line = j.get("cityState") or "<MISSING>,<MISSING>"
-            city = line.split(",")[0].strip() or "<MISSING>"
-            state = line.split(",")[1].strip() or "<MISSING>"
-            postal = j.get("zip") or "<MISSING>"
-            if len(postal) > 5:
-                postal = postal[:5]
-            country_code = "US"
-            store_number = "<MISSING>"
-            page_url = f'https://christushealth.org{l.get("detailLink")}'
-            location_name = l.get("name") or "<MISSING>"
-            if "-" in location_name:
-                location_name = location_name.split("-")[0].strip()
-            phone = l.get("phone") or "<MISSING>"
-            latitude = j.get("lat") or "<MISSING>"
-            longitude = j.get("lng") or "<MISSING>"
-            location_type = j.get("locationType") or "<MISSING>"
-            hours_of_operation = "<INACCESSIBLE>"
+        adr1 = j.get("streetAddress") or ""
+        adr2 = j.get("streetAddress2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zipCode")
+        country_code = "US"
+        store_number = j.get("id")
+        location_type = j.get("entity")
+        location_name = j.get("name")
+        slug = j.get("url")
+        page_url = f"https://www.christushealth.org{slug}"
+        phone = j.get("phone")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        hours_of_operation = "<INACCESSIBLE>"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            location_type=location_type,
+            phone=phone,
+            store_number=store_number,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
 
-            out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.christushealth.org/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -107,7 +107,10 @@ def ret_record(record):
         longitude = str(record["Coords"]["Lng"])
     except Exception:
         pass
-
+    if len(str(latitude)) <= 3:
+        latitude = MISSING
+    if len(str(longitude)) <= 3:
+        longitude = MISSING
     parsed = parser.parse_address_intl(raw_address)
     street_address = parsed.street_address_1 if parsed.street_address_1 else MISSING
     street_address = (
@@ -115,18 +118,38 @@ def ret_record(record):
         if parsed.street_address_2
         else street_address
     )
+    # This seems to work best for street_address ^
 
     try:
         raw_address = " ".join(data2)
+        try:
+            raw_address = raw_address.split("Tel")[0]
+        except Exception:
+            pass
+        try:
+            raw_address = raw_address.split("Mail Boxes Etc.")[1].strip()
+            raw_address = raw_address.split(" ", 1)[1].strip()
+        except Exception:
+            pass
+        try:
+            raw_address = raw_address.split("Tel")[0].strip()
+        except Exception:
+            pass
     except Exception:
         pass
     raw_address = raw_address.replace("Contact", "").strip()
-    raw_address = re.sub("[\t\r\n ]+", " ", raw_address)
     parsed = parser.parse_address_intl(raw_address)
     city = parsed.city if parsed.city else MISSING
     country_code = parsed.country if parsed.country else MISSING
     state = parsed.state if parsed.state else MISSING
     zip_postal = parsed.postcode if parsed.postcode else MISSING
+    raw_address = re.sub("[\t\r\n ]+", " ", str(raw_address).strip())
+
+    if city == MISSING:
+        try:
+            city = data1[-1]
+        except Exception:
+            pass
 
     return SgRecord(
         page_url=page_url,
