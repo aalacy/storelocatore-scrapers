@@ -63,10 +63,6 @@ def fetch_data():
 
             raw_address = street_address
 
-            if re.search("[0-9]", raw_address[-1]):
-                phone = raw_address.split(",")[-1].strip()
-                raw_address = ",".join(street_address.split(",")[:-1])
-
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address:
@@ -85,6 +81,25 @@ def fetch_data():
 
             if state == "<MISSING>":
                 state = formatted_addr.state
+
+            if re.search("[0-9]", raw_address[-1]):
+                phone = raw_address.split(",")[-1].strip()
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("+", "")
+                    .replace(" ", "")
+                    .replace("-", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    raw_address = ",".join(street_address.split(",")[:-1])
+                else:
+                    zip = phone.split(" ")[-1].strip()
+                    phone = "<MISSING>"
+
+            if zip == phone:
+                phone = "<MISSING>"
 
             type_list = []
             if "types" in store:
