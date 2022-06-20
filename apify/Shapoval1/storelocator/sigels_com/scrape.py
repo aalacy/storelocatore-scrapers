@@ -31,7 +31,7 @@ def fetch_data(sgw: SgWriter):
     for j in js["merchant_configs"]:
 
         b = j.get("merchant")
-        page_url = "<MISSING>"
+        page_url = "https://sigels.com/info"
         location_name = b.get("name") or "<MISSING>"
         ad = b.get("address").get("full_address")
         location_type = b.get("merchant_type")

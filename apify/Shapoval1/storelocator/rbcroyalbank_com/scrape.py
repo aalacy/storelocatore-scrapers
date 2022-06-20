@@ -14,6 +14,7 @@ def fetch_data(sgw: SgWriter):
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
         max_search_distance_miles=250,
+        expected_search_radius_miles=30,
         max_search_results=None,
     )
     for z in zips:
