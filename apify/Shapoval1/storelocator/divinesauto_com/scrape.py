@@ -51,15 +51,11 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "US"
         city = a.city or "<MISSING>"
-        text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
+        map_link = "".join(tree.xpath('//iframe[contains(@src, "maps")]/@src'))
         try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
             latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
             "".join(
