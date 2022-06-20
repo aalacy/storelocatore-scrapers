@@ -15,10 +15,12 @@ def fetch_data(sgw: SgWriter):
         lines = d.xpath(".//text()")
         lines = list(filter(None, [line.strip() for line in lines]))
         location_name = lines.pop(0)
-        adr = lines[: lines.index("Store hours")]
-        hours_of_operation = ";".join(lines[lines.index("Store hours") + 1 :])
-        csz = adr.pop()
-        street_address = adr.pop()
+        if "Store hours" in lines:
+            lines.remove("Store hours")
+
+        hours_of_operation = lines.pop()
+        csz = lines.pop()
+        street_address = lines.pop()
         city = csz.split(", ")[0]
         csz = csz.split(", ")[1]
         state, postal = csz.split()
