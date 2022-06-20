@@ -15,7 +15,9 @@ def get_data():
     url = "https://www.centrehifi.com/en/store-locator/"
     class_name = "popup-language-header"
 
-    with SgChrome() as driver:
+    with SgChrome(
+        block_third_parties=False,
+    ) as driver:
         driver.get(url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CLASS_NAME, class_name))
@@ -95,19 +97,36 @@ def get_data():
                 state = "<MISSING>"
         address = address.strip()
         store_number = grid["data-store-id"]
-        phone = ""
         location_type = ""
-        hours = ""
         country_code = "CA"
-
-        try:
-            phone = "(" + location_name.split("(")[1]
-            location_name = location_name.replace(phone, "").strip()
-        except Exception:
-            pass
 
         if "," == address[-1]:
             address = address[:-1]
+
+        phone_test = grid.find_all("a")
+        for test in phone_test:
+            if "tel:" in test["href"]:
+                phone = test["href"].replace("tel:", "")
+                break
+
+        hours = ""
+        hours_parts = (
+            grid.find("div", attrs={"class": "opening-hours"})
+            .find("tbody")
+            .find_all("tr")
+        )
+
+        for part in hours_parts:
+            hours = (
+                hours
+                + part.text.strip()
+                .replace("\n", " ")
+                .replace("\r", " ")
+                .replace("\t", " ")
+                + ", "
+            )
+
+        hours = unidecode.unidecode(hours[:-2])
 
         yield {
             "locator_domain": locator_domain,
@@ -166,4 +185,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

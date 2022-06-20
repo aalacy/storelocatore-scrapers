@@ -1,29 +1,19 @@
-import ssl
 from lxml import etree
 from urllib.parse import urljoin
 from time import sleep
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def fetch_data():
     start_url = "https://www.converse.com.au/allstores"
     domain = "converse.com.au"
 
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
@@ -38,7 +28,7 @@ def fetch_data():
             sleep(10)
             loc_dom = etree.HTML(driver.page_source)
 
-            location_name = loc_dom.xpath('//div[@class="store-type"]/text()')[0]
+            location_name = loc_dom.xpath('//div[@itemprop="name"]/text()')[0]
             str_1 = loc_dom.xpath('//span[@itemprop="shopNoUnit"]/text()')
             str_1 = str_1[0] if str_1 else ""
             str_2 = loc_dom.xpath('//span[@itemprop="streetNumber"]/text()')
@@ -58,6 +48,8 @@ def fetch_data():
                 .split("@")[-1]
                 .split(",")[:2]
             )
+            phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')[0]
+            country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')[0]
 
             item = SgRecord(
                 locator_domain=domain,
@@ -67,12 +59,10 @@ def fetch_data():
                 city=loc_raw[0],
                 state=loc_raw[1],
                 zip_postal=loc_raw[2],
-                country_code=loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')[
-                    0
-                ],
-                store_number=SgRecord.MISSING,
-                phone=loc_dom.xpath('//span[@itemprop="telephone"]/text()')[0],
-                location_type=SgRecord.MISSING,
+                country_code=country_code,
+                store_number="",
+                phone=phone,
+                location_type="",
                 latitude=geo[0],
                 longitude=geo[1],
                 hours_of_operation=hoo,
