@@ -16,6 +16,9 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
+        if not poi["address"]:
+            continue
+
         item = SgRecord(
             locator_domain=domain,
             page_url="https://converse.com.ar/stores",

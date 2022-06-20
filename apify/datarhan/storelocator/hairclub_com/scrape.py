@@ -45,6 +45,8 @@ def fetch_data():
             all_codes.found_location_at(
                 poi["position"]["latitude"], poi["position"]["longitude"]
             )
+            hoo = loc_dom.xpath('//div[@class="day-and-hour"]//text()')
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
