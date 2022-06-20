@@ -71,11 +71,13 @@ def fetch_locations(postal, search, driver, writer):
     soup = fetch(postal, driver)
 
     if not soup:
+        search.found_nothing()
         return
 
     canvas = soup.find("div", id="map_canvas")
 
     if not canvas:
+        search.found_nothing()
         return
 
     locations = json.loads(canvas.attrs["data-stores"])
