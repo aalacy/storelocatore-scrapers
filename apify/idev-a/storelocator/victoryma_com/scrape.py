@@ -43,7 +43,7 @@ def get_country_by_code(code=""):
     elif code in ca_provinces_codes:
         return "CA"
     else:
-        return "<MISSING>"
+        return ""
 
 
 @retry(stop=stop_after_attempt(10), wait=wait_random(min=30, max=90))
