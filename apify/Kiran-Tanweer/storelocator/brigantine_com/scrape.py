@@ -7,7 +7,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 import re
 import json
-from sgscrape import sgpostal as parser
 
 
 session = SgRequests()
@@ -65,21 +64,16 @@ def fetch_data():
         )
         script = json.loads(script)
         address = address.replace("Address ", "").strip()
-        parsed = parser.parse_address_usa(address)
-        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-        street = (
-            (street1 + ", " + parsed.street_address_2)
-            if parsed.street_address_2
-            else street1
-        )
-        city = parsed.city if parsed.city else "<MISSING>"
-        state = parsed.state if parsed.state else "<MISSING>"
-        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
         for store in script["locations"]:
             if title.find(store["title"]) != -1:
                 store_id = store["ID"]
                 latitude = store["map"]["lat"]
                 longitude = store["map"]["lng"]
+                street = store["map"]["name"]
+                city = store["map"]["city"]
+                state = store["map"]["state_short"]
+                pcode = store["map"]["post_code"]
 
                 yield SgRecord(
                     locator_domain=DOMAIN,
@@ -96,6 +90,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours.strip(),
+                    raw_address=address.strip(),
                 )
 
 
