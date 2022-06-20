@@ -8,8 +8,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://www.mcdonalds.it/store_closest.js"
     domain = "mcdonalds.it"
     hdr = {
@@ -41,11 +40,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
