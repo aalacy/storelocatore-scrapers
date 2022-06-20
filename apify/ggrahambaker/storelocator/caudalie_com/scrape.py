@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import us
 from sglogging import SgLogSetup
-from math import radians, cos, sin, asin, sqrt, pi, atan2
 
 logger = SgLogSetup().get_logger("")
 
