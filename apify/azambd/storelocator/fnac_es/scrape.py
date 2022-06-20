@@ -31,14 +31,14 @@ def driver_sleep(driver, time=2):
         pass
 
 
+# Not in use
 def random_sleep(driver, start=5, limit=3):
     driver_sleep(driver, random.randint(start, start + limit))
 
 
 def fetch_stores():
     with SgFirefox(block_third_parties=True) as driver:
-        driver.get(store_url)
-        random_sleep(driver, 20)
+        driver.get_and_wait_for_request(store_url, 80)
         jsontxt = (
             driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
         ).replace("&quot;", '"')

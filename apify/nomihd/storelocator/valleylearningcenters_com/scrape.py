@@ -5,13 +5,27 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "valleylearningcenters.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "authority": "valleylearningcenters.com",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "cache-control": "max-age=0",
+    "referer": "https://valleylearningcenters.com/",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "cross-site",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
 
 
@@ -25,7 +39,7 @@ def fetch_data():
         "https://valleylearningcenters.com/locations/", headers=headers
     )
     loc_sel = lxml.html.fromstring(loc_req.text)
-    loc_list = loc_sel.xpath('//div[@class="wp-block-column"]')
+    loc_list = loc_sel.xpath('//div[contains(@class,"wp-block-column")]')
     loc_dict = {}
     for loc in loc_list:
         link = "".join(loc.xpath(".//h2//a/@href")).strip()
@@ -56,7 +70,7 @@ def fetch_data():
 
             country_code = "US"
 
-            store_number = "<MISSING>"
+            store_number = store["id"]
             desc_sel = lxml.html.fromstring(store["description"])
             phone = "".join(desc_sel.xpath("//p//text()")).strip()
             if "!" in phone:
@@ -98,7 +112,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
