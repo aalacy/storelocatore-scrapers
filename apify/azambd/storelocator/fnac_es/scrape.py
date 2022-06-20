@@ -22,23 +22,9 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def driver_sleep(driver, time=2):
-    try:
-        WebDriverWait(driver, time).until(
-            EC.presence_of_element_located((By.ID, MISSING))
-        )
-    except Exception:
-        pass
-
-
-# Not in use
-def random_sleep(driver, start=5, limit=3):
-    driver_sleep(driver, random.randint(start, start + limit))
-
-
 def fetch_stores():
-    with SgFirefox(block_third_parties=True) as driver:
-        driver.get_and_wait_for_request(store_url, 80)
+    with SgFirefox(driver_wait_timeout=120) as driver:
+        driver.get_and_wait_for_request(store_url)
         jsontxt = (
             driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
         ).replace("&quot;", '"')
