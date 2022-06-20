@@ -82,7 +82,7 @@ def get_data(slug, sgw: SgWriter):
         .strip()
     )
     phone = line.pop()
-    raw_address = line.pop(0).replace("\xa0", "")
+    raw_address = line.pop(0).replace("\xa0", " ")
     if "Hours" in line:
         line.remove("Hours")
     hours_of_operation = ";".join(line)
