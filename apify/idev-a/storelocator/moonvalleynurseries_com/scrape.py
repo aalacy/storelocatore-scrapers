@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgpostal.sgpostal import parse_address_intl
@@ -34,6 +34,8 @@ def fetch_data():
                 location_type = "Moon Valley Nursery"
             if "Farm" in location_name:
                 location_type = "Farm"
+            if not location_type:
+                continue
             page_url = locator_domain + _.a["href"]
             temp = []
             for pp in _.select("p"):
@@ -77,7 +79,17 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
