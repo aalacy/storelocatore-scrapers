@@ -16,7 +16,6 @@ base_url = "https://www.gloriajeansnc.com/wp-admin/admin-ajax.php?action=store_s
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
-        print(len(locations))
         for _ in locations:
             street_address = _["address"]
             if _["address2"]:
