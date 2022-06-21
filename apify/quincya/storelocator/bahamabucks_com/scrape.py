@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     base_link = "https://bahamabucks.com/locations/"
-    js_link = "https://bahamabucks.com/wp-content/cache/autoptimize/js/autoptimize_1d947f98a5b19801d376e6c98ccbceff.js"
+    js_link = "https://bahamabucks.com/wp-content/cache/autoptimize/js/autoptimize_a8a773fbd229a9bf45d2408d87b2c7ec.js"
 
     session = SgRequests()
     req = session.get(js_link, headers=headers)
@@ -84,6 +84,17 @@ def fetch_data(sgw: SgWriter):
             == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
         ):
             continue
+        if (
+            location_name == "Hudson Oaks"
+            and hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            link = base_link
+        if (
+            hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            hours_of_operation = ""
         if not location_name:
             location_name = "BAHAMA BUCK'S"
 
