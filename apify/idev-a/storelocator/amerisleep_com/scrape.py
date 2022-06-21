@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import dirtyjson as json
+import json
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -38,7 +38,6 @@ def fetch_data():
             link = div.a["href"]
             if not link.startswith("http"):
                 link = locator_domain + link
-            logger.info(link)
             soup1 = bs(session.get(link, headers=_headers).text, "lxml")
             loc = json.loads(
                 soup1.find("script", type="application/ld+json")
@@ -63,7 +62,7 @@ def fetch_data():
                 state=loc["address"]["addressRegion"],
                 zip_postal=loc["address"]["postalCode"],
                 country_code="US",
-                location_type=loc["@type"],
+                location_type="",
                 phone=loc["telephone"],
                 latitude=coord[0],
                 longitude=coord[1],
