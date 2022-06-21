@@ -38,7 +38,6 @@ def extract_json(html_string):
 
 
 def get_data():
-    page_urls = []
     with SgRequests(verify_ssl=False) as session:
         search = DynamicZipSearch(
             country_codes=[SearchableCountries.USA],
