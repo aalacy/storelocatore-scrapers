@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
         if "direcci" not in item.text.lower():
             continue
         location_name = item.find(class_="titulotienda").text.strip()
-        raw_address = list(item.p.stripped_strings)[1]
+        raw_address = " ".join(list(item.p.stripped_strings)[1:])
         addr = parse_address_intl(raw_address)
         try:
             street_address = addr.street_address_1 + " " + addr.street_address_2

@@ -15,7 +15,7 @@ session = SgRequests()
 def fetch_data():
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=5,
+        expected_search_radius_miles=500,
     )
 
     headers = {
@@ -24,67 +24,33 @@ def fetch_data():
 
     for lat, lng in coords:
 
-        location_url = (
-            "https://watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="
-            + str(lat)
-            + "&lng="
-            + str(lng)
-            + "&max_results=250&search_radius=10&search=&statistics="
-        )
-        try:
-            r_locations = session.get(location_url, headers=headers)
-            json_data = r_locations.json()
-        except Exception:
-            continue
+        location_url = "https://watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=500&search_radius=500&search=&statistics="
+        all_locations = session.get(
+            location_url.format(lat, lng), headers=headers
+        ).json()
+        if not all_locations:
+            coords.found_nothing()
 
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        country_code = "US"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        hours_of_operation = "<MISSING>"
-        page_url = (
-            "http://www.watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="
-            + str(lat)
-            + "&lng="
-            + str(lng)
-            + "&max_results=250&search_radius=10&search=&statistics="
-        )
-
-        for location in json_data:
-            city = location["city"]
-            state = location["state"]
-            zipp = location["zip"]
-            address2 = location["address2"]
-            street_address = (
-                location["address"] + " " + str(address2).replace("None", "")
-            )
-            latitude = location["lat"]
-            longitude = location["lng"]
-            phone = location["phone"]
-            store_number = location["store"]
+        for poi in all_locations:
+            address2 = poi["address2"]
+            street_address = poi["address"] + " " + str(address2).replace("None", "")
             hours_of_operation = "Open 24/7"
+            coords.found_location_at(poi["lat"], poi["lng"])
 
             item = SgRecord(
                 locator_domain="watermillexpress.com",
-                page_url=page_url,
-                location_name=location_name,
+                page_url="https://watermillexpress.com/locations/",
+                location_name=poi["store"],
                 street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zipp,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
+                city=poi["city"],
+                state=poi["state"],
+                zip_postal=poi["zip"],
+                country_code="US",
+                store_number=poi["store"],
+                phone=poi["phone"],
+                location_type="",
+                latitude=poi["lat"],
+                longitude=poi["lng"],
                 hours_of_operation=hours_of_operation,
             )
 
