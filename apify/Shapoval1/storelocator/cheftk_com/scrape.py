@@ -1,40 +1,13 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://www.cheftk.com"
     urls = [
@@ -80,7 +53,7 @@ def fetch_data():
         r = session.get(i, headers=headers)
         tree = html.fromstring(r.text)
 
-        page_url = i
+        page_url = str(i)
         phone = (
             "".join(
                 tree.xpath(
@@ -90,16 +63,18 @@ def fetch_data():
             .replace("Phone", "")
             .replace(":", "")
             .replace("Call", "")
+            .replace("(Nom Yen)", "")
             .strip()
         )
-        phone = phone.replace("​    ", "")
+        phone = phone.replace("​    ", "").strip()
+        phone = " ".join(phone.split())
         location_name = (
             "".join(
                 tree.xpath(
                     '//div[@class="txt "]/div[1]//text() | //div[@class="txt "]/h6[1]//text()'
                 )
             )
-            .replace("   ", "")
+            .replace("   ", "")
             .strip()
             or "<MISSING>"
         )
@@ -122,7 +97,7 @@ def fetch_data():
                         '//div[@class="txt "]/h6[1]/following-sibling::p[1]//text()'
                     )
                 )
-                .replace("            ", "")
+                .replace("            ", "")
                 .strip()
             )
         if page_url.find("808") != -1:
@@ -140,15 +115,13 @@ def fetch_data():
                 )
             )
         if page_url.find("thep-thai") != -1:
-            ad = (
-                "".join(tree.xpath('//div[@class="txt "]/p[1]//text()'))
-                .split("Copyright.")[0]
-                .strip()
-                + " "
-                + "".join(tree.xpath('//div[@class="txt "]/p[2]//text()'))
-            )
+            ad = "".join(
+                tree.xpath('//p/span//span[@style="font-size:20px;"]//text()')
+            ).strip()
+        if ad.find("Garlic") != -1:
+            ad = ad.split("Garlic")[0].strip()
+        ad = " ".join(ad.split())
         a = usaddress.tag(ad, tag_mapping=tag)[0]
-
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
@@ -156,14 +129,11 @@ def fetch_data():
         postal = a.get("postal") or "<MISSING>"
         country_code = "USA"
         city = a.get("city") or "<MISSING>"
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
         if street_address.find("69-201") != -1:
-            session = SgRequests()
             r = session.get("http://www.cheftk.com/contact-us.html", headers=headers)
             tree = html.fromstring(r.text)
             hours_of_operation = (
@@ -192,7 +162,6 @@ def fetch_data():
                 .strip()
             )
         if street_address.find("1103") != -1:
-            session = SgRequests()
             r = session.get("http://www.cheftk.com/contact-us.html", headers=headers)
             tree = html.fromstring(r.text)
             slug = street_address.split()[0].strip()
@@ -211,31 +180,28 @@ def fetch_data():
         if street_address.find("75-5722") != -1:
             hours_of_operation = "11:00 a.m. - 9:00 p.m. daily "
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

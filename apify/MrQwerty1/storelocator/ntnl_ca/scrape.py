@@ -29,8 +29,11 @@ def get_urls():
     return tree.xpath("//a[contains(text(), 'Learn more')]/@href")
 
 
-def get_data(url, sgw: SgWriter):
-    page_url = f"https://www.ntnl.ca{url}"
+def get_data(slug, sgw: SgWriter):
+    if slug.startswith("/"):
+        page_url = f"https://www.ntnl.ca{slug}"
+    else:
+        return
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 

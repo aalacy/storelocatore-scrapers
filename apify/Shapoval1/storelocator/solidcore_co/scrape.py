@@ -34,6 +34,7 @@ def fetch_data(sgw: SgWriter):
         .replace("icon", '"icon"')
         .replace("infoWindow", '"infoWindow"')
         .replace("content", '"content"')
+        .replace("nickname", '"nickname"')
     )
     jsblock = "[" + jsblock + "]"
     jsb = eval(jsblock)
