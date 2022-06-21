@@ -136,6 +136,12 @@ def fetch_data():
                     '//div[@class="panel-body"]//div[@class="col-md-8"]/img[@src="images/shondrive.jpg"]/@src'
                 )
             ).strip()
+            if len(shop_n_drive_logo) <= 0:
+                shop_n_drive_logo = "".join(
+                    store_sel.xpath(
+                        '//div[@class="panel-body"]//div[@class="col-md-8"]/img[@src="images/ShonDrive.jpg"]/@src'
+                    )
+                ).strip()
             if shop_n_drive_logo:
                 yield SgRecord(
                     locator_domain=locator_domain,

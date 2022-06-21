@@ -3,7 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
@@ -34,20 +34,18 @@ def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    divs = tree.xpath("//section[@class='section03']")
+    divs = tree.xpath("//div[contains(@class, 'branch-detail branch')]")
     for d in divs:
-        location_name = "".join(d.xpath(".//p[@class='textList01'][1]/text()")).strip()
-        raw_address = "".join(d.xpath(".//p[@class='textList02']/text()")).strip()
+        location_name = "".join(d.xpath(".//h2/text()")).strip()
+        raw_address = "".join(
+            d.xpath(".//h2/following-sibling::div[1]//text()")
+        ).strip()
+        if "\r" in raw_address:
+            raw_address = raw_address.split("\r")[0].strip()
         street_address, city, state, postal = get_international(raw_address)
-        phone = (
-            "".join(d.xpath(".//p[contains(text(), 'Tel')]/text()"))
-            .replace(".", "")
-            .replace(":", "")
-            .replace("Tel", "")
-            .strip()
-        )
+        phone = "".join(d.xpath(".//h2/following-sibling::div[2]//text()")).strip()
 
-        text = "".join(d.xpath(".//iframe/@src"))
+        text = "".join(d.xpath(".//iframe/@data-src"))
         latitude, longitude = get_coords_from_embed(text)
 
         row = SgRecord(
@@ -71,5 +69,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.mos-th.com/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         fetch_data(writer)
