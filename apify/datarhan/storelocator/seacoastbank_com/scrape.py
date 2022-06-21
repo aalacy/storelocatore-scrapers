@@ -26,16 +26,9 @@ def fetch_data():
     all_locations = demjson.decode(data)
 
     for poi in all_locations:
-        store_url = "<MISSING>"
+        page_url = start_url
         if poi["detailsURL"]:
-            store_url = "https://www.seacoastbank.com" + poi["detailsURL"]
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["streetAddress"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["zip"]
+            page_url = "https://www.seacoastbank.com" + poi["detailsURL"]
         phone = poi["phone"]
         if not phone:
             continue
@@ -45,33 +38,29 @@ def fetch_data():
         geo = poi["coords"].split(",")
         latitude = geo[0]
         longitude = geo[1]
-        hoo = []
-        if poi.get("hoursTableHTML"):
-            hours = []
-            hours = etree.HTML(poi["hoursTableHTML"]).xpath("//tr")
-            for e in hours:
-                hoo.append(" ".join(e.xpath(".//text()")[:-1]))
-        hours_of_operation = (
-            " ".join(hoo).replace("N/A", "").replace("Lobby ", "")
-            if hoo
-            else "<MISSING>"
+
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath(
+            '//div[div[div[contains(text(), "LOBBY HOURS")]]]/following-sibling::div[1]//text()'
         )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
+            page_url=page_url,
+            location_name=poi["name"],
+            street_address=poi["streetAddress"],
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["zip"],
             country_code="",
             store_number="",
             phone=phone,
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hoo,
         )
 
         yield item
