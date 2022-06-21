@@ -5,8 +5,11 @@ import os
 import json
 import ssl
 from sglogging import sglog
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
 
 ssl._create_default_https_context = ssl._create_unverified_context
+crawl_state = CrawlStateSingleton.get_instance()
+log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
 
 
 def extract_json(html_string):
@@ -36,9 +39,7 @@ def extract_json(html_string):
     return json_objects
 
 
-def get_data():
-    page_urls = []
-    log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
+def get_urls():
     url = "https://www.carrefour.fr/magasin"
     with SgFirefox(
         block_third_parties=True,
@@ -47,14 +48,12 @@ def get_data():
         driver.get(url)
         response = driver.page_source
         soup = bs(response, "html.parser")
-
         region_urls = [
             "https://www.carrefour.fr" + li_tag.find("a")["href"]
             for li_tag in soup.find_all(
                 "li", attrs={"class": "store-locator-footer-list__item"}
             )
         ]
-
         for url in region_urls:
             log.info("url: " + url)
             driver.get(url)
@@ -69,115 +68,127 @@ def get_data():
             ]
 
             for sub_url in subregion_urls:
-                log.info("sub_url: " + sub_url)
+                crawl_state.push_request(SerializableRequest(url=sub_url))
+
+    crawl_state.set_misc_value("got_urls", True)
+
+
+def get_data():
+    page_urls = []
+
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
+        x = 0
+        for sub_url_object in crawl_state.request_stack_iter():
+            sub_url = sub_url_object.url
+            log.info("sub_url: " + sub_url)
+            try:
+                driver.get(sub_url)
+                response = driver.page_source
+                json_objects = extract_json(response)
+                json_objects[1]["search"]["data"]["stores"]
+            except Exception:
+                driver.get(sub_url)
+                response = driver.page_source
+                json_objects = extract_json(response)
+
+            for location in json_objects[1]["search"]["data"]["stores"]:
+                x = x + 1
+                if x == 10:
+                    return
+                locator_domain = "carrefour.fr"
+
+                page_url = "https://www.carrefour.fr" + location["storePageUrl"]
+                if (
+                    page_url
+                    == "https://www.carrefour.fr/magasin/market-bourgoin-jallieu-rivet"
+                ):
+                    continue
+                location_name = location["name"]
+                latitude = location["coordinates"][1]
+                longitude = location["coordinates"][0]
+                city = location["address"]["city"]
+                store_number = location["storeId"]
+                address = location["address"]["address1"].strip()
+
                 try:
-                    driver.get(sub_url)
-                    response = driver.page_source
-                    json_objects = extract_json(response)
-                    json_objects[1]["search"]["data"]["stores"]
+                    if address[-1] == "0":
+                        address = address[:-2]
                 except Exception:
-                    driver.get(sub_url)
-                    response = driver.page_source
-                    json_objects = extract_json(response)
+                    address = "<MISSING>"
 
-                for location in json_objects[1]["search"]["data"]["stores"]:
-                    locator_domain = "carrefour.fr"
+                state = "<MISSING>"
+                zipp = location["address"]["postalCode"]
 
-                    page_url = "https://www.carrefour.fr" + location["storePageUrl"]
-                    if (
-                        page_url
-                        == "https://www.carrefour.fr/magasin/market-bourgoin-jallieu-rivet"
-                    ):
-                        continue
-                    location_name = location["name"]
-                    latitude = location["coordinates"][1]
-                    longitude = location["coordinates"][0]
-                    city = location["address"]["city"]
-                    store_number = location["storeId"]
-                    address = location["address"]["address1"].strip()
+                log.info("page_url: " + page_url)
+                if page_url in page_urls:
+                    continue
+                page_urls.append(page_url)
+                driver.get(page_url)
+                phone_response = driver.page_source
 
-                    try:
-                        if address[-1] == "0":
-                            address = address[:-2]
-                    except Exception:
-                        address = "<MISSING>"
+                phone_soup = bs(phone_response, "html.parser")
+                a_tags = phone_soup.find_all("a")
 
-                    state = "<MISSING>"
-                    zipp = location["address"]["postalCode"]
+                phone = "<MISSING>"
+                for a_tag in a_tags:
+                    if "tel:" in a_tag["href"]:
+                        phone = a_tag["href"].replace("tel:", "")
+                        break
 
-                    log.info("page_url: " + page_url)
-                    if page_url in page_urls:
-                        continue
-                    page_urls.append(page_url)
-                    driver.get(page_url)
-                    phone_response = driver.page_source
+                location_type = location["banner"]
+                country_code = "France"
 
-                    phone_soup = bs(phone_response, "html.parser")
-                    a_tags = phone_soup.find_all("a")
-
-                    phone = "<MISSING>"
-                    for a_tag in a_tags:
-                        if "tel:" in a_tag["href"]:
-                            phone = a_tag["href"].replace("tel:", "")
-                            break
-
-                    location_type = location["banner"]
-                    country_code = "France"
-
-                    if page_url != "https://www.carrefour.fr/magasin/":
-                        hours_parts = phone_soup.find_all(
-                            "div", attrs={"class": "store-meta__opening-range"}
+                if page_url != "https://www.carrefour.fr/magasin/":
+                    hours_parts = phone_soup.find_all(
+                        "div", attrs={"class": "store-meta__opening-range"}
+                    )
+                    hours = ""
+                    for part in hours_parts:
+                        day = part.find(
+                            "div", attrs={"class": "store-meta__label"}
+                        ).text.strip()
+                        times = part.find_all(
+                            "div", attrs={"class": "store-meta__time-range"}
                         )
-                        hours = ""
-                        for part in hours_parts:
-                            day = part.find(
-                                "div", attrs={"class": "store-meta__label"}
-                            ).text.strip()
-                            times = part.find_all(
-                                "div", attrs={"class": "store-meta__time-range"}
-                            )
 
-                            time_part = ""
-                            for time in times:
-                                time_part = time_part + time.text.strip() + " "
+                        time_part = ""
+                        for time in times:
+                            time_part = time_part + time.text.strip() + " "
 
-                            time_part = time_part.strip()
+                        time_part = time_part.strip()
 
-                            hours = hours + day + " " + time_part + ", "
+                        hours = hours + day + " " + time_part + ", "
 
-                        hours = hours[:-2]
-                        hours = hours.replace("à", "-")
+                    hours = hours[:-2]
+                    hours = hours.replace("à", "-")
 
-                    else:
-                        hours = "<MISSING>"
-                    log.info(location_name)
-                    yield {
-                        "locator_domain": locator_domain,
-                        "page_url": page_url,
-                        "location_name": location_name,
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "city": city,
-                        "store_number": store_number,
-                        "street_address": address,
-                        "state": state,
-                        "zip": zipp,
-                        "phone": phone,
-                        "location_type": location_type,
-                        "hours": hours,
-                        "country_code": country_code,
-                    }
+                else:
+                    hours = "<MISSING>"
+                log.info(location_name)
+                yield {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                }
 
 
 def scrape():
-    try:
-        proxy_pass = os.environ["PROXY_PASSWORD"]
-
-    except Exception:
-        proxy_pass = "No"
-
-    if proxy_pass == "No":
-        raise Exception("Run this with a proxy")
+    if not crawl_state.get_misc_value("got_urls"):
+        get_urls()
 
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
@@ -213,4 +224,10 @@ def scrape():
     pipeline.run()
 
 
+# while True:
+# try:
 scrape()
+# break
+
+# except Exception:
+# continue
