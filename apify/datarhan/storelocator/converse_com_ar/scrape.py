@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -19,22 +21,31 @@ def fetch_data():
         if not poi["address"]:
             continue
 
+        raw_data = etree.HTML(poi["note"]).xpath("//text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        hoo = [e for e in raw_data if "hs" in e]
+        hoo = " ".join(hoo)
+        phone = [e for e in raw_data if len(e.split("-")) == 3][0]
+        city = raw_data[0]
+        if len(city.split("-")) == 3:
+            city = ""
+
         item = SgRecord(
             locator_domain=domain,
             page_url="https://converse.com.ar/stores",
             location_name=poi["name"],
             street_address=poi["address"],
-            city="",
+            city=city,
             state=poi["province"]["name"],
             zip_postal="",
             country_code="AR",
             store_number=poi["code"],
-            phone=poi["phone"],
+            phone=phone,
             location_type="",
             latitude="",
             longitude="",
             hours_of_operation="",
-            raw_address="",
+            raw_address=hoo,
         )
 
         yield item

@@ -28,6 +28,8 @@ def fetch_data(sgw: SgWriter):
         )
         phone = "".join(phone_lst) or "<MISSING>"
         location_name = "".join(info[0]).strip()
+        if location_name.find("Year Round Catering") != -1:
+            continue
         adr = (
             " ".join(info[1:])
             .replace("Open", "")
@@ -82,6 +84,9 @@ def fetch_data(sgw: SgWriter):
             f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
+        if location_name.find("426 South Court Street") != -1:
+            location_name = "<MISSING>"
+            street_address = "426 South Court Street"
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "US"
@@ -100,28 +105,80 @@ def fetch_data(sgw: SgWriter):
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
         if latitude == "<MISSING>":
+            try:
+                latitude = (
+                    "".join(
+                        tree.xpath(
+                            f'//script[contains(text(), "{location_name}")]/text()'
+                        )
+                    )
+                    .split(f"{location_name}")[0]
+                    .split("LatLng(")[-1]
+                    .split(",")[0]
+                    .strip()
+                )
+                longitude = (
+                    "".join(
+                        tree.xpath(
+                            f'//script[contains(text(), "{location_name}")]/text()'
+                        )
+                    )
+                    .split(f"{location_name}")[0]
+                    .split("LatLng(")[-1]
+                    .split(",")[1]
+                    .split(")")[0]
+                    .strip()
+                )
+            except IndexError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+        if latitude == "<MISSING>":
             latitude = (
                 "".join(
-                    tree.xpath(f'//script[contains(text(), "{location_name}")]/text()')
+                    tree.xpath(f'//script[contains(text(), "{street_address}")]/text()')
                 )
-                .split(f"{location_name}")[0]
+                .split(f"{street_address}")[0]
                 .split("LatLng(")[-1]
                 .split(",")[0]
                 .strip()
             )
             longitude = (
                 "".join(
-                    tree.xpath(f'//script[contains(text(), "{location_name}")]/text()')
+                    tree.xpath(f'//script[contains(text(), "{street_address}")]/text()')
                 )
-                .split(f"{location_name}")[0]
+                .split(f"{street_address}")[0]
                 .split("LatLng(")[-1]
                 .split(",")[1]
                 .split(")")[0]
                 .strip()
             )
-        if street_address == "189 N Harrisville Rd":
-            latitude = "35"
-            longitude = "-98"
+        map_info = (
+            "".join(tree.xpath(f'//script[contains(text(), "{latitude}")]/text()'))
+            .split(f"{longitude}")[1]
+            .split("}")[0]
+            .strip()
+        )
+        if phone == "<MISSING>":
+            phone_lst = re.findall(
+                re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), map_info
+            )
+            phone = "".join(phone_lst) or "<MISSING>"
+        map_info_h = map_info.split('message: "')[1].split('"')[0]
+        c = html.fromstring(map_info_h)
+        map_info_l = c.xpath("//*//text()")
+        map_info_l = list(filter(None, [m.strip() for m in map_info_l]))
+        tmp = []
+        for x in map_info_l:
+            if (
+                "Mon" in x
+                or "Sun" in x
+                or "M-F" in x
+                or "Sunday" in x
+                or "Fri" in x
+                or "12pm-9pm" in x
+            ):
+                tmp.append(x)
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = "; ".join(tmp)
 
         row = SgRecord(
             locator_domain=locator_domain,
