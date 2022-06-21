@@ -9,32 +9,28 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.haglofs.com/on/demandware.store/Sites-haglofs-eu-Site/de_AT/Stores-GetNearestStores?latitude=48.2081743&longitude=16.3738189&countryCode=AT&distanceUnit=km&maxdistance=50000&brands=hg&isDisableCheckRTI=true"
+    start_url = "https://www.haglofs.com/api/content/en/stores"
     domain = "haglofs.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     data = session.get(start_url, headers=hdr).json()
-    for store_number, poi in data["stores"].items():
-        street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += ", " + poi["address2"]
-
+    for poi in data["stores"]:
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["storeUrl"],
+            page_url="https://www.haglofs.com/en/stores",
             location_name=poi["name"],
-            street_address=street_address,
-            city=poi["city"],
-            state=poi["stateCode"],
-            zip_postal=poi["postalCode"],
-            country_code=poi["countryCode"],
-            store_number=store_number,
+            street_address=poi["address"]["street"],
+            city=poi["address"]["city"],
+            state="",
+            zip_postal=poi["address"]["zipCode"],
+            country_code="",
+            store_number="",
             phone=poi["phone"],
             location_type="",
-            latitude=poi["latitude"],
-            longitude=poi["longitude"],
-            hours_of_operation="",
+            latitude=poi["coordinates"]["latitude"],
+            longitude=poi["coordinates"]["longitude"],
+            hours_of_operation=" ".join(poi["openingHours"]),
         )
 
         yield item
