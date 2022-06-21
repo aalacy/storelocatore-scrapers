@@ -1,7 +1,6 @@
 from sgselenium import SgFirefox
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
-import os
 import json
 import ssl
 from sglogging import sglog
