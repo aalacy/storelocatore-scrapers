@@ -1,118 +1,83 @@
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
+    session = SgRequests()
     start_url = "https://api.prooil.ca/api/stores/states/"
     domain = "take5oilchange.ca"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_locations = []
     response = session.get(start_url, headers=hdr)
     data = json.loads(response.text)
     for state in data["message"]:
         for city in state["cities"]:
-            all_locations += city["stores"]
+            all_locations = city["stores"]
+            for poi in all_locations:
+                store_url = poi["storeURL"]
+                if not store_url:
+                    store_url = "https://www.take5oilchange.ca/locations/{}/{}-{}/".format(
+                        poi["locationState"], poi["locationCity"], str(poi["storeId"])
+                    )
+                loc_response = session.get(store_url)
+                loc_dom = etree.HTML(loc_response.text)
 
-    for poi in all_locations:
-        store_url = poi["storeURL"]
-        if not store_url:
-            store_url = "https://www.take5oilchange.ca/locations/{}/{}-{}/".format(
-                poi["locationState"], poi["locationCity"], str(poi["storeId"])
-            )
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
+                location_name = "TAKE 5 OIL CHANGE #{}".format(str(poi["storeId"]))
+                street_address = poi["streetAddress1"]
+                city = poi["locationCity"]
+                state = poi["locationState"]
+                zip_code = poi["locationPostalCode"]
+                country_code = poi["locationCountry"]
+                store_number = poi["storeId"]
+                phone = poi["phone"]
+                location_type = "<MISSING>"
+                latitude = poi["lat"]
+                longitude = poi["lng"]
+                hoo = []
+                if store_url != "":
+                    hoo = loc_dom.xpath(
+                        '//div[@class="store-hours font-opensans font-16"]/p/text()'
+                    )
+                    hoo = [" ".join([s for s in e.split()]) for e in hoo if e.strip()]
+                hours_of_operation = " ".join(hoo) if hoo else ""
 
-        location_name = "TAKE 5 OIL CHANGE #{}".format(str(poi["storeId"]))
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["streetAddress1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["locationCity"]
-        city = city if city else "<MISSING>"
-        state = poi["locationState"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["locationPostalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["locationCountry"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["storeId"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
-        hoo = []
-        if store_url != "<MISSING>":
-            hoo = loc_dom.xpath(
-                '//div[@class="store-hours font-opensans font-16"]/p/text()'
-            )
-            hoo = [" ".join([s for s in e.split()]) for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=store_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
