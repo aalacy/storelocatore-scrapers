@@ -1,88 +1,108 @@
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
-from sgpostal.sgpostal import parse_address_intl
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgpostal.sgpostal import International_Parser, parse_address
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
-locator_domain = "https://baskinrobbinsindia.com"
-base_url = "https://baskinrobbinsindia.com/locations"
-city_url = "https://baskinrobbinsindia.com/getcat/locate_city/3"
-json_url = "https://baskinrobbinsindia.com/getcat/getStoresbycityid/{}"
+session = SgRequests()
 
 
-def fetch_data():
-    with SgRequests(verify_ssl=False) as session:
-        locations = json.loads(
-            session.get(base_url, headers=_headers)
-            .text.split("var saarcCountrys =")[1]
-            .split("jQuery.each")[0]
-            .strip()[:-1]
-        )["countrys"]
-        for country, cc in locations.items():
-            for city, stores in cc["citys"].items():
-                for _ in stores["stores"]:
-                    addr = _["address"].split(",")
-                    yield SgRecord(
-                        location_name=_["name"],
-                        street_address=", ".join(addr[:-2]),
-                        city=addr[-2],
-                        country_code=country,
-                        phone=_["phonenumber"].split(",")[0],
-                        locator_domain=locator_domain,
-                        raw_address=_["address"],
-                    )
-        cities = session.get(city_url, headers=_headers).json()
-        for city in cities:
-            locations = session.get(
-                json_url.format(city["city_id"]), headers=_headers
-            ).json()
-            for _ in locations:
-                longitude = _["lng"]
-                latitude = _["lat"]
-                if not longitude:
-                    _lat = latitude.split(".")
-                    latitude = ".".join(_lat[:2])
-                    longitude = ".".join(_lat[2:])
+def fetch_data(sgw: SgWriter):
 
-                raw_address = f'{_["address"]}, {_["city_name"]}, {_["state_name"]}, {_["country_name"]}'
-                addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
-                yield SgRecord(
-                    store_number=_["store_id"],
-                    location_name=_["name"],
-                    street_address=street_address,
-                    city=_["city_name"],
-                    state=_["state_name"],
-                    zip_postal=addr.postcode,
-                    country_code=_["country_name"],
-                    phone=_["phone"],
-                    locator_domain=locator_domain,
-                    latitude=latitude,
-                    longitude=longitude,
-                )
+    locator_domain = "https://baskinrobbinsindia.com/"
+
+    search = DynamicGeoSearch(
+        country_codes=[
+            SearchableCountries.INDIA,
+            SearchableCountries.BANGLADESH,
+            SearchableCountries.SRI_LANKA,
+        ],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
+        max_search_results=None,
+    )
+    for lat, long in search:
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        }
+
+        r = session.get(
+            f"https://stockist.co/api/v1/u11410/locations/search?tag=u11410&latitude={str(lat)}&longitude={str(long)}&filter_operator=and&distance=500000&_=st_3cb74uyu05ix1isqz8lrw",
+            headers=headers,
+        )
+
+        try:
+            js = r.json()["locations"]
+        except:
+            search.found_nothing()
+            continue
+        search.found_location_at(lat, long)
+        for j in js:
+
+            page_url = "https://baskinrobbinsindia.com/pages/store-locator"
+            location_name = j.get("name") or "<MISSING>"
+            ad = j.get("address_line_1") or "<MISSING>"
+            if ad:
+                ad = "".join(ad).replace("\n", " ").replace("\r", "").strip()
+            ad = " ".join(ad.split())
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
+            )
+            if street_address.isdigit():
+                street_address = ad
+            state = j.get("state") or "<MISSING>"
+            postal = j.get("postal_code") or "<MISSING>"
+            country_code = j.get("country") or "<MISSING>"
+            city = j.get("city") or "<MISSING>"
+            if city == "0":
+                city = "<MISSING>"
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            store_number = j.get("id")
+            phone = j.get("phone") or "<MISSING>"
+            if str(phone).find(",") != -1:
+                phone = str(phone).split(",")[0].strip()
+            if str(phone).find("/") != -1:
+                phone = str(phone).split("/")[0].strip()
+            if phone == "-":
+                phone = "<MISSING>"
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=SgRecord.MISSING,
+                raw_address=ad,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
+    session = SgRequests()
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.COUNTRY_CODE,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+        fetch_data(writer)

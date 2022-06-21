@@ -6,8 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://burgerking.com.br/api/nearest"
     domain = "burgerking.com.br"
     hdr = {
@@ -21,6 +20,9 @@ def fetch_data():
     data = session.post(start_url, headers=hdr, json=frm).json()
 
     for poi in data["entries"]:
+        if type(poi) == bool:
+            continue
+
         item = SgRecord(
             locator_domain=domain,
             page_url="https://burgerking.com.br/restaurantes",
