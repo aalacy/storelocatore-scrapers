@@ -39,7 +39,7 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["link"],
-            location_name=poi["acf"]["city"],
+            location_name=poi["title"]["rendered"],
             street_address=poi["acf"]["address"],
             city=poi["acf"]["city"],
             state=state,
