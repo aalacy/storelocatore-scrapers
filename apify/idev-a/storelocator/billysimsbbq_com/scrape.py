@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domain = "https://billysimsbbq.com"
 base_url = "https://taptapeat.com/locations/?bid=108&lat=37.09024&lng=-95.712891"
