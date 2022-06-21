@@ -1,95 +1,47 @@
-import csv
-import json
-from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgselenium import SgChrome
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+locator_domain = "https://billysimsbbq.com"
+base_url = "https://taptapeat.com/locations/?bid=108&lat=37.09024&lng=-95.712891"
 
 
 def fetch_data():
-    base_url = "https://billysimsbbq.com"
-    res = session.get(
-        "https://billysimsbbq.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=e8904e9c7a&load_all=1&layout=1",
-    )
-    store_list = json.loads(res.text)
-    data = []
-
-    for store in store_list:
-        store_number = store["id"]
-        city = store["city"]
-        state = store["state"].split(",")[0]
-        page_url = store["website"]
-        hours = json.loads(store["open_hours"])
-        hours_of_operation = ""
-        for x in hours:
-            if hours[x] == "0":
-                hours_of_operation += x + " Closed "
-            else:
-                hours_of_operation += x + " " + ", ".join(hours[x]) + " "
-        location_name = store["title"]
-        street_address = store["street"]
-        zip = store["postal_code"]
-        country_code = store["country"]
-        phone = store["phone"]
-        location_type = "<MISSING>"
-        latitude = store["lat"]
-        longitude = store["lng"]
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgChrome() as driver:
+        driver.get(base_url)
+        locations = driver.execute_script("return restaurants")
+        for id, _ in locations.items():
+            street_address = _["vcAddress"]
+            if _.get("vcAddress2"):
+                street_address += " " + _.get("vcAddress2")
+            hours = []
+            if _["hours"]:
+                for x, hh in _["hours"].items():
+                    if hh:
+                        hours.append(
+                            f"{hh[0]['DayOfWeek_Day']}: {hh[0]['vcTimeOpen']} - {hh[0]['vcTimeClose']}"
+                        )
+            yield SgRecord(
+                page_url="https://billysimsbbq.com/locations/",
+                store_number=id,
+                location_name=_["vcFriendlyName"],
+                street_address=street_address,
+                city=_["vcCity"],
+                state=_["vcState"],
+                zip_postal=_["vcZip"],
+                latitude=_["vcLatitude"],
+                longitude=_["vcLongitude"],
+                country_code="US",
+                phone=_.get("vcPhoneNumber"),
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
