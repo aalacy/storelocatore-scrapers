@@ -19,7 +19,6 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    base_url = "https://www.educationaloutfitters.com"
     r = session.get("http://www.educationaloutfitters.com/states", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     country_code = "US"
