@@ -32,7 +32,7 @@ def fetch_data():
         location_name = address[0].replace(":", "")
         log.info(location_name)
         address = " ".join(address[1:])
-        address = address.replace(",", " ")
+        address = address.replace(",", " ").replace("Crescent Center", "")
         address = usaddress.parse(address)
         i = 0
         street_address = ""

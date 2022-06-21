@@ -26,7 +26,7 @@ def fetch_data(sgw: SgWriter):
     )
 
     for item in items:
-        location_name = item.h4.text.strip()
+        location_name = item.find_all("h4")[-1].text.strip()
         raw_address = list(item.stripped_strings)[1:]
         if "COMING SOON" in raw_address[0].upper():
             continue
@@ -85,6 +85,10 @@ def fetch_data(sgw: SgWriter):
             city = location_name.title()
 
         city = city.replace("+", " ")
+
+        if "Pawleys" in location_name:
+            city = "Pawleys Island"
+            state = "South Carolina"
 
         country_code = "US"
         store_number = "<MISSING>"
