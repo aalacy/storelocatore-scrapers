@@ -23,7 +23,6 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        url = "https://www.thefragranceshop.co.uk/store-finder/listing"
         r = session.get(DOMAIN, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = r.text.split("href%3D%5C%22%2Fpages%2F")[1:]
