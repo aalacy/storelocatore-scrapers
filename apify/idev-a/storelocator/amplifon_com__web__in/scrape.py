@@ -3,104 +3,119 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
-import re
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
-logger = SgLogSetup().get_logger("gaes")
+logger = SgLogSetup().get_logger("")
 
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+headers = {
+    "accept": " application/json, text/javascript, */*; q=0.01",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "channel": "AmplifonUUXApac",
+    "content-type": "application/json",
+    "country": "in",
+    "origin": "https://www.amplifon.com",
+    "referer": "https://www.amplifon.com/",
 }
 
 locator_domain = "https://www.amplifon.com"
-in_url = "https://www.amplifon.com/in/store-locator"
-hu_url = "https://www.amplifon.com/hu/sitemap.xml"
-pl_url = "https://www.amplifon.com/pl/sitemap.xml"
+
+urls = {
+    "in": {
+        "locator": "https://www.amplifon.com/in/store-locator/results",
+        "base": "https://www.amplifon.com/in/store-locator/hearing-aids-jaipur/{}",
+        "latitude": "23.022505",
+        "longitude": "72.5713621",
+    },
+    "hu": {
+        "locator": "https://www.amplifon.com/hu/hallaskozpont-kereso/search-results.html",
+        "base": "https://www.amplifon.com/hu/hallaskozpont-kereso/hallokeszulekek-baranya-megye/{}",
+        "latitude": "46.0727345",
+        "longitude": "18.232266",
+    },
+    "pl": {
+        "locator": "https://www.amplifon.com/pl/nasze-gabinety/search-results",
+        "base": "https://www.amplifon.com/pl/nasze-gabinety/aparaty-sluchowe-podkarpackie/{}",
+        "latitude": "50.0411867",
+        "longitude": "21.9991196",
+    },
+}
+
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
 
 
-def fetch_others():
+def fetch_data():
     with SgRequests() as session:
-        urls = {}
-        urls["in"] = []
-        for loc in (
-            bs(session.get(in_url, headers=_headers).text, "xml")
-            .find("h3", string=re.compile(r"Search by area"))
-            .find_next_sibling()
-            .select("li a")
-        ):
-            url = locator_domain + loc["href"]
-            logger.info(url)
-            locations = bs(session.get(url, headers=_headers).text, "xml").select(
-                "div.m-store-teaser a.d-block"
+        for country, cc in urls.items():
+            bb = bs(session.get(cc["locator"]).text, "lxml").select_one(
+                "div.store-locator-results"
             )
+            headers["x-api-key"] = bb["data-client-api-key"]
+            headers["channel"] = bb["data-channel"]
+            payload = {
+                "countryCode": bb["data-country-code"],
+                "latitude": cc["latitude"],
+                "longitude": cc["longitude"],
+                "locale": bb["data-locale"],
+                "limit": 1500,
+                "radius": 10000,
+                "type": "",
+            }
+            locations = session.post(
+                bb["data-getstore-service-url"], headers=headers, json=payload
+            ).json()
+            logger.info(f"[{country}] {len(locations)}")
             for _ in locations:
-                urls["in"].append(_["href"])
-        urls["hu"] = [
-            loc.text
-            for loc in bs(session.get(hu_url, headers=_headers).text, "lxml").select(
-                "loc"
-            )
-        ]
-        urls["pl"] = [
-            loc.text
-            for loc in bs(session.get(pl_url, headers=_headers).text, "lxml").select(
-                "loc"
-            )
-        ]
-        for country, url1 in urls.items():
-            for page_url in url1:
-                if (
-                    "pl/nasze-gabinety/" not in page_url
-                    and "hu/hallaskozpont-kereso/" not in page_url
-                    and "in/store-locator/" not in page_url
-                ):
-                    continue
-
-                if len(page_url.split("/")) < 7:
-                    continue
-
-                if "store-detail" in page_url:
-                    continue
-
-                logger.info(f"[***] {page_url}")
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                _ = json.loads(sp1.find("script", type="application/ld+json").string)
-                phone = ""
-                if sp1.select_one("span.phone-list"):
-                    try:
-                        phone = list(
-                            sp1.select_one("span.phone-list").stripped_strings
-                        )[0]
-                    except:
-                        pass
+                page_url = cc["base"].format(
+                    f"{_['shortName'].lower()}-{_['type'].lower()}{_['shopNumber']}"
+                )
                 hours = []
-                for hh in _["openingHoursSpecification"]:
-                    day = hh["dayOfWeek"]
-                    hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
-                addr = _["address"]
-                state = addr.get("addressRegion")
-                if (
-                    state.replace("(", "")
-                    .replace(")", "")
-                    .replace(" ", "")
-                    .strip()
-                    .isdigit()
-                ):
-                    state = ""
+                logger.info(f"[{country}] {_['shopNumber']}")
+                start_date = datetime.now().strftime("%Y-%m-%d")
+                end_date = (datetime.now() + relativedelta(months=1)).strftime(
+                    "%Y-%m-%d"
+                )
+                payload1 = {
+                    "countryCode": bb["data-country-code"],
+                    "type": _["type"],
+                    "shopNumber": _["shopNumber"],
+                    "locale": bb["data-locale"],
+                    "startDate": start_date,
+                    "endDate": end_date,
+                }
+                hr = session.post(
+                    bb["data-getopeninghours-service-url"],
+                    headers=headers,
+                    json=payload1,
+                ).json()
+                for hh in hr["openingTimes"]:
+                    hours.append(
+                        f"{hr_obj[str(hh['dayOfWeek'])]}: {hh['startTime']} - {hh['endTime']}"
+                    )
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_["name"],
-                    street_address=addr["streetAddress"],
-                    city=addr["addressLocality"],
-                    state=state,
-                    zip_postal=addr.get("postalCode"),
-                    latitude=_["geo"]["latitude"],
-                    longitude=_["geo"]["longitude"],
+                    store_number=_["shopNumber"],
+                    location_name=_["shopName"],
+                    street_address=_["address"],
+                    city=_["city"],
+                    state=_.get("province"),
+                    zip_postal=_.get("cap"),
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
                     country_code=country,
-                    phone=phone,
+                    phone=_.get("phoneNumber1"),
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                 )
@@ -108,6 +123,6 @@ def fetch_others():
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_others()
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
