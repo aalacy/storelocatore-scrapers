@@ -19,9 +19,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("div", {"class": "shula-menu__location"})
-    p = 0
-    flag = 0
-    print(len(divlist))
+
     for div in divlist:
         if "shulassteakhouse" in div.find("a")["href"]:
             pass
