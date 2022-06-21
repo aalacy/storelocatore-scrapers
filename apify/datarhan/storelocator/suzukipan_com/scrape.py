@@ -37,7 +37,7 @@ def fetch_data():
             continue
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
         hoo = poi_html.xpath(
-            './/p[contains(text(), "Horario de Ventas")]/following-sibling::p[1]//text()'
+            './/p[strong[contains(text(), "Horario de Ventas")]]/following-sibling::p[1]//text()'
         )
         if not hoo:
             hoo = poi_html.xpath(

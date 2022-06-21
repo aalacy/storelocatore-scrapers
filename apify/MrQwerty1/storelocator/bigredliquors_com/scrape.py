@@ -1,76 +1,44 @@
-import csv
 import json
 
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://bigredliquors.com/"
-    api_url = "https://bigredliquors.com/store-locator/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath(
             "//script[contains(text(), 'cityHiveWidgetAPIResourceStorage')]/text()"
         )
     )
-    text = text.split('JSON.parse("')[2].split('");')[0].replace("\\", "")
-    js = json.loads(text)["merchant_configs"]
+    text = text.replace("\\", "").split('"merchant_configs":')[1].split("}],")[0] + "}]"
+    js = json.loads(text)
 
     for j in js:
         j = j.get("merchant")
-        location_name = j.get("name")
+        location_name = j.get("name") or ""
         status = j.get("onboarding_state")
         if status != "active":
             continue
         if location_name.lower().find("big red #") == -1:
             continue
         a = j.get("address")
-        street_address = a.get("street_address") or "<MISSING>"
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("zipcode") or "<MISSING>"
-        country_code = a.get("country_code") or "<MISSING>"
+        street_address = a.get("street_address")
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("zipcode")
+        country_code = a.get("country_code")
         store_number = location_name.split("#")[1].split()[0]
-        page_url = "<MISSING>"
-        phone = j.get("phone_number") or "<MISSING>"
+        phone = j.get("phone_number")
         loc = a.get("address_properties") or {}
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("lng") or "<MISSING>"
-        location_type = j.get("type") or "<MISSING>"
+        latitude = loc.get("lat")
+        longitude = loc.get("lng")
+        location_type = j.get("type")
 
         _tmp = []
         hours = j.get("business_hours")
@@ -80,33 +48,35 @@ def fetch_data():
             else:
                 _tmp.append(f"{k}: Closed")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            location_type=location_type,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://bigredliquors.com/"
+    page_url = "https://bigredliquors.com/store-locator/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
