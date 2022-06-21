@@ -30,6 +30,12 @@ def fetch_data():
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
         hoo = loc_dom.xpath('//p[strong[contains(text(), "HOURS")]]/text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        geo = (
+            loc_dom.xpath("//iframe/@src")[-1]
+            .split("!2d")[1]
+            .split("!2m3")[0]
+            .split("!3d")
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -43,8 +49,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude="",
-            longitude="",
+            latitude=geo[1],
+            longitude=geo[0],
             hours_of_operation=hoo,
         )
 
