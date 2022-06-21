@@ -52,6 +52,13 @@ def fetch_data(sgw: SgWriter):
         if "opening" in adr:
             hours_of_operation = adr.split("from")[1].strip()
             adr = adr.split("opening")[0].strip()
+        for i in info:
+            if "Daily" in i or "daily" in i:
+                hours_of_operation = str(i)
+        if hours_of_operation.find("As") != -1:
+            hours_of_operation = hours_of_operation.split("As")[0].strip()
+        if hours_of_operation.find("from") != -1:
+            hours_of_operation = hours_of_operation.split("from")[1].strip()
         adr = (
             adr.replace("Next to Burberry/Blaze Pizza", "")
             .replace("(Inside Walmart)", "")

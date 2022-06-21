@@ -147,7 +147,7 @@ def fetch_data(sgw: SgWriter):
         use_state=False,
     )
 
-    with SgChrome() as driver:
+    with SgChrome(driver_wait_timeout=180) as driver:
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             task = [
                 executor.submit(fetch_records, lat, lng, search_mx, sgw, driver)
