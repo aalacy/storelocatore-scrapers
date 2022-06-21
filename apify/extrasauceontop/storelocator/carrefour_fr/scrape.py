@@ -79,7 +79,6 @@ def get_data():
         block_third_parties=True,
         proxy_country="fr",
     ) as driver:
-        x = 0
         for sub_url_object in crawl_state.request_stack_iter():
             sub_url = sub_url_object.url
             log.info("sub_url: " + sub_url)
@@ -94,9 +93,6 @@ def get_data():
                 json_objects = extract_json(response)
 
             for location in json_objects[1]["search"]["data"]["stores"]:
-                x = x + 1
-                if x == 10:
-                    return
                 locator_domain = "carrefour.fr"
 
                 page_url = "https://www.carrefour.fr" + location["storePageUrl"]
@@ -223,10 +219,14 @@ def scrape():
     pipeline.run()
 
 
-# while True:
-# try:
-scrape()
-# break
+x = 0
+while True:
+    x = x + 1
+    if x == 5:
+        raise Exception("Check errors")
+    try:
+        scrape()
+        break
 
-# except Exception:
-# continue
+    except Exception:
+        continue
