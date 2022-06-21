@@ -72,6 +72,8 @@ def fetch_data():
                 .split("Handicap")[0]
                 .replace("*temporary hours", "")
             )
+            if "opening late summer 2022" in hours_of_operation:
+                continue
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
