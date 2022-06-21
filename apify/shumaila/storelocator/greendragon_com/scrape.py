@@ -35,19 +35,56 @@ def fetch_data():
             soup = BeautifulSoup(driver.page_source, "html.parser")
 
             title = soup.find("h1").text
+            lat = longt = "<MISSING>"
+            try:
+
+                phone = (
+                    soup.find("div", {"class": "location-details"})
+                    .find("span", {"itemprop": "telephone"})
+                    .text
+                )
+            except:
+                phone = "<MISSING>"
+            try:
+                lat = (
+                    driver.page_source.split('"GeoCoordinates",', 1)[1]
+                    .split('"latitude": "', 1)[1]
+                    .split('"', 1)[0]
+                )
+                longt = (
+                    driver.page_source.split('"GeoCoordinates",', 1)[1]
+                    .split('"longitude": "', 1)[1]
+                    .split('"', 1)[0]
+                )
+            except:
+
+                try:
+                    h = 0
+                    dclist = soup.findAll("iframe")
+                    coordlist = ""
+                    for d in dclist:
+
+                        if "!2d" in d["src"]:
+
+                            coordlist = d["src"]
+
+                            if h == 1:
+                                longt, lat = (
+                                    coordlist.split("!2d", 1)[1]
+                                    .split("!2m", 1)[0]
+                                    .split("!3d", 1)
+                                )
+                                break
+                            h = 1
+                except:
+
+                    lat = longt = "<MISSING>"
             try:
                 address = (
                     soup.find("div", {"class": "location-details"}).find("small").text
                 )
-                phone = soup.find("span", {"itemprop": "telephone"}).text
-                lat = driver.page_source.split('latitude" content="', 1)[1].split(
-                    '"', 1
-                )[0]
-                longt = driver.page_source.split('"longitude" content="', 1)[1].split(
-                    '"', 1
-                )[0]
-
                 address = usaddress.parse(address)
+
                 ltype = "Store"
                 i = 0
                 street = ""
@@ -78,7 +115,7 @@ def fetch_data():
                 state = state.lstrip().replace(",", "")
                 pcode = pcode.lstrip().replace(",", "")
             except:
-                street = city = state = pcode = phone = lat = longt = "<MISSING>"
+                street = city = state = pcode = "<MISSING>"
                 ltype = "Delivery Only"
             hours = (
                 soup.find("div", {"class": "location-details"})

@@ -6,7 +6,7 @@ from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -262,11 +262,16 @@ def fetch_data(sgw: SgWriter):
                 full_address_list = list(loc.stripped_strings)
                 location_name = full_address_list[0]
                 street_address = full_address_list[1].split(",")[0]
-                city_line = full_address_list[2].split(",")
+                try:
+                    city_line = full_address_list[2].split(",")
+                except:
+                    continue
                 city = city_line[0]
                 state = city_line[1].split()[0]
                 zipp = city_line[1].split()[1]
                 phone = full_address_list[-1]
+                if "," in phone:
+                    phone = locs[-1].text.split("\n")[0]
 
                 sgw.write_row(
                     SgRecord(
@@ -493,5 +498,5 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)

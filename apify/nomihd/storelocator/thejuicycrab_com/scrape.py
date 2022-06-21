@@ -6,97 +6,104 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import lxml.html
 
 website = "thejuicycrab.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "authority": "thejuicycrab.com",
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-    "accept": "application/json, text/javascript, */*; q=0.01",
-    "x-requested-with": "XMLHttpRequest",
+    "authority": "www.thejuicycrab.com",
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "referer": "https://www.thejuicycrab.com/locations",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
     "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36",
-    "content-type": "application/json",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "cors",
+    "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-dest": "empty",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://thejuicycrab.com/locations/"
-    search_res = session.get(search_url, headers=headers)
+    search_url = "https://www.thejuicycrab.com/locations-data"
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
+        search_sel = lxml.html.fromstring(search_res.text)
+        stores = json.loads(
+            "".join(search_sel.xpath('//textarea[@id="locations-data"]/text()')).strip()
+        )["locations"]["objects"]
 
-    json_str = (
-        search_res.text.split("var _items = ")[1]
-        .split("</script>")[0]
-        .strip()
-        .strip(";]")
-        .strip()
-        .strip(",")
-        .strip()
-    ) + "]"
+        for store in stores:
 
-    json_res = json.loads(json_str)
+            if store["type"]["name"] != "Restaurant":
+                continue
 
-    store_list = json_res
+            page_url = "https://www.thejuicycrab.com/restaurant/" + store["hs_path"]
 
-    for store in store_list:
+            locator_domain = website
 
-        page_url = search_url
+            street_address = (
+                store["address"].replace("<span>", "").replace("</span>", "").strip()
+            )
 
-        locator_domain = website
+            city = store["city"]
+            state = store["state"]
+            zip = "<MISSING>"
 
-        street_address = (store["address"] + "," + store["suite"]).strip(", ").strip()
+            country_code = "US"
 
-        city = store["city"].strip()
-        state = store["state"].strip()
-        zip = store["zipCode"].strip()
+            location_name = store["name"]
 
-        country_code = "US"
+            phone = store["phone_number"]
+            store_number = "<MISSING>"
 
-        location_name = store["name"].strip()
+            location_type = "<MISSING>"
 
-        if "COMING SOON" in location_name:
-            continue
-        phone = store["phone"]
-        if phone and "," in phone:
-            phone = phone.split(",")[0].strip()
+            hours_sel = lxml.html.fromstring(
+                store["bussiness_hours"]
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .strip()
+            )
+            hours_of_operation = "; ".join(
+                list(filter(str, [x.strip() for x in hours_sel.xpath("//p/text()")]))
+            ).strip()
+            if len(hours_of_operation) <= 0:
+                hours = hours_sel.xpath("//table//tr")
+                hours_list = []
+                for hour in hours:
+                    day = "".join(hour.xpath("td[1]/text()")).strip()
+                    time = "".join(hour.xpath("td[2]/text()")).strip()
+                    hours_list.append(day + ":" + time)
 
-        store_number = "<MISSING>"
+                hours_of_operation = "; ".join(hours_list).strip()
 
-        location_type = "<MISSING>"
+            latitude, longitude = (
+                store["lat"],
+                store["long"],
+            )
+            raw_address = "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
-
-        latitude, longitude = (
-            store["latitude"],
-            store["longitude"],
-        )
-        raw_address = "<MISSING>"
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
