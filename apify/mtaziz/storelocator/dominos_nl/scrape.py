@@ -311,8 +311,14 @@ def get_api_urls_nl():
 def get_open_close_times(d):
     opentime = d["Open"]
     closetime = d["Close"]
-    op1 = datetime.datetime.strptime(opentime, "%Y-%m-%dT%H:%M:%S")
-    cl1 = datetime.datetime.strptime(closetime, "%Y-%m-%dT%H:%M:%S")
+    op1 = ""
+    cl1 = ""
+    if len(opentime) > 20:
+        op1 = datetime.datetime.strptime(opentime[:-6], "%Y-%m-%dT%H:%M:%S")
+        cl1 = datetime.datetime.strptime(closetime[:-6], "%Y-%m-%dT%H:%M:%S")
+    if len(opentime) < 20:
+        op1 = datetime.datetime.strptime(opentime, "%Y-%m-%dT%H:%M:%S")
+        cl1 = datetime.datetime.strptime(closetime, "%Y-%m-%dT%H:%M:%S")
     op_datetime_format = "%A: %H:%M"
     cl_datetime_format = "%H:%M"
     opentime_convert = op1.strftime(op_datetime_format)
@@ -422,6 +428,7 @@ def fetch_data(sgw: SgWriter):
     # France
     fr_urls = get_api_urls_fr()
     dk_urls.extend(fr_urls)
+
     # Netherlands
     nl_urls = get_api_urls_nl()
     dk_urls.extend(nl_urls)
