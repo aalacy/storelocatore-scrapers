@@ -34,7 +34,7 @@ def fetch_data():
             _ = loc["_source"]
             street_address = _["street"]
             if _["street_line_2"]:
-                street_address += " " + _["street_line_2"]
+                street_address += ", " + _["street_line_2"]
 
             hours = []
             hh = json.loads(_["opening_hours"])
@@ -51,15 +51,20 @@ def fetch_data():
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+                street_address += ", " + addr.street_address_2
+
+            city = _["city"].split(",")[0].strip()
+            state = _["region"]
+            zip_postal = _["postcode"]
+
             yield SgRecord(
                 page_url="https://www.craghoppers.com/ie/store-locator/",
                 store_number=_["store_id"],
                 location_name=_["name"],
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lon"],
                 country_code=_["country"],
