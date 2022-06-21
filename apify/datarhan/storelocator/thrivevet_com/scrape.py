@@ -7,7 +7,7 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-    start_url = "https://www.thrivepetcare.com/_next/data/4sAX9Sn5t9bIiA6c1JqIW/all-locations.json"
+    start_url = "https://www.thrivepetcare.com/_next/data/Y8xChQHG8qVfCur-xvUR9/all-locations.json"
     domain = "thrivepetcare.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -24,7 +24,7 @@ def fetch_data():
                     headers=hdr,
                 ).json()
                 slug = poi["items"][0]["fields"]["slug"]
-                poi_url = f'https://www.thrivepetcare.com/_next/data/4sAX9Sn5t9bIiA6c1JqIW//locations/{state["state"].lower().replace(" ", "-")}/{city["city"].lower().replace(" ", "-")}/{slug}.json'  # slug=illinois&slug=arlington-heights&slug=northwest-highway'
+                poi_url = f'https://www.thrivepetcare.com/_next/data/Y8xChQHG8qVfCur-xvUR9//locations/{state["state"].lower().replace(" ", "-")}/{city["city"].lower().replace(" ", "-")}/{slug}.json'  # slug=illinois&slug=arlington-heights&slug=northwest-highway'
                 poi_data = session.get(poi_url, headers=hdr).json()
                 page_url = f'https://www.thrivepetcare.com/locations/{state["state"].lower().replace(" ", "-")}/{city["city"].lower().replace(" ", "-")}/{slug}'
                 street_address = poi_data["pageProps"]["siteApiData"]["addressLine1"]

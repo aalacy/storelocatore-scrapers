@@ -58,11 +58,9 @@ def fetch_data():
         poi_html = etree.HTML(
             poi_data["storeDetails"]["StoreDetails"]["1"]["generalDetails"]
         )
-        hoo = (
-            [e.strip() for e in poi_html.xpath("//text()") if "horario" in e.lower()][0]
-            .split("ienda:")[-1]
-            .strip()
-        )
+        hoo = [e.strip() for e in poi_html.xpath("//text()") if "horario" in e.lower()]
+        if hoo:
+            hoo = hoo[0].split("ienda:")[-1].strip()
         if not hoo:
             hoo = poi_html.xpath("//text()")[-1]
 
