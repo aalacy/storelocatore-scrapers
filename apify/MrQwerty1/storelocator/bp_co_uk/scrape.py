@@ -76,6 +76,8 @@ def fetch_data():
         log.debug(f"{count}. stores = {len(stores)}")
 
         for store in stores:
+            if store.get("open_status") == "unknown":
+                continue
             location_name = store.get("name")
             store_number = store.get("id")
             location_type = store.get("site_brand")

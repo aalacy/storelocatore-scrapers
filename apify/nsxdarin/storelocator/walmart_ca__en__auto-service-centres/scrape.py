@@ -38,6 +38,8 @@ def fetch_data():
                 country = "CA"
                 session = SgRequests()
                 r2 = session.get(url, headers=headers)
+                if "displayName" not in r2.content:
+                    search.found_nothing()
                 for item in json.loads(r2.content)["payload"]["stores"]:
                     Fuel = False
                     try:

@@ -1,6 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -43,10 +44,20 @@ def get_country_by_code(code=""):
     elif code in ca_provinces_codes:
         return "CA"
     else:
-        return "<MISSING>"
+        return ""
 
 
-@retry(stop=stop_after_attempt(7), wait=wait_random(min=10, max=30))
+def parse_addr(_addr):
+    raw_address = ", ".join(_addr)
+    addr = parse_address_intl(raw_address)
+    street_address = addr.street_address_1
+    if addr.street_address_2:
+        street_address += " " + addr.street_address_2
+
+    return raw_address, addr, street_address
+
+
+@retry(stop=stop_after_attempt(10), wait=wait_random(min=30, max=90))
 def _info(_):
     hours = []
     _addr = []
@@ -75,16 +86,22 @@ def _info(_):
             )
         except:
             pass
-    raw_address = ", ".join(_addr)
-    addr = parse_address_intl(raw_address)
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
 
+    raw_address, addr, street_address = parse_addr(_addr)
     zip_postal = _["zip"] or addr.postcode
     if not zip_postal:
         logger.warning(f'exception in zip_postal {_["url"]} {zip_postal}')
-        raise Exception
+        with SgChrome() as driver:
+            driver.get(_["url"])
+            sp1 = bs(driver.page_source, "lxml")
+            _addr = []
+            try:
+                _addr = list(
+                    sp1.select_one("div.vs15-content.order-sm-1 h3").stripped_strings
+                )
+            except:
+                pass
+            raw_address, addr, street_address = parse_addr(_addr)
 
     return (
         hours,
@@ -97,7 +114,7 @@ def _info(_):
 
 def fetch_data():
     for lat, lng in coords:
-        with SgRequests(proxy_country="us") as session:
+        with SgRequests(proxy_country="ca") as session:
             locations = session.get(base_url.format(lat, lng), headers=_headers).json()
             logger.info(f"[{lat, lng}] {len(locations)}")
             for _ in locations:
