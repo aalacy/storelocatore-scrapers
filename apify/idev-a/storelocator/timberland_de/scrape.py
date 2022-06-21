@@ -10,7 +10,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-from concurrent import futures
 
 website = "https://www.timberland.de"
 page_url = f"{website}/utility/handlersuche.html"
@@ -103,10 +102,14 @@ def get_phone(Source):
     return phone
 
 
-def get_data(coord, sgw: SgWriter):
-    latitude, longitude = coord
-    store_numbers = []
-    try:
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL,
+        expected_search_radius_miles=500,
+        max_search_results=1000,
+    )
+    for lat, long in coords:
+        coords.found_location_at(lat, long)
         payload = {
             "request": {
                 "appkey": "2047B914-DD9C-3B95-87F3-7B461F779AEB",
@@ -120,8 +123,8 @@ def get_data(coord, sgw: SgWriter):
                             {
                                 "addressline": "",
                                 "country": "",
-                                "latitude": latitude,
-                                "longitude": longitude,
+                                "latitude": str(lat),
+                                "longitude": str(long),
                             }
                         ]
                     },
@@ -132,10 +135,14 @@ def get_data(coord, sgw: SgWriter):
                 "geoip": 1,
             }
         }
-        response = session.post(json_url, headers=headers, data=json.dumps(payload))
-        stores = json.loads(response.text)["response"]["collection"]
+        try:
+            response = session.post(json_url, headers=headers, data=json.dumps(payload))
+            stores = json.loads(response.text)["response"]["collection"]
+        except:
+            coords.found_nothing()
+            continue
 
-        log.info(f"from {latitude}: {longitude} ==> stores={len(stores)} ")
+        log.info(f"from {lat}: {long} ==> stores={len(stores)} ")
 
         for store in stores:
             store_number = json_object(store, "uid")
@@ -172,9 +179,6 @@ def get_data(coord, sgw: SgWriter):
             raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
             if raw_address[len(raw_address) - 1] == ",":
                 raw_address = raw_address[:-1]
-            if store_number in store_numbers:
-                continue
-            store_numbers.append(store_number)
 
             row = SgRecord(
                 locator_domain="timberland.de",
@@ -194,22 +198,6 @@ def get_data(coord, sgw: SgWriter):
                 raw_address=raw_address,
             )
             sgw.write_row(row)
-
-    except Exception as e:
-        log.error(f"Can't load from {latitude}: {longitude} e={e}")
-
-
-def fetch_data(sgw: SgWriter):
-    postals = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=621.371,
-        max_search_results=1000,
-    )
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
-        for future in futures.as_completed(future_to_url):
-            future.result()
 
 
 if __name__ == "__main__":
