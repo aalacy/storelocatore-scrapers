@@ -12,9 +12,7 @@ def fetch_data():
     session = SgRequests()
     start_url = "https://www.adecco.hr/poslovnice/"
     domain = "adecco.hr"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
+
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
