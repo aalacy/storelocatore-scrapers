@@ -46,12 +46,7 @@ def get_data():
             max_search_results=25,
         )
 
-        x = 0
         for search_code in search:
-            print(search_code)
-            x = x + 1
-            if x == 200:
-                return
             url = (
                 "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
                 + search_code
@@ -73,7 +68,6 @@ def get_data():
                     page_url = "<MISSING>"
 
                 if page_url != "<MISSING>":
-                    print(page_url)
                     page_response = session.get(page_url).text
                     page_soup = bs(page_response, "html.parser")
 
