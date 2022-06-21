@@ -23,8 +23,12 @@ def fetch_data():
             for poi in all_locations:
                 store_url = poi["storeURL"]
                 if not store_url:
-                    store_url = "https://www.take5oilchange.ca/locations/{}/{}-{}/".format(
-                        poi["locationState"], poi["locationCity"], str(poi["storeId"])
+                    store_url = (
+                        "https://www.take5oilchange.ca/locations/{}/{}-{}/".format(
+                            poi["locationState"],
+                            poi["locationCity"],
+                            str(poi["storeId"]),
+                        )
                     )
                 loc_response = session.get(store_url)
                 loc_dom = etree.HTML(loc_response.text)
