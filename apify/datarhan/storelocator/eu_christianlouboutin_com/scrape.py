@@ -27,15 +27,19 @@ def fetch_data():
         for e in poi["schedule_data"]:
             hoo.append(f'{e["day"]}: {e["label"]}')
         hoo = ", ".join(hoo)
+        zip_code = poi["zipcode"]
+        street_address = poi["street"]
+        if zip_code and zip_code in street_address:
+            street_address = street_address.split(",")[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["store_url"],
             location_name=poi["name"],
-            street_address=poi["street"],
+            street_address=street_address,
             city=poi["city"],
             state="",
-            zip_postal=poi["zipcode"],
+            zip_postal=zip_code,
             country_code=poi["country"],
             store_number=poi["retailer_id"],
             phone=poi["phone"],
