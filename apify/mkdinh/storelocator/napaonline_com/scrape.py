@@ -142,7 +142,7 @@ def fetch_data():
         driver.set_script_timeout(600)
         load_initial_page(driver)
         search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], max_search_distance_miles=15
+            country_codes=SearchableCountries.ALL, max_search_distance_miles=50
         )
         for postal in search:
             fetch_locations(postal, search, driver, writer)
