@@ -34,8 +34,6 @@ def fetch_data():
                 location_type = "Moon Valley Nursery"
             if "Farm" in location_name:
                 location_type = "Farm"
-            if not location_type:
-                continue
             page_url = locator_domain + _.a["href"]
             temp = []
             for pp in _.select("p"):
