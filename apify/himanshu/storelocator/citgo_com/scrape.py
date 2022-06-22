@@ -1,5 +1,4 @@
-import json
-from sgrequests import SgRequestError, SgRequests
+from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
