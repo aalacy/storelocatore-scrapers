@@ -63,6 +63,11 @@ def fetch_data():
                         raw_address += " " + addr["city"]
                         raw_address += " " + addr.get("zipcode")
                         raw_address += " " + addr["country_code"]
+                        raw_address = (
+                            raw_address.replace("\n", "")
+                            .replace("\r", " ")
+                            .replace("\t", "")
+                        )
                         hours = []
                         for key, hh in _["weekly_opening"].items():
                             if key.isdigit() and hh["hours"]:
@@ -76,10 +81,50 @@ def fetch_data():
                             phone = ""
 
                         if phone:
-                            phone = phone.split(",")[0]
+                            phone = phone.split("&")[0].replace('"', "").strip()
+                            if (
+                                "@" in phone
+                                or str(phone) == "0"
+                                or str(phone) == "1"
+                                or ".com" in phone
+                            ):
+                                phone = ""
+                            else:
+                                phone = phone.split(",")[0].split(";")[0].split("/")[0]
+                                if phone.startswith("???."):
+                                    phone = phone.replace("???.", "")
+                                phone = phone.split("?")[0].strip()
+
+                            if "Mr" in phone or "Dr" in phone:
+                                phone = phone.split(" - ")[-1].strip()
+
+                            if len(phone.split(" – ")[-1]) > 8:
+                                phone = phone.split(" – ")[0]
+
+                            if len(phone.split(" - ")[-1]) > 8:
+                                phone = phone.split(" - ")[0]
+
+                            if len(phone.split(". ")[-1]) > 10:
+                                phone = phone.split(". ")[0]
+                            if len(phone.split()[-1]) > 10:
+                                phone = phone.split()[0]
+                            if len(phone.split(":")[-1]) > 12:
+                                phone = phone.split(":")[0]
+
+                            if phone.endswith("("):
+                                phone = phone[:-1]
 
                         city = addr["city"]
                         zip_postal = addr.get("zipcode")
+                        if zip_postal:
+                            zip_postal = zip_postal.replace("NGAOUNDERE", "").strip()
+                            if (
+                                "UNIVERSITE" in zip_postal
+                                or "FAHAMEY" in zip_postal
+                                or "BALLEYARA" in zip_postal
+                                or "HIPPODROME" in zip_postal
+                            ):
+                                zip_postal = ""
                         if "Excellium" in city:
                             city = ""
                         if city and city.isdigit():
@@ -88,11 +133,14 @@ def fetch_data():
                         if city:
                             city = city.split(",")[0]
 
+                        street_address = " ".join(addr["lines"]).strip()
+                        if street_address == "-" or street_address == "#N/A":
+                            street_address = ""
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
-                            street_address=" ".join(addr["lines"]),
+                            street_address=street_address,
                             city=city,
                             zip_postal=zip_postal,
                             country_code=addr["country_code"],

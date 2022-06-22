@@ -6,7 +6,9 @@ from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
 import urllib.parse
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "academicsprek.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -62,9 +64,17 @@ def fetch_data():
         page_url = store_url
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
-        if "OPENING FALL" in store_req.text:
-            continue
         store_sel = lxml.html.fromstring(store_req.text)
+        if (
+            "OPENING FALL"
+            in "".join(
+                store_sel.xpath(
+                    '//h1[@class="elementor-heading-title elementor-size-default"]/text()'
+                )
+            ).strip()
+        ):
+            continue
+
         locator_domain = website
 
         location_name = "<MISSING>"
@@ -125,22 +135,20 @@ def fetch_data():
         longitude = "<MISSING>"
         if phone in coord_dict:
             location_name = coord_dict[phone]["infoTitle"]
-            hours_of_operation = coord_dict[phone]["infoWorkingHours"]
             LatLng = coord_dict[phone]["coordinates"]
             latitude = LatLng.split(",")[0].strip()
             longitude = LatLng.split(",")[1].strip()
 
-        if hours_of_operation == "<MISSING>" or hours_of_operation == "":
-            hours = store_sel.xpath(
-                '//div[.//b[contains(text(),"School Hours")]]/table//tr'
-            )
-            hours_list = []
-            for hour in hours:
-                day = "".join(hour.xpath("td[1]/text()")).strip()
-                time = "".join(hour.xpath("td[2]/text()")).strip()
-                hours_list.append(day + ":" + time)
+        hours = store_sel.xpath(
+            '//div[.//b[contains(text(),"School Hours")]]/table//tr'
+        )
+        hours_list = []
+        for hour in hours:
+            day = "".join(hour.xpath("td[1]/text()")).strip()
+            time = "".join(hour.xpath("td[2]/text()")).strip()
+            hours_list.append(day + ":" + time)
 
-            hours_of_operation = "; ".join(hours_list).strip()
+        hours_of_operation = "; ".join(hours_list).strip()
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -163,7 +171,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

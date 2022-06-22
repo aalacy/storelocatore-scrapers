@@ -15,7 +15,9 @@ logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def get_all_stores():
-    with SgFirefox(block_javascript=False) as driver:
+    with SgFirefox(
+        block_third_parties=False,
+    ) as driver:
 
         driver.get_and_wait_for_request(
             "https://www.napacanada.com/en/auto-parts-stores-near-me"
@@ -41,12 +43,14 @@ def get_missed_cities(MISSED_CITIES):
     """
     Find and get broken store links.
     """
-    with SgFirefox(block_javascript=False) as driver:
+    new_links = []
 
-        new_links = []
-
-        for link in MISSED_CITIES:
-            CITY = link.split("/")[-1].title()
+    for link in MISSED_CITIES:
+        CITY = link.split("/")[-1].title()
+        with SgFirefox(
+            block_third_parties=False,
+            user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        ) as driver:
             driver.get_and_wait_for_request(
                 f"https://www.napacanada.com/en/store-finder?q={CITY}&page=10"
             )
@@ -97,14 +101,19 @@ def parse(location):
 
 
 def fetch_data():
-    with SgFirefox(block_javascript=False) as driver:
 
-        urls = get_all_stores()
-        logger.info(f"Total pages to crawl: {len(urls)}")
-        MISSED_CITIES = []
-        for url in urls:
-            url = url.replace(" ", "%20")
-            logger.info(f"Crawling {url}")
+    urls = get_all_stores()
+    logger.info(f"Total pages to crawl: {len(urls)}")
+    MISSED_CITIES = []
+    for url in urls:
+        url = url.replace(" ", "%20")
+        if "châteauguay" in str(url):
+            url = "https://www.napacanada.com/en/qc/ch%c3%82teauguay/store/1004540"
+        logger.info(f"Crawling {url}")
+        with SgFirefox(
+            block_third_parties=False,
+            user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        ) as driver:
             driver.get_and_wait_for_request(url)
             soup = BeautifulSoup(driver.page_source, "html.parser")
             try:
@@ -116,10 +125,14 @@ def fetch_data():
                 MISSED_CITIES.append(url)
                 continue
 
-        missed_links = get_missed_cities(MISSED_CITIES)
-        logger.info(f"Total broken or missed urls: {len(missed_links)}")
-        for url in missed_links:
-            logger.info(f"Crawling missed link: {url}")
+    missed_links = get_missed_cities(MISSED_CITIES)
+    logger.info(f"Total broken or missed urls: {len(missed_links)}")
+    for url in missed_links:
+        logger.info(f"Crawling missed link: {url}")
+        with SgFirefox(
+            block_third_parties=False,
+            user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        ) as driver:
             driver.get_and_wait_for_request(url)
             soup = BeautifulSoup(driver.page_source, "html.parser")
             location = json.loads(soup.select("script[type*=application]")[1].text)

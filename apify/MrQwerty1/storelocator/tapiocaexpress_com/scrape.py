@@ -1,97 +1,51 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    divs = tree.xpath("//table[@id='tablepress-1']/tbody/tr")
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.tapiocaexpress.com/"
-    api_url = "https://www.tapiocaexpress.com/wp-admin/admin-ajax.php"
-    data = {"action": "csl_ajax_onload"}
-
-    session = SgRequests()
-    r = session.post(api_url, data=data)
-    js = r.json()["response"]
-
-    for j in js:
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        if len(postal) == 4:
-            postal = f"0{postal}"
+    for d in divs:
+        location_name = city = "".join(d.xpath("./td[1]//text()")).strip()
+        if "(" in city:
+            city = city.split("(")[0].strip()
+        street_address = "".join(d.xpath("./td[2]//text()")).strip()
+        if city in street_address:
+            street_address = street_address.replace(city, "").strip()
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        state = "".join(d.xpath("./td[3]//text()")).strip()
+        postal = "".join(d.xpath("./td[4]//text()")).strip()
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = "https://www.tapiocaexpress.com/store-locator/"
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours = (
-            j.get("hours")
-            .replace("Store Hours", "")
-            .replace("Store hours", "")
-            .replace(": ", "")
-            .strip()
+        phone = "".join(d.xpath("./td[5]//text()")).strip()
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            locator_domain=locator_domain,
         )
-        hours_of_operation = hours or "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.tapiocaexpress.com/"
+    page_url = "https://www.tapiocaexpress.com/list-of-franchisees/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)
