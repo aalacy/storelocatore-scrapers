@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from lxml import html
 
@@ -108,11 +109,13 @@ def fetch_store_details(link):
     data = featuredData["data"]
 
     location_name = (
-        (" ".join(body.xpath("//h1/span/span/text()")))
-        .replace("Coming Soon!", "")
-        .replace("&nbsp;", " ")
-        .strip()
+        (" ".join(body.xpath("//h1/span/span/text()"))).replace("&nbsp;", " ").strip()
     )
+    if not location_name:
+        try:
+            location_name = body.xpath("//h1//text()")[0].strip()
+        except:
+            location_name = body.xpath("//h4//text()")[0].strip()
 
     phone = body.xpath('//a[contains(@href, "tel:")]/span/span/text()')
     if len(phone) == 0:
@@ -125,6 +128,13 @@ def fetch_store_details(link):
                 phone = [MISSING]
 
     phone = phone[0].replace("tel:", "").strip()
+    if not phone:
+        try:
+            phone = re.findall(
+                r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(body.xpath("//text()"))
+            )[0]
+        except:
+            pass
 
     operations = []
     hoursP = body.xpath("//span[text()='HOURS']")
@@ -133,12 +143,22 @@ def fetch_store_details(link):
         dayParts = fetch_node_text(parentDiv)
         for dayPart in dayParts[1:]:
             operations.append("".join(dayPart))
+    if len(operations) == 0:
+        for hourP in hoursP:
+            parentDiv = (
+                hourP.getparent().getparent().getparent().getparent().getparent()
+            )
+            dayParts = fetch_node_text(parentDiv)
+            for dayPart in dayParts[1:]:
+                operations.append("".join(dayPart))
+    if len(operations) == 0:
+        for hourP in hoursP:
+            parentDiv = hourP.getparent().getparent()
+            dayParts = fetch_node_text(parentDiv)
+            for dayPart in dayParts[1:]:
+                operations.append("".join(dayPart))
 
     location_type = MISSING
-    if len(operations) == 0:
-        phone = MISSING
-    if phone == MISSING:
-        location_type = "coming soon"
     location = {}
 
     foundLocation = False
