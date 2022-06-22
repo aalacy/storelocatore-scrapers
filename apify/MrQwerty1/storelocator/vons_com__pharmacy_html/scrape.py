@@ -47,9 +47,12 @@ def get_data(page_url, sgw: SgWriter):
         "//h2[contains(text(), 'Pharmacy Hours')]/following-sibling::div[1]//tr[not(./th)]"
     )
     for h in hours:
+        inters = []
         day = " ".join("".join(h.xpath("./td[1]//text()")).split())
         span = h.xpath("./td[2]/span")
-        inters = []
+        if not span:
+            inters.append("Closed")
+
         for s in span:
             inter = " ".join("".join(s.xpath(".//text()")).split())
             inters.append(inter)

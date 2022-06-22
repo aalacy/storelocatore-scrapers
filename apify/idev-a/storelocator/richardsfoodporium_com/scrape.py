@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("richardsfoodporium")
 
@@ -39,11 +41,12 @@ def fetch_data():
                 phone=addr[2],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address="; ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

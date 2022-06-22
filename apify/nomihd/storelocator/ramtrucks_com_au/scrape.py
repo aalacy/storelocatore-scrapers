@@ -35,12 +35,6 @@ def fetch_data():
                 store.xpath('.//p[@class="fdd-text fdd-text-name"]//text()')
             ).strip()
 
-            location_type = ", ".join(
-                store.xpath(
-                    './/div[@class="fdd-tag-wrapper"]//span[@class="fdd-tag-text"]/text()'
-                )
-            ).strip()
-
             store_info = list(
                 filter(
                     str,
@@ -68,17 +62,60 @@ def fetch_data():
                 store.xpath('.//a[contains(@href,"/locate-a-dealer")]/@href')
             )
 
-            if len(phone) <= 0:
-                log.info(page_url)
-                store_req = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_req.text)
-                phone = "".join(
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
+
+            typ_list = []
+            sales_addr = ", ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidSales"]/div[@class="ldidItemWrapper"][./div[contains(text(),"Address:")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+
+            service_addr = ", ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidService"]/div[@class="ldidItemWrapper"][./div[contains(text(),"Address:")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+
+            if len(sales_addr) > 0:
+                typ_list.append("sales")
+            else:
+                sales_addr = service_addr  # when sales is missing
+
+            if sales_addr == service_addr:
+                typ_list.append("service")
+
+            parts_addr = ", ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidParts"]/div[@class="ldidItemWrapper"][./div[contains(text(),"Address:")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+
+            if sales_addr == parts_addr:
+                typ_list.append("parts")
+
+            location_type = ", ".join(typ_list).strip()
+
+            hours_of_operation = "; ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidSales"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = "; ".join(
                     store_sel.xpath(
-                        '//div[@class="locateDealerInfoDetailsItemWrapper"][./div[contains(text(),"Service")]]/div[@class="locateDealerInfoDetailsText"]/text()'
+                        '//div[@data-id="ldidService"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
                     )
                 ).strip()
 
-            hours_of_operation = "<MISSING>"
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = "; ".join(
+                    store_sel.xpath(
+                        '//div[@data-id="ldidParts"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                    )
+                ).strip()
 
             store_number = page_url.split("=")[1].strip()
 

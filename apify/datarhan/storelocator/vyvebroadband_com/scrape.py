@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -15,11 +17,15 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     data = session.get(start_url, headers=hdr).json()
-    for poi in data["local_offices"]:
 
+    page_url = "https://vyvebroadband.com/payment-centers/"
+    response = session.get(page_url)
+    dom = etree.HTML(response.text)
+    phone = dom.xpath('//a[@class="vyve-phone-number"]/@href')[0].split(":")[-1].strip()
+    for poi in data["local_offices"]:
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://vyvebroadband.com/payment-centers/",
+            page_url=page_url,
             location_name=poi["address1"],
             street_address=poi["address2"],
             city=poi["city"],
@@ -27,7 +33,7 @@ def fetch_data():
             zip_postal=poi["zipcode"],
             country_code="",
             store_number=poi["id"],
-            phone="",
+            phone=phone,
             location_type="",
             latitude="",
             longitude="",

@@ -59,7 +59,12 @@ def fetch_data(sgw: SgWriter):
                 .replace("'", "")
                 .strip()
             )
-            phone = "".join(d.xpath('.//p[@class="tel"]/text()')) or "<MISSING>"
+            phone = (
+                "".join(d.xpath('.//a[contains(@href, "tel")]/text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
             hours_of_operation = (
                 "".join(d.xpath('.//p[@class="time"]//text()'))
                 .replace("\n", "")

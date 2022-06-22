@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
+from selenium.webdriver.common.by import By
 from sgscrape.sgpostal import parse_address_intl
 import re
 import ssl
@@ -64,46 +65,56 @@ def pull_content(url):
     return soup
 
 
-def close_modal(driver):
-    try:
-        driver.find_element_by_id("bfx-wm-close-button").click()
-    except:
-        pass
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
-    search_from = driver.find_element_by_id("storelocator-query")
-    search_from.send_keys("london")
-    driver.find_element_by_xpath('//*[@id="storeFinderForm"]/div/span/button').click()
-    driver.implicitly_wait(10)
+    js_string = 'var element = document.getElementById("bfx-cc-wrapper-expanded");element.remove();'
     try:
-        driver.find_element_by_id("bfx-wm-close-button").click()
+        driver.execute_script(js_string)
     except:
         pass
+    search_from = driver.find_element(By.ID, "storelocator-query")
+    try:
+        driver.find_element(By.ID, "bfx-wm-close-button").click()
+    except:
+        pass
+    search_from.send_keys("london")
+    try:
+        driver.find_element(
+            By.XPATH, '//*[@id="storeFinderForm"]/div/span/button'
+        ).click()
+    except:
+        try:
+            driver.execute_script(js_string)
+            driver.find_element(
+                By.XPATH, '//*[@id="storeFinderForm"]/div/span/button'
+            ).click()
+        except:
+            pass
+    driver.implicitly_wait(10)
     num = 1
     while True:
         log.info(f"Get all locations in page ({num})")
         driver.implicitly_wait(5)
-        stores = driver.find_elements_by_xpath(
-            '//*[@id="storeFinder"]/div/div[2]/div/div/div[2]/div[1]/ul/li'
+        stores = driver.find_elements(
+            By.XPATH, '//*[@id="storeFinder"]/div/div[2]/div/div/div[2]/div[1]/ul/li'
         )
         driver.execute_script("return arguments[0].scrollIntoView(true);", search_from)
         for store in stores:
             try:
                 store.click()
             except:
-                store.find_element_by_class_name("js-select-store-label").click()
+                store.find_element(By.CLASS_NAME, "js-select-store-label").click()
+            time.sleep(1)
             driver.implicitly_wait(5)
-            info = driver.find_element_by_class_name("store__finder--details-info")
-            location_name = info.find_element_by_class_name(
-                "js-store-displayName"
+            info = driver.find_element(By.CLASS_NAME, "store__finder--details-info")
+            location_name = info.find_element(
+                By.CLASS_NAME, "js-store-displayName"
             ).text.strip()
             address = (
-                info.find_element_by_class_name("info__address")
+                info.find_element(By.CLASS_NAME, "info__address")
                 .text.replace("\n", ",")
                 .strip()
                 .split(",")
@@ -115,19 +126,28 @@ def fetch_data():
             else:
                 raw_address = ", ".join(address[:-1]).strip()
                 phone = (
-                    re.sub(r"Tel|:|Phone", "", address[-1], flags=re.IGNORECASE)
-                    .replace("\u202c", "")
+                    (
+                        re.sub(
+                            r"Tel.?|Tél.?|:|Phone|Llamados y Whatsapp|Llamados",
+                            "",
+                            address[-1],
+                            flags=re.IGNORECASE,
+                        )
+                        .replace("\u202c", "")
+                        .strip()
+                    )
+                    .split("/")[0]
                     .strip()
                 )
             street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = MISSING
             hoo = ""
             try:
-                hoo_content = driver.find_element_by_css_selector(
-                    "div.store__finder--details-openings dl"
+                hoo_content = driver.find_element(
+                    By.CSS_SELECTOR, "div.store__finder--details-openings dl"
                 )
-                days = hoo_content.find_elements_by_tag_name("dt")
-                hours = hoo_content.find_elements_by_tag_name("dd")
+                days = hoo_content.find_elements(By.TAG_NAME, "dt")
+                hours = hoo_content.find_elements(By.TAG_NAME, "dd")
                 for i in range(len(days)):
                     hoo += days[i].text.strip() + ": " + hours[i].text.strip() + ","
                 hours_of_operation = hoo.rstrip(",")
@@ -137,8 +157,8 @@ def fetch_data():
             if "temporarily closed" in location_name:
                 location_type = "TEMP_CLOSED"
             store_number = MISSING
-            map_link = driver.find_element_by_xpath(
-                '//*[@id="store-finder-map"]/div/div/div[14]/div/a'
+            map_link = driver.find_element(
+                By.XPATH, '//*[@id="store-finder-map"]/div/div/div[14]/div/a'
             ).get_attribute("href")
             latlong = map_link.split("ll=")[1].split("&z=")[0].split(",")
             latitude = latlong[0] if len(latlong[0]) > 1 else MISSING

@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ast
+from sgpostal import sgpostal as parser
 
 website = "centra.ie"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,17 +58,18 @@ def fetch_data():
                 .strip()
                 .replace("\\/", "/")
                 .strip()
+                .replace("Centra,", "")
+                .strip()
             )
+            formatted_addr = parser.parse_address_intl(raw_address)
             temp_address = raw_address.split(",")
             street_address = ", ".join(temp_address[:-3]).strip()
-            if (
-                len(street_address.split(",")) > 1
-                and street_address.split(",")[0] == "Centra"
-            ):
-                street_address = ", ".join(temp_address[1:-3]).strip()
-
-            city = temp_address[-3]
-            state = temp_address[-2]
+            if not street_address:
+                street_address = "Centra"
+            city = formatted_addr.city
+            if not city:
+                city = location_name
+            state = "<MISSING>"
             zip = temp_address[-1]
 
             country_code = "IE"
@@ -78,6 +80,9 @@ def fetch_data():
                 .replace("<br \\/>", "")
                 .strip()
                 .replace("\n", "; ")
+                .strip()
+                .replace("\n", "")
+                .replace("\r", "")
                 .strip()
             )
 

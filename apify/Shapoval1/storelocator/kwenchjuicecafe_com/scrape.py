@@ -1,40 +1,13 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://kwenchjuicecafe.com/"
     page_url = "https://kwenchjuicecafe.com/locations/"
@@ -77,25 +50,26 @@ def fetch_data():
     for b in block:
 
         location_name = "".join(b.xpath('.//h4[@class="tsI_hd"]/text()'))
-        ad = " ".join(
-            b.xpath(
-                ".//p[./a[contains(@href, '/maps/')]]/a/text() | .//p[./a[contains(@href, 'g.page')]]/a/text()"
+        ad = (
+            " ".join(
+                b.xpath(
+                    ".//p[./a[contains(@href, '/maps')]]/a/text() | .//p[./a[contains(@href, 'g.page')]]/a/text()"
+                )
             )
+            or "<MISSING>"
         )
         if ad.find("(") != -1:
             ad = ad.split("(")[0].strip()
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
 
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
-        state = a.get("state").replace(".", "") or "<MISSING>"
-        postal = a.get("postal")
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        city = a.get("city")
+        city = a.get("city") or "<MISSING>"
         phone = "".join(b.xpath('.//h4[@class="tsI_sh"]/text()'))
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
         text = "".join(
             b.xpath('.//a[contains(@href, "https://www.google.com/maps/place")]/@href')
         )
@@ -109,33 +83,30 @@ def fetch_data():
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=ad,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

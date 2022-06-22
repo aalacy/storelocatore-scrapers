@@ -38,17 +38,16 @@ def fetch_data():
     )
     for lat, lng in search:
         api_url = (
-            "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?api_key=0700165de62eb1a445df7d02b02c7831&v=20181201&location="
+            "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?api_key=560be559a1e94e7ee609fd3bd69e7abd&v=20181201&location="
             + str(lat)
             + ",%20"
             + str(lng)
-            + "&limit=50&radius=500&resolvePlaceholders=true&entityTypes=location&savedFilterIds=60879124"
+            + "&limit=50&radius=500&resolvePlaceholders=true&entityTypes=location&savedFilterIds=970119315"
         )
         log.info("Getting stores from => " + api_url)
         json_data = session.get(api_url, headers=HEADERS).json()["response"]["entities"]
         log.info(f"Found {len(json_data)} stores")
         for data in json_data:
-            search.found_location_at(lat, lng)
             if "CLOSED" in data["name"]:
                 continue
             country_code = data["address"]["countryCode"]
@@ -56,10 +55,7 @@ def fetch_data():
                 page_url = data["websiteUrl"]["url"]
             except KeyError:
                 continue
-            if "c_pagesName" not in data:
-                location_name = MISSING
-            else:
-                location_name = data["c_pagesName"]
+            location_name = data["geomodifier"]
             street_address = data["address"]["line1"]
             if "line2" in data["address"]:
                 street_address += " " + str(data["address"]["line2"]).strip()
@@ -67,7 +63,7 @@ def fetch_data():
             state = data["address"]["region"]
             zip_postal = data["address"]["postalCode"]
             store_number = data["meta"]["id"]
-            location_type = data["c_storeType"]
+            location_type = ""
             try:
                 hours_of_operation = get_hours(data["hours"])
             except:
@@ -75,6 +71,7 @@ def fetch_data():
             phone = data["mainPhone"]
             latitude = data["geocodedCoordinate"]["latitude"]
             longitude = data["geocodedCoordinate"]["longitude"]
+            search.found_location_at(latitude, longitude)
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

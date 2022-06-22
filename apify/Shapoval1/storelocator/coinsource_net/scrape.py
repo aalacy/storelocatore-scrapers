@@ -27,8 +27,13 @@ def fetch_data(sgw: SgWriter):
 
     for j in js["data"]:
         a = j.get("location")
-        page_url = "https://coinsource.net/bitcoin-atm-locations"
         location_name = j.get("name") or "<MISSING>"
+        if (
+            location_name == "Warehouse Gemini Tester 2"
+            or location_name == "ATM Bitcoin"
+            or location_name == "Crypto Coin"
+        ):
+            continue
         location_type = j.get("atmType")
         country_code = a.get("country") or "US"
         latitude = a.get("latitude") or "<MISSING>"
@@ -39,7 +44,10 @@ def fetch_data(sgw: SgWriter):
         city = "".join(a.get("city")).strip() or "<MISSING>"
         state = "".join(a.get("state")).strip() or "<MISSING>"
         postal = "".join(a.get("zip")).strip() or "<MISSING>"
+        if postal == "TX":
+            postal = "<MISSING>"
         store_number = j.get("id")
+        page_url = f"https://coinsource.net/bitcoin-atm-locations?kiosk={store_number}"
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -22,50 +22,31 @@ def fetch_data():
     url = "https://www.lunchboxwax.com/salons/"
     request = session.get(url)
     soup = BeautifulSoup(request.text, "html.parser")
-    data_list = soup.findAll("div", {"class", "marker"})
+    data_list = soup.findAll("li", {"class", "locationcols"})
     for data in data_list:
+        temp = data.findAll("span")
         latitude = data["data-lat"]
-        longitude = data["data-lng"]
-        location_name = data.find("p", {"class", "locationName"}).text
-        try:
-            page_url = data.find("a")["href"]
-        except:
-            if location_name == "LunchboxWax Milford":
-                page_url = "https://www.lunchboxwax.com/ct-milford-marketplace/"
+        longitude = data["data-lon"]
+        location_name = temp[0].text
+        street_address = temp[1].text
+        if "Coming Soon" in street_address:
+            continue
+        city = temp[2].text
+        state = temp[3].text
+        zip_postal = temp[4].text
+        phone = temp[-1].text
+        page_url = data.findAll("a")[-1]["href"]
         log.info(page_url)
         subrequest = session.get(page_url)
-        if "Coming Soon" in subrequest.text:
-            continue
         subsoup = BeautifulSoup(subrequest.text, "html.parser")
-        hours_of_operation = (
-            subsoup.find("div", {"class", "hidden-hours"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-        )
-        phone = (
-            subsoup.find("li", {"class", "location__list-item phone-list-item"})
-            .find("a")
-            .text
-        )
-        add = subsoup.find("li", {"class", "location__list-item address-list-item"})
-        add = add.findAll("span")
         try:
-            street_address = add[0].text
-            city = add[1].text
-            state = add[2].text
-            zip_postal = add[3].text
-        except:
-            add = BeautifulSoup(
-                subrequest.text.split(
-                    '<li class="location__list-item address-list-item">'
-                )[1].split("</li>")[0],
-                "html.parser",
+            hours_of_operation = (
+                subsoup.find("div", {"class", "hidden-hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            add = add.findAll("span")
-            street_address = add[0].text
-            city = add[1].text
-            state = add[2].text
-            zip_postal = add[3].text
+        except:
+            hours_of_operation = MISSING
         country_code = "US"
         if "-" in latitude:
             temp = latitude

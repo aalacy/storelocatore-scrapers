@@ -18,7 +18,7 @@ def fetch_data():
     with SgRequests() as session:
         locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             'div[data-builder-component="page"] > div > div > div'
-        )[1:]
+        )[1:-1]
         for loc in locations:
             _ = loc.findChildren(recursive=False)[1].findChildren(recursive=False)
             hours = []

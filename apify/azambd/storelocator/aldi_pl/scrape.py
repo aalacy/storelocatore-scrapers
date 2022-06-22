@@ -82,7 +82,7 @@ def fetch_data():
         log.debug(f"{count} - {page_count} . scrapping {page_url} ...")
 
         location_name = stringify_nodes(
-            body, '//div[contains(@class, "mod mod-headline")]/h1'
+            body, '//div[contains(@class, "mod mod-headline")]/h2'
         )
         street_address = stringify_nodes(
             body, '//span[contains(@itemprop, "streetAddress")]'

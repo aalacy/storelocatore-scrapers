@@ -26,31 +26,37 @@ def fetch_data(sgw: SgWriter):
         ad = (
             " ".join(
                 d.xpath(
-                    './/preceding::strong[text()="Address:"][1]/following-sibling::text()'
+                    './/preceding::strong[text()="Address:"][1]/following-sibling::p[1]/text()'
                 )
             )
             .replace("\n", "")
             .replace("República Dominicana", "")
             .strip()
         )
-        street_address = " ".join(ad.split(",")[:-1]).strip()
+        street_address = " ".join(ad.split(",")[:-2]).strip()
+        street_address = " ".join(street_address.split())
         country_code = "Dominican Republic"
         city = ad.split(",")[-1].strip()
         map_link = "".join(d.xpath(".//iframe/@src"))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        phone = "".join(
-            d.xpath(
-                './/preceding::strong[text()="Phone number:"]/following-sibling::p[1]/text()'
+        phone = (
+            "".join(
+                d.xpath(
+                    './/preceding::strong[contains(text(), "Phone number")][1]/following-sibling::text()'
+                )
             )
-        ).strip()
+            .replace(" IKEA", "")
+            .strip()
+        )
         hours_of_operation = (
             "".join(
                 d.xpath(
-                    './/preceding::strong[text()="Phone number:"]/following-sibling::p[2]/text()'
+                    './/preceding::div[./p[@class="txtHorarios mb-2 mb-md-1"]][2]/p[1]//text()'
                 )
             )
             .replace("\n", " ")
+            .replace("Shop:", "")
             .strip()
         )
 

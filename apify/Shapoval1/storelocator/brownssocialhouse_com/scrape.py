@@ -41,18 +41,24 @@ def get_data(url, sgw: SgWriter):
     page_url = f"https://brownssocialhouse.com/{page_url}"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
         "Referer": "https://brownssocialhouse.com/",
-        "Proxy-Authorization": "Basic VEYwYmJlZGNkNWM1YmE1YWZjNDhhOTQ4MjcxMDlmMGJhMS5oNzgzb2hhdzA5amRmMDpURjBiYmVkY2Q1YzViYTVhZmM0OGE5NDgyNzEwOWYwYmExLmg3ODIzOWhk",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
+        "If-None-Match": 'W/"59c00ef0d0df62e10c2be8aab595f484"',
+        "Cache-Control": "max-age=0",
     }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    try:
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+    except:
+        return
     hours_of_operation = (
         " ".join(
             tree.xpath(

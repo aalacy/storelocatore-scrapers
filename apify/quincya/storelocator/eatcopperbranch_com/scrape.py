@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -20,65 +20,64 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://eatcopperbranch.com"
 
     req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    base = BeautifulSoup(req.text, "html.parser")
 
-    items = list(base.find(class_="et_pb_text_inner").stripped_strings)
+    items = base.find_all("li", class_="fusion-layout-column")
 
     for item in items:
-        if "," not in item or "& MARKHAM" in item.upper():
-            location_name = item.replace("\xa0", "")
-            continue
-        raw_address = (
-            item.replace("\xa0", "")
-            .replace(", ON ", ", ON, ")
-            .replace(" QC", ", QC")
-            .replace(" ON", ", ON")
-            .replace(" TN ", " TN, ")
-            .replace(" AB ", " AB, ")
-            .replace(" BC ", " BC, ")
-            .replace(" ME ", " ME, ")
-            .replace(" NS ", " NS, ")
-            .replace(",,", ",")
-        )
-        if "/" in raw_address:
-            phone = raw_address.split("/")[-1].strip()
-            raw_address = raw_address.split("/")[0].strip().split(",")
+        raw_address = list(item.stripped_strings)
+        location_name = raw_address[0]
+        street_address = raw_address[1]
+        if "," in street_address:
+            if "suite" not in street_address and "16th" not in street_address:
+                street_address = street_address.split(",")[0].strip()
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+        city_line = raw_address[2].split(",")
+        if len(city_line) == 3:
+            city = city_line[0].strip()
+            state = city_line[1].strip()
+            zip_code = city_line[2].strip()
         else:
-            raw_address = raw_address.strip().split(",")
-            phone = ""
-
-        street_address = ", ".join(raw_address[:-3])
-        if not street_address:
-            street_address = raw_address[0]
-        street_address = street_address.split(",")[0].strip()
-        city = raw_address[-3].strip()
-        state = raw_address[-2].strip()
-        zip_code = raw_address[-1].strip()
+            city = city_line[0].strip()
+            state = city_line[1].split()[0].strip()
+            zip_code = " ".join(city_line[1].split()[1:])
         if len(zip_code) == 5:
             country_code = "US"
         else:
             country_code = "CA"
 
-        if street_address == city:
-            city = state
-            state = ""
-
-        if city == "Toronto":
-            state = "ON"
-
-        if state == "C":
-            state = "QC"
-
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        phone = raw_address[3]
+        if "-" not in phone:
+            phone = ""
+        location_type = ""
         latitude = ""
         longitude = ""
-        hours_of_operation = ""
+
+        link = item.a["href"]
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "html.parser")
+
+        store_number = base.main.section.div["id"].split("-")[-1]
+        hours_of_operation = " ".join(
+            list(
+                base.main.section.find(string="Opening Hours")
+                .find_previous(class_="fusion-column-wrapper")
+                .find_previous(class_="fusion-column-wrapper")
+                .stripped_strings
+            )[1:]
+        )
+        if hours_of_operation.find("Temporarily Closed") != -1:
+            hours_of_operation = "Temporarily Closed"
+        if hours_of_operation.find("COMING SOON") != -1:
+            hours_of_operation = "COMING SOON"
+        if hours_of_operation.find("Coming soon") != -1:
+            hours_of_operation = "Coming soon"
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=base_link,
+                page_url=link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -95,5 +94,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)

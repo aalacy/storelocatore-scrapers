@@ -1,64 +1,95 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import time
+from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("")
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
 locator_domain = "https://www.iconcinemas.com"
 base_url = "https://www.iconcinemas.com/"
+info_url = "https://www.iconcinemas.com/theatreinfo.php"
+
+
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
+def _d(driver, loc):
+    logger.info(loc.find_element_by_css_selector("span").text)
+    coming_soon = bs(driver.page_source, "lxml").select_one("div#cs")
+    if coming_soon and "coming soon" in coming_soon.text.lower():
+        return None
+    button = loc.find_element_by_css_selector('div[role="button"]')
+    driver.execute_script("arguments[0].click();", button)
+    time.sleep(1)
+    info_btn = driver.find_element_by_xpath("//a[contains(text(),'THEATRE INFO')]")
+    driver.execute_script("arguments[0].click();", info_btn)
+    rr = driver.wait_for_request(info_url)
+    sp1 = bs(rr.response.body, "lxml")
+    info = list(sp1.select_one("div#general table > tr > td").stripped_strings)
+    addr = info[1].split(",")
+    try:
+        coord = (
+            sp1.select_one("div#drawMap")["onclick"]
+            .split("query=")[1]
+            .split("');")[0]
+            .split(",")
+        )
+    except:
+        return None
+    if coord[0] == "" and coord[1] == "":
+        return None
+    return SgRecord(
+        page_url=base_url,
+        location_name=info[0],
+        street_address=" ".join(addr[:-2]),
+        city=addr[-2].split(",")[0].strip(),
+        state=addr[-1].strip().split()[0].strip(),
+        zip_postal=addr[-1].strip().split()[-1].strip(),
+        country_code="US",
+        latitude=coord[0],
+        longitude=coord[1],
+        locator_domain=locator_domain,
+        raw_address=", ".join(addr),
+    )
 
 
 def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.feature a")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            alert = sp1.select_one("div#alertMessage img.img-responsive")
-            if alert and "edmondcomingsoonart.jpg" in alert["src"]:
-                continue
-            addr = list(sp1.select_one("div#footer-address p a").stripped_strings)
-            map_url = page_url + sp1.select_one("div#footer-address p a")["href"]
-            res = session.get(map_url, headers=_headers).text
-            try:
-                coord = (
-                    res.split("new google.maps.LatLng(")[1].split(");")[0].split(",")
-                )
-            except:
-                coord = ["", ""]
-            yield SgRecord(
-                page_url=page_url,
-                location_name=sp1.h2.text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[1]
-                .replace("\xa0", " ")
-                .split(",")[1]
-                .strip()
-                .split(" ")[-1]
-                .strip(),
-                country_code="US",
-                latitude=coord[0],
-                longitude=coord[1],
-                locator_domain=locator_domain,
-                raw_address=" ".join(addr),
-            )
+    driver = get_driver()
+    driver.get(base_url)
+    locations = driver.find_elements_by_xpath('//div[@class="locationItem"]')
+    total = len(locations)
+    for x in range(total):
+        del driver.requests
+        driver.get(base_url)
+        header = driver.find_element_by_css_selector("div.headerLocationName")
+        driver.execute_script("arguments[0].click();", header)
+        time.sleep(1)
+        locations = driver.find_elements_by_xpath('//div[@class="locationItem"]')
+        loc = locations[x]
+        yield _d(driver, loc)
+
+    if driver:
+        driver.close()
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

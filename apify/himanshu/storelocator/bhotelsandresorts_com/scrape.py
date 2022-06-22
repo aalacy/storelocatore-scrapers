@@ -1,111 +1,73 @@
-import json
-import usaddress
 from lxml import html
-from sglogging import sglog
-from bs4 import BeautifulSoup
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
-website = "bhotelsandresorts_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
 
+def fetch_data(sgw: SgWriter):
 
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-}
+    locator_domain = "https://www.bhotelsandresorts.com/"
+    api_url = "https://www.bhotelsandresorts.com/destinations/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//a[text()="LEARN MORE"]')
+    for d in div:
 
-DOMAIN = "https://bhotelsandresorts.com/"
-MISSING = SgRecord.MISSING
-
-
-def fetch_data():
-    r = session.get("https://www.bhotelsandresorts.com/destinations", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    script_temp = soup.find(id="menu-main").ul
-    for script_location in script_temp.find_all("li"):
-        page_url = script_location.find("a")["href"]
-        log.info(page_url)
-        r1 = session.get(page_url, headers=headers)
-        tree = html.fromstring(r1.text)
-        text = "".join(tree.xpath("//script[contains(text(), 'places')]/text()"))
-        text = text.split('"places":[')[-1].split("}}")[0] + "}}}"
-        address_json = json.loads(text)
-        location_name = address_json["title"]
-        store_number = address_json["id"]
-        latitude = address_json["location"]["lat"]
-        longitude = address_json["location"]["lng"]
-        try:
-            phone = address_json["content"]
-        except:
-            phone = MISSING
-        if "Directions" in phone:
-            phone = MISSING
-        address = address_json["address"]
-        address = address.replace(",", " ").replace("USA", "")
-        address = usaddress.parse(address)
-        i = 0
-        street_address = ""
-        city = ""
-        state = ""
-        zip_postal = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street_address = street_address + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                zip_postal = zip_postal + " " + temp[0]
-            i += 1
-        if not zip_postal:
-            zip_postal = r1.text.split('"postal_code":"')[1].split('"')[0]
+        page_url = "".join(d.xpath(".//@href"))
+        location_name = "".join(d.xpath(".//preceding-sibling::h2[1]/text()"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        street_address = (
+            "".join(tree.xpath('//p[text()="Main"]/preceding-sibling::p[1]/text()[1]'))
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//p[text()="Main"]/preceding-sibling::p[1]/text()[2]'))
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
+        )
+        state = ad.split()[-2].strip()
+        postal = ad.split()[-1].strip()
         country_code = "US"
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=MISSING,
+        city = " ".join(ad.split()[:-2]).strip()
+        phone = (
+            "".join(tree.xpath('//p[text()="Main"]/following-sibling::p[1]/text()'))
+            .replace("\n", "")
+            .replace(",", "")
+            .strip()
         )
 
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {ad}",
+        )
 
-def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
-    ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

@@ -30,7 +30,7 @@ def get_hours(hours) -> str:
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://foxtrotco.com"
-    ll = [1, 2, 3]
+    ll = [1, 2, 3, 4]
     for i in ll:
         api_url = f"https://api.foxtrotchicago.com/v5/retail-stores/?region_id={i}"
         session = SgRequests()
@@ -61,8 +61,8 @@ def fetch_data(sgw: SgWriter):
             longitude = j.get("lon") or "<MISSING>"
             hours = j.get("operating_hours")
             hours_of_operation = get_hours(hours)
-            a_url = "".join(j.get("asset_url"))
-            if "ComingSoon" in a_url or "coming-soon" in a_url:
+            cms = j.get("is_coming_soon")
+            if cms:
                 hours_of_operation = "Coming Soon"
 
             row = SgRecord(

@@ -44,14 +44,12 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = (
-        "http://www.papajohns.ky/users/getlocation/getlocationdeatails/0/index.html"
-    )
+    search_url = "https://www.papajohns.ky/"
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath('//div[@id="contentTitle"]//tr/td')
+    store_list = search_sel.xpath('//div[@class="locations__container pa-6"]')
 
     for store in store_list:
 
@@ -59,30 +57,22 @@ def fetch_data():
 
         locator_domain = website
 
-        store_info = "".join(store.xpath("text()")).strip()
+        location_name = "".join(
+            store.xpath('.//div[@class="locations__title mb-2"]/text()')
+        ).strip()
+        raw_address = (
+            "".join(store.xpath('.//div[@class="mb-0 locations__content"]/p[1]/text()'))
+            .strip()
+            .split(",")
+        )
+        street_address = raw_address[0].strip()
+        city = raw_address[1].strip()
+        phone = "".join(
+            store.xpath(
+                './/div[@class="mb-0 locations__content"]/p[./a[contains(@href,"tel:")]]//text()'
+            )
+        ).strip()
 
-        phone = "<MISSING>"
-        try:
-            phone = store_info.split("tel:")[1].strip()
-        except:
-            phone = store_info.split("Tel:")[1].strip()
-
-        street_address = store_info.split("tel:")[0].strip().split("Tel:")[0].strip()
-        location_name = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
-        if "," in street_address:
-            location_name = street_address.split(",")[1].strip()
-            street_address = street_address.split(",")[0].strip()
-            map_link = "".join(
-                search_sel.xpath('//iframe[contains(@src,"maps/embed")]/@src')
-            ).strip()
-            latitude, longitude = get_latlng(map_link)
-        else:
-            location_name = "Hurley's"
-
-        city = "<MISSING>"
         state = "<MISSING>"
         zip = "<MISSING>"
         country_code = "CY"
@@ -90,8 +80,9 @@ def fetch_data():
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"
-        hours_of_operation = "Open 11AM-11PM Everyday"
-        raw_address = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -108,7 +99,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 

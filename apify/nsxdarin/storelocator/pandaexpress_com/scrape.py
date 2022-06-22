@@ -16,7 +16,28 @@ logger = SgLogSetup().get_logger("pandaexpress_com")
 def fetch_data():
     url = "https://www.pandaexpress.com/locations"
     states = []
-    cities = []
+    cities = [
+        "https://www.pandaexpress.com/locations/wi/milwaukee",
+        "https://www.pandaexpress.com/locations/tx/hurst",
+        "https://www.pandaexpress.com/locations/sc/charleston",
+        "https://www.pandaexpress.com/locations/sc/myrtle-beach",
+        "https://www.pandaexpress.com/locations/mi/lansing",
+        "https://www.pandaexpress.com/locations/mi/rochester",
+        "https://www.pandaexpress.com/locations/md/frederick",
+        "https://www.pandaexpress.com/locations/in/lafayette",
+        "https://www.pandaexpress.com/locations/il/peoria",
+        "https://www.pandaexpress.com/locations/ia/des-moines",
+        "https://www.pandaexpress.com/locations/hi/kailua",
+        "https://www.pandaexpress.com/locations/fl/panama-city",
+        "https://www.pandaexpress.com/locations/ca/covina",
+        "https://www.pandaexpress.com/locations/ca/highland",
+        "https://www.pandaexpress.com/locations/ca/hollywood",
+        "https://www.pandaexpress.com/locations/ca/monterey",
+        "https://www.pandaexpress.com/locations/ca/walnut",
+        "https://www.pandaexpress.com/locations/ca/woodland",
+        "https://www.pandaexpress.com/locations/az/prescott",
+        "https://www.pandaexpress.com/locations/ar/benton",
+    ]
     locs = ["https://www.pandaexpress.com/locations/ar/benton/20810-i-30-north"]
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -40,7 +61,8 @@ def fetch_data():
                             "https://www.pandaexpress.com/locations/"
                             + item.split('"')[0]
                         )
-                        if "(1) </a>" in item:
+                        lurl = lurl.replace("coeur-dalene", "coeur-d'alene")
+                        if "(1) </a>" in item and lurl not in cities:
                             locs.append(lurl)
                         else:
                             cities.append(lurl)
@@ -62,6 +84,7 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for loc in locs:
+        loc = loc.replace("coeur-dalene", "coeur-d'alene")
         try:
             logger.info(loc)
             hours = ""
@@ -96,6 +119,7 @@ def fetch_data():
                         .rsplit(" ", 1)[0]
                     )
                     zc = address.strip().rsplit(" ", 1)[1]
+                    rawadd = address.replace("<br>", ", ").replace("  ", " ")
                 if '<div class="day_name">' in line2:
                     days = line2.split('<div class="day_name">')
                     for day in days:
@@ -111,25 +135,39 @@ def fetch_data():
                                 hours = hours + "; " + hrs
             if hours == "":
                 hours = "<MISSING>"
-            if "," in add:
-                add = add.split(",")[1].strip()
-            if len(zc) >= 5:
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=purl,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+            if (
+                "," in add
+                and "Km " not in add
+                and "Lot " not in add
+                and "Int. " not in add
+                and "Pr2" not in add
+                and "Pr-3" not in add
+                and "Suite" not in add
+            ):
+                addnew = add.split(",")[1].strip()
+                if len(addnew) <= 2:
+                    add = add.replace(",", "")
+                else:
+                    add = addnew
+            if len(zc) >= 1:
+                if purl not in cities:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        raw_address=rawadd,
+                        hours_of_operation=hours,
+                    )
         except:
             pass
 
