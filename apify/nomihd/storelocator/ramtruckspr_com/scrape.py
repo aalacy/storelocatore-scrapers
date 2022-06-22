@@ -117,6 +117,7 @@ def fetch_data():
                     hours_of_operation = "".join(hours_of_operation[1:]).strip()
 
             map_link = "".join(store.xpath('.//iframe[contains(@src,"maps")]/@src'))
+            log.info(map_link)
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(

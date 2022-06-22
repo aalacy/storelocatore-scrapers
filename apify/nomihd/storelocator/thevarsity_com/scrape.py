@@ -36,7 +36,7 @@ def fetch_data():
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath(
-            "//div[@class='grid__item medium-up--one-half text-center']"
+            "//main[@id='MainContent']//div[contains(@class,'grid__item medium-up--one-')]"
         )
 
         for store in stores:
@@ -72,7 +72,10 @@ def fetch_data():
                 '//p[./strong[contains(text(),"HOURS OF OPERATION:")]]/following-sibling::p'
             )
             hours_list = []
-            if len(hours) <= 0:
+            if (
+                len(hours) <= 0
+                or "We are located" in "".join(hours[0].xpath("text()")).strip()
+            ):
                 hours = store_sel.xpath(
                     '//p[./strong[contains(text(),"HOURS OF OPERATION:")]]'
                 )
@@ -85,7 +88,12 @@ def fetch_data():
                         hours_list.append("".join(hour).strip())
 
             hours_of_operation = (
-                "; ".join(hours_list).strip().split("; Closed on")[0].strip()
+                "; ".join(hours_list)
+                .strip()
+                .split("; Closed on")[0]
+                .strip()
+                .split("(")[0]
+                .strip()
             )
 
             store_number = "<MISSING>"

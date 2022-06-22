@@ -65,7 +65,10 @@ def fetch_data():
     info = soup.find("div", {"class": "block_information_storelocator"}).find_all(
         "div", {"class": "info-second-text"}
     )
-    phone = info[0].text.split("-")[1].strip()
+    try:
+        phone = info[0].text.split()[0].strip()
+    except:
+        phone = ""
     hours_of_operation = info[2].get_text(strip=True, separator=", ")
     for row in data:
         location_name = row["properties"]["name"].strip()

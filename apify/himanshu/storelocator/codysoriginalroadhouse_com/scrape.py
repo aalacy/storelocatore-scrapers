@@ -31,7 +31,7 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             location_details = soup.findAll(
                 "div", {"data-testid": "mesh-container-content"}
-            )[-2]
+            )[-3]
             hours_of_operation = location_details.get_text(
                 separator="|", strip=True
             ).replace("|", " ")
