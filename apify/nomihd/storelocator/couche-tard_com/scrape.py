@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("couche-tard_com")
-session = SgRequests()
+session = SgRequests(dont_retry_status_codes=([404]))
 
 
 def fetch_data():
@@ -36,11 +36,21 @@ def fetch_data():
             page += 1
 
             location_url = "https://www.couche-tard.com/stores_new.php?lat={}&lng={}&distance=9999999999&services=&region=quebec&page={}"
-            stores = session.get(
-                location_url.format("43.653482", "-79.383935", str(page)),
-                headers=headers,
-            ).json()["stores"]
-            if len(stores) <= 0:
+            retry_count = 0
+            stores = None
+            while retry_count <= 3:
+                stores = None
+                stores = session.get(
+                    location_url.format("43.653482", "-79.383935", str(page)),
+                    headers=headers,
+                ).json()["stores"]
+                if len(stores) > 0:
+                    break
+                else:
+                    logger.info("retrying to get stores")
+                    retry_count = retry_count + 1
+
+            if stores is None or len(stores) <= 0:
                 cont = False
                 break
             logger.info(f"visiting pageno:{page}")
@@ -60,10 +70,7 @@ def fetch_data():
                             "store-locator", "trouvez-votre-magasin"
                         ).strip()
                         logger.info(page_url)
-                        try:
-                            store_req = session.get(page_url, headers=headers)
-                        except:
-                            continue
+                        store_req = session.get(page_url, headers=headers)
                         store_sel = lxml.html.fromstring(store_req.text)
                         json_list = store_sel.xpath(
                             '//script[@type="application/ld+json"]/text()'
@@ -90,7 +97,12 @@ def fetch_data():
                                     .replace("&#039;", "'")
                                     .strip()
                                 )
-                                if street_address[-1:] == ",":
+                                if street_address:
+                                    street_address = street_address.split("(")[
+                                        0
+                                    ].strip()
+
+                                if street_address[-1] == ",":
                                     street_address = street_address[:-1]
                                 city = (
                                     store_json["address"]["addressLocality"]

@@ -52,7 +52,11 @@ def fetch_data(sgw: SgWriter):
                 city, postal = SgRecord.MISSING, SgRecord.MISSING
             country_code = "DE"
             store_number = j.get("ID")
-            location_name = j.get("Title")
+            location_name = j.get("Title") or ""
+            if "SB" in location_name:
+                location_type = "ATM"
+            else:
+                location_type = "Branch"
             page_url = f"https://www.deutsche-bank.de/cip/rest/api/url/filialfinder/Home/Details?id={store_number}"
             phone = a.get("Tel")
 
@@ -89,6 +93,8 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(f'{day}: {"|".join(inters)}')
 
             hours_of_operation = ";".join(_tmp)
+            if location_type == "ATM":
+                hours_of_operation = SgRecord.MISSING
 
             row = SgRecord(
                 page_url=page_url,
@@ -100,6 +106,7 @@ def fetch_data(sgw: SgWriter):
                 country_code=country_code,
                 latitude=latitude,
                 longitude=longitude,
+                location_type=location_type,
                 phone=phone,
                 store_number=store_number,
                 hours_of_operation=hours_of_operation,

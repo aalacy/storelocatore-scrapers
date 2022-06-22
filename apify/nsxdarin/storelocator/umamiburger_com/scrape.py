@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
 
 DOMAIN = "umamiburger.com"
 BASE_URL = "https://www.umamiburger.com/"
@@ -33,93 +32,108 @@ def fetch_data():
         "https://www.umamiburger.com/dine-in-locations",
         "https://www.umamiburger.com/pick-up-and-delivery",
     ]
-    days = [
-        {"label": "Su", "name": "Sunday:"},
-        {"label": "Mo", "name": "Monday:"},
-        {"label": "Tu", "name": "Tuesday:"},
-        {"label": "We", "name": "Wednesday:"},
-        {"label": "Th", "name": "Thursday:"},
-        {"label": "Fr", "name": "Friday:"},
-        {"label": "Sa", "name": "Saturday:"},
-    ]
     for link in links:
         soup = pull_content(link)
-        data = json.loads(
-            soup.find("script", id="popmenu-apollo-state")
-            .string.replace("window.POPMENU_APOLLO_STATE = ", "")
-            .replace("};", "}")
-            .replace('" + "', "")
-            .strip()
-        )
-        for key, value in data.items():
-            if key.startswith("RestaurantLocation:"):
-                if (
-                    "customLocationContent" in value
-                    and "Coming Soon!" in value["customLocationContent"]
-                ):
-                    continue
+        soupstr = str(soup.find("script", id="popmenu-apollo-state"))
+        items = soupstr.split('"RestaurantLocation:')
+        for item in items:
+            if (
+                "Coming Soon!" not in item
+                and "POPMENU_APOLLO_STATE" not in item
+                and '"id":' in item
+            ):
                 try:
-                    page_url = BASE_URL + value["slug"]
-                    location_name = value["name"]
-                    raw_address = value["fullAddress"].replace("\n", ", ").strip()
-                    city = value["city"]
-                    state = value["state"]
-                    zip_postal = value["postalCode"]
+                    page_url = BASE_URL + item.split('"slug":"')[1].split('"')[0]
+                except:
+                    page_url = "<MISSING>"
+                try:
+                    location_name = item.split('"name":"')[1].split('"')[0]
+                except:
+                    location_name = "<MISSING>"
+                try:
+                    raw_address = (
+                        item.split('"fullAddress":"')[1]
+                        .split('"')[0]
+                        .replace("\n", ", ")
+                        .strip()
+                    )
+                except:
+                    raw_address = ""
+                try:
+                    city = item.split('"city":"')[1].split('"')[0]
+                except:
+                    city = "<MISSING>"
+                try:
+                    state = item.split('"state":"')[1].split('"')[0]
+                except:
+                    state = "<MISSING>"
+                try:
+                    zip_postal = item.split('"postalCode":"')[1].split('"')[0]
+                except:
+                    zip_postal = "<MISSING>"
+                try:
                     street_address = (
-                        value["streetAddress"]
+                        item.split('"streetAddress":"')[1]
+                        .split('"')[0]
                         .replace("\n", ", ")
                         .replace("Level 1 Pullman Paris Montparnasse Hotel,", "")
                         .strip()
                     )
                 except:
-                    continue
-                country_code = value["country"]
-                phone = value["displayPhone"]
+                    street_address = "<MISSING>"
+                try:
+                    country_code = item.split('"country":"')[1].split('"')[0]
+                except:
+                    country_code = "<MISSING>"
+                try:
+                    phone = item.split('"displayPhone":"')[1].split('"')[0]
+                except:
+                    phone = "<MISSING>"
                 location_type = MISSING
-                store_number = value["id"]
-                latitude = value["lat"]
-                longitude = value["lng"]
+                store_number = item.split('"id":')[1].split(",")[0]
+                try:
+                    latitude = item.split('"lat":')[1].split(",")[0]
+                    longitude = item.split('"lng":')[1].split(",")[0]
+                except:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
                 hoo = ""
                 try:
-                    for day in days:
-                        day_available = False
-                        for hday in value["schemaHours"]:
-                            if day["label"] in hday:
-                                day_available = True
-                                hoo += hday.replace(day["label"], day["name"]) + ","
-                        if not day_available:
-                            hoo += day["name"] + " Closed" + ","
-                        hoo = hoo.replace(
-                            day["name"]
-                            + " 16:30-19:00,"
-                            + day["name"]
-                            + " 11:30-15:00",
-                            day["name"]
-                            + " 11:30-15:00,"
-                            + day["name"]
-                            + " 16:30-19:00",
-                        )
+                    hoo = (
+                        item.split('"schemaHours":["')[1]
+                        .split('],"show')[0]
+                        .replace('","', "; ")
+                        .replace('"', "")
+                    )
                 except:
                     pass
-                hours_of_operation = hoo.strip().rstrip(",")
+                hours_of_operation = hoo.strip()
+                if "\\n" in street_address:
+                    street_address = street_address.split("\\n")[0]
+                if "\n" in street_address:
+                    street_address = street_address.split("\n")[0]
                 log.info("Append {} => {}".format(location_name, street_address))
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+                if 'isLocationClosed":true' in item:
+                    hoo = "Temporarily Closed"
+                    location_name = location_name + " - Temporarily Closed"
+                if "null" not in latitude and "<MISSING>" not in street_address:
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_postal,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
 
 
 def scrape():

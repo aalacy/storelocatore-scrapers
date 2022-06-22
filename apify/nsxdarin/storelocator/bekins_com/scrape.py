@@ -18,8 +18,6 @@ def fetch_data():
     url = "https://www.bekins.com/agent-sitemap.xml"
     locs = []
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
     for line in r.iter_lines():
         if (
             "<loc>https://www.bekins.com/find-a-local-agent/agents/" in line
@@ -49,9 +47,14 @@ def fetch_data():
         city = raw_address[-2].strip()
         state = raw_address[-1].split()[0]
         zc = raw_address[-1].split()[1]
-        phone = (
-            base.find(string="Call Us").find_previous("a")["href"].replace("tel:", "")
-        )
+        try:
+            phone = (
+                base.find(string="Call Us")
+                .find_previous("a")["href"]
+                .replace("tel:", "")
+            )
+        except:
+            phone = "<MISSING>"
         website = "bekins.com"
         typ = ""
         country = "US"

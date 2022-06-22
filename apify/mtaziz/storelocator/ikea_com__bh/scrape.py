@@ -56,7 +56,7 @@ store_locator_list = [
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(proxy_country="us") as http:
         response = http.get(url, headers=headers)
         time.sleep(random.randint(3, 7))
         if response.status_code == 200:
@@ -1084,9 +1084,8 @@ def fetch_records_qa(sgw: SgWriter):
         location_name = "".join(sel2.xpath(xpath_locname))
         location_name = "IKEA Doha store"
         logger.info(f"Location Name: {location_name}")
-        xpath_address = (
-            '//div[*[strong[contains(text(), "IKEA Doha store")]]]/p//text()'
-        )
+
+        xpath_address = '//div[p[contains(text(), "Street No")]]/p//text()'
 
         address_custom = sel2.xpath(xpath_address)
         logger.info(f"{[page_url]} = > {address_custom}")

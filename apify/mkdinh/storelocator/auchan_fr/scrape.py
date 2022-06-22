@@ -41,25 +41,35 @@ def fetch_location(item, location_type, session):
         city = store_info.find("meta", itemprop="addressLocality").attrs["content"]
         postal = store_info.find("meta", itemprop="postalCode").attrs["content"]
 
-        hours_of_operation = soup.find("ul", class_="store-weekSchedule").attrs.get(
-            "content"
-        )
-        if not hours_of_operation:
-            hours_of_operation = ",".join(
-                [
-                    "Lundi: Fermé",
-                    "Mardi: Fermé",
-                    "Mercredi: Fermé",
-                    "Jeudi: Fermé",
-                    "Vendredi: Fermé",
-                    "Samedi: Fermé",
-                    "Dimanche: Fermé",
-                ]
-            )
+        schedule = store_info.find("ul", class_="store-weekSchedule")
+        hours_of_operation = []
+        for dayhour in schedule.find_all("li"):
+            day = dayhour.find("span", class_="store-weekSchedule__days").text
+            hour = dayhour.find("span", class_="store-weekSchedule__hours").text
+
+            hours_of_operation.append(f"{day}: {hour}")
+
+        if not len(hours_of_operation):
+            hours_of_operation = [
+                "Lundi: Fermé",
+                "Mardi: Fermé",
+                "Mercredi: Fermé",
+                "Jeudi: Fermé",
+                "Vendredi: Fermé",
+                "Samedi: Fermé",
+                "Dimanche: Fermé",
+            ]
+        hours_of_operation = ",".join(hours_of_operation)
     else:
-        address = item.find("div", class_="place-pos__address").text.strip()
-        postal, city = address.split(" ", 1)
-        street_address = None
+        address = item.find("div", class_="place-pos__address").find_all("span")
+        texts = [item.text.strip() for item in address if item.text]
+        if len(texts) == 1:
+            street_address = None
+            (postalcity,) = texts
+        else:
+            street_address, postalcity = texts
+
+        postal, city = postalcity.split(" ", 1)
         hours_of_operation = None
 
     phone_info = soup.find("meta", itemprop="telephone")
@@ -86,7 +96,7 @@ def fetch_data():
     with SgRequests() as session:
         types = ["DRIVE", "PICKUP_POINT", "LOCKERS", "HYPER", "SUPER", "PROXY"]
         session.get("https://www.auchan.fr")
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor() as executor:
             for location_type in types:
                 response = session.get(
                     f"https://www.auchan.fr/nos-magasins?types={location_type}"

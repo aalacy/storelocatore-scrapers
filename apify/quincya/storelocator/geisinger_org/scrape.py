@@ -17,23 +17,6 @@ from sgrequests import SgRequests
 logger = SgLogSetup().get_logger("geisinger.org")
 
 
-def get_loc_type(oservices):
-    sel_os = html.fromstring(oservices)
-    ostext = sel_os.xpath("//text()")
-    ostext = [" ".join(i.split()) for i in ostext]
-    ostext = [i for i in ostext if i]
-    location_type = (
-        "; ".join(ostext)
-        .replace("•", "")
-        .replace("<>br/>", ";")
-        .split("; <")[0]
-        .strip()
-    )
-    if "font-size" in location_type:
-        location_type = ""
-    return location_type
-
-
 def get_hoo(officehours):
     sel_hoo = html.fromstring(officehours)
     hoo_data = sel_hoo.xpath("//text()")
@@ -116,8 +99,6 @@ def fetch_data(sgw: SgWriter):
         latitude = ""
         longitude = ""
 
-        if store["OTHERSERVICES"].strip():
-            location_type = get_loc_type(store["OTHERSERVICES"].strip())
         if store["OFFICEHOURS"].strip():
             hours_of_operation = get_hoo(store["OFFICEHOURS"].strip())
 

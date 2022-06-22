@@ -6,7 +6,6 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal import sgpostal as parser
 
 website = "bata.pe"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -49,18 +48,33 @@ def fetch_data():
         location_name = store["nombre"]
         raw_address = store["direccion"]
 
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if street_address:
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-        else:
-            if formatted_addr.street_address_2:
-                street_address = formatted_addr.street_address_2
+        street_address = "".join(raw_address.rsplit(".", 1)[0].strip())
+        city = (
+            raw_address.rsplit(".", 1)[1]
+            .strip()
+            .split("-")[0]
+            .strip()
+            .split("LC:")[0]
+            .strip()
+            .split("639,")[0]
+            .strip()
+        )
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+        state = (
+            raw_address.rsplit(".", 1)[1]
+            .strip()
+            .split("-")[-1]
+            .strip()
+            .replace("L206A", "")
+            .replace("1027", "")
+            .strip()
+        )
+        zip = "<MISSING>"
+
+        if location_name == "B MOYOBAMBA":
+            street_address = raw_address.split("-")[0].strip()
+            city = "<MISSING>"
+            state = raw_address.split("-")[1].strip()
 
         country_code = "PE"
 

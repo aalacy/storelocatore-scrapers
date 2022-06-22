@@ -39,6 +39,7 @@ def fetch_data(sgw: SgWriter):
             .split('}]"')[0]
             .replace("\\r", "")
             .replace("\\", "")
+            .replace('""', '"')
             + "}]"
         )
         js = json.loads(text)
@@ -46,7 +47,9 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             if "australia" in api:
                 locator_domain = "https://decathlon.com.au/"
-                page_url = j.get("web") or ""
+                page_url = (
+                    j.get("web") or "https://decathlon.com.au/pages/store-locator"
+                )
                 page_url = page_url.replace("\\", "")
             else:
                 locator_domain = "https://decathlon.lk/"
@@ -80,7 +83,13 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                     .lower()
                 )
-                if not h or "click" in h or "open" in h:
+                if (
+                    not h
+                    or "click" in h
+                    or "open" in h
+                    or "visit" in h
+                    or "normal" in h
+                ):
                     continue
                 _tmp.append(h.strip())
                 if "sunday" in h.lower():

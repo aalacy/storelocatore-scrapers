@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./*/span[contains(text(), "Taco Bell ·")]]')
+    div = tree.xpath('//div[./*/span[contains(text(), "·")]]')
     for d in div:
 
         location_name = (
