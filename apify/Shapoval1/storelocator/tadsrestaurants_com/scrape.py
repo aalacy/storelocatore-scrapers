@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="col sqs-col-3 span-3"]')
+    div = tree.xpath('//div[@class="col sqs-col-4 span-4"]')
     for d in div:
 
         location_name = "".join(d.xpath(".//h2/text()"))

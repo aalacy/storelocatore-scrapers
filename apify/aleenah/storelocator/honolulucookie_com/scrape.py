@@ -1,129 +1,103 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-import re
-from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("honolulucookie_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    locator_domain = "https://www.honolulucookie.com/"
+    page_url = "https://www.honolulucookie.com/content/store-locations.asp"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//h3/following-sibling::ul[./li/a[contains(@href, "maps")]]')
+    for d in div:
 
-
-session = SgRequests()
-all = []
-
-
-def fetch_data():
-    # Your scraper here
-    res = session.get("https://www.honolulucookie.com/content/store-locations.asp")
-    soup = BeautifulSoup(res.text, "html.parser")
-    stores = soup.find_all("div", {"class": "location-section"})
-    del stores[0]
-    for store in stores:
-        uls = store.find_all("ul")
-        for ul in uls:
-            lis = ul.find_all("li")
-
-            a = lis[0].find("a")
-            loc = a.text
-            lat, long = re.findall(r"/@(-?[\d\.]+),(-?[\d\.]+)", a.get("href"))[0]
-            street = lis[1].text
-            if "Caesars Palace®" in street:
-                loc += " " + "Caesars Palace®"
-                street = lis[2].text
-                del lis[0]
-
-            csz = lis[2].text.strip().split(",")
-            if len(csz) == 1:
-                csz = lis[3].text.strip().split(",")
-                if len(csz) == 1:
-                    city = state = zip = "<MISSING>"
-                else:
-                    street += " " + lis[2].text.strip()
-                    city = csz[0]
-                    logger.info(csz)
-                    csz = csz[1].strip().split(" ")
-                    state = csz[0]
-                    zip = csz[1]
-            else:
-                city = csz[0]
-                logger.info(csz)
-                csz = csz[1].strip().split(" ")
-                state = csz[0]
-                zip = csz[1]
-
-            if "Ph" in lis[3].text:
-                phone = re.findall(r"([\d \)\(\-]+)", lis[3].text)[0]
-            else:
-                if "Ph" in lis[4].text:
-                    phone = re.findall(r"([\d \)\(\-]+)", lis[4].text)[0]
-                else:
-                    phone = "<MISSING>"
-            del lis[0]  # link
-            del lis[0]  # street
-            del lis[0]  # state,city,zip
-            del lis[0]  # phone
-
-            tim = ""
-            for li in lis:
-                if "ph:" in li.text.lower():
-                    continue
-                tim += li.text.strip() + " "
-            tim = tim.strip()
-
-            all.append(
-                [
-                    "https://www.honolulucookie.com",
-                    loc,
-                    street,
-                    city,
-                    state,
-                    zip,
-                    "US",
-                    "<MISSING>",  # store #
-                    phone.strip(),  # phone
-                    "<MISSING>",  # type
-                    lat,  # lat
-                    long,  # long
-                    tim,  # timing
-                    "https://www.honolulucookie.com/content/store-locations.asp",
-                ]
+        location_name = "".join(d.xpath("./li[1]//text()"))
+        street_address = (
+            " ".join(
+                d.xpath(
+                    './li[contains(text(), "Ph:")]/preceding-sibling::li[1]/preceding-sibling::li[text()]//text()'
+                )
             )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(
+                d.xpath(
+                    './li[contains(text(), "Ph:")]/preceding-sibling::li[1]//text()'
+                )
+            )
+            .replace("Ph:", "")
+            .strip()
+        )
+        if ad.find("(") != -1:
+            ad = "<MISSING>"
+        state = "<MISSING>"
+        postal = "<MISSING>"
+        country_code = "US"
+        city = "<MISSING>"
+        if ad != "<MISSING>":
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
+        text = "".join(d.xpath("./li[1]/a/@href"))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = (
+            "".join(d.xpath('./li[contains(text(), "Ph:")]/text()'))
+            .replace("Ph:", "")
+            .strip()
+        )
+        hours_of_operation = (
+            " ".join(
+                d.xpath(
+                    './li[@class="callout-text"]/strong//text() | ./li[./span[contains(text(), "TEMPO")]]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
-    return all
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {ad}".replace("<MISSING>", "").strip(),
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
