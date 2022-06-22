@@ -9,7 +9,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def get_data():
     initial_url = "https://www.sytner.co.uk/dealer-locator/?postcode=london&distance=0&franchiseHash="
 
-    with SgChrome() as driver:
+    with SgChrome(block_third_parties=False) as driver:
         driver.get(initial_url)
 
         html = driver.page_source
@@ -45,19 +45,23 @@ def get_data():
             driver.get(page_url)
             hours_response = driver.page_source
 
-            hours_soup = bs(hours_response, "html.parser")
-            hours_parts = hours_soup.find(
-                "div", attrs={"class": "loc-hours-table"}
-            ).find_all("tr")
+            try:
+                hours_soup = bs(hours_response, "html.parser")
+                hours_table = hours_soup.find("div", attrs={"class": "loc-hours-table"})
 
-            hours = ""
-            for part in hours_parts:
-                hours = hours + part.text.strip() + ", "
+                hours_days = hours_table.find_all("td", attrs={"class": "day"})
+                hours_times = hours_table.find_all("td", attrs={"class": "hours"})
 
-            hours = hours[:-2]
-            hours = hours.replace("\n", "").replace("\r", "").replace("\t", "")
-            while "  " in hours:
-                hours = hours.replace("  ", " ")
+                hours = ""
+                for x in range(hours_days):
+                    day = hours_days[x]
+                    time = hours_times[x]
+                    hours = hours + day + " " + time + ", "
+
+                hours = hours[:-2]
+
+            except Exception:
+                hours = "<MISSING>"
 
             yield {
                 "locator_domain": locator_domain,
@@ -112,4 +116,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

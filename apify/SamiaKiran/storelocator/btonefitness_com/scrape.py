@@ -23,39 +23,42 @@ def fetch_data():
         url = "https://www.btonefitness.com/locations"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        state_list = soup.findAll("div", {"class": "mt-3"})
-        for state_url in state_list:
-            state = state_url.find("h2").text
-            try:
-                city = state_url.find("h4").text
-            except:
-                city = state_url.find("div", {"class": "link"}).text
-
-            loclist = state_url.findAll("div", {"role": "listitem"})
-            for loc in loclist:
-                page_url = DOMAIN + loc.find("a")["href"]
-                log.info(page_url)
-                r = session.get(page_url, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                location_name = soup.find("span", {"class": "studio-name"}).text
-                street_address = soup.find("span", {"class": "studio-address"}).text
-                country_code = "US"
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=page_url,
-                    location_name=location_name.strip(),
-                    street_address=street_address.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=MISSING,
-                    country_code=country_code,
-                    store_number=MISSING,
-                    phone=MISSING,
-                    location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
-                    hours_of_operation=MISSING,
-                )
+        loclist = soup.findAll("div", {"role": "listitem"})
+        for loc in loclist:
+            page_url = DOMAIN + loc.find("a")["href"]
+            r = session.get(page_url, headers=headers)
+            if "Opening Summer 2022" in r.text:
+                continue
+            log.info(page_url)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("span", {"class": "studio-name"}).text
+            street_address = soup.find("span", {"class": "studio-address"}).text
+            address = (
+                soup.select_one("a[href*=maps]")["href"]
+                .split("&destination=")[1]
+                .split("&destination_")[0]
+                .split()
+            )
+            zip_postal = address[-1]
+            state = address[-2]
+            city = address[-3].replace(",", "")
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=MISSING,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=MISSING,
+            )
 
 
 def scrape():

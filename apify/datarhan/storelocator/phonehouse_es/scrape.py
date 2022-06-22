@@ -46,12 +46,17 @@ def fetch_data():
             phone = phone[0] if phone else ""
             if phone and phone == "-":
                 phone = ""
+            latitude = ""
+            longitude = ""
             geo = (
                 loc_dom.xpath("//iframe/@src")[-1]
                 .split("!2d")[-1]
                 .split("!3m2")[0]
                 .split("!3d")
             )
+            if len(geo) > 1:
+                latitude = geo[1].split("!")[0]
+                longitude = geo[0]
             zip_code = addr.postcode
             if zip_code:
                 zip_code = zip_code.split()[0]
@@ -72,8 +77,8 @@ def fetch_data():
                 store_number="",
                 phone=phone,
                 location_type="",
-                latitude=geo[1].split("!")[0],
-                longitude=geo[0],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
                 raw_address=raw_address,
             )

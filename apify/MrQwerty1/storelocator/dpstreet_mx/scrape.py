@@ -32,6 +32,8 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         hours_of_operation = j["Attribute"][0]["displayValue"]
+        if hours_of_operation == "inactiva":
+            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,

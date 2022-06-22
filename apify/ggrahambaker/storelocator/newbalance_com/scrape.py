@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
@@ -21,12 +20,13 @@ locator_domain = "https://www.newbalance.com/"
 class ExampleSearchIteration(SearchIteration):
     def do(
         self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        coord,
+        zipcode,
+        current_country,
+        items_remaining,
+        found_location_at,
+        found_nothing,
+    ):
         with SgRequests(proxy_country="us") as session:
             x = coord[0]
             y = coord[1]
@@ -35,11 +35,13 @@ class ExampleSearchIteration(SearchIteration):
                 + str(x)
                 + "&map_center_lng="
                 + str(y)
-                + "&map_distance_diag=100&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10"
+                + "&map_distance_diag=3000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10"
             )
             res_json = session.get(url, headers=HEADERS).json()["markers"]
 
             logger.info(f"[{current_country}] [{x, y}] {len(res_json)}")
+            if len(res_json) == 0:
+                found_nothing()
 
             for loc in res_json:
                 found_location_at(loc["lat"], loc["lng"])
@@ -77,6 +79,8 @@ class ExampleSearchIteration(SearchIteration):
                             soup.find("script", {"type": "application/ld+json"}).text
                         )
                         for hh in loc_json.get("openingHoursSpecification", []):
+                            if not hh.get("dayOfWeek"):
+                                continue
                             hours.append(
                                 f"{', '.join(hh['dayOfWeek'])}: {hh['opens']} - {hh['closes']}"
                             )
@@ -99,10 +103,16 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_2()
+        search_type="DynamicGeoSearch",
+        granularity=Grain_2(),
+        max_search_distance_miles=3000,
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,

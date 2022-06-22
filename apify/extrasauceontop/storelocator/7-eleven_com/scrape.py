@@ -7,10 +7,12 @@ from sglogging import sglog
 def get_data():
     log = sglog.SgLogSetup().get_logger(logger_name="7eleven")
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_4(),
+        max_search_distance_miles=10000,
     )
 
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     headers = {
         "Authority": "www.7-eleven.com",
         "Method": "GET",
@@ -70,7 +72,10 @@ def get_data():
                 zipp = "0" + str(zipp)
             store_number = location["id"]
             phone = location["phone"]
-            if len(phone) < 5:
+            try:
+                if len(phone) < 5:
+                    phone = "<MISSING>"
+            except Exception:
                 phone = "<MISSING>"
             location_type = "<MISSING>"
             latitude = location["lat"]

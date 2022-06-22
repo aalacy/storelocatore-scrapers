@@ -44,6 +44,12 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if "PO BOX" in street_address:
+                street_address = street_address.split(", PO BOX")[0]
+            elif "Delafield" in street_address:
+                street_address = street_address.split(", Delafield")[0]
+            street_address = street_address.strip(",")
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

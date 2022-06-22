@@ -137,6 +137,8 @@ if __name__ == "__main__":
     }
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.STORE_NUMBER})
+        )
     ) as writer:
         fetch_data(writer)

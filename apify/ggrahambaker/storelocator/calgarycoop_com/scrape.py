@@ -35,10 +35,40 @@ def fetch_data():
             phone = loc_dom.xpath('//p[contains(text(), "Phone")]/span/text()')[0]
         except:
             phone = "<MISSING>"
-        hoo = loc_dom.xpath(
-            '//h5[contains(text(), "Food Centre")]/following-sibling::p/span[@class="hours"]/text()'
+        hoo = (
+            " ".join(
+                loc_dom.xpath(
+                    '//h5[contains(text(), "Food Centre")]/following-sibling::p[./span[@class="hours"]]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
         )
-        hoo = hoo[0] if hoo else ""
+        hoo = " ".join(hoo.split()) or "<MISSING>"
+        if hoo == "<MISSING>":
+            hoo = (
+                " ".join(
+                    loc_dom.xpath(
+                        '//h5[contains(text(), "Gas Station")]/following-sibling::p[./span[@class="hours"]]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hoo = " ".join(hoo.split()) or "<MISSING>"
+        if hoo == "<MISSING>":
+            hoo = (
+                " ".join(
+                    loc_dom.xpath(
+                        '//div[./h5]/h5/following-sibling::p[./span[@class="hours"]]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hoo = " ".join(hoo.split()) or "<MISSING>"
+        if hoo.find("Holiday") != -1:
+            hoo = hoo.split("Holiday")[0].strip()
 
         item = SgRecord(
             locator_domain=domain,

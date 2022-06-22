@@ -26,7 +26,7 @@ def fetch_data():
             if street_address.endswith(","):
                 street_address = street_address[:-1]
             coord = (
-                _.iframe["src"]
+                _.iframe["nitro-lazy-src"]
                 .split("!2d")[1]
                 .split("!2m")[0]
                 .split("!3m")[0]

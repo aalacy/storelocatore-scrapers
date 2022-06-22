@@ -1,50 +1,19 @@
 import re
-import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
+    session = SgRequests()
     start_url = "https://www.tboothwireless.ca/en/locations/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "tboothwireless.ca"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -67,27 +36,19 @@ def fetch_data():
 
     for poi in all_locations:
         location_name = poi["Name"]
-        location_name = location_name if location_name else "<MISSING>"
         street_address = poi["Address"]
         if poi["Address2"]:
             street_address += " " + poi["Address2"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["City"]
-        city = city if city else "<MISSING>"
         state = poi["ProvinceAbbrev"]
-        state = state if state else "<MISSING>"
         zip_code = poi["PostalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["CountryCode"]
-        country_code = country_code if country_code else "<MISSING>"
         store_number = str(poi["LocationId"])
         url_part = location_name.lower().replace(" ", "-")
-        store_url = (
+        page_url = (
             f"https://www.tboothwireless.ca/en/locations/{store_number}/{url_part}/"
         )
         phone = poi["Phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
         latitude = poi["Google_Latitude"]
         longitude = poi["Google_Longitude"]
         hoo = []
@@ -96,33 +57,38 @@ def fetch_data():
             opens = str(float(elem["Open"]) // 100.00).replace(".", ":") + "0"
             closes = str(float(elem["Close"]) // 100.00).replace(".", ":") + "0"
             hoo.append(f"{day} {opens} - {closes}")
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else ""
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 ## R&D:
-- Total Locations = 27 as of 29th July 2021
+- Total Locations = 31 as of 21st June 2022

@@ -47,6 +47,8 @@ def fetch_data():
                 loc_dom = etree.HTML(loc_response.text)
 
                 location_name = loc_dom.xpath("//h1/text()")[0]
+                if "ONLINE" in location_name:
+                    continue
                 raw_address = loc_dom.xpath(
                     '//div[@class="StoreListResult_address"]/span/text()'
                 )

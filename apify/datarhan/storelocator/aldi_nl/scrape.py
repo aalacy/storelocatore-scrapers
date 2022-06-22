@@ -1,41 +1,40 @@
-from lxml import etree
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
-import time
-from sglogging import sglog
 
 
 def fetch_data():
-    log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
     session = SgRequests()
-    start_url = "https://uberall.com/api/storefinders/ALDINORDNL_8oqeY3lnn9MTZdVzFn4o0WCDVTauoZ/locations/all?v=20211005&language=nl&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&"
+    start_url = "https://uberall.com/api/storefinders/ALDINORDNL_8oqeY3lnn9MTZdVzFn4o0WCDVTauoZ/locations/all?v=20211005&language=nl&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&fieldMask=openingHours&fieldMask=phone"
     domain = "aldi.nl"
+
     data = session.get(start_url).json()
     for poi in data["response"]["locations"]:
         city = poi["city"]
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
-        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-').replace('é', 'e').replace('ë', 'e').replace('ï', 'i')}/{store_number}"
-        log.info(page_url)
-        with SgFirefox() as driver:
-            try:
-                driver.get(page_url)
-                time.sleep(10)
-                loc_dom = etree.HTML(driver.page_source)
-
-            except Exception:
-                raise Exception
-
-        hoo = loc_dom.xpath(
-            '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo if e.strip() and e != "gesloten"])
-        phone = loc_dom.xpath('//li[@class="ubsf_details-phone"]/span/text()')
-        phone = phone[0] if phone else ""
+        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-')}/{store_number}"
+        hoo = []
+        days = {
+            7: "Sunday",
+            1: "Monday",
+            2: "Tuesday",
+            3: "Wednesday",
+            4: "Thursday",
+            5: "Friday",
+            6: "Saturday",
+        }
+        for e in poi["openingHours"]:
+            day = days[e["dayOfWeek"]]
+            if e.get("closed"):
+                hoo.append(f"{day}: closed")
+            else:
+                opens = e["from1"]
+                closes = e["to1"]
+            hoo.append(f"{day}: {opens} - {closes}")
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -47,7 +46,7 @@ def fetch_data():
             zip_postal=poi["zip"],
             country_code=poi["country"],
             store_number=store_number,
-            phone=phone,
+            phone=poi["phone"],
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
@@ -71,5 +70,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
-# https://www.aldi.nl/supermarkt.html/l/hardenberg/isra▒l-emanuelplein-9/3187516

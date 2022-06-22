@@ -57,25 +57,33 @@ def fetch_records(idx, store_url, sgw: SgWriter):
         sel1 = html.fromstring(r1.text, "lxml")
         locname = sel1.xpath('//*[@class="hero__title"]/text()')
         locname = "".join(locname)
-        add = sel1.xpath('//div[contains(@class, "hero__content")]/a/text()')
+        xpath_new_for_add = '//div[contains(@class, "map-overlay__section")]/a[@class="location anchor-link"]/text()'
+        add = sel1.xpath(xpath_new_for_add)
         add_raw = " ".join("".join(add).split())
-        addr = add_raw.split(",")
-        logger.info(f"[{idx}] Address: {addr}")
         street_address = ""
         city = ""
         state = ""
         zip_ = ""
+        pai = parse_address_intl(add_raw)
+        sta1 = pai.street_address_1
+        sta2 = pai.street_address_2
 
-        if len(addr) > 2:
-            zip_ = addr[-1].strip()
-            street_address = ""
-            city = addr[-3].strip()
-            state = addr[-2].strip()
+        if sta1 is not None and sta2 is not None:
+            street_address = sta1 + ", " + sta2
+        elif sta1 is not None and sta2 is None:
+            street_address = sta1
+        elif sta1 is None and sta2 is not None:
+            street_address = sta2
         else:
             street_address = ""
-            city = ""
-            state = addr[-2].strip()
-            zip_ = addr[-1].strip()
+
+        if pai.city is not None:
+            city = pai.city
+        if pai.postcode is not None:
+            zip_ = pai.postcode
+
+        if pai.state is not None:
+            state = pai.state
 
         hours = ""
         try:
@@ -102,10 +110,6 @@ def fetch_records(idx, store_url, sgw: SgWriter):
         lat = ll[0]
         lng = ll[1]
 
-        pai = parse_address_intl(add_raw)
-        city = ""
-        if pai.city is not None:
-            city = pai.city
         if "Brecon, Powys, LD3 8NH" in add_raw:
             city = "Brecon"
         if "Brecon, Powys, LD3 7YS" in add_raw:

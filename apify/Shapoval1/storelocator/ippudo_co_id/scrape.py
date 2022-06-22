@@ -38,6 +38,9 @@ def fetch_data(sgw: SgWriter):
             postal = a.postcode or "<MISSING>"
             country_code = "ID"
             city = a.city or "<MISSING>"
+            if city == "<MISSING>":
+                city = ad.split(",")[-2].strip()
+                state = ad.split()[-2].strip()
             map_link = "".join(d.xpath(".//iframe/@src"))
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()

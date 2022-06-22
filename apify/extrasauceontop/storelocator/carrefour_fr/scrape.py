@@ -1,11 +1,14 @@
 from sgselenium import SgFirefox
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
-import os
 import json
 import ssl
+from sglogging import sglog
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
 
 ssl._create_default_https_context = ssl._create_unverified_context
+crawl_state = CrawlStateSingleton.get_instance()
+log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
 
 
 def extract_json(html_string):
@@ -35,28 +38,59 @@ def extract_json(html_string):
     return json_objects
 
 
-def get_data():
+def get_urls():
     url = "https://www.carrefour.fr/magasin"
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
         driver.get(url)
         response = driver.page_source
         soup = bs(response, "html.parser")
-
         region_urls = [
             "https://www.carrefour.fr" + li_tag.find("a")["href"]
             for li_tag in soup.find_all(
                 "li", attrs={"class": "store-locator-footer-list__item"}
             )
         ]
-
-    for url in region_urls:
-        with SgFirefox(block_third_parties=True) as driver:
+        for url in region_urls:
+            log.info("url: " + url)
+            driver.get(url)
             response = driver.page_source
-            json_objects = extract_json(response)
+            soup = bs(response, "html.parser")
+
+            subregion_urls = [
+                "https://www.carrefour.fr" + li_tag.find("a")["href"]
+                for li_tag in soup.find_all(
+                    "li", attrs={"class": "store-locator-footer-list__item"}
+                )
+            ]
+
+            for sub_url in subregion_urls:
+                crawl_state.push_request(SerializableRequest(url=sub_url))
+
+    crawl_state.set_misc_value("got_urls", True)
+
+
+def get_data():
+    page_urls = []
+
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
+        for sub_url_object in crawl_state.request_stack_iter():
+            sub_url = sub_url_object.url
+            log.info("sub_url: " + sub_url)
             try:
+                driver.get(sub_url)
+                response = driver.page_source
+                json_objects = extract_json(response)
                 json_objects[1]["search"]["data"]["stores"]
             except Exception:
-                pass
+                driver.get(sub_url)
+                response = driver.page_source
+                json_objects = extract_json(response)
 
             for location in json_objects[1]["search"]["data"]["stores"]:
                 locator_domain = "carrefour.fr"
@@ -74,15 +108,21 @@ def get_data():
                 store_number = location["storeId"]
                 address = location["address"]["address1"].strip()
 
-                if address[-1] == "0":
-                    address = address[:-2]
+                try:
+                    if address[-1] == "0":
+                        address = address[:-2]
+                except Exception:
+                    address = "<MISSING>"
 
                 state = "<MISSING>"
                 zipp = location["address"]["postalCode"]
 
-                with SgFirefox(block_third_parties=True) as browser:
-                    browser.get(page_url)
-                    phone_response = driver.page_source
+                log.info("page_url: " + page_url)
+                if page_url in page_urls:
+                    continue
+                page_urls.append(page_url)
+                driver.get(page_url)
+                phone_response = driver.page_source
 
                 phone_soup = bs(phone_response, "html.parser")
                 a_tags = phone_soup.find_all("a")
@@ -93,7 +133,7 @@ def get_data():
                         phone = a_tag["href"].replace("tel:", "")
                         break
 
-                location_type = "<MISSING>"
+                location_type = location["banner"]
                 country_code = "France"
 
                 if page_url != "https://www.carrefour.fr/magasin/":
@@ -122,7 +162,7 @@ def get_data():
 
                 else:
                     hours = "<MISSING>"
-
+                log.info(location_name)
                 yield {
                     "locator_domain": locator_domain,
                     "page_url": page_url,
@@ -142,15 +182,8 @@ def get_data():
 
 
 def scrape():
-
-    try:
-        proxy_pass = os.environ["PROXY_PASSWORD"]
-
-    except Exception:
-        proxy_pass = "No"
-
-    if proxy_pass == "No":
-        raise Exception("Run this with a proxy")
+    if not crawl_state.get_misc_value("got_urls"):
+        get_urls()
 
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
@@ -186,4 +219,14 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+x = 0
+while True:
+    x = x + 1
+    if x == 5:
+        raise Exception("Check errors")
+    try:
+        scrape()
+        break
+
+    except Exception:
+        continue
