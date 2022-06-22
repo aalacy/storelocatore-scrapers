@@ -80,32 +80,28 @@ def fetch_data():
                 country_code = "Belgium"
             elif "www.snipes.pl" in link:
                 country_code = "Poland"
+            elif "www.snipes.pt" in link:
+                country_code = "Portugal"
             elif "www.snipes.com" in link:
                 country_code = "Germany"
+
             r = session.get(link, headers=headers)
             log.info(
                 f"Fetching Stores from {country_code} >> Response Status: {r.status_code}"
             )
 
-            try:
+            loclist = (
+                r.text.split('data-locations="')[1]
+                .split("data-icon=")[0]
+                .replace('}]"', "}]")
+            )
+            if len(loclist) == 0:
+                response = get_response(country_code, link)
                 loclist = (
-                    r.text.split('data-locations="')[1]
+                    response.text.split('data-locations="')[1]
                     .split("data-icon=")[0]
                     .replace('}]"', "}]")
                 )
-            except Exception as e:
-                log.info(f"loclist Error: {e}")
-                response = get_response(country_code, link)
-                try:
-                    loclist = (
-                        response.text.split('data-locations="')[1]
-                        .split("data-icon=")[0]
-                        .replace('}]"', "}]")
-                    )
-                except:
-                    continue
-
-            loclist = BeautifulSoup(loclist, "html.parser")
             try:
                 loclist = json.loads(str(loclist))
             except Exception as e:

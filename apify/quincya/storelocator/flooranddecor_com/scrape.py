@@ -66,11 +66,16 @@ def fetch_data(sgw: SgWriter):
                 "stores"
             ]["allStoresList"]
         except:
+            search.found_nothing()
             continue
+
+        if not stores:
+            search.found_nothing()
 
         for store in stores:
             location_name = store["name"]
             if store["isUpcomingStore"]:
+                search.found_nothing()
                 continue
             try:
                 street_address = (store["address1"] + " " + store["address2"]).strip()
@@ -93,26 +98,30 @@ def fetch_data(sgw: SgWriter):
             if store["storeStatus"]["temporarilyClosed"]:
                 hours_of_operation = "Temporarily Closed"
             if store["storeStatus"]["comingSoon"]:
+                search.found_nothing()
                 continue
             if store["storeStatus"]["closed"] or "CLOSED" in location_name.upper():
                 hours_of_operation = "Closed"
 
             if "cannot be" in hours_of_operation:
-                req = session.get(link, headers=headers2)
-                base = BeautifulSoup(req.text, "lxml")
                 try:
-                    hours_of_operation = " ".join(
-                        list(
-                            base.find(
-                                class_="b-storelocator_hours-list"
-                            ).stripped_strings
+                    req = session.get(link, headers=headers2)
+                    base = BeautifulSoup(req.text, "lxml")
+                    try:
+                        hours_of_operation = " ".join(
+                            list(
+                                base.find(
+                                    class_="b-storelocator_hours-list"
+                                ).stripped_strings
+                            )
                         )
-                    )
+                    except:
+                        if "closed for rebuild" in base.text.lower():
+                            hours_of_operation = "Temporarily Closed"
+                        else:
+                            hours_of_operation = ""
                 except:
-                    if "closed for rebuild" in base.text.lower():
-                        hours_of_operation = "Temporarily Closed"
-                    else:
-                        hours_of_operation = ""
+                    hours_of_operation = ""
 
             sgw.write_row(
                 SgRecord(
