@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -23,7 +22,7 @@ HEADERS = {
     "sec-fetch-mode": "cors",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 session = SgRequests(verify_ssl=False)
 
@@ -53,25 +52,20 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.PERU],
-        expected_search_radius_miles=5,
-        max_search_results=2,
+        expected_search_radius_miles=10,
     )
     for lat, long in search:
         url = API_URL.format(lat, long)
         log.info(f"Searching locations for => {lat}, {long}")
         stores = session.get(url, headers=HEADERS).json()
+        if not stores["results"]:
+            search.found_nothing()
+            continue
         for row in stores["results"]:
-            search.found_location_at(lat, long)
             location_name = row["titulo"]
             raw_address = row["direccion"].strip()
             street_address, city, state, zip_postal = getAddress(raw_address)
@@ -86,6 +80,7 @@ def fetch_data():
             store_number = row["id"]
             latitude = row["latitud"]
             longitude = row["longitud"]
+            search.found_location_at(latitude, longitude)
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

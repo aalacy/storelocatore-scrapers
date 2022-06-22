@@ -1,192 +1,125 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import json
-import us
+import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "eatatelmers.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "eatatelmers.com",
+    "accept": "*/*",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "referer": "https://eatatelmers.com/locations/",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+    "x-requested-with": "XMLHttpRequest",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
+params = {
+    "filter": '{"map_id":"1","mashupIDs":[],"customFields":[]}',
+}
 
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
-    search_url = "https://www.eatatelmers.com/wp-admin/admin-ajax.php"
-    data = {
-        "address": "",
-        "formdata": "addressInput=",
-        "lat": "",
-        "lng": "",
-        "name": "",
-        "options[distance_unit]": "miles",
-        "options[dropdown_style]": "none",
-        "options[ignore_radius]": "1",
-        "options[immediately_show_locations]": "1",
-        "options[initial_radius]": "10000",
-        "options[label_directions]": "Directions",
-        "options[label_email]": "Email",
-        "options[label_fax]": "Fax: ",
-        "options[label_phone]": "Phone: ",
-        "options[label_website]": "Website",
-        "options[loading_indicator]": "",
-        "options[map_center]": "",
-        "options[map_center_lat]": "",
-        "options[map_center_lng]": "",
-        "options[map_domain]": "maps.google.com",
-        "options[map_end_icon]": "https://staging1.eatatelmers.com/wp-content/plugins/store-locator-le/images/icons/bulk_blue.png",
-        "options[map_home_icon]": "https://staging1.eatatelmers.com/wp-content/plugins/store-locator-le/images/icons/shape_lightblue_man.png",
-        "options[map_region]": "us",
-        "options[map_type]": "roadmap",
-        "options[message_bad_address]": "Could not locate this address. Please try a different location.",
-        "options[message_no_results]": "No locations found.",
-        "options[no_autozoom]": "1",
-        "options[use_sensor]": "0",
-        "options[zoom_level]": "4",
-        "options[zoom_tweak]": "1",
-        "radius": "5000000",
-        "tags": "",
-        "action": "csl_ajax_onload",
-    }
+    with SgRequests() as session:
+        search_res = session.get(
+            "https://eatatelmers.com/wp-json/wpgmza/v1/features/",
+            headers=headers,
+            params=params,
+        )
 
-    stores_req = session.post(search_url, data=data, headers=headers)
-    stores = json.loads(stores_req.text)["response"]
+        stores = json.loads(search_res.text)["markers"]
 
-    for store in stores:
-        page_url = "https://eatatelmers.com/locations/"
+        for store in stores:
+            page_url = "https://eatatelmers.com/locations/"
+            store_sel = lxml.html.fromstring(store["description"])
 
-        locator_domain = website
-        location_name = store["name"].replace("&#039;", "'").strip()
-        if location_name == "":
-            location_name = "<MISSING>"
+            locator_domain = website
 
-        street_address = store["address"]
-        if store["address2"] is not None:
-            if len(store["address2"]) > 0:
-                street_address = street_address + ", " + store["address2"]
+            location_name = store["title"]
 
-        city = store["city"].replace("&#039;", "'").strip()
-        state = store["state"]
-        zip = store["zip"]
+            raw_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath('//div[@class="address"]/text()')
+                    ],
+                )
+            )
 
-        country_code = "<MISSING>"
-        if us.states.lookup(state):
+            if "USA" in ",".join(raw_info):
+                raw_address = store["address"].split(",")
+                street_address = ", ".join(raw_address[:-2]).strip()
+                city = raw_address[-2].strip()
+                state = raw_address[-1].strip().split(" ")[0].strip()
+                zip = raw_address[-1].strip().split(" ")[-1].strip()
+
+            else:
+                street_address = ", ".join(raw_info[:-2]).strip()
+                city = raw_info[-2].strip().split(",")[0].strip()
+                state = (
+                    raw_info[-2].strip().split(",")[-1].strip().split(" ")[0].strip()
+                )
+                zip = raw_info[-2].strip().split(",")[-1].strip().split(" ")[-1].strip()
+
             country_code = "US"
 
-        if street_address == "" or street_address is None:
-            street_address = "<MISSING>"
+            phone = raw_info[-1].strip()
+            store_number = store["id"]
 
-        if city == "" or city is None:
-            city = "<MISSING>"
+            location_type = "<MISSING>"
 
-        if state == "" or state is None:
-            state = "<MISSING>"
+            hours_of_operation = "".join(
+                store_sel.xpath('//div[@class="directions-hours"]/text()')
+            ).strip()
 
-        if zip == "" or zip is None:
-            zip = "<MISSING>"
+            latitude = store["lat"]
+            longitude = store["lng"]
 
-        store_number = str(store["id"])
-        phone = store["phone"]
-
-        location_type = "<MISSING>"
-        latitude = store["lat"]
-        longitude = store["lng"]
-
-        if latitude == "" or latitude is None:
-            latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
-            longitude = "<MISSING>"
-
-        hours_of_operation = "; ".join(
-            store["hours"]
-            .replace("&amp;", "&")
-            .replace("&lt;br&gt;", "")
-            .strip()
-            .replace("Takeout and delivery only", "")
-            .strip()
-            .split("\n")
-        ).strip()
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-
-        if phone == "" or phone is None:
-            phone = "<MISSING>"
-
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-
-    return loc_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

@@ -49,6 +49,12 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             hours_of_operation = " ".join(hours_of_operation.split())
+            img_com_soon = "".join(d.xpath("./preceding-sibling::div/img/@src"))
+            if (
+                img_com_soon
+                == "//cdn.shopify.com/s/files/1/1514/6262/files/Artboard_1_12_1000x.jpg?v=1654886186"
+            ):
+                hours_of_operation = "Coming Soon"
 
             row = SgRecord(
                 locator_domain=locator_domain,
