@@ -46,8 +46,8 @@ def fetch_data(sgw: SgWriter):
         zipp = val["Foodprovider"]["PostalCode"]
         store_number = val["Foodprovider"]["Id"]
         phone = val["Foodprovider"]["Tell"]
-        latitude = val["Foodprovider"]["Longitude"]
-        longitude = val["Foodprovider"]["Latitude"]
+        latitude = val["Foodprovider"]["Latitude"]
+        longitude = val["Foodprovider"]["Longitude"]
 
         sgw.write_row(
             SgRecord(
