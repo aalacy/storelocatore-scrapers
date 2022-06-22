@@ -1,5 +1,3 @@
-import json
-from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -7,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
@@ -14,25 +13,31 @@ def fetch_data():
 
     domain = "adecco.co.uk"
     start_url = "https://www.adecco.co.uk/find-a-branch/"
-    response = session.post(start_url)
-    dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//div[@id="nav-tabContent"]//li/a/@href')
-    all_locations += dom.xpath('//li/a[contains(@href, "/find-a-branch/")]/@href')
-    all_locations.append(
-        "https://www.adecco.co.uk/find-a-branch/branches/grey-street-newcastle-upon-tyne-uk?location=grey%20street+%20newcastle%20upon%20tyne+%20uk&distance=50&latitude=54.9724619&longitude=-1.6123224"
+    all_codes = DynamicGeoSearch(
+        country_codes=[SearchableCountries.IRELAND, SearchableCountries.BRITAIN],
+        expected_search_radius_miles=500,
     )
-    for url in list(set(all_locations)):
-        url = urljoin(start_url, url)
-        response = session.get(url)
-        dom = etree.HTML(response.text)
-
-        data = dom.xpath('//script[contains(text(), "branch_details")]/text()')
-        if not data:
-            continue
-        data = data[0].split("details =")[-1].split(";\r\n    var brand")[0]
-        data = json.loads(data)
-        for poi in data:
+    url = "https://www.adecco.co.uk/globalweb/branch/branchsearch"
+    for lat, lng in all_codes:
+        frm = {
+            "dto": {
+                "Latitude": lat,
+                "Longitude": lng,
+                "MaxResults": "100",
+                "Radius": "500",
+                "Industry": "ALL",
+                "RadiusUnits": "MILES",
+            }
+        }
+        hdr = {
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "content-type": "application/json; charset=UTF-8",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.41 Safari/537.36",
+            "x-requested-with": "XMLHttpRequest",
+        }
+        data = session.post(url, json=frm, headers=hdr).json()
+        for poi in data["Items"]:
             page_url = urljoin(start_url, poi["ItemUrl"])
             street_address = f'{poi["Address"]} {poi["AddressExtension"]}'
             hoo = []
@@ -46,7 +51,7 @@ def fetch_data():
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
-                location_name=poi["BranchName"],
+                location_name=poi["MetaTitle"],
                 street_address=street_address,
                 city=poi["City"],
                 state=poi["State"],

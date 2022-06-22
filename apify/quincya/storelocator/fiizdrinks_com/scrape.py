@@ -49,6 +49,14 @@ def fetch_data(sgw: SgWriter):
                 raw_address = (
                     raw_address[0].replace("land Dr,", "land DrRR").split("RR")
                 )
+            if "St, Poca" in raw_address[0]:
+                raw_address = (
+                    raw_address[0].replace("lock St,", "lock StRR").split("RR")
+                )
+            if "Blvd, League" in raw_address[0]:
+                raw_address = raw_address[0].replace("Blvd,", "BlvdRR").split("RR")
+            if "A, Mesa" in raw_address[0]:
+                raw_address = raw_address[0].replace("A,", "ARR").split("RR")
             street_address = " ".join(raw_address[:-1])
             if street_address in found:
                 continue

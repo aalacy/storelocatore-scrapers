@@ -158,6 +158,15 @@ def fetch_data():
                     store.xpath('.//a[contains(text(),"Google Maps")]/@href')
                 ).strip()
                 latitude, longitude = get_latlng(map_link)
+                phone = (
+                    phone.split("/")[0]
+                    .strip()
+                    .split(" - ")[0]
+                    .strip()
+                    .lower()
+                    .split("anexo")[0]
+                    .strip()
+                )
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -168,7 +177,7 @@ def fetch_data():
                     zip_postal=zip,
                     country_code=country_code,
                     store_number=store_number,
-                    phone=phone.split("/")[-1].strip(),
+                    phone=phone,
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,

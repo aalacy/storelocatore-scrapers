@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
         "Pragma": "no-cache",
         "Cache-Control": "no-cache",
         "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2NzgwMTI5NjcxMzEsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.XQaoqEQjo4pSYTIvJ-deC9T4TuBEw6tkm9FIXohULlRZO6nVv5Bp5bCtg6IzEyHg-b3nzfh2FJLoDdkBph4kuQ",
+        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2ODE3NjIxOTIzOTYsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.NX1jLP-KHyfySWNzLEt8qeVMFIuugKvXSUl2TbYasQnU7QZY3bvTSJRI4fgP7-ltSqYaKs_-1IzqRwKY0d2-sQ",
         "Source": "WEB",
         "Origin": "https://burgerking.pl",
         "Connection": "keep-alive",
@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         )
         state = "<MISSING>"
         postal = j.get("addressPostalCode") or "<MISSING>"
-        country_code = "US"
+        country_code = "PL"
         city = j.get("addressCity") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("geoLat") or "<MISSING>"
@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
             "Pragma": "no-cache",
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
-            "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2NzgwMTI5NjcxMzEsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.XQaoqEQjo4pSYTIvJ-deC9T4TuBEw6tkm9FIXohULlRZO6nVv5Bp5bCtg6IzEyHg-b3nzfh2FJLoDdkBph4kuQ",
+            "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2ODE3NjIxOTIzOTYsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.NX1jLP-KHyfySWNzLEt8qeVMFIuugKvXSUl2TbYasQnU7QZY3bvTSJRI4fgP7-ltSqYaKs_-1IzqRwKY0d2-sQ",
             "Source": "WEB",
             "Origin": "https://burgerking.pl",
             "Connection": "keep-alive",
@@ -63,22 +63,24 @@ def fetch_data(sgw: SgWriter):
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "cross-site",
         }
-
-        r = session.get(
-            f"https://bkpl.api.amdv.amrest.eu/ordering-api/rest/v1/restaurants/{store_number}/TAKEOUT",
-            headers=headers,
-        )
-        js = r.json()["details"]
-        phone = js.get("phoneNo")
-        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        tmp = []
-        for d in days:
-            day = d
-            opens = js.get(f"open{d}From")
-            closes = js.get(f"open{d}To")
-            line = f"{day} {opens} - {closes}"
-            tmp.append(line)
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        try:
+            r = session.get(
+                f"https://bkpl.api.amdv.amrest.eu/ordering-api/rest/v1/restaurants/{store_number}/TAKEOUT",
+                headers=headers,
+            )
+            js = r.json()["details"]
+            phone = js.get("phoneNo")
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            tmp = []
+            for d in days:
+                day = d
+                opens = js.get(f"open{d}From")
+                closes = js.get(f"open{d}To")
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        except:
+            phone, hours_of_operation = "<MISSING>", "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

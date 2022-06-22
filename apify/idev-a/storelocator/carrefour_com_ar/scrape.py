@@ -6,10 +6,14 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import stop_after_attempt, retry
 import time
-import dirtyjson as json
 from sglogging import SgLogSetup
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -22,17 +26,9 @@ headers = {
 locator_domain = "https://carrefour.com.ar/"
 ar_base_url = "https://www.carrefour.com.ar/_v/public/graphql/v1?workspace=master&maxAge=short&appsEtag=remove&domain=store&locale=es-AR&operationName=getStoreLocations&variables=%7B%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22a84a4ca92ba8036fe76fd9e12c2809129881268d3a53a753212b6387a4297537%22%2C%22sender%22%3A%22lyracons.lyr-store-locator%400.x%22%2C%22provider%22%3A%22vtex.store-graphql%402.x%22%7D%2C%22variables%22%3A%22eyJhY2NvdW50IjoiY2FycmVmb3VyYXIifQ%3D%3D%22%7D"
 br_base_url = "https://www.carrefour.com.br/localizador-de-lojas"
-br_json_url = r"https://www.carrefour.com.br/_v/public/graphql/v1\?workspace=master\&maxAge=short\&appsEtag=remove\&domain=store"
+br_json_url = r"operationName=GET_STORES"
 
 days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-
-
-def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-        is_headless=True,
-    ).driver()
 
 
 @retry(stop=stop_after_attempt(2))
@@ -153,51 +149,72 @@ def fetch_data():
             )
 
 
-def fetch_br():
-    driver = get_driver()
-    driver.get(br_base_url)
-    checks = []
-    checks.append(driver.find_element_by_css_selector("input#simple-check2"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check3"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check4"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check5"))
-    checks.append(driver.find_element_by_css_selector("input#simple-check6"))
-    for check in checks:
-        del driver.requests
-        driver.execute_script("arguments[0].click();", check)
-        time.sleep(10)
-        driver.wait_for_request(br_json_url)
+def get_url(url):
+    with SgRequests() as session:
+        return session.get(url, headers=headers)
 
-    x = 0
-    while True:
-        rr = driver.wait_for_request(br_json_url)
-        locations = json.loads(rr.response.body)["data"]["documents"]
-        logger.info(f"page {x}, {len(locations)}")
+
+def fetch_br():
+    with SgChrome(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
+        is_headless=True,
+    ) as driver:
+        driver.get(br_base_url)
+        time.sleep(5)
+        locations = []
+        for rr in driver.requests[::-1]:
+            if br_json_url in rr.url:
+                locations = get_url(rr.url).json()["data"]["documents"]
+                break
+
+        logger.info(f"page 0, {len(locations)}")
         for loc in locations:
             yield _d(loc)
 
-        button = driver.find_elements_by_css_selector(
-            "div.carrefourbr-carrefour-components-0-x-showMoreButton button"
-        )
-        if button:
-            del driver.requests
-            x += 1
+        checks = []
+        checks.append(driver.find_element_by_css_selector("input#simple-check2"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check3"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check4"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check5"))
+        checks.append(driver.find_element_by_css_selector("input#simple-check6"))
+        for check in checks:
+            driver.execute_script("arguments[0].click();", check)
+            time.sleep(2)
+            driver.wait_for_request(br_json_url)
+
+        x = 0
+        while True:
             try:
-                banner = driver.find_element_by_css_selector(
-                    "button.onetrust-close-btn-handler.banner-close-button"
+                locations = []
+                for rr in driver.requests[::-1]:
+                    if br_json_url in rr.url:
+                        locations = get_url(rr.url).json()["data"]["documents"]
+                        break
+
+                logger.info(f"page {x}, {len(locations)}")
+                for loc in locations:
+                    yield _d(loc)
+
+                button = driver.find_elements_by_css_selector(
+                    "div.carrefourbr-carrefour-components-0-x-showMoreButton button"
                 )
-                if banner:
-                    banner.click()
-                    time.sleep(1)
+                if button:
+                    x += 1
+                    try:
+                        banner = driver.find_element_by_css_selector(
+                            "button.onetrust-close-btn-handler.banner-close-button"
+                        )
+                        if banner:
+                            banner.click()
+                            time.sleep(1)
+                    except:
+                        pass
+                    button[0].click()
+                    time.sleep(2)
+                else:
+                    break
             except:
                 pass
-            button[0].click()
-            time.sleep(5)
-        else:
-            break
-
-    if driver:
-        driver.close()
 
 
 if __name__ == "__main__":

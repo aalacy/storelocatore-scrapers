@@ -75,8 +75,18 @@ def fetch_data():
             if not location_name or "Service Center" in location_name:
                 continue
 
-            street_address = store_json["address"]["streetAddress"]
-            city = store_json["address"]["addressLocality"]
+            street_address = (
+                store_json["address"]["streetAddress"]
+                .replace("&#233;", "é")
+                .replace("&#39;", "'")
+                .strip()
+            )
+            city = (
+                store_json["address"]["addressLocality"]
+                .replace("&#233;", "é")
+                .replace("&#39;", "'")
+                .strip()
+            )
             if city:
                 city = city.split("(")[0].strip()
             state = "<MISSING>"
@@ -100,6 +110,13 @@ def fetch_data():
                 ).strip()
                 if ":" in phone:
                     phone = phone.split(":")[1].strip()
+
+            if len(phone) <= 0:
+                phone = store_sel.xpath('//span[@class="phoneNumber"]//text()')
+                if len(phone) > 0:
+                    phone = phone[0]
+                else:
+                    phone = "<MISSING>"
 
             hours = list(
                 filter(

@@ -1,3 +1,5 @@
+import re
+from bs4 import BeautifulSoup
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -7,14 +9,39 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
-def fetch_data(sgw: SgWriter):
+def fetch_api_url(session):
+    response = session.get("https://www.lidl-ni.co.uk/")
+    soup = BeautifulSoup(response.text)
+    scripts = soup.find_all("script")
+    for script in scripts:
+        if script.string:
+            newline_removed = re.sub(r"\n", "", script.string)
+            result = re.search(
+                r'window\.storesearchConfig\s*=\s*.*path:\s*"(.*)"', newline_removed
+            )
+            config = session.get(f"https://www.lidl-ni.co.uk{result.group(1)}").json()[
+                "storesearch"
+            ]
+            return config["sourceUrl"], config["key"]
+
+
+def fetch_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.BRITAIN], max_search_distance_miles=25
     )
+    url, key = fetch_api_url(session)
     for lat, lng in search:
-        api = f"https://spatial.virtualearth.net/REST/v1/data/91bdba818b3c4f5e8b109f223ac4a9f0/Filialdaten-NIE/Filialdaten-NIE?$select=*,__Distance&$filter=Adresstyp%20eq%201&key=AkeGPHUAkt63PHcPYgWMYeSXRmUHkFqe4ql0f8XDSEdG-PnxQ22O6gL9rTAdQ-WV&$format=json&spatialFilter=nearby({lat},{lng},15)"
-        r = session.get(api, headers=headers)
-        js = r.json()["d"]["results"]
+        params = {
+            "$select": "*,__Distance",
+            "$format": "json",
+            "spatialFilter": f"nearby({lat},{lng},1000)",
+            "key": key,
+        }
+        r = session.get(url, params=params, headers=headers)
+        try:
+            js = r.json()["d"]["results"]
+        except:
+            continue
 
         for j in js:
             street_address = j.get("AddressLine") or ""
@@ -23,7 +50,7 @@ def fetch_data(sgw: SgWriter):
 
             if f", {city}" in street_address:
                 street_address = street_address.split(f", {city}")[0].strip()
-            country_code = "IE"
+            country_code = "GB"
             store_number = j.get("EntityID")
             location_name = j.get("ShownStoreName") or city
             latitude = j.get("Latitude")
@@ -57,7 +84,7 @@ def fetch_data(sgw: SgWriter):
                 locator_domain=locator_domain,
             )
 
-            sgw.write_row(row)
+            yield row
 
 
 if __name__ == "__main__":
@@ -71,4 +98,5 @@ if __name__ == "__main__":
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        fetch_data(writer)
+        for row in fetch_data():
+            writer.write_row(row)

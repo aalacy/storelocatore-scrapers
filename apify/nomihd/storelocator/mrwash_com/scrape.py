@@ -59,7 +59,7 @@ def fetch_data():
             ).strip()
             if len(raw_address) <= 0:
                 raw_address = (
-                    store_req.text.split("wash located at")[1]
+                    store_req.text.split("wash located at")[-1]
                     .strip()
                     .split("<")[0]
                     .strip()

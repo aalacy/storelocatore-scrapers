@@ -1,124 +1,81 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
-
-DOMAIN = "maxsrestaurantna.com"
-BASE_URL = "https://www.maxsrestaurantna.com/"
-HEADERS = {
-    "Accept": "*/*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
-}
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
-
-MISSING = "<MISSING>"
 
 
-def pull_content(url):
-    log.info("Pull content => " + url)
-    HEADERS["Referer"] = url
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://www.maxsrestaurantna.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.maxsrestaurantna.com/california",
+        "Origin": "https://www.maxsrestaurantna.com",
+        "Proxy-Authorization": "Basic ZG1pdHJpeTIyc2hhcGFAZ21haWwuY29tOnJxeFN6YzI0NnNzdnByVVZwdHJT",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
 
-def fetch_data():
-    log.info("Fetching store_locator data")
-    links = [
-        "https://www.maxsrestaurantna.com/locations",
-        "https://www.maxsrestaurantna.com/guam",
-        "https://www.maxsrestaurantna.com/santa-clarita",
-    ]
-    days = [
-        {"label": "Su", "name": "Sunday:"},
-        {"label": "Mo", "name": "Monday:"},
-        {"label": "Tu", "name": "Tuesday:"},
-        {"label": "We", "name": "Wednesday:"},
-        {"label": "Th", "name": "Thursday:"},
-        {"label": "Fr", "name": "Friday:"},
-        {"label": "Sa", "name": "Saturday:"},
-    ]
-    for link in links:
-        soup = pull_content(link)
-        data = json.loads(
-            soup.find("script", id="popmenu-apollo-state")
-            .string.replace("window.POPMENU_APOLLO_STATE = ", "")
-            .replace("};", "}")
-            .replace('" + "', "")
-            .strip()
+    json_data = {
+        "operationName": "restaurantWithLocations",
+        "variables": {
+            "restaurantId": 5466,
+        },
+        "extensions": {
+            "operationId": "PopmenuClient/4d4c3b13b2fd299b79e97dc193f1c22e",
+        },
+    }
+
+    r = session.post(
+        "https://www.maxsrestaurantna.com/graphql", headers=headers, json=json_data
+    )
+    js = r.json()["data"]["restaurant"]["locations"]
+    for j in js:
+
+        slug = j.get("slug")
+        page_url = f"https://www.maxsrestaurantna.com/{slug}"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = j.get("streetAddress") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postalCode") or "<MISSING>"
+        country_code = j.get("country") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours = j.get("schemaHours")
+        hours_of_operation = "<MISSING>"
+        if hours:
+            hours_of_operation = " ".join(hours)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-        for key, value in data.items():
-            if key.startswith("RestaurantLocation:"):
-                if (
-                    "customLocationContent" in value
-                    and "Coming Soon!" in value["customLocationContent"]
-                ):
-                    continue
-                try:
-                    page_url = BASE_URL + value["slug"]
-                    location_name = value["name"]
-                    raw_address = value["fullAddress"].replace("\n", ", ")
-                    city = value["city"]
-                    state = value["state"]
-                    zip_postal = value["postalCode"]
-                    street_address = value["streetAddress"].strip()
-                except:
-                    continue
-                country_code = value["country"]
-                phone = value["displayPhone"]
-                location_type = MISSING
-                store_number = value["id"]
-                latitude = value["lat"]
-                longitude = value["lng"]
-                hoo = ""
-                for day in days:
-                    day_available = False
-                    for hday in value["schemaHours"]:
-                        if day["label"] in hday:
-                            day_available = True
-                            hoo += hday.replace(day["label"], day["name"]) + ","
-                    if not day_available:
-                        hoo += day["name"] + " Closed" + ","
-                    hoo = hoo.replace(
-                        day["name"] + " 16:30-19:00," + day["name"] + " 11:30-15:00",
-                        day["name"] + " 11:30-15:00," + day["name"] + " 16:30-19:00",
-                    )
-                hours_of_operation = hoo.strip().rstrip(",")
-                log.info("Append {} => {}".format(location_name, street_address))
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    log.info("start {} Scraper".format(DOMAIN))
-    count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

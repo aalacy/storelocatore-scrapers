@@ -38,9 +38,11 @@ def fetch_data(sgw: SgWriter):
         ad = " ".join(a.xpath("//*//text()")).replace("\r\n", "").strip()
 
         a = parse_address(USA_Best_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "")
+            .replace("Entrance On Eddy No Motorcycles", "")
+            .strip()
+        )
         state = a.state or "<MISSING>"
         if state == "On Jefferson":
             state = "<MISSING>"

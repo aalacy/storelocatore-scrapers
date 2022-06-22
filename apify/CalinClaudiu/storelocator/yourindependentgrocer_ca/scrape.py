@@ -3,10 +3,9 @@ from sglogging import sglog
 
 import ssl
 from sgscrape import simple_utils as utils
-from sgrequests.sgrequests import SgRequests
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -20,6 +19,7 @@ from fuzzywuzzy import process
 
 # no need for python-Levenshtein, we're processing only 30 records
 
+import pandas as pd
 import json  # noqa
 
 import time
@@ -379,11 +379,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
 
     def determined_possible():
         def passed():
-            retryBehaviour = Retry(total=2, connect=2, read=2, backoff_factor=0.1)
-            retryBehaviour = False
-            with SgRequests(
-                retry_behavior=retryBehaviour, proxy_rotation_failure_threshold=2
-            ) as session:
+            with SgRequests() as session:
                 try:
                     if result["api"]:
                         test_url = result["api"]
@@ -466,6 +462,11 @@ def do_everything(k):
 
 
 def url_fix(url):
+    if "DoSearch2" not in url:
+        ClientId = url.split("ClientId=", 1)[1].split("&", 1)[0]
+        ApiKey = url.split("ApiKey=", 1)[1].split("&", 1)[0]
+        goodtype = f"https://ws2.bullseyelocations.com/RestSearch.svc/DoSearch2?ClientId={ClientId}&ApiKey={ApiKey}&CountryId=2&CountryScope=ALL&FillAttr=true&GetHoursForUpcomingWeek=true&LanguageCode=en&Latitude=44.6437182&Longitude=-63.6200314&Radius=20&SearchTypeOverride=1&MaxResults=15&PageSize=15&StartIndex=0&CategoryIDs=93238&MatchAllCategories=true"
+        url = str(goodtype)
     url = url.split("StartIndex")[0] + "StartIndex" + "=0"
     url = "Radius=200".join(url.split("Radius="))  # (means 20020)
     url = "MaxResults=100".join(url.split("MaxResults="))  # (means 10010)
@@ -474,42 +475,60 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    driver = SgChrome().driver()
-    driver.get(url)
-    to_click = WebDriverWait(driver, 40).until(
-        EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
-        )
-    )
-    to_click.click()
+    z = None
+    with SgFirefox() as driver:
+        driver.get(url)
+        time.sleep(60)
+        url = None
+        try:
+            to_click = WebDriverWait(driver, 60).until(
+                EC.visibility_of_element_located(
+                    (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+                )
+            )
+            to_click.click()
+        except Exception:
+            pass
 
-    input_field = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+        input_field = WebDriverWait(driver, 60).until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+                )
             )
         )
-    )
-    input_field.send_keys("B3L 4T2")
-    input_field.send_keys(Keys.RETURN)
-    time.sleep(10)
-    wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+        input_field.send_keys("B3L 4T2")
+        input_field.send_keys(Keys.RETURN)
+        time.sleep(30)
+        try:
+            wait_for_loc = WebDriverWait(driver, 60).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                    )
+                )
             )
-        )
-    )
+        except Exception:
+            logzilla.info(driver.page_source)
 
-    time.sleep(10)
-    for r in driver.requests:
+        time.sleep(10)
+        z = driver.requests
+    headers = {}
+    for r in z:
         if "DoSearch2" in r.path:
             url = r.url
             headers = r.headers
-    driver.quit()
-    time.sleep(10)
+    for r in z:
+        if "RestSearch.svc/GetCategories" in r.path:
+            url = r.url
+            headers = r.headers
+
+    if not url:
+        for i in z:
+            logzilla.info(i.path)
+
     return url, headers
 
 
@@ -596,41 +615,41 @@ def lesser_determination(banner, fullId):
 
 def lesser_datasource():
     url = "https://www.loblaws.ca/api/pickup-locations"
-    session = SgRequests()
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    lesserData = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
-    session.close()
-    for i in lesserData:
-        loctype, url = lesser_determination(
-            i["storeBannerId"], i["id"] if i["id"] else i["storeId"]
-        )
-        yield {
-            "url": url,
-            "Name": i["name"],
-            "Latitude": i["geoPoint"]["latitude"],
-            "Longitude": i["geoPoint"]["longitude"],
-            "Address1": i["address"]["line1"],
-            "Address2": i["address"]["line2"],
-            "Address3": "",
-            "Address4": "",
-            "City": i["address"]["town"],
-            "State": i["address"]["region"],
-            "PostCode": i["address"]["postalCode"],
-            "CountryCode": i["address"]["country"],
-            "PhoneNumber": i["contactNumber"],
-            "ThirdPartyId": i["id"] if i["id"] else i["storeId"],
-            "BusinessHours": "",
-            "ttype": loctype,
+    with SgRequests() as session:
+        headers = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
         }
+        lesserData = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
+        session.close()
+        for i in lesserData:
+            loctype, url = lesser_determination(
+                i["storeBannerId"], i["id"] if i["id"] else i["storeId"]
+            )
+            yield {
+                "url": url,
+                "Name": i["name"],
+                "Latitude": i["geoPoint"]["latitude"],
+                "Longitude": i["geoPoint"]["longitude"],
+                "Address1": i["address"]["line1"],
+                "Address2": i["address"]["line2"],
+                "Address3": "",
+                "Address4": "",
+                "City": i["address"]["town"],
+                "State": i["address"]["region"],
+                "PostCode": i["address"]["postalCode"],
+                "CountryCode": i["address"]["country"],
+                "PhoneNumber": i["contactNumber"],
+                "ThirdPartyId": i["id"] if i["id"] else i["storeId"],
+                "BusinessHours": "",
+                "ttype": loctype,
+            }
 
 
 def fix_rec(x):
-    x["Address1x"] = x["Address1"]
-    x["Address2x"] = x["Address2"]
-    x["Address3x"] = x["Address3"]
-    x["Address4x"] = x["Address4"]
+    x["Address1x"] = x.get("Address1")
+    x["Address2x"] = x.get("Address2")
+    x["Address3x"] = x.get("Address3")
+    x["Address4x"] = x.get("Address4")
     try:
         if (
             any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
@@ -689,17 +708,15 @@ def fetch_data():
             try:
                 return get_api_call(url)
             except Exception as e:
-                logzilla.info(f"Handling this:\n{str(e)}")
-                retry_starting()
-                # shouldn't be to worried,
-                # worst case if their API changes crawl will timeout
-                # rather than just pull from the other (worse) data source
+                logzilla.error("nope\n", exc_info=e)
 
         if retry:
             retry_starting()
+
         return get_api_call(url)
 
     url, headers = rRetry(False)
+
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa
@@ -743,7 +760,7 @@ def fetch_data():
     #    file.write(json.dumps(megafails)) # noqa
 
     for i in lesser_datasource():
-        yield i
+        yield fix_rec(i)
     logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
 
 
@@ -751,10 +768,10 @@ def fix_comma(x):
     x = x.replace("null", "").replace("None", "")
     h = []
     try:
-        for i in x.split(", "):
+        for i in x.split(","):
             if len(i.strip()) >= 1:
                 if i != ",":
-                    h.append(i)
+                    h.append(i.strip())
         return ", ".join(h)
     except Exception:
         return x
@@ -801,6 +818,42 @@ def fix_city(x):
         return x.split(",")[0]
     except Exception:
         return x
+
+
+def fetch_data_QUESTION():
+    alldata = []
+    for rec in fetch_data():
+        alldata.append(rec)
+    df = pd.DataFrame.from_records(alldata)
+    data = tariq_dedupe(df).to_dict("records")
+    for record in data:
+        yield record
+
+
+def tariq_dedupe(df_crawl):
+    # Round 1 based on Phone, street_address and zip
+    df_crawl.head()
+    row_num, col_num = df_crawl.shape
+    locator_domain_list = df_crawl["url"].tolist()
+    ldomain_list_deduped = list(set(locator_domain_list))
+    df_list = []
+    for dnum, domain in enumerate(ldomain_list_deduped[0:]):
+        df_contains_domain = df_crawl[df_crawl["url"].str.contains(domain)]
+        df_cd_copy = df_contains_domain.copy()
+        df_atlanta_deduped = df_cd_copy.drop_duplicates(["PhoneNumber", "Address1", ""])
+        deduped_row_num, deduped_col_num = df_atlanta_deduped.shape
+        df_list.append(df_atlanta_deduped)
+
+    df_merged = pd.concat(df_list)
+    # Round 2 based on duplicate latitude and longitude
+    # Remove None None None from raw address
+    df_merged_deduped = df_merged.drop_duplicates(["Latitude", "Longitude", "PostCode"])
+    df_merged_deduped_copy = df_merged_deduped.copy()  # Testing Purpose
+    # Drop if rows contain duplicate lating & longitude but keep the row containing hours of operation not <MISSING>
+    df_final = df_merged_deduped_copy.sort_values(
+        "BusinessHours", key=lambda x: x.eq("<MISSING>") or not x
+    ).drop_duplicates(["Latitude", "Longitude"], keep="last")
+    return df_final
 
 
 def scrape():
@@ -875,15 +928,16 @@ def scrape():
         ),
         raw_address=sp.MultiMappingField(
             mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
-            multi_mapping_concat_with=", ",
+            multi_mapping_concat_with=" ",
             value_transform=fix_comma,
             is_required=False,
+            part_of_record_identity=True,
         ),
     )
 
     pipeline = sp.SimpleScraperPipeline(
         scraper_name="pipeline",
-        data_fetcher=fetch_data,
+        data_fetcher=fetch_data_QUESTION,
         field_definitions=field_defs,
         log_stats_interval=5,
     )

@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["results"]["locations"]
     for j in js:
 
-        page_url = j.get("website")
+        page_url = j.get("website") or "https://www.420pm.ca/locations"
         location_name = j.get("name")
         ad = "".join(j.get("streetaddress"))
         street_address = "".join(ad.split(",")[:-3]).strip()
@@ -57,5 +57,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
         fetch_data(writer)

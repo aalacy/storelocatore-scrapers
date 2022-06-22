@@ -1,13 +1,14 @@
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from sgrequests import SgRequests
+from sgselenium import SgFirefox
 from bs4 import BeautifulSoup as bs
-import json
 from sgscrape import simple_scraper_pipeline as sp
-import os
+import json
 import ssl
+from sglogging import sglog
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
 
 ssl._create_default_https_context = ssl._create_unverified_context
+crawl_state = CrawlStateSingleton.get_instance()
+log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
 
 
 def extract_json(html_string):
@@ -37,154 +38,152 @@ def extract_json(html_string):
     return json_objects
 
 
-def reset_sessions(data_url):
-    s = SgRequests()
+def get_urls():
+    url = "https://www.carrefour.fr/magasin"
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
+        driver.get(url)
+        response = driver.page_source
+        soup = bs(response, "html.parser")
+        region_urls = [
+            "https://www.carrefour.fr" + li_tag.find("a")["href"]
+            for li_tag in soup.find_all(
+                "li", attrs={"class": "store-locator-footer-list__item"}
+            )
+        ]
+        for url in region_urls:
+            log.info("url: " + url)
+            driver.get(url)
+            response = driver.page_source
+            soup = bs(response, "html.parser")
 
-    driver = SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ).driver()
-    driver.get(data_url)
+            subregion_urls = [
+                "https://www.carrefour.fr" + li_tag.find("a")["href"]
+                for li_tag in soup.find_all(
+                    "li", attrs={"class": "store-locator-footer-list__item"}
+                )
+            ]
 
-    for request in driver.requests:
+            for sub_url in subregion_urls:
+                crawl_state.push_request(SerializableRequest(url=sub_url))
 
-        headers = request.headers
-        try:
-            response = s.get(data_url, headers=headers)
-            response_text = response.text
-
-            test_html = response_text.split("div")
-            if len(test_html) < 2:
-                continue
-            else:
-                driver.quit()
-                return [s, headers, response_text]
-
-        except Exception:
-            driver.quit()
-            continue
+    crawl_state.set_misc_value("got_urls", True)
 
 
 def get_data():
-    url = "https://www.carrefour.fr/magasin"
+    page_urls = []
 
-    response_stuff = reset_sessions(url)
-    response = response_stuff[2]
-
-    soup = bs(response, "html.parser")
-
-    region_urls = [
-        "https://www.carrefour.fr" + li_tag.find("a")["href"]
-        for li_tag in soup.find_all(
-            "li", attrs={"class": "store-locator-footer-list__item"}
-        )
-    ]
-
-    for url in region_urls:
-        response_session = reset_sessions(url)
-        response = response_session[2]
-        session = response_session[0]
-        headers = response_session[1]
-        json_objects = extract_json(response)
-
-        for location in json_objects[1]["search"]["data"]["stores"]:
-            locator_domain = "carrefour.fr"
-
-            page_url = "https://www.carrefour.fr" + location["storePageUrl"]
-            location_name = location["name"]
-            latitude = location["address"]["geoCoordinates"]["latitude"]
-            longitude = location["address"]["geoCoordinates"]["latitude"]
-            city = location["address"]["city"]
-            store_number = location["id"]
-            address = (
-                location["address"]["address1"]
-                + " "
-                + location["address"]["address2"]
-                + " "
-                + location["address"]["address3"]
-            ).strip()
-
-            if address[-1] == "0":
-                address = address[:-2]
-
-            state = location["address"]["region"]
-            zipp = location["address"]["postalCode"]
-
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
+        for sub_url_object in crawl_state.request_stack_iter():
+            sub_url = sub_url_object.url
+            log.info("sub_url: " + sub_url)
             try:
-                phone_response = session.get(page_url, headers=headers).text
-
+                driver.get(sub_url)
+                response = driver.page_source
+                json_objects = extract_json(response)
+                json_objects[1]["search"]["data"]["stores"]
             except Exception:
-                response_session = reset_sessions(url)
-                phone_response = response_session[2]
-                session = response_session[0]
-                headers = response_session[1]
+                driver.get(sub_url)
+                response = driver.page_source
+                json_objects = extract_json(response)
 
-            phone_soup = bs(phone_response, "html.parser")
-            a_tags = phone_soup.find_all("a")
+            for location in json_objects[1]["search"]["data"]["stores"]:
+                locator_domain = "carrefour.fr"
 
-            phone = "<MISSING>"
-            for a_tag in a_tags:
-                if "tel:" in a_tag["href"]:
-                    phone = a_tag["href"].replace("tel:", "")
-                    break
+                page_url = "https://www.carrefour.fr" + location["storePageUrl"]
+                if (
+                    page_url
+                    == "https://www.carrefour.fr/magasin/market-bourgoin-jallieu-rivet"
+                ):
+                    continue
+                location_name = location["name"]
+                latitude = location["coordinates"][1]
+                longitude = location["coordinates"][0]
+                city = location["address"]["city"]
+                store_number = location["storeId"]
+                address = location["address"]["address1"].strip()
 
-            location_type = "<MISSING>"
-            country_code = location["address"]["countryCode"]
+                try:
+                    if address[-1] == "0":
+                        address = address[:-2]
+                except Exception:
+                    address = "<MISSING>"
 
-            if page_url != "https://www.carrefour.fr/magasin/":
-                hours_parts = phone_soup.find_all(
-                    "div", attrs={"class": "store-meta__opening-range"}
-                )
-                hours = ""
-                for part in hours_parts:
-                    day = part.find(
-                        "div", attrs={"class": "store-meta__label"}
-                    ).text.strip()
-                    times = part.find_all(
-                        "div", attrs={"class": "store-meta__time-range"}
+                state = "<MISSING>"
+                zipp = location["address"]["postalCode"]
+
+                log.info("page_url: " + page_url)
+                if page_url in page_urls:
+                    continue
+                page_urls.append(page_url)
+                driver.get(page_url)
+                phone_response = driver.page_source
+
+                phone_soup = bs(phone_response, "html.parser")
+                a_tags = phone_soup.find_all("a")
+
+                phone = "<MISSING>"
+                for a_tag in a_tags:
+                    if "tel:" in a_tag["href"]:
+                        phone = a_tag["href"].replace("tel:", "")
+                        break
+
+                location_type = location["banner"]
+                country_code = "France"
+
+                if page_url != "https://www.carrefour.fr/magasin/":
+                    hours_parts = phone_soup.find_all(
+                        "div", attrs={"class": "store-meta__opening-range"}
                     )
+                    hours = ""
+                    for part in hours_parts:
+                        day = part.find(
+                            "div", attrs={"class": "store-meta__label"}
+                        ).text.strip()
+                        times = part.find_all(
+                            "div", attrs={"class": "store-meta__time-range"}
+                        )
 
-                    time_part = ""
-                    for time in times:
-                        time_part = time_part + time.text.strip() + " "
+                        time_part = ""
+                        for time in times:
+                            time_part = time_part + time.text.strip() + " "
 
-                    time_part = time_part.strip()
+                        time_part = time_part.strip()
 
-                    hours = hours + day + " " + time_part + ", "
+                        hours = hours + day + " " + time_part + ", "
 
-                hours = hours[:-2]
-                hours = hours.replace("à", "-")
+                    hours = hours[:-2]
+                    hours = hours.replace("à", "-")
 
-            else:
-                hours = "<MISSING>"
-
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+                else:
+                    hours = "<MISSING>"
+                log.info(location_name)
+                yield {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                }
 
 
 def scrape():
-
-    try:
-        proxy_pass = os.environ["PROXY_PASSWORD"]
-
-    except Exception:
-        proxy_pass = "No"
-
-    if proxy_pass == "No":
-        raise Exception("Run this with a proxy")
+    if not crawl_state.get_misc_value("got_urls"):
+        get_urls()
 
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
@@ -220,4 +219,14 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+x = 0
+while True:
+    x = x + 1
+    if x == 5:
+        raise Exception("Check errors")
+    try:
+        scrape()
+        break
+
+    except Exception:
+        continue

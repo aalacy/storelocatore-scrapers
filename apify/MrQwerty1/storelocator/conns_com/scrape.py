@@ -47,7 +47,12 @@ def fetch_data(sgw: SgWriter):
                 0
             ].xpath(".//li[./span]")
         except:
-            hours = []
+            try:
+                hours = d.xpath(".//div[@class='store-listing-hours wh-hours']")[
+                    0
+                ].xpath(".//li[./span]")
+            except:
+                hours = []
 
         for h in hours:
             day = "".join(h.xpath("./span[1]/text()")).strip()

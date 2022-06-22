@@ -95,10 +95,56 @@ def parse_json(store):
     hoo = []
     for day in days.keys():
         try:
-            hoo.append(days[day] + ": " + store[day].replace("\n", ","))
+            hoo.append(
+                days[day] + ": " + store[day].replace("\r\n", ",").replace("\n", ",")
+            )
         except:
             hoo.append(days[day] + ": " + "<MISSING>")
     data["hours_of_operation"] = ", ".join(hoo)
+
+    return data
+
+
+# Incorporate CL locations
+
+
+def parse_data_cl(store):
+    data = {}
+    data["locator_domain"] = DOMAIN
+    store_number = store["id"]
+    if str(store_number) == "None":
+        store_number = MISSING
+    data["store_number"] = store_number
+    data["page_url"] = MISSING
+    data["location_name"] = store["name"]
+    data["location_type"] = "Store"
+    type_check = store["name"].lower()
+    if "store" in str(type_check):
+        data["location_type"] = "store"
+    if "outlet" in str(type_check):
+        data["location_type"] = "outlet"
+
+    street_address = store["address"]["street"]
+    street_number = store["address"]["number"]
+    data["street_address"] = street_address + ", " + street_number
+
+    data["city"] = store["address"]["city"]
+    state = store["address"]["state"]
+    if str(state) == "None":
+        state = MISSING
+    data["state"] = state
+    country_code = "CL"
+    data["country_code"] = country_code
+    zip_postal = store["address"]["postalCode"]
+    if str(zip_postal) == "0" or str(zip_postal) == "None":
+        zip_postal = MISSING
+    data["zip_postal"] = zip_postal
+    phone = MISSING
+    data["phone"] = phone
+    data["latitude"] = store["address"]["location"]["latitude"]
+    data["longitude"] = store["address"]["location"]["longitude"]
+
+    data["hours_of_operation"] = MISSING
 
     return data
 
@@ -160,25 +206,35 @@ def fetch_data():
 
         yield parse_json(store)
 
+    # Incorporate CL locations
+    api_url_cl = "https://www.vans.cl/files/locales.json"
+    responsecl = session.get(api_url_cl, headers=headers)
+    data_json_cl = responsecl.json()
+
+    for store_cl in data_json_cl:
+        yield parse_data_cl(store_cl)
+
 
 def scrape():
     logger.info(f"Start Crawling {DOMAIN} ...")
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(DOMAIN),
-        page_url=sp.MappingField(mapping=["page_url"]),
-        location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MappingField(mapping=["latitude"]),
-        longitude=sp.MappingField(mapping=["longitude"]),
-        street_address=sp.MappingField(mapping=["street_address"]),
-        city=sp.MappingField(mapping=["city"]),
-        state=sp.MappingField(mapping=["state"]),
-        zipcode=sp.MappingField(mapping=["zip_postal"]),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"]),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(mapping=["location_name"], is_required=False),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
         store_number=sp.MappingField(
             mapping=["store_number"], part_of_record_identity=True
         ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 

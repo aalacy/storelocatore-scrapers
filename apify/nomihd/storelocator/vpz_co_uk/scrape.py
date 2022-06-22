@@ -1,186 +1,139 @@
 # -*- coding: utf-8 -*-
-import csv
+from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+
 
 website = "vpz.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "vpz-shopify.ayko.com",
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "origin": "https://vpz.co.uk",
+    "referer": "https://vpz.co.uk/",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
+    def __init__(self):
+        self.__state = CrawlStateSingleton.get_instance()
 
-        log.info(f"No of records being processed: {len(temp_list)}")
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
+        lat = coord[0]
+        lng = coord[1]
+        log.info(f"fetching data using coordinates:{lat},{lng}")
+        params = {
+            "latitude": lat,
+            "longitude": lng,
+        }
+        search_url = "https://vpz-shopify.ayko.com/api/location/get"
+        with SgRequests(dont_retry_status_codes=([404])) as session:
+            stores_req = session.get(search_url, headers=headers, params=params)
 
-def fetch_data():
-    # Your scraper here
-    search_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location=SW17%200RG&offset={}&limit=50&api_key=46014f43cb3d0581a9d4b5e3c04e0b4e&v=20181201&resolvePlaceholders=true&entityTypes=location"
-    offset = 0
-    while True:
-        final_url = search_url.format(str(offset))
-        stores_req = session.get(final_url, headers=headers)
-        json_data = json.loads(stores_req.text)
-        if json_data["response"]["count"] < offset:
-            break
+            try:
+                stores = json.loads(stores_req.text)
+                for key in stores.keys():
+                    store_info = stores[key]
+                    page_url = "<MISSING>"
+                    locator_domain = website
+                    location_name = store_info["name"]
+                    street_address = store_info["address_1"]
+                    if (
+                        "address_2" in store_info
+                        and store_info["address_2"]
+                        and len(store_info["address_2"]) > 0
+                    ):
+                        street_address = street_address + ", " + store_info["address_2"]
 
-        stores = json_data["response"]["entities"]
-        for store in stores:
-            page_url = "<MISSING>"
-            if "landingPageUrl" in store:
-                page_url = store["landingPageUrl"]
+                    city = store_info["town"]
+                    state = store_info["county"]
+                    zip = store_info["postcode"]
+                    country_code = "GB"
+                    store_number = store_info["location_id"]
+                    phone = store_info["phone_number"]
+                    location_type = "<MISSING>"
+                    if store_info["is_active"] != "1":
+                        location_type = "not active"
 
-            locator_domain = website
-            location_name = store["name"]
-            if location_name == "":
-                location_name = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
 
-            if "COMING SOON" in location_name or "coming-soon" in page_url:
-                continue
-            street_address = store["address"]["line1"]
-            if "line2" in store:
-                if store["line2"] is not None and len(store["line2"]) > 0:
-                    street_address = street_address + ", " + store["line2"]
+                    latitude = store_info["latitude"]
+                    longitude = store_info["longitude"]
 
-            city = store["address"]["city"]
-            state = "<MISSING>"
-            if "region" in store["address"]:
-                state = store["address"]["region"]
-            zip = store["address"]["postalCode"]
-            country_code = store["address"]["countryCode"]
+                    found_location_at(latitude, longitude)
 
-            if street_address == "":
-                street_address = "<MISSING>"
-
-            if city == "":
-                city = "<MISSING>"
-
-            if state == "":
-                state = "<MISSING>"
-
-            if zip == "":
-                zip = "<MISSING>"
-
-            store_temp = store["meta"]["id"]
-            store_number = ""
-            for temp in store_temp:
-                if temp.isalpha():
-                    break
-                else:
-                    store_number = store_number + temp
-
-            if store_number == "":
-                store_number = "<MISSING>"
-            phone = ""
-            if "mainPhone" in store:
-                phone = store["mainPhone"]
-
-            location_type = "open"
-
-            if "closed" in store:
-                if store["closed"] is True:
-                    location_type = "closed"
-
-            if "hours" in store:
-                hours = store["hours"]
-            hours_of_operation = ""
-            for day, time in hours.items():
-                if "openIntervals" in time:
-                    hours_of_operation = (
-                        hours_of_operation
-                        + day
-                        + ":"
-                        + time["openIntervals"][0]["start"]
-                        + "-"
-                        + time["openIntervals"][0]["end"]
-                        + " "
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
                     )
 
-            hours_of_operation = hours_of_operation.strip()
-
-            latitude = store["yextDisplayCoordinate"]["latitude"]
-            longitude = store["yextDisplayCoordinate"]["longitude"]
-
-            if latitude == "":
-                latitude = "<MISSING>"
-            if longitude == "":
-                longitude = "<MISSING>"
-
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
-            if phone == "":
-                phone = "<MISSING>"
-
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            yield curr_list
-
-        offset = offset + 50
+            except:
+                pass
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
-    log.info("Finished")
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        expected_search_radius_miles=50,
+    )
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        search_iter = _SearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=["GB"],
+        )
+
+        for rec in par_search.run():
+            writer.write_row(rec)
 
 
 if __name__ == "__main__":

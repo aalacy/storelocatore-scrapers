@@ -1,144 +1,98 @@
-from sglogging import sglog
-from bs4 import BeautifulSoup
+# -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome
-import ssl
-import json
-
-ssl._create_default_https_context = ssl._create_unverified_context
-session = SgRequests()
-website = "bathandbodyworks_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
-}
-
-DOMAIN = "https://www.bathandbodyworks.com"
-MISSING = SgRecord.MISSING
-
-
-def extract_json(html_string):
-    json_objects = []
-    count = 0
-
-    brace_count = 0
-    for element in html_string:
-
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    base_url = (
+    session = SgRequests()
+
+    start_url = "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=39.4923&longitude=-0.4046&countryCode=US&distanceUnit=mi&maxdistance=50000&BBW=1"
+    domain = "bathandbodyworks.com"
+    hdr = {
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "accept-encoding": "gzip, deflate, br",
+        "cookie": "_pxhd=A20RvZIXctJCBmUD1vmZRC6c4Iej1W/FHIHN48Im5jKK4HGE7gueulI/uB9bDaze0XGOcoJ7DzS3IsEmqHB1Uw==:vjLQwFfy8ZkI1aTfr8x0w2AtjcGpgmQ7ReOcLFr9sB0Uu1pVGTQW0XUAu4roZbBrW0V/DvgQx85EF/W74Ob21ttBs2y2FcuIk/EvwLa0pj8=; dwac_8ad49cb0e424b64ecf842fb2a5=SyzDJGCPg3_KQ6yfqKzt2ViJs9PhCSW4SBw%3D|dw-only|||USD|false|US%2FEastern|true; cqcid=abxc5qSH4FlK7HzC1LcdCgHXhm; cquid=||; sid=SyzDJGCPg3_KQ6yfqKzt2ViJs9PhCSW4SBw; dwanonymous_3ca1c1eaa8cb6f7cdb78c17b8163592f=abxc5qSH4FlK7HzC1LcdCgHXhm; __cq_dnt=0; dw_dnt=0; dwsid=T9rKprjsT5mutqHJCLnphlx_ulE5auleLOkOH037QTfgXdkMXWCxja0XAyrlSGLh_YnGspmyFvK3p_mKPujzcA==; optimizelyEndUserId=oeu1654081828598r0.7657302277775213; pxcts=71a6ece5-e19b-11ec-a7cd-6652656e4f65; _pxvid=6fc1e85c-e19b-11ec-983d-756c75534873; EmailSignupModalDismissal=true; collapsibleState=true; utag_main=v_id:01811ef5bf43000d7674663ba5ea05079002e07100838$_sn:1$_ss:1$_st:1654083630728$ses_id:1654081830728%3Bexp-session$_pn:1%3Bexp-session; CONSENTMGR=consent:false%7Cts:1654081831053; __cq_uuid=adad1c70-4b6b-11ec-be7f-a5d87894805b; __cq_seg=0~0.00!1~0.00!2~0.00!3~0.00!4~0.00!5~0.00!6~0.00!7~0.00!8~0.00!9~0.00; cmTPSet=Y; _px3=29ee5f81d947a1fd2d9f20c915353eab3434f9ce1adc86150b6087f6956d5932:XRL/ENVpRM5K9VvoSGVG4XtJe8w3PpgZJ0CMpCwBsZYNb94sfZsuBrwnnphlgmRx7hlZoQcyRODeIAbxORLwCg==:1000:P6a3suU7WMcd58kKzbsaTYepIVY1x4DVO9mxdqO6DUtFqxauecSO5ckk45OypkhgHIc3aTrXsHtT871VpD0V4MdsXWDVQpGgujYea0ox0Tu9qr7TlS8SGRDmumdzqymOEdjUHOz93n/tckO4Wl4fcIaiDSd+UfNW9gGvoqLVRRyASotnGq1OduWVrt6LEIt8eKGVgfY5ubUaa82Gvv0c2g==",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+    }
+    data = session.get(start_url, headers=hdr).json()
+    for store_number, poi in data["stores"].items():
+        street_address = poi["address1"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
+        hoo = ""
+        if poi["storeHours"]:
+            hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.bathandbodyworks.com/store-locator",
+            location_name=poi["name"],
+            street_address=street_address,
+            city=poi["city"],
+            state=poi["stateCode"],
+            zip_postal=poi["postalCode"],
+            country_code=poi["countryCode"],
+            store_number=store_number,
+            phone=poi["phone"],
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=hoo,
+        )
+
+        yield item
+
+    start_url = (
         "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
     )
-    r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    data = soup.find_all("div", {"class": "store-location"})
-    for i in data:
-        data2 = i.find("p", {"class": "location"})
-        state = data2.text.split(",")[-1].strip()
-        city = data2.text.split(",")[0].strip()
-        location_name = i.find("p").text
-        data3 = i.find("p", {"class": "title"})
-        phone = data3.find_next_sibling().text
-        log.info(phone)
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=base_url,
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+
+    all_locations = dom.xpath('//div[@class="store-location"]')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath('.//p[@class="store-name"]/text()')[0]
+        raw_address = poi_html.xpath('.//p[@class="location"]/text()')[0].split(", ")
+        phone = poi_html.xpath("./p[4]/text()")[0]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
             location_name=location_name,
-            street_address=MISSING,
-            city=city,
-            state=state,
-            zip_postal=MISSING,
+            street_address="",
+            city=raw_address[0],
+            state=raw_address[1],
+            zip_postal="",
             country_code="CA",
-            store_number=MISSING,
-            phone=phone.strip(),
-            location_type=MISSING,
-            latitude=MISSING,
-            longitude=MISSING,
-            hours_of_operation=MISSING,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
         )
-    base_url = "https://www.bathandbodyworks.com"
 
-    url = "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1"
-    with SgChrome(
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-        is_headless=True,
-    ).driver() as driver:
-        driver.get(url)
-        response = driver.page_source
-
-    json_objects = extract_json(response)
-
-    location_data = json_objects[0]["stores"]
-    for key in location_data:
-        store_data = location_data[key]
-        location_name = store_data["name"]
-        street_address = store_data["address1"] + " " + store_data["address2"]
-        city = store_data["city"]
-        state = store_data["stateCode"]
-        zip_postal = store_data["postalCode"]
-        country_code = store_data["countryCode"]
-        phone = store_data["phone"]
-        log.info(phone)
-        store_number = key
-        latitude = store_data["latitude"]
-        longitude = store_data["longitude"]
-        hours_of_operation = " ".join(
-            list(BeautifulSoup(store_data["storeHours"], "lxml").stripped_strings)
-        )
-        url = "https://www.bathandbodyworks.com/store-locator"
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=url,
-            location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone.strip(),
-            location_type=MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+        yield item
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

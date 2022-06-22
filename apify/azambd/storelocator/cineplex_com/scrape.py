@@ -1,48 +1,138 @@
-from sgpostal.sgpostal import parse_address_intl
-from lxml import html
-import time
-import random
-
-from sglogging import sglog
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
+from sgscrape import simple_scraper_pipeline as sp
+from sgpostal.sgpostal import parse_address_intl
+from sglogging import sglog
+import json
 
-from sgselenium import SgChrome
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-import ssl
+session = SgRequests()
 
-ssl._create_default_https_context = ssl._create_unverified_context
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
-
-website = "https://www.cineplex.com"
-MISSING = SgRecord.MISSING
-
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+DOMAIN = "cineplex.com"
+logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+MISSING = "<MISSING>"
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
-def driver_sleep(driver, time=2):
-    try:
-        WebDriverWait(driver, time).until(
-            EC.presence_of_element_located((By.ID, MISSING))
-        )
-    except Exception as e:
-        log.info(f"{e}")
-        pass
+def get_cities():
+    cities = [
+        "Calgary",
+        "Rocky View",
+        "Red Deer County",
+        "Lethbridge",
+        "Edmonton",
+        "Medicine Hat",
+        "Sherwood Park",
+        "Vernon",
+        "Kelowna",
+        "Kamloops",
+        "Saskatoon",
+        "Grande Prairie",
+        "Chilliwack",
+        "Moose Jaw",
+        "Prince Albert",
+        "Mission",
+        "Abbotsford",
+        "Pitt Meadows",
+        "Langley",
+        "Coquitlam",
+        "Regina",
+        "Surrey",
+        "Burnaby",
+        "Prince George",
+        "Vancouver",
+        "West Vancouver",
+        "Richmond",
+        "Victoria",
+        "Langford",
+        "Nanaimo",
+        "Prince Rupert",
+        "Winnipeg",
+        "Thunder Bay",
+        "Sault Ste. Mari",
+        "Sudbury",
+        "Windsor",
+        "Sarnia",
+        "Owen Sound",
+        "North Bay",
+        "Chatham",
+        "Collingwood",
+        "London",
+        "Midland",
+        "St. Thomas",
+        "Waterloo",
+        "Orangeville",
+        "Barrie",
+        "Kitchener",
+        "Guelph",
+        "Orillia",
+        "Cambridge",
+        "Brantford",
+        "Brampton",
+        "East Gwillimbury",
+        "Milton",
+        "Aurora",
+        "Mississauga",
+        "Vaughan",
+        "Ancaster",
+        "Burlington",
+        "Richmond Hill",
+        "Oakville",
+        "Toronto",
+        "Etobicoke",
+        "Markham",
+        "Stoney Creek",
+        "Scarborough",
+        "Pickering",
+        "Ajax",
+        "Oshawa",
+        "Clarington",
+        "Peterborough",
+        "Welland",
+        "Niagara Falls",
+        "Belleville",
+        "Hull",
+        "Ottawa",
+        "Kingston",
+        "Barrhaven",
+        "Brockville",
+        "Cornwall",
+        "Dorion",
+        "Kirkland",
+        "Laval",
+        "Montréal",
+        "Lasalle",
+        "Brossard",
+        "St-Bruno",
+        "St. Jean",
+        "Victoriaville",
+        "St. Foy",
+        "Québec",
+        "Beauport",
+        "Rock Forest",
+        "Fredericton",
+        "Miramichi",
+        "Saint John",
+        "Moncton",
+        "Dieppe",
+        "Yarmouth",
+        "Amherst",
+        "Summerside",
+        "New Minas",
+        "West Royalty",
+        "Bridgewater",
+        "Truro",
+        "Lower Sackville",
+        "Halifax",
+        "Dartmouth",
+        "New Glasgow",
+        "Antigonish",
+        "Sydney",
+        "Corner Brook",
+        "St. John'S",
+    ]
 
-
-def random_sleep(driver, start=5, limit=6):
-    driver_sleep(driver, random.randint(start, start + limit))
-
-
-def request_with_retries(driver, url):
-    return driver.get(url)
+    return cities
 
 
 def get_address(raw_address):
@@ -66,107 +156,88 @@ def get_address(raw_address):
                 zip_postal = MISSING
             return street_address, city, state, zip_postal
     except Exception as e:
-        log.info(f"Address Err: {e}")
+        logger.info(f"Address issue: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
 
-def fix_string(body, xpath):
-    data = body.xpath(xpath)
-    if len(data) == 0:
-        return MISSING
-    data = " ".join(data)
-    data = data.replace("\r", " ").replace("\n", " ").strip()
-    data = (" ".join(data.split())).strip()
+def parse_json(store):
+    data = {}
+    data["locator_domain"] = DOMAIN
+    data["store_number"] = store["id"]
+    data["page_url"] = "https://www.cineplex.com/Theatre/" + store["TheatreDetailsUrl"]
+    data["location_name"] = store["title"]
+    data["location_type"] = MISSING
+    raw_address = store["TheatreAddress"]
+    street_address, city, state, zip_postal = get_address(raw_address)
+    data["street_address"] = street_address
+    data["city"] = city
+    data["state"] = state
+    data["country_code"] = "CA"
+    data["zip_postal"] = zip_postal
+    data["phone"] = store["TheatrePhone"]
+    data["latitude"] = MISSING
+    data["longitude"] = MISSING
+    data["hours_of_operation"] = MISSING
+    data["raw_address"] = raw_address
+
     return data
 
 
-def fetch_stores(driver):
-    page = 0
-    pageUrls = []
-    while True:
-        page = page + 1
-        request_with_retries(
-            driver,
-            f"{website}/Theatres/TheatreListings?LocationURL=calgary&Range=5000&page={page}",
-        )
-        body = html.fromstring(driver.page_source, "lxml")
-        random_sleep(driver)
-        urls = body.xpath('//div[contains(@class, "theatre-text")]/a/@href')
-        if len(urls) == 0:
-            break
-        for url in urls:
-            if url not in pageUrls:
-                pageUrls.append(url)
-        log.debug(f"Page {page}. total url ={len(urls)}; pageUrls={len(pageUrls)}")
-    return pageUrls
+def fetch_stores(city_name, page=1, stores=[]):
+    api_url = f"https://search.cineplex.com/api/Search/Search?query={city_name}&from=theatredetails&siteFilter=www.cineplex.com&page={page}&lang=en-us"
+    response = session.get(api_url, headers=headers)
+    logger.info(f"{city_name} Response: {response}")
+    data = json.loads(response.text)["TheatreDetails"]
+    new_stores = data["Records"]
+    pages = len(data["pages"])
+    for store in new_stores:
+        stores.append(store["allMeta"])
+
+    if pages > page:
+        return fetch_stores(city_name, page + 1, stores)
+
+    return stores
 
 
-def fetch_data(driver, http):
-    urls = fetch_stores(driver)
-    log.info(f"Total stores = {len(urls)}")
-
-    count = 0
-    for url in urls:
-        count = count + 1
-        page_url = f"{website}{url}"
-        log.debug(f"{count}. scrapping {page_url} ...")
-        response = http.get(page_url)
-        body = html.fromstring(response.text, "lxml")
-
-        store_number = MISSING
-        location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
-        hours_of_operation = MISSING
-
-        location_name = fix_string(body, "//h1/text()")
-        raw_address = fix_string(
-            body, '//div[contains(@class, "theatre-details-page-address")]/a/text()'
-        )
-        phone = fix_string(
-            body, '//div[contains(@class, "theatre-details-page-phone")]/a/text()'
-        )
-
-        street_address, city, state, zip_postal = get_address(raw_address)
-        country_code = "CA"
-
-        yield SgRecord(
-            locator_domain=website,
-            store_number=store_number,
-            page_url=page_url,
-            location_name=location_name,
-            location_type=location_type,
-            street_address=street_address,
-            city=city,
-            zip_postal=zip_postal,
-            state=state,
-            country_code=country_code,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-    return []
+def fetch_data():
+    cities = get_cities()
+    logger.info(f"Total Cities To Crawl: {len(cities)}")
+    for city_name in cities:
+        stores = fetch_stores(city_name, 1, [])
+        for store in stores:
+            yield parse_json(store)
 
 
 def scrape():
-    log.info(f"Start scrapping {website} ...")
-    start = time.time()
-    count = 0
-    with SgRequests() as http:
-        with SgChrome(user_agent=user_agent) as driver:
-            with SgWriter(
-                deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
-            ) as writer:
-                for rec in fetch_data(driver, http):
-                    writer.write_row(rec)
-                    count = count + 1
+    logger.info(f"Start Crawling {DOMAIN} ...")
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(DOMAIN),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(mapping=["location_name"]),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-    end = time.time()
-    log.info(f"Total Rows Added= {count}")
-    log.info(f"Scrape took {end-start} seconds.")
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=1,
+    )
+
+    pipeline.run()
 
 
 if __name__ == "__main__":

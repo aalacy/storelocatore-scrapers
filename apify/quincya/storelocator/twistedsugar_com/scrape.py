@@ -21,8 +21,10 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://twistedsugar.com"
 
     for store in stores:
+
         if "coming soon" in store["description"].lower():
             continue
+
         location_name = store["store"]
         street_address = (store["address"] + " " + store["address2"]).strip()
         city = store["city"]

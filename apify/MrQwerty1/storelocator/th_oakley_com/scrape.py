@@ -43,14 +43,30 @@ def fetch_data(sgw: SgWriter):
             store_number = uuid.uuid4().hex
             location_name = j.get("name")
             phone = j.get("phone") or ""
-            phone = phone.replace("Sementara", "").strip()
+            phone = (
+                phone.replace("Sementara", "")
+                .replace(":", "")
+                .replace("Telp.", "")
+                .replace("Nil", "")
+                .strip()
+            )
             if "/" in phone:
                 phone = phone.split("/")[0].strip()
             if "E" in phone:
                 phone = phone.split("E")[0].strip()
+            if "," in phone:
+                phone = phone.split(",")[0].strip()
 
             latitude = j.get("lat")
             longitude = j.get("lng")
+
+            ch = j.get("channel_of_trade") or ""
+            if ch == "101" or ch == "100":
+                location_type = "Oakley Store"
+            elif ch == "200" or ch == "201":
+                location_type = "Oakley Vault"
+            else:
+                location_type = "Resellers"
 
             row = SgRecord(
                 page_url=page_url,
@@ -63,6 +79,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 phone=phone,
+                location_type=location_type,
                 store_number=store_number,
                 raw_address=raw_address,
                 locator_domain=locator_domain,

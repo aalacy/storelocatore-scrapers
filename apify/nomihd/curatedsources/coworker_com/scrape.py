@@ -170,13 +170,16 @@ def fetch_pages(city_url):
             location = store["location"]
 
             raw_address = (location["address_1"] + " " + location["address_2"]).strip()
+            city = None
             if location["city_name"]:
+                city = location["city_name"]
                 raw_address = raw_address + ", " + location["city_name"]
             if location["state_code"]:
                 raw_address = raw_address + ", " + location["state_code"]
 
             all_stores.append(
                 {
+                    "city": city,
                     "store_number": store["id"],
                     "location_name": store["name"].split(" - ")[0].strip(),
                     "page_url": page_url,
@@ -260,6 +263,8 @@ def fetch_data():
             log.info(f"  {page_count}. scrapping {store['location_name']}")
             hours_of_operation = get_hours_of_operation(store["page_url"])
             street_address, city, state, zip_postal = get_address(store["raw_address"])
+            if not city:
+                city = store["city"]
 
             yield SgRecord(
                 locator_domain=website,

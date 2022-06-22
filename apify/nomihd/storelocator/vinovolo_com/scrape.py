@@ -43,7 +43,7 @@ def fetch_data():
             store_sel = lxml.html.fromstring(store_res.text)
 
             locations = store_sel.xpath(
-                '//div[@class="elementor-widget-wrap elementor-element-populated" and .//h2[not(contains(text(),"Locations"))]]/div[.//p]'
+                '//span[text()="Click To View Menu"]/ancestor::section[1]'
             )
             city_state = "".join(
                 store_sel.xpath(
@@ -52,11 +52,13 @@ def fetch_data():
             ).strip()
             for location in locations:
 
-                location_name = "".join(location.xpath(".//p//text()")).strip()
+                location_name = "".join(
+                    location.xpath("./preceding-sibling::div[.//p]//p//text()")
+                ).strip()
                 location_type = "<MISSING>"
 
                 location_info_sel = location.xpath(
-                    "./following-sibling::section[.//p][1]//div[p]"
+                    "./preceding-sibling::section[.//p]//div[p]"
                 )
 
                 raw_address = (

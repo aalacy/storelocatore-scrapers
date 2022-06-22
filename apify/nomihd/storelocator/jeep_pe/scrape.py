@@ -79,7 +79,7 @@ def fetch_data():
             for store in stores:
                 if len("".join(store.xpath("@data-region")).strip()) <= 0:
                     continue
-                page_url = "<MISSING>"
+                page_url = search_url
                 locator_domain = website
                 location_name = "".join(store.xpath("h2/text()")).strip()
 
@@ -90,10 +90,23 @@ def fetch_data():
                         add_list.append("".join(temp).strip())
 
                 raw_address = ", ".join(add_list).strip()
-                phone = "".join(
-                    store.xpath('div[1]/div[@class="phone"]//text()')
-                ).strip()
-
+                phone = (
+                    "".join(store.xpath('div[1]/div[@class="phone"]//text()'))
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                )
+                phone = (
+                    phone.split("/")[0]
+                    .strip()
+                    .split(" - ")[0]
+                    .strip()
+                    .lower()
+                    .split("anexo")[0]
+                    .strip()
+                )
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:

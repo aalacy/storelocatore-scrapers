@@ -21,9 +21,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
-        )
+        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
         for lat, long in search:
             log.info(f"Fetching Locations for lat {lat} & long {long}")
             url = (
@@ -31,7 +29,7 @@ def fetch_data():
                 + str(lat)
                 + "&long="
                 + str(long)
-                + "&radius=300.0"
+                + "&radius=1000000000"
             )
             loclist = session.get(url, headers=headers).json()["stores"]
             if not loclist:
@@ -49,8 +47,26 @@ def fetch_data():
                     )
                 except:
                     hours_of_operation = MISSING
+
                 if "Here are the store hours" in hours_of_operation:
                     hours_of_operation = MISSING
+                if (
+                    "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+                    in hours_of_operation
+                ):
+                    hours_of_operation = hours_of_operation.replace("Sunday", "Sunday#")
+                    hour_list = hours_of_operation.split("#")
+                    day_list = hour_list[0].split()
+                    time_list = (
+                        hour_list[1]
+                        .replace(" AM", "AM")
+                        .replace(" PM", "PM")
+                        .replace(" - ", "-")
+                        .split()
+                    )
+                    hours_of_operation = ""
+                    for day, time in zip(day_list, time_list):
+                        hours_of_operation = hours_of_operation + " " + day + " " + time
                 phone = loc["phone"]
                 street_address = loc["address1"]
                 log.info(street_address)
@@ -61,6 +77,13 @@ def fetch_data():
                     state = MISSING
                 zip_postal = loc["postalCode"]
                 country_code = loc["countryCode"]
+                if "Los Angeles" in state:
+                    if "CA" in city.split()[-1]:
+                        state = "CA"
+                        city = city.replace("CA", "")
+                if country_code == "CA":
+                    zip_postal = loc["address2"].split()
+                    zip_postal = zip_postal[-2] + " " + zip_postal[-1]
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url="https://www.iroparis.com/us/stores",
@@ -84,7 +107,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

@@ -52,11 +52,18 @@ def get_json_data_us_ca(loc):
 def get_json_data_global(loc):
     with SgRequests() as http:
         r = http.get(loc, headers=headers)
+
+        if not r.status_code or r.status_code is None:
+            return
+
+        if r.status_code == 200 and not r.text:
+            return
+
         if r.text:
             data_json = json.loads(r.text)
             return data_json
         raise Exception(
-            f"HTTP Error Code: {r.status_code} > Please fix Global RetryError for {loc}"
+            f"HTTP Error Code: {r.status_code} > Please fix JsonDataGlobalRetryError for {loc}"
         )
 
 
