@@ -74,6 +74,6 @@ if __name__ == "__main__":
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        fetch_data(writer)
+    with SgRequests() as session:
+        with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+            fetch_data(writer)
