@@ -125,16 +125,17 @@ def fetch_store_details(link):
                 '//span[contains(text(), "(") and contains(text(), ")")]/text()'
             )
             if len(phone) == 0:
-                phone = [MISSING]
+                phone = ""
 
-    phone = phone[0].replace("tel:", "").strip()
-    if not phone:
+    try:
+        phone = phone[0].replace("tel:", "").strip()
+    except:
         try:
             phone = re.findall(
                 r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(body.xpath("//text()"))
             )[0]
         except:
-            pass
+            phone = ""
 
     operations = []
     hoursP = body.xpath("//span[text()='HOURS']")
