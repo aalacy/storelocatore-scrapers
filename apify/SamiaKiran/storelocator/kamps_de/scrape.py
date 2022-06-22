@@ -30,7 +30,6 @@ def fetch_data():
     if True:
         url = "https://kamps.de/standorte"
         r = session.get(url, headers=headers)
-        # soup = BeautifulSoup(r.text, "html.parser")
         loclist = r.text.split("var item = JSON.parse('")[1:]
         for loc in loclist:
             loc = loc.replace("&quot;", '"').split("}")[0] + "}}}"
