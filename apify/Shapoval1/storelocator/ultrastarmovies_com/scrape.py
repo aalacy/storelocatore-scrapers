@@ -83,7 +83,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//div[contains(@class, "fusion-text fusion-text-")]//span[./strong[text()="CURRENT HOURS"]]/following-sibling::span//text()'
+                    '//div[contains(@class, "fusion-text fusion-text-")]//span[./strong[contains(text(), "HOURS")]]/following-sibling::span//text()'
                 )
             )
             .replace("\n", "")

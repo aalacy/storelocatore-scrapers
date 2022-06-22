@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import demjson
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -23,15 +24,16 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//form[contains(@id, "bindStore")]/@action')
-    total_pages = dom.xpath('//div[@class="cus-pagnation"]/div/text()')[0][-1]
-    for p in range(1, int(total_pages)):
-        np = f"https://www.elverys.ie/store-finder?latitude=0.0&longitude=0.0&q=&page={p}"
-        response = session.get(np)
+    next_page = dom.xpath('//li[@class="next"]/a/@href')
+    while next_page:
+        next_page_url = urljoin(start_url, next_page[0])
+        response = session.get(next_page_url)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//form[contains(@id, "bindStore")]/@action')
+        next_page = dom.xpath('//li[@class="next"]/a/@href')
 
     for url in all_locations:
-        page_url = "https://www.elverys.ie" + url
+        page_url = urljoin(start_url, url).replace(" ", "%20")
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(
             loc_response.text.replace('17 O" Connell', "17 O Connell")
