@@ -19,6 +19,8 @@ def fetch_data():
     data = json.loads(dom.xpath("//@data-dna")[0])
     all_locations = [e for e in data if e["type"] == "markers"]
     for poi in all_locations:
+        if not poi["options"]["infoWindowOptions"]:
+            continue
         poi_html = etree.HTML(poi["options"]["infoWindowOptions"]["content"])
         zip_code = poi_html.xpath("//@data-zip")[0]
         city = poi_html.xpath("//@data-city-state")[0].split(", ")[0]
@@ -27,6 +29,8 @@ def fetch_data():
         location_name = poi_html.xpath("//a/text()")[0].strip()
         phone = poi_html.xpath('//a[@class="phone-link"]/text()')[0].strip()
         street_address = poi_html.xpath("//address/text()")[0].strip()
+        if zip_code in street_address:
+            street_address = ""
 
         item = SgRecord(
             locator_domain=domain,

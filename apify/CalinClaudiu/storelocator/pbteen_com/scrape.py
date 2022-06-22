@@ -31,6 +31,7 @@ def fix_comma(x):
 
 def fix_record2(rec):
     country = rec[1]
+    cc = rec[2]
     rec = rec[0]
     k = {}
     k["host"] = "<MISSING>"
@@ -98,6 +99,11 @@ def fix_record2(rec):
             k["hours"] = str(rec["timings1"]) + ", " + str(rec["timings2"])
         except Exception:
             k["hours"] = "<MISSING>"
+    k["country"] = cc
+
+    if cc == "ME":
+        k["address"] = k["name"]
+        k["name"] = "<MISSING>"
 
     return k
 
@@ -230,13 +236,14 @@ def fix_record(rec, host):
                 k["phone"] = rec["address"]["dayPhone"]
             except Exception:
                 k["phone"] = "<MISSING>"
+
     return k
 
 
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
         for rec in data["statesAndProvinces"][country]["stores"]:
-            yield (rec, country)
+            yield (rec, country, data["countryCode"])
 
 
 def main_all(session, url):
