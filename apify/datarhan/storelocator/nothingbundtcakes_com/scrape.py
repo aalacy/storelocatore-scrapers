@@ -1,147 +1,76 @@
 import re
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    DOMAIN = "nothingbundtcakes.com"
-
-    items = []
-    gathered_items = []
+    domain = "nothingbundtcakes.com"
 
     start_url = "https://www.nothingbundtcakes.com/bakeries?"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_poi_html = dom.xpath(
-        '//div[@class="search-results"]/div[@class="bakeries"]/div'
+    all_locations = dom.xpath(
+        '//a[button[contains(text(), "View Bakery Information")]]/@href'
     )
-    next_page = (
-        "https://www.nothingbundtcakes.com"
-        + dom.xpath('//span[@class="next control"]/a/@href')[0]
-    )
-    while next_page:
-        next_response = session.get(next_page)
-        page_dom = etree.HTML(next_response.text)
-        page_poi_html = page_dom.xpath(
-            '//div[@class="search-results"]/div[@class="bakeries"]/div'
-        )
-        all_poi_html += page_poi_html
-        next_page = page_dom.xpath('//span[@class="next control"]/a/@href')
-        if next_page:
-            next_page = "https://www.nothingbundtcakes.com" + next_page[0]
-
-    for poi_html in all_poi_html:
-        store_url = poi_html.xpath('.//a[@class="btn visit-bakery-page"]/@href')
-        store_url = (
-            "https://www.nothingbundtcakes.com/" + store_url[0]
-            if store_url
-            else "<MISSING>"
-        )
-        location_name = poi_html.xpath('.//div[@class="name"]/div/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        if "Coming Soon" in location_name:
+    for page_url in all_locations:
+        loc_response = session.get(page_url)
+        if loc_response.status_code != 200:
             continue
-        street_address = poi_html.xpath('.//p[@class="line1 line"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        street_address_2 = poi_html.xpath('.//p[@class="line2 line"]/text()')
+        loc_dom = etree.HTML(loc_response.text)
+
+        latitude = re.findall('latitude = "(.+?)";', loc_response.text)[0]
+        longitude = re.findall('longitude = "(.+?)";', loc_response.text)[0]
+        location_name = re.findall('name = "(.+?)";', loc_response.text)[0]
+        street_address = re.findall('street = "(.+?)";', loc_response.text)[0]
+        street_address_2 = re.findall('street2 = "(.+?)";', loc_response.text)
         if street_address_2:
-            street_address += " " + street_address_2[0]
-        city = poi_html.xpath('.//span[@class="city"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = poi_html.xpath('.//span[@class="state"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = poi_html.xpath('.//span[@class="postal_code"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = ""
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = ""
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi_html.xpath('.//p[@class="phone"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        geo_data = poi_html.xpath('.//a[contains(@href, "maps")]/@href')
-        geo_data = geo_data[0] if geo_data else "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if geo_data == "<MISSING>":
-            latitude = re.findall(r"/@(.+)/data", geo_data)
-            latitude = latitude[0].split(",")[0] if latitude else "<MISSING>"
-            longitude = re.findall(r"/@(.+)/data", geo_data)
-            longitude = longitude[0].split(",")[0] if longitude else "<MISSING>"
-        hours_of_operation = poi_html.xpath('//div[@class="hours"]//text()')
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation[1:]).split("*")[0].strip()
-            if hours_of_operation
-            else "<MISSING>"
+            street_address += ", " + street_address_2[0]
+        city = re.findall('city = "(.+?)";', loc_response.text)[0]
+        state = re.findall('region_id = "(.+?)";', loc_response.text)[0]
+        zip_code = re.findall('postcode = "(.+?)";', loc_response.text)[0]
+        country_code = re.findall('country = "(.+?)";', loc_response.text)[0]
+        store_number = re.findall('entity_id = "(.+?)";', loc_response.text)[0]
+        phone = loc_dom.xpath('//a[@class="result-phone"]/text()')[0]
+        hoo = loc_dom.xpath('//div[h4[contains(text(), "HOURS OF OPERATION")]]//text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()][1:])
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        check = location_name.strip().lower() + " " + street_address.strip().lower()
-        if check not in gathered_items:
-            gathered_items.append(check)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
