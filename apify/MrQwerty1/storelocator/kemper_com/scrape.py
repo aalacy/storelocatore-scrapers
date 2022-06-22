@@ -8,11 +8,11 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
     for _zip in search:
         json_data = {
-            "radius": 12,
+            "radius": 60,
             "address": "",
             "city": "",
             "state": "",
@@ -54,6 +54,7 @@ def fetch_data(sgw: SgWriter):
 
             row = SgRecord(
                 location_name=location_name,
+                page_url=page_url,
                 street_address=street_address,
                 city=city,
                 state=state,
@@ -71,6 +72,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.kemper.com/"
+    page_url = "https://www.kemper.com/get-started/find-an-agent"
     api = "https://customer.kemper.com/faa/v1/agency/ka"
 
     headers = {
