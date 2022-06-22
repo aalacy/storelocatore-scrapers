@@ -39,6 +39,8 @@ def fetch_data():
             hours_of_operation = (
                 temp[1].get_text(separator="|", strip=True).replace("|", " ")
             )
+            if "Last call" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Last call")[0]
             if "Please call ahead to check" in hours_of_operation:
                 hours_of_operation = MISSING
             if "Qatar" in temp[0].text:
