@@ -33,10 +33,15 @@ def fetch_data():
             street_address = _.select_one("span.address-line1").text.strip()
             if _.select_one("span.address-line2"):
                 street_address += " " + _.select_one("span.address-line2").text.strip()
+            city = _.select_one("span.locality").text.strip()
+            if str(street_address).find(f"{city}") != -1:
+                street_address = str(street_address).split(",")[0].strip()
             phone = ""
             _p = _.select_one("div.views-field-field-telephone-number a")
             if _p:
                 phone = _p.text.strip()
+            if str(phone).find("or") != -1:
+                phone = str(phone).split("or")[0].strip()
             _hr = sp1.find("h3", string=re.compile(r"Hours of Operation"))
             hours = ""
             if _hr:
@@ -46,8 +51,10 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h2.text.strip(),
-                street_address=street_address.replace("Jakes Fireworks,", "").strip(),
-                city=_.select_one("span.locality").text.strip(),
+                street_address=street_address.replace("Jakes Fireworks,", "")
+                .replace("Jake's Fireworks,", "")
+                .strip(),
+                city=city,
                 state=_.select_one("span.administrative-area").text.strip(),
                 zip_postal=_.select_one("span.postal-code").text.strip(),
                 country_code="US",

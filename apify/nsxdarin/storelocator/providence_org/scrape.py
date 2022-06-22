@@ -46,6 +46,7 @@ def fetch_data():
                             .split('href=\\"')[1]
                             .split("\\")[0]
                         )
+                        typ = "<MISSING>"
                         try:
                             csz = item.split("\\u003cdiv\\u003e")[2].split("\\")[0]
                             city = csz.split(",")[0]
@@ -63,6 +64,22 @@ def fetch_data():
                         lurl = lurl.replace("https://www.providence.orghttps", "https")
                         if "," in phone:
                             phone = phone.split(",")[0].strip()
+                        if "/providence" in lurl:
+                            typ = "Providence"
+                        if "/facey" in lurl:
+                            typ = "Facey"
+                        if "/covenant" in lurl:
+                            typ = "Covenant"
+                        if " - " in name:
+                            namesuffix = name.split(" - ")[1].strip()
+                            if city in namesuffix:
+                                name = name.split(" - ")[0].strip()
+                        if "Providence" in name:
+                            typ = "Providence"
+                        if "Covenant" in name:
+                            typ = "Covenant"
+                        if "Facey" in name:
+                            typ = "Facey"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=lurl,
