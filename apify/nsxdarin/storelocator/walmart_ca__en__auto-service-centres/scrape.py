@@ -1,11 +1,12 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
+import tenacity
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("walmart_ca__en__auto-service-centres")
 
@@ -13,26 +14,27 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.CANADA],
-    max_search_distance_miles=None,
-    max_search_results=None,
-)
+search = static_zipcode_list(1, SearchableCountries.CANADA)
+
+
+@tenacity.retry(wait=tenacity.wait_fixed(5))
+def fetch_stores(code):
+    with SgRequests() as http:
+        logger.info(f"Pulling Zip Code: {code}...")
+        formatted_code = code.replace(" ", "")
+        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=PHARMACY"
+        return http.get(url, headers=headers).json()["payload"]["stores"]
 
 
 def fetch_data():
-    for code in search:
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr="
-            + code.replace(" ", "")
-        )
-        website = "walmart.ca/en/auto-service-centres"
-        typ = "Walmart"
-        country = "CA"
-        session = SgRequests()
-        r2 = session.get(url, headers=headers)
-        for item in json.loads(r2.content)["payload"]["stores"]:
+    website = "walmart.ca/en/auto-service-centres"
+    typ = "Walmart"
+    country = "CA"
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_stores, code) for code in search]
+    for future in as_completed(futures):
+        stores = future.result()
+        for item in stores:
             Fuel = False
             try:
                 name = item["displayName"]
@@ -100,7 +102,9 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

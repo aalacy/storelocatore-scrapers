@@ -33,7 +33,7 @@ def fetch_data():
             if "HOURS" in r.text:
                 loc = r.text.split("HOURS")[1].split("</section>", 1)[0]
                 soup = BeautifulSoup(loc, "html.parser")
-                address = loc.split("CONTACT")[1]
+                address = r.text.split("CONTACT")[1]
                 hours_of_operation = (
                     soup.find("div", {"data-testid": "richTextElement"})
                     .get_text(separator="|", strip=True)
@@ -53,6 +53,9 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .split("|")
             )
+            if len(address) > 3:
+                if "GM" in address[-3]:
+                    address = address[:-3]
             phone = address[-1]
             address = " ".join(address[:-1])
             address = address.replace(",", " ")

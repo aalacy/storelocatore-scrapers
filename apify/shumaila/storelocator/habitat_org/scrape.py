@@ -28,8 +28,9 @@ def fetch_data():
         soup = BeautifulSoup(page.text, "html.parser")
         maindiv = soup.findAll("article", {"class": "address-listing"})
         for card in maindiv:
-            title = card.text
-            link = "https://www.habitat.org" + card.find("a")["href"]
+            title = card.find("a").text.strip()
+            link = "https://www.habitat.org" + card.find("a")["href"].strip()
+
             page = session.get(link, headers=headers)
             soup = BeautifulSoup(page.text, "html.parser")
             store = page.text.split('"id":"map', 1)[1].split('"', 1)[0]
@@ -49,6 +50,10 @@ def fetch_data():
                 )
             except:
                 phone = "<MISSING>"
+            try:
+                phone = "(" + phone.split("(", 1)[1]
+            except:
+                pass
             yield SgRecord(
                 locator_domain="https://www.habitat.org",
                 page_url=link,

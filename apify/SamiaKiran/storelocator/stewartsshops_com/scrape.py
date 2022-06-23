@@ -27,7 +27,7 @@ def fetch_data():
         expected_search_radius_miles=200,
     )
     for lat, long in search:
-        log.info(f"Coordinates remaining: {search.items_remaining()})")
+        log.info(f"Location found at: {search.found_location_at(lat, long)})")
         url = (
             "https://www.stewartsshops.com/wp-admin/admin-ajax.php?action=store_search&distance_unit=mi&lat="
             + str(lat)
@@ -39,6 +39,7 @@ def fetch_data():
         if loclist:
             for loc in loclist:
                 location_name = html.unescape(loc["store"])
+                page_url = loc["permalink"]
                 log.info(location_name)
                 store_number = location_name.split("#", 1)[1].replace("-", "")
                 if store_number.split():
@@ -59,7 +60,7 @@ def fetch_data():
                 )
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url="https://www.stewartsshops.com/find-a-shop/",
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
