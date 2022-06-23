@@ -42,6 +42,9 @@ def fetch_data():
                 pass
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
+            raw_address = unidecode.unidecode(raw_address)
+            title = unidecode.unidecode(title)
+
             hours = "<MISSING>"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
@@ -60,11 +63,10 @@ def fetch_data():
             if "Address" in title:
                 title = raw_address
             pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
-            title = unidecode.unidecode(title)
+
             street = unidecode.unidecode(street)
             city = unidecode.unidecode(city)
             state = unidecode.unidecode(state)
-            raw_address = unidecode.unidecode(raw_address)
 
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
@@ -198,10 +200,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
-            duplicate_streak_failure_factor=5,
-        )
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         results = fetch_data()
         for rec in results:
