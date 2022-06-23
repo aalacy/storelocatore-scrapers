@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import unidecode
 
 from sgrequests import SgRequests
 
@@ -34,6 +34,7 @@ def fetch_data():
             title = loc.split("\n", 1)[0]
 
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
+
             phone = address.split("\n")[-1]
             try:
                 phone = phone.split("/", 1)[0]
@@ -59,9 +60,15 @@ def fetch_data():
             if "Address" in title:
                 title = raw_address
             pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
+            title = unidecode.unidecode(title)
+            street = unidecode.unidecode(street)
+            city = unidecode.unidecode(city)
+            state = unidecode.unidecode(state)
+            raw_address = unidecode.unidecode(raw_address)
+
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
-                page_url="<MISSING>",
+                page_url=url,
                 location_name=title,
                 street_address=street.strip(),
                 city=city.strip(),
