@@ -25,7 +25,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.findAll("ul", {"class": "directory-listing"})
-    p = 1
+
     for cnow in statelist:
         ccode = cnow["ng-show"].split("'", 1)[1].split("'", 1)[0]
         loclist = cnow.findAll("li", {"class": "directory-listing-entry"})
