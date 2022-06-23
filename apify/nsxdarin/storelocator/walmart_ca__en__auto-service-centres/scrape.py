@@ -5,6 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import tenacity
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("walmart_ca__en__auto-service-centres")
 
@@ -15,18 +17,23 @@ headers = {
 search = static_zipcode_list(1, SearchableCountries.CANADA)
 
 
-def fetch_data():
-    n = 0
-    for code in search:
-        logger.info(f"Pulling Zip Code {n}: {code}...")
-        n += 1
+@tenacity.retry(wait=tenacity.wait_fixed(5))
+def fetch_stores(code):
+    with SgRequests() as http:
+        logger.info(f"Pulling Zip Code: {code}...")
         formatted_code = code.replace(" ", "")
-        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=TIRE_AND_LUBE_EXPRESS_CENTRE"
-        website = "walmart.ca/en/auto-service-centres"
-        typ = "Walmart"
-        country = "CA"
-        session = SgRequests()
-        stores = session.get(url, headers=headers).json()["payload"]["stores"]
+        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=PHARMACY"
+        return http.get(url, headers=headers).json()["payload"]["stores"]
+
+
+def fetch_data():
+    website = "walmart.ca/en/auto-service-centres"
+    typ = "Walmart"
+    country = "CA"
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_stores, code) for code in search]
+    for future in as_completed(futures):
+        stores = future.result()
         for item in stores:
             Fuel = False
             try:
