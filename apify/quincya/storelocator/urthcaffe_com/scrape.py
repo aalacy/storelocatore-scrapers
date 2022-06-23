@@ -45,6 +45,8 @@ def fetch_data(sgw: SgWriter):
             location_name = "LAX"
         if "4940 W" in street_address:
             location_name = "South Bay"
+        if "8565 Melrose" in street_address:
+            location_name = "Melrose"
         country_code = "US"
         location_type = "<MISSING>"
         phone = store["telephone"]
