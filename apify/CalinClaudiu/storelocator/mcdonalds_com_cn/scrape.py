@@ -819,13 +819,23 @@ def fix_comma(x):
 
 
 def fix_ph(x):
+    x = str(x).strip()
+    lenp = len(x)
+    copx = x
     try:
         x = x.split(":")[0]
     except Exception:
         pass
 
     try:
-        x = x.split("-")[0]
+        x = x.rsplit("-", 1)[0]
+    except Exception:
+        pass
+
+    try:
+        if len(x) < ((lenp / 2) - 2) or len(x) <= 4:
+            logzilla.error(f"Phone \n\n{x}\n{copx}\n\n")
+            return copx
     except Exception:
         pass
 

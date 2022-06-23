@@ -45,18 +45,21 @@ def fetch_data(sgw: SgWriter):
         phone = "".join(info).split("Ph:")[1].strip() or "<MISSING>"
         hours_of_operation = "<MISSING>"
         if page_url != "https://www.talktimestore.com/locations":
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//div[./h2[./span[text()="Opening Hours"]]]/following-sibling::div[1]//text()'
+            try:
+                r = session.get(page_url, headers=headers)
+                tree = html.fromstring(r.text)
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//div[./h2[./span[text()="Opening Hours"]]]/following-sibling::div[1]//text()'
+                        )
                     )
+                    .replace("\n", "")
+                    .strip()
                 )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = " ".join(hours_of_operation.split())
+                hours_of_operation = " ".join(hours_of_operation.split())
+            except:
+                hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

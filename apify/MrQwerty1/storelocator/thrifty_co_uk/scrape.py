@@ -1,143 +1,83 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    for i in range(0, 10000, 1000):
+        api = f"https://www.thrifty.com/loc/modules/multilocation/?near_location=Sydney&threshold=50000&distance_unit=miles&limit=1000&language_code=en-us&published=1&within_business=true&offset={i}"
+        r = session.get(api, headers=headers)
+        js = r.json()["objects"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for j in js:
+            adr1 = j.get("street") or ""
+            adr2 = j.get("street2") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = j.get("city") or ""
+            if "(" in city:
+                city = city.split("(")[0].strip()
+            if "," in city:
+                city = city.split(",")[0].strip()
+            city = city.replace("COMMERCIAL", "").replace("4WD AND TRUCK", "").strip()
+            state = j.get("state")
+            postal = j.get("postal_code") or ""
+            if str(postal) == "0":
+                postal = SgRecord.MISSING
+            country_code = j.get("country")
+            store_number = j.get("id")
+            location_name = j.get("location_name")
+            try:
+                phone = j["phones"][0]["e164"]
+            except:
+                phone = SgRecord.MISSING
+            latitude = j.get("lat")
+            longitude = j.get("lon")
+            raw_address = j.get("formatted_address")
 
-        for row in data:
-            writer.writerow(row)
+            _tmp = []
+            try:
+                hours = j["formatted_hours"]["primary"]["grouped_days"]
+            except KeyError:
+                hours = []
 
+            for h in hours:
+                day = h.get("label_abbr")
+                inter = h.get("content")
+                _tmp.append(f"{day}: {inter}")
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.thrifty.co.uk/locations.htm")
-    tree = html.fromstring(r.text)
+            hours_of_operation = ";".join(_tmp)
 
-    return set(tree.xpath("//ul[@class='locations']/li/a/@href"))
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                raw_address=raw_address,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
+            sgw.write_row(row)
 
-def get_data(url):
-    locator_domain = "https://www.thrifty.co.uk/"
-    page_url = f"https://www.thrifty.co.uk{url}"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath("//div[@class='rightcol_book_inner']/p/strong/text()")
-    ).strip()
-    line = tree.xpath("//div[@class='rightcol_book_inner']/p/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    try:
-        street_address = ", ".join(line[:-2])
-        city = line[-2]
-        postal = line[-1]
-    except IndexError:
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        postal = "<MISSING>"
-
-    state = "<MISSING>"
-    if city.lower().find("park,") != -1:
-        city = city.split(",")[-1].strip()
-    if city.find(",") != -1:
-        state = city.split(",")[-1].strip() or "<MISSING>"
-        city = city.split(",")[0].strip()
-
-    country_code = "GB"
-    store_number = "<MISSING>"
-    text = "".join(tree.xpath("//div[@class='book_outer']/text()")).strip()
-    try:
-        phone = text.split("call")[-1].split("*")[0].strip() or "<MISSING>"
-        if phone.find("\n") != -1:
-            if phone.find("dial") != -1:
-                phone = phone.split("dial")[1].split("*")[0].strip()
-            else:
-                phone = "<MISSING>"
-    except IndexError:
-        phone = "<MISSING>"
-
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    days = tree.xpath("//span[@class='res_left_locations']/text()")
-    times = tree.xpath("//span[@class='res_right_locations']/text()")
-
-    for d, t in zip(days, times):
-        _tmp.append(f"{d.strip()}: {t.strip()}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = "Closed"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 1000:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.thrifty.com/"
+    page_url = "https://www.thrifty.com/loc/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
