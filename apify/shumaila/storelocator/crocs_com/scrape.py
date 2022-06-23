@@ -15,7 +15,6 @@ headers = {
 
 
 def fetch_locations(lat, lng):
-    print(lat, lng)
 
     headers = {
         "Connection": "keep-alive",
@@ -155,8 +154,6 @@ def fetch_data():
     search = list(mylist)
     search = search + [(50.4501, 30.5234)]
 
-    print(search)
-    input()
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
         for future in as_completed(futures):
