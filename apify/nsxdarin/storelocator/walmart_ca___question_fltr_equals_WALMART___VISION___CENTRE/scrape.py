@@ -25,7 +25,9 @@ def fetch_stores(code):
             logger.info(f"Pulling Zip Code: {code}...")
             formatted_code = code.replace(" ", "")
             url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=WALMART_VISION_CENTRE"
-            return http.get(url, headers=headers).json()["payload"]["stores"]
+            response = http.get(url, headers=headers)
+            print(response.content)
+            return response.json()["payload"]["stores"]
         except:
             print(traceback.format_exc())
             raise Exception("failed to fetch stores")
