@@ -90,9 +90,7 @@ if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
         )
     ) as writer:
         fetch_data(writer)
