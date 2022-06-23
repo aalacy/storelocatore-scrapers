@@ -144,7 +144,7 @@ def fetch_data():
 
                     latitude, longitude = "".join(
                         store_sel.xpath("//div[@class='geolocation']/@data-lat")
-                    ), "".join(store.xpath("//div[@class='geolocation']/@data-lng"))
+                    ), "".join(store_sel.xpath("//div[@class='geolocation']/@data-lng"))
 
                     if str(latitude) == "0":
                         latitude = "<MISSING>"

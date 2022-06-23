@@ -30,7 +30,6 @@ def fetch_data():
         latitude = div["data-latitude"]
         longitude = div["data-longitude"]
         location_name = div.find("h4").text
-        log.info(location_name)
         address = re.sub(pattern, " ", div.find("address").text)
         phone = div.find("div", {"class": "phone"}).text.replace("\n", "")
         address = address.lstrip()
@@ -79,6 +78,8 @@ def fetch_data():
         store_number = div["data-loc-id"]
         if not street_address:
             r = session.get(page_url, headers=headers)
+            if "Coming Soon" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             address = (
                 soup.find("div", {"class": "address"})

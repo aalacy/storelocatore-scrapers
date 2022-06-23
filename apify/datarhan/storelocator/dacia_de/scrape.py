@@ -30,7 +30,7 @@ def fetch_data():
             page_url="https://www.dacia.de/haendlersuche/liste-concessions.html",
             location_name=poi["name"],
             street_address=poi["extendedAddress"],
-            city=poi["locality"],
+            city=poi["locality"].split("/")[0],
             state="",
             zip_postal=poi["postalCode"],
             country_code=poi["country"],

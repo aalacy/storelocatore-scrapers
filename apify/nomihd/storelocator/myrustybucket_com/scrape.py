@@ -26,7 +26,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.myrustybucket.com/wp-json/wp/v2/locations"
+    search_url = "https://www.myrustybucket.com/wp-json/wp/v2/locations/?status=publish&per_page=100"
     with SgFirefox(block_third_parties=True) as driver:
         driver.get(search_url)
         log.info(driver.page_source)

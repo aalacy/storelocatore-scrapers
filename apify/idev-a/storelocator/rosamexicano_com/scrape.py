@@ -1,11 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from lxml import html
 import json
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import re
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rosamexicano")
@@ -26,21 +26,28 @@ def fetch_data():
         )
         for _ in locations["subOrganization"]:
             logger.info(_["url"])
-            sp1 = bs(session.get(_["url"], headers=_headers).text, "lxml")
-            _hr = sp1.find("strong", string=re.compile(r"Hours of Operation"))
-            hours = ""
-            if _hr:
-                hours = _hr.find_next_sibling("strong").text.strip()
-            if not hours:
-                hours = sp1.select_one("section#intro strong").text
-                if "AM" not in hours:
-                    hours = ""
-            coord = (
-                sp1.select_one("div.gmaps")["data-gmaps-static-url-mobile"]
-                .split("&center=")[1]
-                .split("&")[0]
-                .split("%2C")
+            r = session.get(_["url"], headers=_headers)
+            tree = html.fromstring(r.text)
+            ll = "".join(tree.xpath("//div/@data-gmaps-static-url-mobile"))
+            latitude = ll.split("center=")[1].split("%2C")[0].strip()
+            longitude = ll.split("center=")[1].split("%2C")[1].split("&")[0].strip()
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//p[./strong[text()="Hours of Operation"]]//text()')
+                )
+                .replace("\n", "")
+                .replace("Hours of Operation", "")
+                .strip()
             )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    " ".join(tree.xpath('//p[contains(text(), "0pm")]//text()'))
+                    .replace("\n", "")
+                    .strip()
+                )
+                hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+
             yield SgRecord(
                 page_url=_["url"],
                 location_name=_["name"],
@@ -49,12 +56,12 @@ def fetch_data():
                 city=_["address"]["addressLocality"],
                 state=_["address"]["addressRegion"],
                 zip_postal=_["address"]["postalCode"],
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=latitude,
+                longitude=longitude,
                 country_code="US",
                 phone=_["telephone"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation=hours_of_operation,
             )
 
 

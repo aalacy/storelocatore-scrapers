@@ -1,5 +1,3 @@
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -28,6 +26,10 @@ def fetch_data():
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/at/de/drive/15.75/48.33333?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/tr/tr/drive/32.854048/39.920789?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/pt/pt/drive/-7.4333/39.2911?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/cz/cs/drive/14.421253/50.087465?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/lt/lt/drive/25.282911/54.687046?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/hu/hu/drive/19.04083/47.49833?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/pl/pl/drive/21.00879/52.231475?count=500&extraCountries=&isCurrentLocation=false&services=ShowRoom",
     ]
     domain = "toyota.ro"
     hdr = {
@@ -37,25 +39,21 @@ def fetch_data():
         data = session.get(url, headers=hdr).json()
         for poi in data["dealers"]:
             page_url = poi.get("url")
-            hoo = ""
-            if page_url:
-                loc_response = session.get(page_url, headers=hdr)
-                if loc_response.status_code == 200:
-                    loc_dom = etree.HTML(loc_response.text)
-
-                    hoo = loc_dom.xpath(
-                        '//div[h3[i[@class="fa fa-clock-o fa-fw"]]]/following-sibling::div[1]//text()'
-                    )
-                    hoo = " ".join(
-                        [
-                            " ".join([l for l in e.strip().split()])
-                            for e in hoo
-                            if e.strip()
-                        ]
-                    )
-                    if hoo == "-":
-                        hoo = ""
-                    hoo = hoo.replace("<o:p></o:p>", "")
+            hoo = []
+            hoo_data = [
+                e for e in poi["openingDays"] if e["originalService"] == "ShowRoom"
+            ]
+            for e in hoo_data:
+                if e["hours"]:
+                    if e["startDayCode"] != e["endDayCode"]:
+                        hoo.append(
+                            f'{e["startDayCode"]} - {e["endDayCode"]}: {e["hours"][0]["startTime"]}-{e["hours"][0]["endTime"]}'
+                        )
+                    else:
+                        hoo.append(
+                            f'{e["startDayCode"]}: {e["hours"][0]["startTime"]}-{e["hours"][0]["endTime"]}'
+                        )
+            hoo = ", ".join(hoo)
             street_address = poi["address"]["address1"]
             city = poi["address"]["city"]
             zip_code = poi["address"]["zip"]

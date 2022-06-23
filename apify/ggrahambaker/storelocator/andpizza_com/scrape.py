@@ -1,4 +1,5 @@
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -18,10 +19,14 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
+    url = "https://andpizza.com/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    coming_soon_list = soup.findAll("article", {"data-coming-soon": "true"})
     url = "https://andpizza.com/wp-content/themes/andpizza/assets/js/scripts.js?ver=06072021"
     log.info("Fetching the Bearer Token...")
     r = session.get(url, headers=headers)
-    Bearer = r.text.split("'Authorization','")[1].split("');},")[0]
+    Bearer = "Bearer" + r.text.split("Bearer")[1].split("')")[0]
     api_url = "https://api.andpizza.com/webapi/v100/partners/shops"
     headers_2 = {
         "authority": "api.andpizza.com",
@@ -40,7 +45,12 @@ def fetch_data():
     }
     loclist = session.get(api_url, headers=headers_2).json()["data"]
     for loc in loclist:
-        location_name = loc["name"]
+        location_type = MISSING
+        location_name = loc["name"].replace("&pizza //", "")
+        for coming in coming_soon_list:
+            if location_name == coming.find("h2").text:
+                location_type = "Coming Soon"
+                break
         log.info(location_name)
         addy = loc["location"]
         street_address = addy["address1"]
@@ -70,7 +80,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours,

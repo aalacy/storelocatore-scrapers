@@ -24,6 +24,8 @@ def fetch_data():
         links = soup.select("div#StoreLocator tr a")
         for link in links:
             addr = list(link.stripped_strings)
+            if "Shop Smart" not in addr[0]:
+                continue
             state_zip = " ".join(addr[3:]).strip().split(" ")
             page_url = link["href"].replace("&amp;", "&")
             logger.info(page_url)
@@ -33,7 +35,11 @@ def fetch_data():
                 sp1 = bs(res.text, "lxml")
                 if sp1.find("a", href=re.compile(r"tel:")):
                     phone = sp1.find("a", href=re.compile(r"tel:")).text
-                hours = sp1.select_one("table#hours_info-BS tr td dl dd").text
+
+                hours = sp1.select_one("table#hours_info-BS tr td dl dd")
+                if hours:
+                    hours = hours.text
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=addr[0],

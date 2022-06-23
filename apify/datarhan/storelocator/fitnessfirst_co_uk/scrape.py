@@ -12,7 +12,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "fitnessfirst.co.uk"
-    start_url = "https://www.fitnessfirst.co.uk/Umbraco/Api/Club/GetClubs?facilities=&classes=&location=london&regions=&subRegions="
+    start_url = "https://www.fitnessfirst.co.uk/Umbraco/Api/Club/GetClubs?facilities=&classes=&location=&regions=&subRegions="
 
     all_locations = session.get(start_url).json()
     for poi in all_locations:
@@ -36,7 +36,7 @@ def fetch_data():
             location_type = poi_data["@type"]
         else:
             raw_address = loc_dom.xpath("//address/text()")[0]
-            street_address = raw_address.split(",")[0]
+            street_address = ", ".join(raw_address.split(",")[:2])
             city = raw_address.split(",")[-2]
             zip_code = raw_address.split(",")[-1]
             country_code = "GB"
