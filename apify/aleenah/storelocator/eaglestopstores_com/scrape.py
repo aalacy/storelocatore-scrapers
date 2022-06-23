@@ -1,148 +1,113 @@
-import csv
-import re
-import requests
-from sglogging import SgLogSetup
+import usaddress
+from sglogging import sglog
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from typing import Iterable
 
-logger = SgLogSetup().get_logger('eaglestopstores_com')
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
+website = "eaglestopstores_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+DOMAIN = "https://eaglestopstores.com/"
+MISSING = SgRecord.MISSING
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
-def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    types=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
-    page_url=[]
-    headers={'Accept': 'application/json,text/javascript,*/*;q=0.01',
-'Accept-Encoding': 'gzip,deflate,br',
-'Accept-Language': 'en-US,en;q=0.9',
-'Connection': 'keep-alive',
-'Content-Length': '114',
-'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-'Host': 'eaglestopstores.com',
-'Origin': 'https://eaglestopstores.com',
-'Referer': 'https://eaglestopstores.com/locations/',
-'Sec-Fetch-Mode':'cors',
-'Sec-Fetch-Site': 'same-origin',
-'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36',
-'X-Requested-With': 'XMLHttpRequest'}
-    res=requests.post("https://eaglestopstores.com/wp-admin/admin-ajax.php",headers=headers,data="action=store_wpress_listener&method=display_list&page_number=1&lat=&lng=&category_id=&max_distance=&nb_display=100")
-    stores=res.json()["stores"].split("More information<")
-    del stores[-1]
-    #logger.info(stores[0])
-    for store in stores:
-        logger.info(store)
-        ll=re.findall(r'<img src=".*center=([\d\.]+),(-?[\d\.]+)&',store)[0]
-        lat.append(ll[0])
-        long.append(ll[1])
-        ids.append(re.findall(r'<a href="https://eaglestopstores.com/c-stores/\?store_id=([0-9]+)"',store)[0])
-        locs.append(re.findall(r'class="ygp_sl_stores_list_name">(.*)</a><div class="ygp_sl_stores_list_address',store)[0].strip())
-        if "ygp_sl_stores_list_tel" in store:
-            phones.append(re.findall(r'class="ygp_sl_stores_list_tel">(.*)</div><div class="ygp_sl_stores_list_more_info_box', store)[0].strip())
-        else:
-            phones.append("<MISSING>")
-        add=re.findall(r'<div class="ygp_sl_stores_list_address">(.*[0-9]{5})</div>',store)
-        if add==[]:
-            add = re.findall(r'<div class="ygp_sl_stores_list_address">(.*)</div><div class', store)[0].replace("US","")
-            if "</div><div class=" in add:
-                add = add.split("</div><div class=")[0].strip()
-            s=re.findall(r'[A-Z]{2}',add)
-            if s==[]:
-                s="<MISSING>"
-                c="<MISSING>"
-                states.append("<MISSING>")
-                cities.append("<MISSING>")
-            else:
-                s=s[-1]
-                states.append(s)
-                if "," in add:
-                    if len(add.split(",")[-2]) <= 2:
-                        c = add.split(",")[-2]
-                    else:
-                        c = add.split(",")[-2].split(" ")[-1]
-            street.append(add.replace(s,"").replace(c,"").replace(",","").strip())
-            cities.append(c)
-            zips.append("<MISSING>")
-            continue
+payload = "action=store_wpress_listener&method=display_map&page_number=1&lat=&lng=&category_id=&max_distance=&nb_display=100"
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+}
 
-        add=add[0].replace("US","")
-        if "</div><div class=" in add:
-            add=add.split("</div><div class=")[0].strip()
+API_ENDPOINT_URL = "https://eaglestopstores.com/wp-admin/admin-ajax.php"
 
-        z= re.findall(r'[0-9]{5}',add)[-1]
-        s=re.findall(r'[A-Z]{2}',add)
-        add=add.replace(z,"")
 
-        if s != []:
-            s=s[-1]
-            add=re.findall(r'(.*)[A-Z]{2}',add)[0]
-            add=add.replace(s,"")
-        else:
-            s="<MISSING>"
-        if "," in add:
-            addr= add.strip().split(",")
-            if s=="<MISSING>":
-                s=addr[-1].strip()
-                if s=="":
-                    s="<MISSING>"
-                else:
-                    add=add.split(s)[0].strip()
-            if len(addr[-2]) <= 2:
-                c = addr[-2]
-            else:
-                c = addr[-2].split(" ")[-1]
-            add.replace(s, "")
-        else:
-            add=add.replace(s,"").replace(",","").strip()
-            c=add.split(" ")[-1]
+def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
+    loclist = http.post(API_ENDPOINT_URL, headers=headers, data=payload).json()[
+        "locations"
+    ]
+    for loc in loclist:
+        location_name = loc["name"]
+        log.info(location_name)
+        store_number = loc["id"]
+        latitude = loc["lat"]
+        longitude = loc["lng"]
+        phone = loc["tel"]
+        hours_of_operation = MISSING
+        address = loc["address"]
+        address = address.replace(",", " ")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url="https://eaglestopstores.com/locations/",
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
 
-        st = add.replace(c,"")
-
-        zips.append(z)
-        cities.append(c)
-        states.append(s)
-        street.append(st.replace(",","").strip())
-
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://eaglestopstores.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append("<MISSING>")  # timing
-        row.append("https://eaglestopstores.com/wp-admin/admin-ajax.php")  # page url
-        all.append(row)
-    return all
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        with SgRequests(proxy_country="us") as http:
+            for rec in fetch_records(http):
+                writer.write_row(rec)
+                count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

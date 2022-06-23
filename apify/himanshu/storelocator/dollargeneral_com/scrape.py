@@ -205,7 +205,7 @@ def fetch_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         granularity=Grain_1_KM(),
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
     )
 
     location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.8201113087423575"

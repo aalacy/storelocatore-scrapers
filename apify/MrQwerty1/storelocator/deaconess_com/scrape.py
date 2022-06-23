@@ -1,44 +1,13 @@
-import csv
 import json
-
-from sgrequests import SgRequests
 from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.deaconess.com/"
-
-    session = SgRequests()
+def fetch_data(sgw: SgWriter):
     params = (
         ("x-algolia-application-id", "384Z147YW1"),
         ("x-algolia-api-key", "eb5ea2fbb3f31a5f31b8236aaad3d350"),
@@ -59,25 +28,36 @@ def fetch_data():
     js = r.json()["results"][0]["hits"]
 
     for j in js:
-        street_address = j.get("StreetAddress") or "<MISSING>"
-        city = j.get("City") or "<MISSING>"
-        state = j.get("State") or "<MISSING>"
-        postal = j.get("Zip") or "<MISSING>"
+        street_address = j.get("StreetAddress")
+        city = j.get("City")
+        state = j.get("State")
+        postal = j.get("Zip")
         country_code = "US"
-        store_number = j.get("ItemID") or "<MISSING>"
-        page_url = j.get("permalink") or "<MISSING>"
-        location_name = j.get("LocationName") or "<MISSING>"
-        phone = j.get("Phone").replace("&nbsp;", "").strip() or "<MISSING>"
+        store_number = j.get("ItemID")
+        slug = j.get("LocationPageURL") or ""
+        if slug.startswith("http"):
+            page_url = slug
+        elif not slug:
+            page_url = SgRecord.MISSING
+        else:
+            page_url = f"https://www.deaconess.com{slug}"
+
+        location_name = j.get("LocationName") or ""
+        if "-" in location_name:
+            location_name = location_name.split("-")[0].strip()
+        phone = j.get("Phone") or ""
+        phone = phone.replace("&nbsp;", "").strip()
         if ">" in phone:
             phone = phone.split(">")[1].split("<")[0]
         if "(" in phone:
             phone = phone.split("(")[0].strip()
         if "E" in phone:
             phone = phone.split("E")[0].strip()
-        loc = j.get("_geoloc")
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("lon") or "<MISSING>"
-        location_type = j.get("LocationTypeName") or "<MISSING>"
+
+        loc = j.get("_geoloc") or {}
+        latitude = loc.get("lat")
+        longitude = loc.get("lon")
+        location_type = j.get("LocationTypeName")
         if "-" in location_type:
             location_type = location_type.split("-")[-1].strip()
 
@@ -95,33 +75,33 @@ def fetch_data():
                 continue
             _tmp.append(t.replace("&nbsp;", " ").strip())
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone or "<MISSING>",
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            location_type=location_type,
+            hours_of_operation=hours_of_operation,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.deaconess.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

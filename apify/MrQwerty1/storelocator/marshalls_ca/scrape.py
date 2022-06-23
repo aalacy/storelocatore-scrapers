@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = j.get("Hours")
         page_url = f"https://www.marshalls.ca/en/storelocator?store={store_number}"
         status = j.get("NewStore")
-        if status == "Y":
+        if status == "Y" and not hours_of_operation:
             hours_of_operation = "Coming Soon"
 
         row = SgRecord(

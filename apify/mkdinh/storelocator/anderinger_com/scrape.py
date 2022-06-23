@@ -2,6 +2,7 @@ import re
 from io import BytesIO
 import tabula as tb  # noqa
 
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgpostal import USA_Best_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
@@ -9,20 +10,26 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
 DOMAIN = "anderinger.com"
-pdf_url = "https://www.anderinger.com/wp-content/uploads/2021/03/Deringer-locations-page-3-23-21.pdf"
 
 
 def write_output(data):
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         for row in data:
             writer.write_row(row)
 
 
-def read_pdf():
+def read_pdf(pdf_url):
     table_column_boundaries = [150, 300, 430, 580]
     area = [0.0, 0.0, 800.0, 600.0]
     with SgRequests() as session:
@@ -76,11 +83,20 @@ def group_by_city(states):
     for state, lines in states.items():
         current_state = state
         for idx, line in enumerate(lines):
-            if "–" in line or idx == 0:
+            if (
+                re.search(r"–|warehous*|facility", line, flags=re.IGNORECASE)
+                or idx == 0
+            ):
                 if current_city_data:
                     cities[current_city] = current_city_data
 
-                current_city = line
+                current_city = (
+                    f"{current_state.capitalize()} {line}"
+                    if re.search(r"warehous*", line, flags=re.IGNORECASE)
+                    else line
+                )
+                current_city = re.sub(r"\:|\;", "", current_city)
+
                 current_city_data = []
                 current_city_data.append(current_state)
                 current_city_data.append(line)
@@ -103,7 +119,7 @@ def get_phone(data):
 def get_store_number(name):
     if "–" in name:
         parsed = name.split(" – ")
-        return parsed[1]
+        return parsed.pop()
 
     return MISSING
 
@@ -121,7 +137,7 @@ def get_address(data):
     if "PO BOX" in address:
         address = ",".join(data[4:6])
 
-    if re.search(r"tel\s*:\s*", address, flags=re.IGNORECASE):
+    if re.search(r"(tel|fax)\s*:\s*", address, flags=re.IGNORECASE):
         address = ""
 
     return address
@@ -130,10 +146,8 @@ def get_address(data):
 MISSING = "<MISSING>"
 
 
-def extract(name, data):
+def extract(name, data, pdf_url):
     address = get_address(data)
-    if address is None:
-        return None
 
     parsed_address = parse_address(USA_Best_Parser(), address)
 
@@ -141,6 +155,8 @@ def extract(name, data):
     page_url = pdf_url
     location_name = name
     street_address = parsed_address.street_address_1
+    if parsed_address.street_address_2:
+        street_address += f", {parsed_address.street_address_2}"
     city = parsed_address.city
     state = parsed_address.state
     postal = parsed_address.postcode
@@ -171,12 +187,20 @@ def extract(name, data):
 
 
 def fetch_data():
-    data = read_pdf()
+
+    base_link = "https://www.anderinger.com/about-deringer/locations/"
+
+    with SgRequests() as session:
+        req = session.get(base_link, headers={"User-Agent": "PostmanRuntime/7.19.0"})
+        base = BeautifulSoup(req.text, "lxml")
+        pdf_url = base.find(class_="entry-content").a["href"]
+
+    data = read_pdf(pdf_url)
     states = group_by_state(data)
     locations = group_by_city(states)
 
     for name, data in locations.items():
-        poi = extract(name, data)
+        poi = extract(name, data, pdf_url)
         if poi:
             yield poi
 

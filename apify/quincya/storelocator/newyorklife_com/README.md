@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber (Scraped correctly)
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator --ignore StateLevelCountValidator (Scraped correctly)

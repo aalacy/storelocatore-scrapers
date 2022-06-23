@@ -1,14 +1,12 @@
 import json
-import re
 
 from bs4 import BeautifulSoup
-
-from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgrequests import SgRequests
 
 
 def fetch_data(sgw: SgWriter):
@@ -22,47 +20,52 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    items = []
+    js = str(base.find(id="popmenu-apollo-state"))
 
-    # Using phones to match lat/lng
-    geos = re.findall(r'[0-9]{2}\.[0-9]+,"lng":-[0-9]{2,3}\.[0-9]+', str(base))
-    phones = re.findall(r'"phone":"[0-9]+', str(base))
-    names = re.findall(r'"name":"[a-z A-Z]+","openTableId', str(base))
-    if len(geos) - len(names) == 1:
-        geos.pop(0)
-        phones.pop(0)
+    js_id = js.split("RestaurantLocation:")[1].split('"')[0]
+    js_city = js.split('city":"')[1].split('"')[0]
+    js_lat = js.split('lat":')[1].split(",")[0]
+    js_lng = js.split('lng":')[1].split(",")[0]
 
-    all_scripts = base.find_all("script")
-    for script in all_scripts:
-        if "addressLocality" in str(script):
-            items.append(script.contents[0])
+    store_data = base.find_all("script", attrs={"type": "application/ld+json"})
 
-    for item in items:
-        store = json.loads(item)
+    for i in store_data:
+        store = json.loads(i.contents[0])
 
-        locator_domain = "urthcaffe.com"
         street_address = store["address"]["streetAddress"].replace("\n", " ")
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"]
+        location_name = city
+        if "459 S. Hewitt" in street_address:
+            location_name = "Downtown LA"
+        if "3131 S. Las" in street_address:
+            location_name = "Wynn Las Vegas"
+        if "1 World Way" in street_address:
+            location_name = "LAX"
+        if "4940 W" in street_address:
+            location_name = "South Bay"
+        if "8565 Melrose" in street_address:
+            location_name = "Melrose"
         country_code = "US"
-        store_number = "<MISSING>"
         location_type = "<MISSING>"
-
         phone = store["telephone"]
-        for i, tel in enumerate(phones):
-            if phone == tel.split('"')[-1]:
-                geo = geos[i]
-                latitude = geo.split(",")[0]
-                longitude = geo.split(":")[-1]
-                location_name = names[i].split(':"')[1].split('",')[0]
-
+        store_number = ""
+        latitude = ""
+        longitude = ""
+        if city == js_city:
+            store_number = js_id
+            latitude = js_lat
+            longitude = js_lng
         hours_of_operation = " ".join(store["openingHours"])
-        link = store["url"]
+        link = (
+            "https://www.urthcaffe.com/"
+            + location_name.replace(" LA", "").replace(" ", "-").lower()
+        )
 
         sgw.write_row(
             SgRecord(
-                locator_domain=locator_domain,
+                locator_domain=base_link,
                 page_url=link,
                 location_name=location_name,
                 street_address=street_address,

@@ -33,13 +33,13 @@ def get_data(api, sgw: SgWriter):
         street_address = f"{j.get('address_1')} {j.get('address_2') or ''}".strip()
         city = j.get("city")
         city = city.replace("&#039;", "'")
-        state = j.get("state")
+        state = j.get("state") or SgRecord.MISSING
         postal = j.get("postal_code")
         if state == "Florida" and "FL" in postal:
             postal = postal.replace("FL", "").strip()
-        country_code = j.get("country_code")
+        country_code = j.get("country_code") or SgRecord.MISSING
 
-        if country_code == "<MISSING>" and state != "<MISSING>":
+        if country_code == SgRecord.MISSING and state != SgRecord.MISSING:
             country_code = state
             state = SgRecord.MISSING
 

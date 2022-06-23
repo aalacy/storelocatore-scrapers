@@ -4,11 +4,11 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "therecroom.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "www.therecroom.com",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -28,88 +28,100 @@ def fetch_data():
     # Your scraper here
     base = "https://www.therecroom.com"
     search_url = "https://www.therecroom.com/Home/BootstrapDialog"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath('//div[@class="row"]/div[.//a]'))
+        store_list = list(search_sel.xpath('//div[@class="row"]/div[.//a]'))
 
-    for store in store_list:
+        for store in store_list:
 
-        page_url = base + "".join(store.xpath(".//a/@href")).strip()
-        locator_domain = website
-        log.info(page_url)
-        store_res = session.post(page_url, headers=headers)
-
-        store_sel = lxml.html.fromstring(store_res.text)
-
-        location_name = "".join(store.xpath(".//h5//text()"))
-
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store.xpath("./div[1]//text()")],
+            page_url = (
+                base
+                + "".join(store.xpath(".//a/@href"))
+                .strip()
+                .replace("Home/SetCookie?location=", "")
+                .strip()
+                + "/info"
             )
-        )
+            locator_domain = website
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
-        full_address = store_info[1:]
+            location_name = "".join(store.xpath(".//h2//text()"))
 
-        street_address = full_address[0]
-        city = full_address[1].split(",")[0]
-        state = full_address[1].split(",")[1]
-        zip = full_address[2].strip()
-        country_code = "CA"
-        store_number = "<MISSING>"
+            store_info = list(
+                filter(
+                    str,
+                    [x.strip() for x in store.xpath("./div[1]//text()")],
+                )
+            )
 
-        phone = (
-            "".join(
+            full_address = store_info[1:]
+
+            street_address = full_address[0]
+            city = full_address[1].split(",")[0]
+            state = full_address[1].split(",")[1]
+            zip = full_address[2].strip()
+            country_code = "CA"
+            store_number = "<MISSING>"
+
+            phone = "".join(
                 list(
                     filter(
                         str,
                         [
                             x.strip()
                             for x in store_sel.xpath(
-                                '//*[contains(text(),"Tel:")]/text()'
+                                '//a[contains(@href,"tel:")]/text()'
                             )
                         ],
                     )
                 )
+            ).strip()
+
+            location_type = "<MISSING>"
+
+            hours = store_sel.xpath('//table[@class="hours"]//tr[./td]')
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath('td[@class="date"]/text()')).strip()
+                time = "".join(hour.xpath('td[@class="time"]/text()')).strip()
+                hours_list.append(day + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
+
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
+            raw_address = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
-            .replace("Tel:", "")
-            .strip()
-        )
-
-        location_type = "<MISSING>"
-
-        hours_of_operation = "<MISSING>"
-
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-        raw_address = "<MISSING>"
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

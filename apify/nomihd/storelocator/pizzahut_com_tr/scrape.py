@@ -50,19 +50,20 @@ def fetch_data():
     stores_req = session.get(search_url, headers=API_HEADERS)
     stores = json.loads(stores_req.text)["result"]
     for store in stores:
-        if store["isStoreActive"] is False:
-            continue
+
         page_url = "https://pizzahut.com.tr/restoranlar"
         location_name = store["name"]
         location_type = "<MISSING>"
         locator_domain = website
         raw_address = store["address"]
-        formatted_addr = parser.parse_address_intl(raw_address)
+        formatted_addr = parser.parse_address_intl(
+            raw_address.rsplit("/", 1)[0].strip()
+        )
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
+        city = raw_address.split("/")[-1].strip().split(",")[-1].strip()
         state = store["townName"]
         zip = formatted_addr.postcode
 
@@ -97,7 +98,12 @@ def fetch_data():
         hours_of_operation = "; ".join(hours_list).strip()
 
         latitude = store["latitude"]
+        if latitude:
+            latitude = latitude.replace("\r\n", "").strip()
+
         longitude = store["longitude"]
+        if longitude:
+            longitude = longitude.replace("\r\n", "").strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
