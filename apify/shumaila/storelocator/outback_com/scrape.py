@@ -62,12 +62,27 @@ def fetch_data():
             pcode = zip_postal.strip() if zip_postal else MISSING
             if "Address" in title:
                 title = raw_address
-            pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
+            pcode = pcode.replace("CEP", "").replace("-DONG", "").replace("-GA", "")
 
             street = unidecode.unidecode(street)
             city = unidecode.unidecode(city)
             state = unidecode.unidecode(state)
-
+            try:
+                phone = phone.split(" (", 1)[0]
+            except:
+                pass
+            if (
+                phone.replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .replace(".", "")
+                .replace(" ", "")
+                .strip()
+                .isdigit()
+            ):
+                pass
+            else:
+                phone = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url=url,
@@ -179,7 +194,23 @@ def fetch_data():
                 except:
                     pass
                 hours = hours.replace("day", "day ").replace("osed", "osed ").strip()
-
+                raw_address = street + " " + city + " " + state + " " + pcode
+                try:
+                    phone = phone.split(" (", 1)[0]
+                except:
+                    pass
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(".", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    pass
+                else:
+                    phone = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
@@ -195,12 +226,13 @@ def fetch_data():
                     latitude=str(lat),
                     longitude=str(longt),
                     hours_of_operation=hours,
+                    raw_address=raw_address,
                 )
 
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.raw_address}))
     ) as writer:
         results = fetch_data()
         for rec in results:
