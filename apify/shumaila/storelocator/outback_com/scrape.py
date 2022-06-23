@@ -85,7 +85,6 @@ def fetch_data():
                 hours_of_operation=hours,
                 raw_address=raw_address,
             )
-    input()
     session1 = SgRequests()
     url = "https://locations.outback.com/index.html"
     r = session1.get(url, headers=headers)
