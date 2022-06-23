@@ -83,7 +83,7 @@ def fetch_data():
                         )
             except:
                 hours = "<MISSING>"
-            if typ == "":
+            if typ == "" or typ == "None":
                 typ = "<MISSING>"
             if lat == "":
                 lat = "<MISSING>"
@@ -96,6 +96,10 @@ def fetch_data():
                 phone = "<MISSING>"
             if add == "@":
                 add = "<MISSING>"
+            if str(phone).find("/") != -1:
+                phone = str(phone).split("/")[0].strip()
+            if str(phone).find("ext") != -1:
+                phone = str(phone).split("ext")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -141,6 +145,10 @@ def fetch_data():
                         phone = item.split('"phone\\":\\"')[1].split('\\"')[0]
                     except:
                         phone = "<MISSING>"
+                    if str(phone).find("/") != -1:
+                        phone = str(phone).split("/")[0].strip()
+                    if str(phone).find("ext") != -1:
+                        phone = str(phone).split("ext")[0].strip()
                     if add == "":
                         add = name
                     if zc == "":

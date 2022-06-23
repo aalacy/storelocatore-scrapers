@@ -11,6 +11,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sgselenium import SgChrome
 import json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("lafaiveoil")
 
