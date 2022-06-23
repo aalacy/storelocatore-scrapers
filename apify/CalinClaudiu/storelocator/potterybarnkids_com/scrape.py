@@ -22,7 +22,7 @@ def fix_comma(x):
         x = x.split(",")
         copy = []
         for i in x:
-            if len(i.strip()) > 0:
+            if len(i) > 0:
                 copy.append(i)
         return ",".join(copy)
     except Exception:
@@ -30,9 +30,10 @@ def fix_comma(x):
 
 
 def fix_record2(rec):
+    country = rec[1]
+    cc = rec[2]
     rec = rec[0]
     k = {}
-    k["country"] = rec["country"]
     k["host"] = "<MISSING>"
     try:
         k["name"] = rec["storeDisplayName"]
@@ -46,7 +47,7 @@ def fix_record2(rec):
     try:
         k["address"] = rec["address"]["addrLine1"]
         try:
-            k["address"] = k["address"] + ", " + rec["address"]["addrLine2"]
+            k["address"] = k["address"] + rec["address"]["addrLine2"]
         except Exception:
             pass
     except Exception:
@@ -90,6 +91,7 @@ def fix_record2(rec):
     except Exception:
         k["host"] = "<MISSING>"
 
+    k["country"] = country
     k["id"] = "<MISSING>"
     k["hours"] = "<MISSING>"
     if k["hours"] == "<MISSING>":
@@ -97,6 +99,11 @@ def fix_record2(rec):
             k["hours"] = str(rec["timings1"]) + ", " + str(rec["timings2"])
         except Exception:
             k["hours"] = "<MISSING>"
+    k["country"] = cc
+
+    if cc == "ME":
+        k["address"] = k["name"]
+        k["name"] = "<MISSING>"
 
     return k
 
@@ -187,24 +194,56 @@ def fix_record(rec, host):
             k["hours"] = "<MISSING>"
 
     try:
+        temphr = []
+        for day in rec["storeHours"]:
+            try:
+                if "rue" in day["closed"]:
+                    temphr.append(str(day["rolledDays"] + ": Closed"))
+            except Exception:
+                pass
+
+            try:
+                temphr.append(str(day["rolledDays"] + ": " + day["rolledHours"]))
+            except Exception:
+                pass
+
+        k["hours"] = "; ".join(temphr)
+    except Exception:
+        try:
+            temphr = []
+            for day in list(rec["storeHoursMap"]):
+                temphr.append(str(str(day) + ": " + str(rec["storeHoursMap"][day])))
+            k["hours"] = "; ".join(temphr)
+        except Exception:
+            k["hours"] = "<MISSING>"
+
+    try:
         k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
     except Exception:
         k["type"] = "<MISSING>"
+    try:
+        k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
+    except Exception:
+        k["type"] = "<MISSING>"
+
+    try:
+        k["phone"] = rec["phone"]
+    except Exception:
+        try:
+            k["phone"] = rec["address"]["unFormattedDayPhone"]
+        except Exception:
+            try:
+                k["phone"] = rec["address"]["dayPhone"]
+            except Exception:
+                k["phone"] = "<MISSING>"
+
     return k
 
 
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
         for rec in data["statesAndProvinces"][country]["stores"]:
-            try:
-                rec["country"] = data["countryCode"]
-            except Exception:
-                try:
-                    rec["country"] = data["name"]
-                except Exception:
-                    rec["country"] = "<MISSING>"
-
-            yield (rec, country)
+            yield (rec, country, data["countryCode"])
 
 
 def main_all(session, url):
@@ -283,10 +322,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
-            mapping=["address"],
-            part_of_record_identity=True,
-            value_transform=fix_comma,
-            is_required=False,
+            mapping=["address"], part_of_record_identity=True, is_required=False
         ),
         city=sp.MappingField(
             mapping=["city"], is_required=False, part_of_record_identity=True

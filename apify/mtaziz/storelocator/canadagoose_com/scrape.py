@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import unquote as stdlib_unquote
 from lxml import etree
 import ssl
+import html as ht
 
 
 try:
@@ -107,9 +108,13 @@ def fetch_records(idx, quoted_url, sgw: SgWriter):
             hours = f"{frioc}; {satoc}; {sunoc}; {monoc}; {tueoc}; {wedoc}; {throc}"
             hours = hours.replace("; ; ; ; ; ;", "").strip()
 
+            sta = " ".join(sta.split())
+            sta = ht.unescape(sta)
+            website = "".join(p.xpath(".//website/text()"))
+
             item = SgRecord(
                 locator_domain="canadagoose.com",
-                page_url="",
+                page_url=website,
                 location_name=locname,
                 street_address=sta,
                 city=city,

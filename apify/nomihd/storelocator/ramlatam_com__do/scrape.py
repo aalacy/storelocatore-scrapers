@@ -44,7 +44,7 @@ def fetch_data():
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
-        stores = search_sel.xpath('//div[@class="wp-block-column"]')
+        stores = search_sel.xpath('//div[contains(@class,"wp-block-column")][./h2]')
 
         for no, store in enumerate(stores, 1):
 
