@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import tenacity
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import traceback
 
 logger = SgLogSetup().get_logger("walmart_ca__?fltr_equals_WALMART_VISION_CENTRE")
 
@@ -20,17 +19,15 @@ search = static_zipcode_list(1, SearchableCountries.CANADA)
 
 @tenacity.retry(wait=tenacity.wait_fixed(5))
 def fetch_stores(code):
-    with SgRequests() as http:
-        try:
-            logger.info(f"Pulling Zip Code: {code}...")
-            formatted_code = code.replace(" ", "")
-            url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=WALMART_VISION_CENTRE"
-            response = http.get(url, headers=headers)
-            print(response.content)
-            return response.json()["payload"]["stores"]
-        except:
-            print(traceback.format_exc())
-            raise Exception("failed to fetch stores")
+    with SgRequests(
+        proxy_escalation_order=[
+            "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/"
+        ]
+    ) as http:
+        logger.info(f"Pulling Zip Code: {code}...")
+        formatted_code = code.replace(" ", "")
+        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=WALMART_VISION_CENTRE"
+        return http.get(url, headers=headers).json()["payload"]["stores"]
 
 
 def fetch_data():
