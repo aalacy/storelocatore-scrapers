@@ -17,7 +17,7 @@ headers = {
 search = static_zipcode_list(1, SearchableCountries.CANADA)
 
 
-@retry(stop=stop_after_attempt(7), wait=tenacity.wait_fixed(7))
+@retry(stop=tenacity.stop_after_attempt(7), wait=tenacity.wait_fixed(7))
 def fetch_stores(http, code):
     logger.info(f"Pulling Zip Code: {code}...")
     formatted_code = code.replace(" ", "")
