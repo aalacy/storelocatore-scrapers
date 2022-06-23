@@ -1,6 +1,6 @@
 # SgSelenium client certificates & temp dirs
-browser.crt
-private.key
+*.crt
+*.key
 .chrometmpdir
 
 # Config files in crawler subdirs
