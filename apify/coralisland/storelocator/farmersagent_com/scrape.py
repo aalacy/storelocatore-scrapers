@@ -19,7 +19,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for code in all_codes:
         data = session.get(start_url.format(code, code), headers=hdr).json()
@@ -34,21 +34,22 @@ def fetch_data():
             if sa_3:
                 street_address += ", " + sa_3
             hoo = []
-            for e in poi["profile"]["hours"]["normalHours"]:
-                if e["intervals"]:
-                    opens = (
-                        str(e["intervals"][0]["start"])[:-2]
-                        + ":"
-                        + str(e["intervals"][0]["start"])[-2:]
-                    )
-                    closes = (
-                        str(e["intervals"][0]["end"])[:-2]
-                        + ":"
-                        + str(e["intervals"][0]["end"])[-2:]
-                    )
-                    hoo.append(f'{e["day"]}: {opens} - {closes}')
-                else:
-                    hoo.append(f'{e["day"]}: closed')
+            if poi["profile"].get("hours"):
+                for e in poi["profile"]["hours"]["normalHours"]:
+                    if e["intervals"]:
+                        opens = (
+                            str(e["intervals"][0]["start"])[:-2]
+                            + ":"
+                            + str(e["intervals"][0]["start"])[-2:]
+                        )
+                        closes = (
+                            str(e["intervals"][0]["end"])[:-2]
+                            + ":"
+                            + str(e["intervals"][0]["end"])[-2:]
+                        )
+                        hoo.append(f'{e["day"]}: {opens} - {closes}')
+                    else:
+                        hoo.append(f'{e["day"]}: closed')
             hoo = ", ".join(hoo)
             latitude = poi["profile"]["yextDisplayCoordinate"]["lat"]
             longitude = poi["profile"]["yextDisplayCoordinate"]["long"]
@@ -79,7 +80,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

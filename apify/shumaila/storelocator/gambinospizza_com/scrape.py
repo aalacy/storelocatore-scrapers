@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import re
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,162 +12,74 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
     pattern = re.compile(r"\s\s+")
-    url = "https://gambinospizza.com/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=stores]")
-    p = 0
+    url = "https://gambinospizza.com/locations-sitemap.xml"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "xml")
+    divlist = soup.findAll("loc")[1:]
+
     for div in divlist:
-        stlink = div["href"]
-        check = stlink.split("stores/", 1)[1].split(".", 1)[0]
-        if len(check) > 2:
-            continue
-        else:
-            pass
-        stlink = "https://gambinospizza.com/" + stlink
-        r = session.get(stlink, headers=headers, verify=False)
+        link = div.text
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.findAll("a", {"class": "yellow"})
-        for link in linklist:
-            title = link.text
-            link = "https://gambinospizza.com/stores/" + link["href"]
-            r = session.get(link, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            content1 = soup.find("div", {"class": "storeinfo"}).text.replace(
-                "\xa0", " "
-            )
-            content1 = re.sub(pattern, "\n", content1).strip()
-            content = content1.splitlines()
-            m = 0
-            street = content[m]
-            m += 1
-            try:
-                city, state = content[m].split(", ", 1)
-            except:
-                street = street + " " + content[m]
-                m += 1
-                city, state = content[m].split(", ", 1)
-            state, pcode = state.split(" ", 1)
-            if len(state) > 2:
-                street = street + " " + content[m]
-                m += 1
-                city, state = content[m].split(", ", 1)
-                state, pcode = state.split(" ", 1)
-            m += 1
-            phone = content[m]
+        title = soup.find("h1").text.replace("Gambino's Pizza in ", "")
+        content = (
+            re.sub(pattern, "\n", soup.text)
+            .strip()
+            .split(soup.find("h1").text + "\n", 1)[1]
+            .split(title + " Coupons & Offers", 1)[0]
+        )
+        street = content.splitlines()[0]
+        city = content.splitlines()[1].replace(",", "").strip()
+        state = content.splitlines()[2]
+        pcode = content.splitlines()[3]
+        phone = content.splitlines()[6]
+        hours = content.split(" Page", 1)[1]
 
-            hours = (
-                content1.split("HOURS", 1)[1]
-                .split("\n", 1)[1]
-                .replace("\n", " ")
-                .strip()
+        coordlink = soup.find("iframe")["src"]
+        r = session.get(coordlink, headers=headers)
+        try:
+            lat, longt = (
+                r.text.split(', USA",null,[null,null,', 1)[1]
+                .split("]", 1)[0]
+                .split(",", 1)
             )
-            try:
-                hours = hours.split("PHOT", 1)[0]
-            except:
-                pass
-            try:
-                hours = hours.split("Large", 1)[0]
-            except:
-                pass
-            try:
-                hours = hours.split("CATER", 1)[0]
-            except:
-                pass
-            try:
-                hours = hours.split("Monday-Friday PARTY ROOM", 1)[0]
-            except:
-                pass
-            try:
-                hours = hours.split("DAIL", 1)[0]
-            except:
-                pass
-            try:
-                hours = hours.split("Inside", 1)[0]
-            except:
-                pass
-            try:
-                hours = hours.split("Closed for: Easter", 1)[0]
-            except:
-                pass
-            if phone.replace("-", "").replace("(", "").replace(")", "").isdigit():
-                pass
-            else:
-                phone = "<MISSING>"
-            try:
-                longt, lat = (
-                    soup.find("iframe")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!3m", 1)[0]
-                    .split("!3d", 1)
-                )
-            except:
-                longt = lat = "<MISSING>"
-            try:
-                lat = lat.split("!2m", 1)[0]
-            except:
-                pass
-            data.append(
-                [
-                    "https://gambinospizza.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours.replace("•", " ").strip(),
-                ]
-            )
+        except:
 
-            p += 1
-    return data
+            lat, longt = (
+                r.text.split(" " + str(pcode) + '",null,[null,null,', 1)[1]
+                .split("]", 1)[0]
+                .split(",", 1)
+            )
+        yield SgRecord(
+            locator_domain="https://gambinospizza.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours.replace("•", " ").replace("\n", " ").strip(),
+        )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
