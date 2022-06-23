@@ -47,7 +47,8 @@ def fetch_data(sgw: SgWriter):
             store_number = j.get("Id")
             location_name = j.get("name") or ""
             location_name = " ".join(location_name.split())
-            phone = j.get("phone")
+            phone = j.get("phone") or ""
+            phone = phone.replace("--", "").strip()
             latitude = j.get("latitude")
             longitude = j.get("longitude")
             search.found_location_at(latitude, longitude)
