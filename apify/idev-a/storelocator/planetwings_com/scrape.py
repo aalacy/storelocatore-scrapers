@@ -23,7 +23,7 @@ def fetch_data():
         res = session.get(base_url, headers=headers)
         store_list = bs(res.text, "lxml").select("div.vc_tta-panel")
         for store in store_list:
-            location_name = store.select_one("span.vc_tta-title-text").string
+            location_name = store.select_one("span.vc_tta-title-text").text.strip()
             index = 0
             while True:
                 address_count = store.text.count("T:")
@@ -74,6 +74,8 @@ if __name__ == "__main__":
             SgRecordID(
                 {
                     SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
                     SgRecord.Headers.PHONE,
                 }
             )

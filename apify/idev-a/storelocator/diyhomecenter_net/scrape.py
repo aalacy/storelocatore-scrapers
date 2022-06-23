@@ -24,6 +24,11 @@ def fetch_data():
     locator_domain = "https://diyhomecenter.net/"
     base_url = "https://diyhomecenter.net/"
     with SgRequests() as session:
+        hours_page = bs(
+            session.get("https://diyhomecenter.net/contact-us/", headers=_headers).text,
+            "lxml",
+        )
+        items = hours_page.find_all(class_="g-block size-25")
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.find(class_="g-dropdown-column").find_all("li")[1:]
         for link in links:
@@ -48,9 +53,14 @@ def fetch_data():
                 phone = addr[-1]
             if _phone(block[0]):
                 phone = block[0]
+            location_name = addr[0]
+            for item in items:
+                if item.p.text.upper() in location_name.upper():
+                    hours_of_operation = " ".join(list(item.stripped_strings)[3:-1])
+                    break
             yield SgRecord(
                 page_url=link.a["href"],
-                location_name=addr[0],
+                location_name=location_name,
                 street_address=addr[1],
                 city=addr[2].split(",")[0].strip(),
                 state=addr[2].split(",")[1].strip().split(" ")[0].strip(),
@@ -60,6 +70,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
             )
 
 

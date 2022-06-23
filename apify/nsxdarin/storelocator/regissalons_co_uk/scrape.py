@@ -1,130 +1,109 @@
-import csv
+import time
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-logger = SgLogSetup().get_logger("regissalons_co_uk")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.regissalons.co.uk/"
+    api_url = "https://www.regissalons.co.uk/salon-locator?show-all=yes"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="list-salons"]/ul/li/ul/li//a')
+    for d in div:
+
+        page_url = "".join(d.xpath(".//@href"))
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+        }
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            time.sleep(5)
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        info_ad = tree.xpath('//p[@class="address"]//text()')
+        info_ad = list(filter(None, [b.strip() for b in info_ad]))
+        ad = (
+            " ".join(tree.xpath('//p[@class="address"]//text()'))
+            .replace("\n", "")
+            .strip()
         )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
+        ad = (
+            " ".join(ad.split())
+            .replace("Regis Hair Salon", "")
+            .replace("Regis Hair & Beauty", "")
+            .replace("Beauty by Regis", "")
+            .replace("Mops Hair Salon", "")
+            .replace("Regis", "")
+            .strip()
         )
-        for row in data:
-            writer.writerow(row)
+        location_name = "".join(
+            tree.xpath('//p[@class="phone"]/preceding-sibling::*[1]//text()')
+        ).strip()
 
-
-def fetch_data():
-    locs = []
-    url = "https://www.regissalons.co.uk/crb_store-sitemap.xml"
-    r = session.get(url, headers=headers)
-    website = "regissalons.co.uk"
-    typ = "<MISSING>"
-    country = "GB"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://www.regissalons.co.uk/salon/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = "<MISSING>"
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if name == "" and "<h3>" in line2:
-                name = line2.split("<h3>")[1].split("<")[0]
-            if '<p class="address">' in line2:
-                addinfo = (
-                    line2.split('<p class="address">')[1]
-                    .split("</p>")[0]
-                    .replace("<br />", "|")
+        street_address = "".join(info_ad[1]).strip()
+        state = "<MISSING>"
+        postal = "".join(info_ad[-1]).strip()
+        country_code = "UK"
+        city = "".join(info_ad[-2]).strip()
+        latitude = "".join(tree.xpath("//div/@data-lat"))
+        longitude = "".join(tree.xpath("//div/@data-lng"))
+        phone = (
+            "".join(tree.xpath('//p[@class="phone"]//text()')).replace("\n", "").strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//h5[text()="Opening Hours"]/following-sibling::div//text()'
                 )
-                if addinfo.count("|") == 3:
-                    add = addinfo.split("|")[1]
-                    city = addinfo.split("|")[2]
-                    state = "<MISSING>"
-                    zc = addinfo.split("|")[3]
-                elif addinfo.count("|") == 4:
-                    add = addinfo.split("|")[1] + " " + addinfo.split("|")[2]
-                    city = addinfo.split("|")[3]
-                    state = "<MISSING>"
-                    zc = addinfo.split("|")[4]
-            if 'href="tel:' in line2 and phone == "":
-                phone = line2.split('href="tel:')[1].split('"')[0]
-            if 'data-lat="' in line2:
-                lat = line2.split('data-lat="')[1].split('"')[0]
-                lng = line2.split('data-lng="')[1].split('"')[0]
-            if "day</strong>" in line2 and "Today" not in line2:
-                hrs = line2.split(">")[1].split("<")[0]
-                next(lines)
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                hrs = (
-                    hrs
-                    + ": "
-                    + g.split("<")[0].strip().replace("\t", "").replace("&#8211;", "-")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if add != "":
-            name = name.replace("&#038;", "&")
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

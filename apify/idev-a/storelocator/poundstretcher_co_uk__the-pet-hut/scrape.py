@@ -82,7 +82,27 @@ def fetch_data():
                 street_address = " ".join(_address[:-2])
                 if len(city.split("\\")) > 1:
                     city = city.split("\\")[1]
-                    street_address += " " + city.split("\\")[0]
+                    street_address += " " + city.split("\\")[0].strip()
+
+                street_address = (
+                    street_address.replace("Unit 3 Waterside Retail Park", "")
+                    .replace("Unit 1 Keighley Retail Park", "")
+                    .replace("Unit 1 Jerome Retail Park", "")
+                    .replace("Unit 1 Newport Retail Park", "")
+                    .replace("Unit 1 Stanway Retail Park", "")
+                    .replace("Unit 2 - 3 Rishworth Centre", "")
+                    .replace("Unit 2 North Valley Retail Park", "")
+                    .replace("Unit 2 St Margarets Retail Park", "")
+                    .replace("Unit 3 Ashton Retail Park", "")
+                    .replace("Unit 3 South Lakeland Retail Pk", "")
+                    .replace("Unit 4 Downpatrick Retail Park", "")
+                    .replace("Unit 44 Park Centre", "")
+                    .replace("Unit 5B Riverside Retail Park", "")
+                    .replace("Unit A The Carlton Centre", "")
+                    .replace("Kilmarnock Retail Park Unit 3 Glencairn Retail Park", "")
+                )
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
 
                 location_type = "<MISSING>"
                 res = session.get(page_url)

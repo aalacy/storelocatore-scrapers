@@ -1,5 +1,3 @@
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -41,25 +39,21 @@ def fetch_data():
         data = session.get(url, headers=hdr).json()
         for poi in data["dealers"]:
             page_url = poi.get("url")
-            hoo = ""
-            if page_url:
-                loc_response = session.get(page_url, headers=hdr)
-                if loc_response.status_code == 200:
-                    loc_dom = etree.HTML(loc_response.text)
-
-                    hoo = loc_dom.xpath(
-                        '//div[h3[i[@class="fa fa-clock-o fa-fw"]]]/following-sibling::div[1]//text()'
-                    )
-                    hoo = " ".join(
-                        [
-                            " ".join([l for l in e.strip().split()])
-                            for e in hoo
-                            if e.strip()
-                        ]
-                    )
-                    if hoo == "-":
-                        hoo = ""
-                    hoo = hoo.replace("<o:p></o:p>", "")
+            hoo = []
+            hoo_data = [
+                e for e in poi["openingDays"] if e["originalService"] == "ShowRoom"
+            ]
+            for e in hoo_data:
+                if e["hours"]:
+                    if e["startDayCode"] != e["endDayCode"]:
+                        hoo.append(
+                            f'{e["startDayCode"]} - {e["endDayCode"]}: {e["hours"][0]["startTime"]}-{e["hours"][0]["endTime"]}'
+                        )
+                    else:
+                        hoo.append(
+                            f'{e["startDayCode"]}: {e["hours"][0]["startTime"]}-{e["hours"][0]["endTime"]}'
+                        )
+            hoo = ", ".join(hoo)
             street_address = poi["address"]["address1"]
             city = poi["address"]["city"]
             zip_code = poi["address"]["zip"]

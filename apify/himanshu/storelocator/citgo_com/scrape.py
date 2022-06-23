@@ -1,10 +1,10 @@
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from tenacity import retry, stop_after_attempt, wait_fixed
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
@@ -15,16 +15,8 @@ HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
-
-
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
 
 
 def build_hours(row):
@@ -46,19 +38,29 @@ def build_hours(row):
     return hours.strip()
 
 
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+def pull_data(url):
+    log.info("Pull data => " + url)
+    with SgRequests(
+        dont_retry_status_codes=([404]), retries_with_fresh_proxy_ip=3
+    ) as session:
+        res = session.get(url, headers=HEADERS)
+        if res.status_code == 404:
+            return False
+        return res.json()
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
-        max_search_results=5,
+        max_search_distance_miles=20,
     )
     for zipcode in search:
         url = API_URL.format(zipcode)
-        log.info("Pull content => " + url)
-        try:
-            stores = session.get(url, headers=HEADERS).json()
-        except:
+        stores = pull_data(url)
+        if not stores or not stores["locations"]:
+            search.found_nothing()
             continue
         for row in stores["locations"]:
             location_name = row["name"]
@@ -73,6 +75,7 @@ def fetch_data():
             store_number = row["number"]
             latitude = row["latitude"]
             longitude = row["longitude"]
+            search.found_location_at(latitude, longitude)
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

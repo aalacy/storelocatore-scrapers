@@ -63,7 +63,7 @@ def get_page_urls():
 
         for link in links:
             final_links.append(link)
-    log.info("links")
+    log.info("number of links")
     log.info(len(final_links))
     return final_links
 
