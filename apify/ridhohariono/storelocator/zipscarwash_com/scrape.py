@@ -21,7 +21,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def getAddress(raw_address):
@@ -66,12 +66,10 @@ def pull_content(url, num=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    max_distance = 750
-    max_results = 200
+    max_distance = 1000
     search = DynamicZipAndGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=max_distance,
-        max_search_results=max_results,
     )
     for zipcode, coord in search:
         lat, long = coord
@@ -97,11 +95,13 @@ def fetch_data():
             latlong_content,
         )
         num = 0
+        if not store_content:
+            search.found_nothing()
+            continue
         for row in store_content:
             location_name = row.find(
                 "div", {"class": "locations__results-name"}
             ).get_text(strip=True, separator=" ")
-            search.found_location_at(lat, long)
             raw_address = (
                 location_name
                 + ", "
@@ -117,6 +117,7 @@ def fetch_data():
             location_type = MISSING
             latitude = latlong[num][0]
             longitude = latlong[num][1]
+            search.found_location_at(latitude, longitude)
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")
