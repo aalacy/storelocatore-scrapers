@@ -25,7 +25,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.findAll("ul", {"class": "directory-listing"})
-    p = 1
+
     for cnow in statelist:
         ccode = cnow["ng-show"].split("'", 1)[1].split("'", 1)[0]
         loclist = cnow.findAll("li", {"class": "directory-listing-entry"})
@@ -67,7 +67,22 @@ def fetch_data():
             street = unidecode.unidecode(street)
             city = unidecode.unidecode(city)
             state = unidecode.unidecode(state)
-
+            try:
+                phone = phone.split(" (", 1)[0]
+            except:
+                pass
+            if (
+                phone.replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .replace(".", "")
+                .replace(" ", "")
+                .strip()
+                .isdigit()
+            ):
+                pass
+            else:
+                phone = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url=url,
@@ -180,6 +195,22 @@ def fetch_data():
                     pass
                 hours = hours.replace("day", "day ").replace("osed", "osed ").strip()
                 raw_address = street + " " + city + " " + state + " " + pcode
+                try:
+                    phone = phone.split(" (", 1)[0]
+                except:
+                    pass
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(".", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    pass
+                else:
+                    phone = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
