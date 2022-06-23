@@ -27,74 +27,71 @@ def fetch_stores(code):
 
 
 def fetch_data():
-    for code in search:
-        formatted_code = code.replace(" ", "")
-        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}"
-        website = "walmart.ca"
-        typ = "Walmart"
-        session = SgRequests()
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(fetch_stores, code) for code in search]
-        for future in as_completed(futures):
-            stores = future.result()
-            for item in stores:
+    url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}"
+    website = "walmart.ca"
+    typ = "Walmart"
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_stores, code) for code in search]
+    for future in as_completed(futures):
+        stores = future.result()
+        for item in stores:
+            try:
+                name = item["displayName"]
+            except:
+                name = item["address"]["city"]
+            store = item["id"]
+            add = item["address"]["address1"]
+            try:
+                add = add + " " + item["address"]["address2"]
+            except:
+                pass
+            city = item["address"]["city"]
+            state = item["address"]["state"]
+            zc = item["address"]["postalCode"]
+            phone = item["phone"]
+            lat = item["geoPoint"]["latitude"]
+            lng = item["geoPoint"]["longitude"]
+            country = "CA"
+            hours = ""
+            for day in item["currentHours"]:
                 try:
-                    name = item["displayName"]
+                    hrs = day["day"] + ": " + day["start"] + "-" + day["end"]
                 except:
-                    name = item["address"]["city"]
-                store = item["id"]
-                add = item["address"]["address1"]
-                try:
-                    add = add + " " + item["address"]["address2"]
-                except:
-                    pass
-                city = item["address"]["city"]
-                state = item["address"]["state"]
-                zc = item["address"]["postalCode"]
-                phone = item["phone"]
-                lat = item["geoPoint"]["latitude"]
-                lng = item["geoPoint"]["longitude"]
-                country = "CA"
-                hours = ""
-                for day in item["currentHours"]:
-                    try:
-                        hrs = day["day"] + ": " + day["start"] + "-" + day["end"]
-                    except:
-                        hrs = day["day"] + ": Closed"
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-                loc = (
-                    "https://www.walmart.ca/en/stores-near-me/"
-                    + name.replace(" ", "-").lower()
-                    + "-"
-                    + str(store)
-                )
-                if "0" not in hours:
-                    hours = "<MISSING>"
-                if "Supercentre" in name:
-                    typ = "Supercenter"
-                if "Neighborhood Market" in name:
-                    typ = "Neighborhood Market"
+                    hrs = day["day"] + ": Closed"
                 if hours == "":
-                    hours = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                    hours = hrs
+                else:
+                    hours = hours + "; " + hrs
+            loc = (
+                "https://www.walmart.ca/en/stores-near-me/"
+                + name.replace(" ", "-").lower()
+                + "-"
+                + str(store)
+            )
+            if "0" not in hours:
+                hours = "<MISSING>"
+            if "Supercentre" in name:
+                typ = "Supercenter"
+            if "Neighborhood Market" in name:
+                typ = "Neighborhood Market"
+            if hours == "":
+                hours = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
