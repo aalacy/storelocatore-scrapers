@@ -25,7 +25,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.findAll("ul", {"class": "directory-listing"})
-
+    p = 1
     for cnow in statelist:
         ccode = cnow["ng-show"].split("'", 1)[1].split("'", 1)[0]
         loclist = cnow.findAll("li", {"class": "directory-listing-entry"})
@@ -42,6 +42,9 @@ def fetch_data():
                 pass
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
+            raw_address = unidecode.unidecode(raw_address)
+            title = unidecode.unidecode(title)
+
             hours = "<MISSING>"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
@@ -60,11 +63,10 @@ def fetch_data():
             if "Address" in title:
                 title = raw_address
             pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
-            title = unidecode.unidecode(title)
+
             street = unidecode.unidecode(street)
             city = unidecode.unidecode(city)
             state = unidecode.unidecode(state)
-            raw_address = unidecode.unidecode(raw_address)
 
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
@@ -83,6 +85,7 @@ def fetch_data():
                 hours_of_operation=hours,
                 raw_address=raw_address,
             )
+    input()
     session1 = SgRequests()
     url = "https://locations.outback.com/index.html"
     r = session1.get(url, headers=headers)
@@ -198,10 +201,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
-            duplicate_streak_failure_factor=5,
-        )
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         results = fetch_data()
         for rec in results:
