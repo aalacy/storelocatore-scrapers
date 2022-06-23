@@ -67,46 +67,82 @@ def get_urls():
             ]
 
             for sub_url in subregion_urls:
-                crawl_state.push_request(SerializableRequest(url=sub_url))
+                try:
+                    driver.get(sub_url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
+                    json_objects[1]["search"]["data"]["stores"]
+                except Exception:
+                    driver.get(sub_url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
+
+                for location in json_objects[1]["search"]["data"]["stores"]:
+                    page_url = "https://www.carrefour.fr" + location["storePageUrl"]
+                    if (
+                        page_url
+                        == "https://www.carrefour.fr/magasin/market-bourgoin-jallieu-rivet"
+                    ):
+                        continue
+
+                    location_name = location["name"]
+                    latitude = location["coordinates"][1]
+                    longitude = location["coordinates"][0]
+                    city = location["address"]["city"]
+                    store_number = location["storeId"]
+                    address = location["address"]["address1"].strip()
+                    zipp = location["address"]["postalCode"]
+                    location_type = location["banner"]
+
+                    url_to_save = (
+                        page_url
+                        + "?location_name="
+                        + str(location_name)
+                        + "&==latitude="
+                        + str(latitude)
+                        + "&==longitude="
+                        + str(longitude)
+                        + "&==city="
+                        + str(city)
+                        + "&==store_number="
+                        + str(store_number)
+                        + "&==address="
+                        + str(address)
+                        + "&==zipp="
+                        + str(zipp)
+                        + "&==location_type="
+                        + str(location_type)
+                    )
+
+                    crawl_state.push_request(SerializableRequest(url=url_to_save))
 
     crawl_state.set_misc_value("got_urls", True)
 
 
 def get_data():
-    page_urls = []
-
-    with SgFirefox(
-        block_third_parties=True,
-        proxy_country="fr",
-    ) as driver:
-        for sub_url_object in crawl_state.request_stack_iter():
-            sub_url = sub_url_object.url
-            log.info("sub_url: " + sub_url)
-            try:
-                driver.get(sub_url)
-                response = driver.page_source
-                json_objects = extract_json(response)
-                json_objects[1]["search"]["data"]["stores"]
-            except Exception:
-                driver.get(sub_url)
-                response = driver.page_source
-                json_objects = extract_json(response)
-
-            for location in json_objects[1]["search"]["data"]["stores"]:
+    x = 0
+    try:
+        with SgFirefox(
+            block_third_parties=True,
+            proxy_country="fr",
+        ) as driver:
+            for page_url_thing in crawl_state.request_stack_iter():
+                x = x + 1
+                if x == 10:
+                    return
+                page_url = page_url_thing.url.split("?")[0]
                 locator_domain = "carrefour.fr"
 
-                page_url = "https://www.carrefour.fr" + location["storePageUrl"]
-                if (
-                    page_url
-                    == "https://www.carrefour.fr/magasin/market-bourgoin-jallieu-rivet"
-                ):
-                    continue
-                location_name = location["name"]
-                latitude = location["coordinates"][1]
-                longitude = location["coordinates"][0]
-                city = location["address"]["city"]
-                store_number = location["storeId"]
-                address = location["address"]["address1"].strip()
+                location_deets = page_url_thing.url.split("?")[1]
+
+                location_name = location_deets.split("location_name=")[1].split("&==")[
+                    0
+                ]
+                latitude = location_deets.split("latitude=")[1].split("&==")[0]
+                longitude = location_deets.split("longitude=")[1].split("&==")[0]
+                city = location_deets.split("city=")[1].split("&==")[0]
+                store_number = location_deets.split("store_number=")[1].split("&==")[0]
+                address = location_deets.split("address=")[1].split("&==")[0]
 
                 try:
                     if address[-1] == "0":
@@ -115,12 +151,10 @@ def get_data():
                     address = "<MISSING>"
 
                 state = "<MISSING>"
-                zipp = location["address"]["postalCode"]
+                zipp = location_deets.split("location_name")[1].split("&==")[0]
 
                 log.info("page_url: " + page_url)
-                if page_url in page_urls:
-                    continue
-                page_urls.append(page_url)
+
                 driver.get(page_url)
                 phone_response = driver.page_source
 
@@ -133,7 +167,9 @@ def get_data():
                         phone = a_tag["href"].replace("tel:", "")
                         break
 
-                location_type = location["banner"]
+                location_type = location_deets.split("location_type=")[1].split("&==")[
+                    0
+                ]
                 country_code = "France"
 
                 if page_url != "https://www.carrefour.fr/magasin/":
@@ -180,6 +216,10 @@ def get_data():
                     "country_code": country_code,
                 }
 
+    except Exception as e:
+        crawl_state.push_request(SerializableRequest(url=page_url_thing.url))
+        raise Exception
+
 
 def scrape():
     if not crawl_state.get_misc_value("got_urls"):
@@ -219,14 +259,14 @@ def scrape():
     pipeline.run()
 
 
-x = 0
-while True:
-    x = x + 1
-    if x == 5:
-        raise Exception("Check errors")
-    try:
-        scrape()
-        break
+# x = 0
+# while True:
+#     x = x + 1
+#     if x == 5:
+#         raise Exception("Check errors")
+#     try:
+scrape()
+#     break
 
-    except Exception:
-        continue
+# except Exception:
+#     continue
