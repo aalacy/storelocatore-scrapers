@@ -6,6 +6,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 os.environ[
     "PROXY_URL"
