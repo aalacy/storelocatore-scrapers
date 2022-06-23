@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 import json
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
@@ -12,115 +13,151 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-checklist = []
 
+def fetch_locations(lat, lng):
 
-def fetch_data():
+    headers = {
+        "Connection": "keep-alive",
+        "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "sec-ch-ua-mobile": "?0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+        "sec-ch-ua-platform": '"Linux"',
+        "Origin": "https://stores.crocs.com",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "https://stores.crocs.com/index_new_int.html",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
 
-    mylist = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
-
-    for lat, lng in mylist:
-
-        url = (
-            "https://crocs.locally.com/stores/conversion_data?has_data=true&company_id=1762&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat="
-            + str(lat)
-            + "&map_center_lng="
-            + str(lng)
-            + "&map_distance_diag=3000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=6.727111799313498&lang=en-us"
-        )
-
+    data = {
+        "request": {
+            "appkey": "1BC4F6AA-9BB9-11E6-953B-FA25F3F215A2",
+            "formdata": {
+                "geoip": False,
+                "dataview": "store_default",
+                "order": "tblstoretype DESC,_distance",
+                "limit": 100,
+                "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
+                "searchradius": "1000",
+                "radiusuom": "mile",
+                "where": {
+                    "tblstorestatus": {"in": "Open,OPEN,open"},
+                    "or": {
+                        "crocsretail": {"eq": "1"},
+                        "crocsoutlet": {"eq": "1"},
+                        "otherretailer": {"eq": "1"},
+                    },
+                },
+                "false": "0",
+            },
+        }
+    }
+    try:
+        loclist = session.post(
+            "https://stores.crocs.com/rest/locatorsearch",
+            headers=headers,
+            data=json.dumps(data),
+        ).json()["response"]["collection"]
+    except:
+        return []
+    weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
+    locations = []
+    for loc in loclist:
+        title = loc["name"]
+        store = loc["clientkey"]
+        phone = loc["phone"]
+        city = loc["city"]
+        state = loc["state"]
+        pcode = loc["postalcode"]
+        lat = loc["latitude"]
+        longt = loc["longitude"]
         try:
-            loclist = session.get(url, headers=headers).json()["markers"]
+            street = loc["address1"] + " " + str(loc["address2"])
 
+            street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
         except:
-            continue
+            return []
+        street = street.replace("None", "")
+        ccode = loc["country"]
+        ltype = "Outlet"
+        hours = "<MISSING>"
 
-        for loc in loclist:
+        if loc["crocsoutlet"] == 0:
+            ltype = "Dealer"
 
-            store = loc["id"]
-            title = loc["name"]
-            lat = loc["lat"]
-            longt = loc["lng"]
-            street = loc["address"]
-            state = loc["state"]
-            city = loc["city"]
-            pcode = loc["zip"]
-            phone = loc["phone"]
-            ccode = loc["country"]
+            link = "<MISSING>"
+        else:
             hours = ""
-            ltype = "Store"
-            if len(loc["slug"].strip()) > 5:
-                link = "https://locations.crocs.com/shop/" + loc["slug"].strip()
-
-                if link in checklist:
-                    pass
-                else:
-                    checklist.append(link)
-                    ltype = "Store"
-                    r = session.get(link, headers=headers)
-                    try:
-                        hourslist = (
-                            "["
-                            + r.text.split('"openingHoursSpecification":[', 1)[1].split(
-                                "],", 1
-                            )[0]
-                            + "]"
-                        )
-                        hourslist = json.loads(hourslist)
-                    except:
-                        try:
-                            hourslist = (
-                                "["
-                                + r.text.split('"openingHoursSpecification":[', 1)[1]
-                                .split("</script>", 1)[0]
-                                .strip()
-                            )
-                            hourslist = hourslist.replace("}]}", "}]")
-                            hourslist = json.loads(hourslist)
-                        except:
-                            hourslist = []
-
-                    for hr in hourslist:
-                        try:
-                            for day in hr["dayOfWeek"]:
-                                hours = (
-                                    hours
-                                    + day
-                                    + " "
-                                    + hr["opens"]
-                                    + "-"
-                                    + hr["closes"]
-                                    + " "
-                                )
-                        except:
-                            pass
-
-            else:
-                ltype = "Dealer"
+            try:
+                link = (
+                    "https://locations.crocs.com/"
+                    + state
+                    + "-"
+                    + city
+                    + "-"
+                    + str(store)
+                )
+            except:
                 link = "<MISSING>"
-            hours = ""
-
-            if len(hours) < 3:
+            try:
+                for day in weeklist:
+                    hours = hours + day + " " + loc[day] + " "
+            except:
                 hours = "<MISSING>"
-            if state.isdigit():
-                state = "<MISSING>"
+        try:
+            if len(phone) < 3:
+                phone = "<MISSING>"
+        except:
+            phone = "<MISSING>"
+        phone = phone.replace("t. ", "").replace("?", "").strip()
+        try:
+            phone = phone.split(",", 1)[0]
+        except:
+            pass
+        title = unidecode.unidecode(title)
+        street = unidecode.unidecode(street)
+        city = unidecode.unidecode(city)
+        state = unidecode.unidecode(state)
 
-            yield SgRecord(
+        locations.append(
+            SgRecord(
                 locator_domain="https://www.crocs.com/",
                 page_url=link,
-                location_name=unidecode.unidecode(title),
-                street_address=unidecode.unidecode(street).strip(),
-                city=unidecode.unidecode(city).strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
                 country_code=ccode,
                 store_number=str(store),
-                phone=phone.strip(),
+                phone=phone,
                 location_type=ltype,
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
             )
+        )
+    return locations
+
+
+def fetch_data():
+
+    mylist = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL,
+        expected_search_radius_miles=5,
+        max_search_distance_miles=1000,
+    )
+    search = list(mylist)
+    search = search + [(50.4501, 30.5234)]
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
+        for future in as_completed(futures):
+            yield from future.result()
 
 
 def scrape():
