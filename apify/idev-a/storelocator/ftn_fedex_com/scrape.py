@@ -34,9 +34,12 @@ max_workers = 16
 def fetchConcurrentSingle(loc, url):
     page_url = urljoin(url, loc.a["href"])
     logger.info(page_url)
-    entity_id = loc.select_one("div.js-hours-today-teaser-placeholder")[
-        "data-entity-id"
-    ]
+    if loc.select_one("div.js-hours-today-teaser-placeholder"):
+        entity_id = loc.select_one("div.js-hours-today-teaser-placeholder")[
+            "data-entity-id"
+        ]
+    else:
+        entity_id = page_url.split("/")[-1]
     rr_url = request_with_retries(json_url.format(entity_id))
     if rr_url.status_code != 200:
         return None
