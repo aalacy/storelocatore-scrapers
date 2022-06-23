@@ -5,6 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import tenacity
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("walmart_ca")
 
@@ -13,6 +15,15 @@ headers = {
 }
 
 search = static_zipcode_list(1, SearchableCountries.CANADA)
+
+
+@tenacity.retry(wait=tenacity.wait_fixed(5))
+def fetch_stores(code):
+    with SgRequests() as http:
+        logger.info(f"Pulling Zip Code: {code}...")
+        formatted_code = code.replace(" ", "")
+        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}"
+        return http.get(url, headers=headers).json()["payload"]["stores"]
 
 
 def fetch_data():

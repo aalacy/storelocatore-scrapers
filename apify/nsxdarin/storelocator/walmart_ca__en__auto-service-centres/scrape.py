@@ -22,7 +22,7 @@ def fetch_stores(code):
     with SgRequests() as http:
         logger.info(f"Pulling Zip Code: {code}...")
         formatted_code = code.replace(" ", "")
-        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=PHARMACY"
+        url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}&serviceTypes=TIRE_AND_LUBE_EXPRESS_CENTRE"
         return http.get(url, headers=headers).json()["payload"]["stores"]
 
 
