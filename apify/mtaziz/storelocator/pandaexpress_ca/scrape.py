@@ -24,7 +24,6 @@ session = SgRequests()
 
 
 def fetch_records():
-    locs = []
     api_endpoint_url = "https://www.pandaexpress.ca/en/userlocation/searchbycoordinates?lat=34.0667&lng=-118.0833&limit=1000&hours=true&_=1582854262229"
     r = session.get(api_endpoint_url, headers=headers)
     for line in r.iter_lines():
@@ -34,8 +33,6 @@ def fetch_records():
             if '"Company":' in item:
                 if '"Country":"Canada"' in item:
                     store = item.split(",")[0]
-                    website = "pandaexpress.ca"
-                    loc = "<MISSING>"
                     name = item.split('"Name":"')[1].split('"')[0]
                     add = item.split('"Address":"')[1].split('"')[0]
                     city = item.split('"City":"')[1].split('"')[0]
