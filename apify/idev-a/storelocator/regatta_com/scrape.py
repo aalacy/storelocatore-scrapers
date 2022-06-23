@@ -17,22 +17,40 @@ LIMIT_CNT = 30
 
 locator_domain = "https://www.regatta.com/"
 base_url = "https://backend-regatta-uk.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1={}&lng1={}&lat2={}&lng2={}"
+ie_url = "https://backend-regatta-ie.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1={}&lng1={}&lat2={}&lng2={}"
 us_url = "https://backend-regatta-us.basecamp-pwa-prod.com/api/ext/store-locations/search?lat1=52.536273191622705&lng1=-122.47558631250001&lat2=17.727758845003045&lng2=-68.95019568750001"
 
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
-def fetch_data(lat1, lat2, lng1, lng2):
+def fetch_uk(lat1, lat2, lng1, lng2):
     lat = (lat1 + lat2) / 2
     lng = (lng1 + lng2) / 2
     formatted_url = base_url.format(lat1, lng1, lat2, lng2)
     stores = list(fetch_stores(formatted_url))
     logger.info(f"{len(stores)} {lat1, lng1, lat2, lng2} found")
     if len(stores) >= LIMIT_CNT:
-        top_left = fetch_data(lat1, lat, lng1, lng)
-        top_right = fetch_data(lat, lat2, lng1, lng)
-        bottom_left = fetch_data(lat1, lat, lng, lng2)
-        bottom_right = fetch_data(lat, lat2, lng, lng2)
+        top_left = fetch_uk(lat1, lat, lng1, lng)
+        top_right = fetch_uk(lat, lat2, lng1, lng)
+        bottom_left = fetch_uk(lat1, lat, lng, lng2)
+        bottom_right = fetch_uk(lat, lat2, lng, lng2)
+
+        return stores + bottom_left + bottom_right + top_left + top_right
+
+    return stores
+
+
+def fetch_ie(lat1, lat2, lng1, lng2):
+    lat = (lat1 + lat2) / 2
+    lng = (lng1 + lng2) / 2
+    formatted_url = ie_url.format(lat1, lng1, lat2, lng2)
+    stores = list(fetch_stores(formatted_url))
+    logger.info(f"{len(stores)} {lat1, lng1, lat2, lng2} found")
+    if len(stores) >= LIMIT_CNT:
+        top_left = fetch_ie(lat1, lat, lng1, lng)
+        top_right = fetch_ie(lat, lat2, lng1, lng)
+        bottom_left = fetch_ie(lat1, lat, lng, lng2)
+        bottom_right = fetch_ie(lat, lat2, lng, lng2)
 
         return stores + bottom_left + bottom_right + top_left + top_right
 
@@ -83,12 +101,13 @@ def fetch_stores(url):
             if country_code == "GB":
                 country_code = "United Kingdom"
             zip_postal = _["postcode"]
+            if zip_postal:
+                zip_postal = zip_postal.replace("IRELAND", "")
+                if zip_postal in ie_list:
+                    zip_postal = ""
+                    country_code = "Ireland"
 
             if _["city"] in ie_list or _["region"] in ie_list:
-                country_code = "Ireland"
-
-            if zip_postal in ie_list:
-                zip_postal = ""
                 country_code = "Ireland"
 
             raw_address = f"{_street_address}, {_['city']}, {_['region']}, {_['postcode']}, {country_code}".replace(
@@ -96,10 +115,13 @@ def fetch_stores(url):
             )
 
             addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
 
+            state = addr.state
+            if state == "Y35":
+                state = ""
             city = _["city"].split(",")[0]
             if city and street_address:
                 _city = city[0].upper() + city.lower()[1:]
@@ -138,7 +160,7 @@ def fetch_stores(url):
                 location_name=_["name"],
                 street_address=street_address,
                 city=city,
-                state=addr.state,
+                state=state,
                 zip_postal=zip_postal,
                 latitude=_["location"]["lat"],
                 longitude=_["location"]["lon"],
@@ -157,7 +179,11 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=5000,
         )
     ) as writer:
-        results = fetch_data(90.0, -90.0, -180.0, 180.0)
+        results = fetch_ie(90.0, -90.0, -180.0, 180.0)
+        for rec in results:
+            writer.write_row(rec)
+
+        results = fetch_uk(90.0, -90.0, -180.0, 180.0)
         for rec in results:
             writer.write_row(rec)
 
