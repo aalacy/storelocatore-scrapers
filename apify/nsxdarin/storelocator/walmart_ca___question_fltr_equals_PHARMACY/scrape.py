@@ -18,7 +18,7 @@ search = static_zipcode_list(1, SearchableCountries.CANADA)
 
 @tenacity.retry(wait=tenacity.wait_fixed(5))
 def fetch_stores(url):
-    with SgRequests as http:
+    with SgRequests() as http:
         return http.get(url, headers=headers).json()["payload"]["stores"]
 
 
