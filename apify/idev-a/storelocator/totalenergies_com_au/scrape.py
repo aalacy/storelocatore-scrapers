@@ -105,19 +105,6 @@ def fetch_data():
 
                         if phone:
                             phone = phone.split("&")[0].replace('"', "").strip()
-                            if (
-                                "@" in phone
-                                or str(phone) == "0"
-                                or str(phone) == "1"
-                                or ".com" in phone
-                            ):
-                                phone = ""
-                            else:
-                                phone = phone.split(",")[0].split(";")[0].split("/")[0]
-                                if phone.startswith("???."):
-                                    phone = phone.replace("???.", "")
-                                phone = phone.split("?")[0].strip()
-
                             if "Mr" in phone or "Dr" in phone:
                                 phone = phone.split(" - ")[-1].strip()
 
@@ -133,6 +120,19 @@ def fetch_data():
                                 phone = phone.split()[0]
                             if len(phone.split(":")[-1]) > 12:
                                 phone = phone.split(":")[0]
+
+                            if phone and (
+                                "@" in phone
+                                or str(phone) == "0"
+                                or str(phone) == "1"
+                                or ".com" in phone
+                            ):
+                                phone = ""
+                            else:
+                                phone = phone.split(",")[0].split(";")[0].split("/")[0]
+                                if phone.startswith("???."):
+                                    phone = phone.replace("???.", "")
+                                phone = phone.split("?")[0].strip()
 
                             if phone.endswith("("):
                                 phone = phone[:-1]
