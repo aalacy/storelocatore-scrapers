@@ -27,7 +27,7 @@ def fetch_stores(code):
 
 
 def fetch_data():
-    website = "walmart.ca/?fltr_equals_WALMART_PHOTO_CENTRE"
+    website = "walmartphotocentre_ca"
     typ = "Walmart"
     country = "CA"
     with ThreadPoolExecutor() as executor:
