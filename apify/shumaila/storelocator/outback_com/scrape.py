@@ -83,6 +83,7 @@ def fetch_data():
                 pass
             else:
                 phone = "<MISSING>"
+            ltype = title + " - " + street
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url=url,
@@ -94,7 +95,7 @@ def fetch_data():
                 country_code=ccode,
                 store_number=SgRecord.MISSING,
                 phone=phone.strip(),
-                location_type=SgRecord.MISSING,
+                location_type=ltype,
                 latitude=SgRecord.MISSING,
                 longitude="<MISSING>",
                 hours_of_operation=hours,
@@ -211,6 +212,7 @@ def fetch_data():
                     pass
                 else:
                     phone = "<MISSING>"
+                ltype = title + " - " + state
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
@@ -222,7 +224,7 @@ def fetch_data():
                     country_code="US",
                     store_number=str(store),
                     phone=phone.strip(),
-                    location_type=SgRecord.MISSING,
+                    location_type=ltype,
                     latitude=str(lat),
                     longitude=str(longt),
                     hours_of_operation=hours,
@@ -232,7 +234,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.raw_address}))
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_TYPE}))
     ) as writer:
         results = fetch_data()
         for rec in results:
