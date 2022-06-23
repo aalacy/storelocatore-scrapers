@@ -216,7 +216,7 @@ def get_data():
                     "country_code": country_code,
                 }
 
-    except Exception as e:
+    except Exception:
         crawl_state.push_request(SerializableRequest(url=page_url_thing.url))
         raise Exception
 
@@ -259,14 +259,14 @@ def scrape():
     pipeline.run()
 
 
-# x = 0
-# while True:
-#     x = x + 1
-#     if x == 5:
-#         raise Exception("Check errors")
-#     try:
-scrape()
-#     break
+x = 0
+while True:
+    x = x + 1
+    if x == 5:
+        raise Exception("Check errors")
+    try:
+        scrape()
+        break
 
-# except Exception:
-#     continue
+    except Exception:
+        continue
