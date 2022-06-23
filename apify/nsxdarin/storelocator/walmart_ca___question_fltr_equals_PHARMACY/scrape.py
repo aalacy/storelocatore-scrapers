@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import tenacity
 
 logger = SgLogSetup().get_logger("walmart_ca__?fltr_equals_PHARMACY")
 
@@ -13,6 +14,12 @@ headers = {
 }
 
 search = static_zipcode_list(1, SearchableCountries.CANADA)
+
+
+@tenacity.retry(wait=tenacity.wait_fixed(5))
+def fetch_stores(url):
+    with SgRequests as http:
+        return http.get(url, headers=headers).json()["payload"]["stores"]
 
 
 def fetch_data():
@@ -25,8 +32,7 @@ def fetch_data():
         website = "walmart.ca/?fltr_equals_PHARMACY"
         typ = "Walmart"
         country = "CA"
-        session = SgRequests()
-        stores = session.get(url, headers=headers).json()["payload"]["stores"]
+        stores = fetch_stores(url)
         for item in stores:
             Fuel = False
             try:
