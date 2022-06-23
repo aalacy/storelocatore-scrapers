@@ -1,18 +1,15 @@
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
 
 logger = SgLogSetup().get_logger("riteaid_com__pharmacy")
 
-search = DynamicZipSearch(
+search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=10000,
-    max_search_results=10,
 )
 
 session = SgRequests()
@@ -21,19 +18,22 @@ headers = {
 }
 
 
+country = "US"
+typ = "Rite-Aid Pharmacy"
+website = "riteaid.com/pharmacy"
+
+
 def fetch_data():
-    for zipcode in search:
-        logger.info(("Pulling Postal Code %s..." % zipcode))
-        url = (
-            "https://www.riteaid.com/services/ext/v2/stores/getStores?address="
-            + str(zipcode)
-            + "&radius=10000&pharmacyOnly=true&globalZipCodeRequired=true"
-        )
+    for lat, lng in search:
+        logger.info(f"Querying lat/lng {lat}, {lng}...")
+        url = f"https://www.riteaid.com/services/ext/v2/stores/getStores?latitude={lat}&longitude={lng}&radius=10000&pharmacyOnly=true&globalZipCodeRequired=true"
         r = session.get(url, headers=headers)
-        country = "US"
-        typ = "Rite-Aid Pharmacy"
-        website = "riteaid.com/pharmacy"
-        for item in json.loads(r.content)["Data"]["stores"]:
+        stores = r.json()["Data"]["stores"]
+        if not stores:
+            search.found_nothing()
+            continue
+
+        for item in stores:
             store = item["storeNumber"]
             add = item["address"]
             city = item["city"]

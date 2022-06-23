@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipAndGeoSearch, Grain_1_KM
 
 DOMAIN = "iga.com.au"
 BASE_URL = "https://www.iga.com.au/stores/#view=storelocator"
@@ -23,17 +23,23 @@ session = SgRequests()
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    search = DynamicZipSearch(
+    search = DynamicZipAndGeoSearch(
         country_codes=[SearchableCountries.AUSTRALIA],
-        max_search_distance_miles=20,
-        max_search_results=10,
+        expected_search_radius_miles=0.2,
+        granularity=Grain_1_KM(),
+        max_search_results=5,
     )
-    for zipcode in search:
+    for zipcode, coord in search:
+        lat, long = coord
         url = API_URL.format(zipcode)
         log.info("Pull content => " + url)
         stores = json.loads(
             session.get(url, headers=HEADERS).text.replace("({", "{").replace("})", "}")
         )
+        if not stores["result"]:
+            search.found_nothing()
+            continue
+        search.found_location_at(lat, long)
         for row in stores["result"]:
             location_name = row["storeName"]
             street_address = (

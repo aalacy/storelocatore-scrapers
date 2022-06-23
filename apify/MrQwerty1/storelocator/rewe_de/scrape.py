@@ -85,6 +85,6 @@ if __name__ == "__main__":
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        fetch_data(writer)
+    with SgRequests() as session:
+        with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+            fetch_data(writer)
