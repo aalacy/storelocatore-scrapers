@@ -27,7 +27,6 @@ def fetch_stores(code):
 
 
 def fetch_data():
-    url = f"https://www.walmart.ca/en/stores-near-me/api/searchStores?singleLineAddr={formatted_code}"
     website = "walmart.ca"
     typ = "Walmart"
     with ThreadPoolExecutor() as executor:
