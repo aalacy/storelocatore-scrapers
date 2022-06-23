@@ -36,94 +36,120 @@ def fetch_data():
 
         store_list = list(search_sel.xpath('//li[contains(@class,"list")]//a/@href'))
 
+        page_urls_list = []
         for store in store_list:
 
             page_url = base + "stores/" + store
             locator_domain = website
+            if len(page_url.split("/")) == 7:
+                page_urls_list.append(page_url)
+            else:
+                state_req = session.get(page_url, headers=headers)
+                state_sel = lxml.html.fromstring(state_req.text)
+                cities = state_sel.xpath('//li[@class="c-directory-list-content-item"]')
+                for cit in cities:
+                    if (
+                        "".join(
+                            cit.xpath(
+                                'span[@class="c-directory-list-content-item-count"]/text()'
+                            )
+                        ).strip()
+                        == "(1)"
+                    ):
+                        page_url = (
+                            "https://www.suddenlink.com/stores/"
+                            + "".join(cit.xpath("a/@href")).strip()
+                        )
+                        page_urls_list.append(page_url)
+
+                    else:
+                        stores_url = (
+                            "https://www.suddenlink.com/stores/"
+                            + "".join(cit.xpath("a/@href")).strip()
+                        )
+
+                        stores_req = session.get(stores_url, headers=headers)
+                        stores_sel = lxml.html.fromstring(stores_req.text)
+                        stores = stores_sel.xpath(
+                            '//a[@class="Teaser-link Link Link--primary"]/@href'
+                        )
+                        for store_url in stores:
+                            page_urls_list.append(
+                                "https://www.suddenlink.com/stores"
+                                + store_url.replace("../", "/")
+                            )
+
+        for page_url in page_urls_list:
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
-            locations = store_sel.xpath('//li[contains(@class,"list")]//a/@href')
+            location_name = "".join(
+                store_sel.xpath('//*[contains(@id,"location-name")]/@content')
+            ).strip()
 
-            if not locations:
-                # append dummy location
-                locations.append("dummy_location")
+            street_address = "".join(
+                store_sel.xpath('//*[contains(@itemprop,"streetAddress")]/@content')
+            )
 
-            for location in locations:
-                if location != "dummy_location":
-                    # send new request and update the selector
-                    page_url = base + "stores/" + location  # update page_url
-                    log.info(page_url)
-                    store_res = session.get(page_url, headers=headers)
-                    store_sel = lxml.html.fromstring(store_res.text)  # update page_url
-
-                location_name = "".join(
-                    store_sel.xpath('//*[contains(@id,"location-name")]/@content')
-                ).strip()
-
-                street_address = "".join(
-                    store_sel.xpath('//*[contains(@itemprop,"streetAddress")]/@content')
+            city = "".join(
+                store_sel.xpath(
+                    '//*[contains(@itemprop,"address")]//*[contains(@class,"city")]//text()'
                 )
-
-                city = "".join(
-                    store_sel.xpath(
-                        '//*[contains(@itemprop,"address")]//*[contains(@class,"city")]//text()'
-                    )
+            )
+            state = "".join(
+                store_sel.xpath(
+                    '//*[contains(@itemprop,"address")]//*[contains(@class,"state")]//text()'
                 )
-                state = "".join(
-                    store_sel.xpath(
-                        '//*[contains(@itemprop,"address")]//*[contains(@class,"state")]//text()'
-                    )
+            )
+            zip = "".join(
+                store_sel.xpath(
+                    '//*[contains(@itemprop,"address")]//*[contains(@class,"postal-code")]//text()'
                 )
-                zip = "".join(
-                    store_sel.xpath(
-                        '//*[contains(@itemprop,"address")]//*[contains(@class,"postal-code")]//text()'
-                    )
+            )
+
+            country_code = "".join(
+                store_sel.xpath(
+                    '//*[contains(@itemprop,"address")]//*[contains(@class,"country")]//text()'
                 )
+            )
 
-                country_code = "".join(
-                    store_sel.xpath(
-                        '//*[contains(@itemprop,"address")]//*[contains(@class,"country")]//text()'
-                    )
-                )
+            store_number = "<MISSING>"
 
-                store_number = "<MISSING>"
+            phone = "(844) 874-7558"
 
-                phone = "(844) 874-7558"
+            location_type = "<MISSING>"
 
-                location_type = "<MISSING>"
+            hours_of_operation = "; ".join(
+                store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')
+            )
 
-                hours_of_operation = "; ".join(
-                    store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')
-                )
+            latitude = store_sel.xpath('//*[contains(@itemprop,"latitude")]/@content')[
+                0
+            ].strip()
+            longitude = store_sel.xpath(
+                '//*[contains(@itemprop,"longitude")]/@content'
+            )[0].strip()
 
-                latitude = store_sel.xpath(
-                    '//*[contains(@itemprop,"latitude")]/@content'
-                )[0].strip()
-                longitude = store_sel.xpath(
-                    '//*[contains(@itemprop,"longitude")]/@content'
-                )[0].strip()
+            raw_address = "<MISSING>"
 
-                raw_address = "<MISSING>"
-
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

@@ -33,6 +33,8 @@ def fetch_data():
         longitude = loc_dom.xpath("//@data-lng")[0]
         hoo = loc_dom.xpath('//div[@class="hours__list"]/text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Tutti")[0]
+        phone = loc_dom.xpath('//div[@class="store__address"]/a/text()')
+        phone = phone[0] if phone else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -44,7 +46,7 @@ def fetch_data():
             zip_postal="",
             country_code="IT",
             store_number="",
-            phone=raw_address[2].split(":")[1],
+            phone=phone,
             location_type="",
             latitude=latitude,
             longitude=longitude,
