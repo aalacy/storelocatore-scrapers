@@ -25,6 +25,10 @@ def fetch_data():
         ]
 
     for poi in all_locations:
+        phone = poi["telephone"].get("value")
+        if phone and phone.endswith("-0"):
+            phone = phone[:-2]
+
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.dacia.de/haendlersuche/liste-concessions.html",
@@ -35,7 +39,7 @@ def fetch_data():
             zip_postal=poi["postalCode"],
             country_code=poi["country"],
             store_number=poi["dealerId"],
-            phone=poi["telephone"].get("value"),
+            phone=phone,
             location_type=poi["type"],
             latitude=poi.get("geolocalization", {}).get("lat"),
             longitude=poi.get("geolocalization", {}).get("lon"),
