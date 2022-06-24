@@ -77,9 +77,8 @@ def get_hoo(tel_last_part):
 
 
 def remove_hash(t):
-    # t = "4300 Meadows Lane #5120 Las Vegas, NV 89107"
-    found = "".join(re.findall("#\d+\w+", t))
-    print("found", found)
+    found = "".join(re.findall(r"#\d+\w+", t))
+    logger.info(f"found: {found}")
     t1 = ""
     if found:
         t1 = t.replace(found, ",").replace(" ,", ",")
