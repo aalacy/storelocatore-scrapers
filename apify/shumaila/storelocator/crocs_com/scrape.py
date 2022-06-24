@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import unidecode
 
 session = SgRequests()
 headers = {
@@ -14,6 +15,7 @@ headers = {
 
 
 def fetch_locations(lat, lng):
+
     headers = {
         "Connection": "keep-alive",
         "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
@@ -40,7 +42,7 @@ def fetch_locations(lat, lng):
                 "order": "tblstoretype DESC,_distance",
                 "limit": 100,
                 "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
-                "searchradius": "100",
+                "searchradius": "1000",
                 "radiusuom": "mile",
                 "where": {
                     "tblstorestatus": {"in": "Open,OPEN,open"},
@@ -106,13 +108,21 @@ def fetch_locations(lat, lng):
                     hours = hours + day + " " + loc[day] + " "
             except:
                 hours = "<MISSING>"
-        if len(phone) < 3:
+        try:
+            if len(phone) < 3:
+                phone = "<MISSING>"
+        except:
             phone = "<MISSING>"
         phone = phone.replace("t. ", "").replace("?", "").strip()
         try:
             phone = phone.split(",", 1)[0]
         except:
             pass
+        title = unidecode.unidecode(title)
+        street = unidecode.unidecode(street)
+        city = unidecode.unidecode(city)
+        state = unidecode.unidecode(state)
+
         locations.append(
             SgRecord(
                 locator_domain="https://www.crocs.com/",
@@ -142,6 +152,7 @@ def fetch_data():
         max_search_distance_miles=1000,
     )
     search = list(mylist)
+    search = search + [(50.4501, 30.5234)]
 
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]

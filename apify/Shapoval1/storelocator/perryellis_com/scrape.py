@@ -40,17 +40,32 @@ def fetch_data(sgw: SgWriter):
             phone = j.get("contacts").get("con_vakq85z8").get("text")
         except:
             phone = "<MISSING>"
-        hours = j.get("hours") or "<MISSING>"
-        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        hours = j.get("hours")
         hours_of_operation = "<MISSING>"
+        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
         tmp = []
-        if hours != "<MISSING>":
+        if "hoursOfOperation" in hours:
             for d in days:
-                day = d
-                time = j.get("hours").get("hoursOfOperation").get(f"{day}")
+                day = str(d).capitalize()
+                time = hours.get("hoursOfOperation").get(f"{d}")
                 line = f"{day} {time}"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
+        r = session.get(
+            "https://api.zenlocator.com/v1/apps/app_cqvdfh5t/init?widget=MAP",
+            headers=headers,
+        )
+        js = r.json()["hours"]
+        for j in js:
+            hours_id = j.get("id")
+            _tmp = []
+            if hours_id == hours:
+                for d in days:
+                    day = str(d).capitalize()
+                    time = j.get("hoursOfOperation").get(f"{d}")
+                    line = f"{day} {time}"
+                    _tmp.append(line)
+                hours_of_operation = "; ".join(_tmp)
 
         row = SgRecord(
             locator_domain=locator_domain,
