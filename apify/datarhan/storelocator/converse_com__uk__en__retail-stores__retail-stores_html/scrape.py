@@ -6,24 +6,25 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://www.converse.com/uk/en/retail-stores/retail-stores.html"
     domain = "onverse.com/uk"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath(
         '//li[@class="content-page"]/div/p[b[contains(text(), "Converse")]]'
     )
     for poi_html in all_locations:
-        location_name = "Converse Brand Outlet Store"
+        location_name = poi_html.xpath('.//b/text()')[0]
         raw_adr = poi_html.xpath("text()")[3:]
         raw_adr = [e.strip() for e in raw_adr]
         addr = parse_address_intl(" ".join(raw_adr))
@@ -48,15 +49,15 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=SgRecord.MISSING,
+            state="",
             zip_postal=addr.postcode,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
+            store_number="",
+            phone="",
+            location_type="",
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation="",
         )
 
         yield item
