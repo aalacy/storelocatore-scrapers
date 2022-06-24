@@ -48,7 +48,7 @@ def fetch_data():
                 soup.find("span", {"itemprop": "addressLocality"}).text
             )
             if "-" in city:
-                city = city.strip("-")[0]
+                city = city.split("-")[0]
             zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
             phone = soup.find("span", {"itemprop": "telephone"}).text
             hour_list = soup.findAll("span", {"itemprop": "openingHours"})
