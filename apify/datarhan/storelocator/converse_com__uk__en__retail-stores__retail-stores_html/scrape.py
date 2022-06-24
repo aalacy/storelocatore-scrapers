@@ -38,6 +38,9 @@ def fetch_data():
         if not city and street_address == "Via della Pace":
             city = "Valmontone"
             street_address += " " + "- Unit 74"
+        zip_code = addr.postcode
+        if zip_code and zip_code in street_address:
+            street_address = street_address.replace(zip_code, "")
 
         item = SgRecord(
             locator_domain=domain,
@@ -46,7 +49,7 @@ def fetch_data():
             street_address=street_address,
             city=city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code=country_code,
             store_number="",
             phone="",
