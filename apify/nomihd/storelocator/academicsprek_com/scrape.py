@@ -100,7 +100,9 @@ def fetch_data():
 
         country_code = "CA"
 
-        store_number = "<MISSING>"
+        store_number = (
+            store_req.text.split('"post":{"id":')[1].strip().split(",")[0].strip()
+        )
 
         phone = "<MISSING>"
         try:
