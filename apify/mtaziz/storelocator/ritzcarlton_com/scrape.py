@@ -26,14 +26,15 @@ else:
 
 MISSING = SgRecord.MISSING
 MAX_WORKERS = 6
-DOMAIN = "marriott.com/gaylord-hotels/travel.mi"
+
+DOMAIN = "ritzcarlton.com"
 URL_LOCATION = "https://www.marriott.com/hotel-search.mi"
-logger = SgLogSetup().get_logger("marriott_com__gaylord-hotels__travel_mi")
+logger = SgLogSetup().get_logger("ritzcarlton_com")
+
 headers_api = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36",
 }
-
 
 # Marriott Hotels has total 30 brands. The data for 23 brands is
 # obtained from 22 API Endpoint URLs.
@@ -106,13 +107,14 @@ def fetch_data_for_non_api_based_child_brands():
     total = 0
     items = []
     regions_submit_search_urls = get__regions_submit_search_urls()
-    with SgChrome() as driver:
+    with SgChrome(is_headless=True, driver_wait_timeout=180) as driver:
         for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
             page_number_second = 1
             url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
             logger.info(f"[{idx}] Pulling the data from >> : {url_base_city_state} ")
             driver.get(url_base_city_state)
-            time.sleep(random.randint(15, 30))
+            driver.implicitly_wait(30)
+            time.sleep(random.randint(15, 60))
             pgsrc = driver.page_source
             search_list_records_total = re.findall(
                 r"search_list_records_total\":\s\d+,", pgsrc

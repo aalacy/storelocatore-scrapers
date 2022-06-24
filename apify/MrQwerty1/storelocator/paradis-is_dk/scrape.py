@@ -33,6 +33,8 @@ def get_urls():
 
 
 def get_data(page_url, sgw: SgWriter):
+    if "/butikker/" not in page_url:
+        return
     tree = get_tree(page_url)
 
     location_name = " ".join(

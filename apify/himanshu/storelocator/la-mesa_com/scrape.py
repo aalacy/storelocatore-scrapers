@@ -21,51 +21,57 @@ def fetch_data():
     if True:
         url = "https://la-mesa.com/locations/"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("ul", {"class": "sub-menu"})[1].findAll("li")
+        loclist = r.text.split('<div class="et_pb_module et_pb_code')[1:]
         for loc in loclist:
-            page_url = loc.find("a")["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h2").text
-            address = soup.find("div", {"class": "et_pb_blurb_description"})
-            phone = address.select_one("a[href*=tel]").text
-            address = address.get_text(separator="|", strip=True).split("|")
-            location_name = address[0]
-            street_address = address[1]
-            address = address[2].split(",")
+            loc = '<div class="et_pb_module et_pb_code' + loc
+            loc = BeautifulSoup(loc, "html.parser")
+            try:
+                coords = loc.select_one("iframe[src*=maps]")["src"]
+            except:
+                continue
+            longitude, latitude = (
+                coords.split("!2d", 1)[1].split("!2m", 1)[0].split("!3d")
+            )
+            phone = loc.select_one("a[href*=tel]").text
+            loc = loc.find("p").get_text(separator="|", strip=True).split("|")
+            location_name = loc[0]
+            street_address = loc[1]
+            address = loc[2].split(",")
             city = address[0]
             address = address[1].split()
             state = address[0]
             zip_postal = address[1]
-            try:
-                coords = soup.find("div", {"class": "et_pb_map_pin"})
-                latitude = coords["data-lat"]
-                longitude = coords["data-lng"]
-            except:
-                longitude, latitude = (
-                    soup.select_one("iframe[src*=maps]")["src"]
-                    .split("!2d", 1)[1]
-                    .split("!2m", 1)[0]
-                    .split("!3d")
-                )
-            try:
-                hours_of_operation = soup.findAll("div", {"class": "et_pb_text_inner"})[
-                    -3
-                ]
-
-            except:
-                hours_of_operation = soup.find("div", {"class": "et_pb_text_inner"})
-            if "About La Mesa Mexican" in str(hours_of_operation):
-                hours_of_operation = soup.findAll("div", {"class": "et_pb_text_inner"})[
-                    4
-                ]
-            hours_of_operation = (
-                hours_of_operation.get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Hours", "")
+            temp = street_address.lower().replace(" ", "-")
+            if "," in street_address:
+                temp = temp.split(",")[0]
+            page_url = (
+                "https://la-mesa.com/locations/"
+                + city.lower().replace(" ", "-")
+                + "/"
+                + temp
             )
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            if r.status_code == 200:
+                soup = BeautifulSoup(r.text, "html.parser")
+                try:
+                    hours_of_operation = soup.findAll(
+                        "div", {"class": "et_pb_text_inner"}
+                    )[-3]
+
+                except:
+                    hours_of_operation = soup.find("div", {"class": "et_pb_text_inner"})
+                if "About La Mesa Mexican" in str(hours_of_operation):
+                    hours_of_operation = soup.findAll(
+                        "div", {"class": "et_pb_text_inner"}
+                    )[4]
+                hours_of_operation = (
+                    hours_of_operation.get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Hours", "")
+                )
+            else:
+                hours_of_operation = MISSING
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
