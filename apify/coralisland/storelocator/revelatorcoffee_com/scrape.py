@@ -31,6 +31,11 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = loc.text
+            coords = (
+                soup.select_one("a[href*=maps]")["href"].split("@", 1)[1].split(",")
+            )
+            latitude = coords[0]
+            longitude = coords[1]
             temp = soup.find("div", {"class": "grid"}).findAll("p")
             address = temp[2].get_text(separator="|", strip=True).replace("|", " ")
             hours_of_operation = temp[3].text + " " + temp[4].text
@@ -74,8 +79,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 

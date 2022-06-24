@@ -3,7 +3,8 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 
 session = SgRequests()
 
@@ -15,6 +16,7 @@ def fetch_data(sgw: SgWriter):
         country_codes=[SearchableCountries.CANADA],
         max_search_distance_miles=50,
         expected_search_radius_miles=50,
+        granularity=Grain_1_KM(),
         max_search_results=None,
     )
     for z in zips:
@@ -118,6 +120,8 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
+
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(

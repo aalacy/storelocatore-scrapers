@@ -20,6 +20,7 @@ days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 def fetch_data(search):
     for lat, lng in search:
+        search.found_location_at(lat, lng)
         with SgRequests() as session:
             locations = session.get(
                 base_url.format(lat, lng, -lat, -lng), headers=_headers
@@ -27,20 +28,24 @@ def fetch_data(search):
             logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
             for loc in locations:
                 _ = loc["_source"]
-                search.found_location_at(_["location"]["lat"], _["location"]["lon"])
+
                 street_address = _["street"]
                 if _["street_line_2"]:
                     street_address += " " + _["street_line_2"]
 
                 city = _["city"]
                 hours = []
-                hh = json.loads(_["opening_hours"])
-                for day in days:
-                    start = hh.get(f"{day}_from")
-                    end = hh.get(f"{day}_to")
-                    if start:
-                        hours.append(f"{day}: {start} - {end}")
-
+                try:
+                    hh = json.loads(_["opening_hours"])
+                except:
+                    hh = {}
+                if hh:
+                    for day in days:
+                        start = hh.get(f"{day}_from")
+                        end = hh.get(f"{day}_to")
+                        if start:
+                            hours.append(f"{day}: {start} - {end}")
+                hours_of_operation = "; ".join(hours) or "<MISSING>"
                 zip_postal = _["postcode"].strip()
                 state = _["region"]
                 if not state:
@@ -72,7 +77,7 @@ def fetch_data(search):
                     phone=_["telephone"],
                     location_type=loc["_type"],
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
 

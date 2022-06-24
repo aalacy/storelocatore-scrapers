@@ -1,174 +1,154 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
-import lxml.html
 import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "rowlandspharmacy.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "Cache-Control": "max-age=0",
+    "Connection": "keep-alive",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
+params = {
+    "v": "20211005",
+    "language": "en",
+    "fieldMask": [
+        "id",
+        "identifier",
+        "googlePlaceId",
+        "lat",
+        "lng",
+        "name",
+        "country",
+        "city",
+        "province",
+        "streetAndNumber",
+        "zip",
+        "businessId",
+        "addressExtra",
+        "callToActions",
+        "openingHours",
+        "openNow",
+        "nextOpen",
+        "phone",
+        "photos",
+        "specialOpeningHours",
+    ],
+}
 
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
-    search_url = "https://www.rowlandspharmacy.co.uk/store-finder"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    json_text = (
-        "".join(
-            stores_sel.xpath(
-                '//div[@data-ng-controller="storeFinderCtrl"]/div/@ng-init'
-            )
+    with SgRequests() as session:
+        stores_req = session.get(
+            "https://uberall.com/api/storefinders/bwzEvjRHRFzJjkeRduLJgHcDYens3x/locations/all",
+            headers=headers,
         )
-        .strip()
-        .split('storeJSON = "')[1]
-        .split('"; init();')[0]
-        .strip()
-        .replace('\\"', '"')
-        .strip()
-        .replace(r"\\u003c", "<")
-        .replace(r"\\u003e", ">")
-        .replace(r"\u00A0", " ")
-        .strip()
-    )
-    stores = json.loads(json_text)
-    for store in stores:
-        page_url = search_url
-        locator_domain = website
-        location_name = store["name"]
-        if location_name == "":
-            location_name = "<MISSING>"
+        stores = json.loads(stores_req.text)["response"]["locations"]
+        for store in stores:
+            locator_domain = website
+            location_name = store["name"]
 
-        address = store["address"].replace("\\n", "").split(",")
-        add_list = []
-        for add in address:
-            if len("".join(add).strip()) > 0:
-                add_list.append("".join(add).strip())
+            street_address = store["streetAndNumber"]
+            city = store["city"]
+            state = store["province"]
+            zip = store["zip"]
+            country_code = "GB"
 
-        street_address = ", ".join(add_list[:-2]).strip().replace("\\n", "").strip()
-        city = add_list[-2].strip().replace("\\n", "").strip()
-        state = add_list[-1].strip().replace("\\n", "").strip()
-        zip = store["postcode"]
-        country_code = "GB"
+            store_number = store["identifier"]
+            page_url = f"https://www.rowlandspharmacy.co.uk/find-local-pharmacy#!/l/{city.lower()}/{street_address.replace(' ','-').strip()}/{store_number}"
 
-        if country_code == "" or country_code is None:
-            country_code = "<MISSING>"
+            phone = store["phone"]
 
-        if street_address == "" or street_address is None:
-            street_address = "<MISSING>"
-
-        if city == "" or city is None:
-            city = "<MISSING>"
-
-        if state == "" or state is None:
-            state = "<MISSING>"
-
-        if zip == "" or zip is None:
-            zip = "<MISSING>"
-
-        store_number = "<MISSING>"
-        phone = store["contactNumber"]
-
-        location_type = "<MISSING>"
-        hours_list = []
-        if store["openingHours"] is not None and len(store["openingHours"]) > 0:
-            hours_sel = lxml.html.fromstring(store["openingHours"])
-            hours = hours_sel.xpath("//p/text()")
+            location_type = "<MISSING>"
+            hours_list = []
+            hours = store["openingHours"]
             for hour in hours:
-                if len("".join(hour).strip()) > 0:
-                    hours_list.append("".join(hour).strip())
+                start_time_list = []
+                end_time_list = []
+                if hour["dayOfWeek"] == 1:
+                    day = "Monday"
+                if hour["dayOfWeek"] == 2:
+                    day = "Tuesday"
+                if hour["dayOfWeek"] == 3:
+                    day = "Wednesday"
+                if hour["dayOfWeek"] == 4:
+                    day = "Thursday"
+                if hour["dayOfWeek"] == 5:
+                    day = "Friday"
+                if hour["dayOfWeek"] == 6:
+                    day = "Saturday"
+                if hour["dayOfWeek"] == 7:
+                    day = "Sunday"
 
-        hours_of_operation = ";".join(hours_list).strip()
-        latitude = store["latitude"]
-        longitude = store["longitude"]
+                if "closed" in hour and hour["closed"] is True:
+                    time = "Closed"
+                else:
+                    if "from1" in hour:
+                        start_time_list.append(hour["from1"])
+                    if "from2" in hour:
+                        start_time_list.append(hour["from2"])
 
-        if latitude == "" or latitude is None:
-            latitude = "<MISSING>"
-        if longitude == "" or longitude is None:
-            longitude = "<MISSING>"
+                    if "to1" in hour:
+                        end_time_list.append(hour["to1"])
+                    if "to2" in hour:
+                        end_time_list.append(hour["to2"])
 
-        if hours_of_operation == "" or hours_of_operation is None:
-            hours_of_operation = "<MISSING>"
-        if phone == "" or phone is None:
-            phone = "<MISSING>"
+                    time = start_time_list[0] + " - " + end_time_list[-1]
 
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-        # break
+                hours_list.append(day + ":" + time)
 
-    return loc_list
+            hours_of_operation = ";".join(hours_list).strip()
+            latitude = store["lat"]
+            longitude = store["lng"]
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
