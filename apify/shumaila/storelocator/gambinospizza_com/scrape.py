@@ -47,12 +47,14 @@ def fetch_data():
                 .split(",", 1)
             )
         except:
-
-            lat, longt = (
-                r.text.split(" " + str(pcode) + '",null,[null,null,', 1)[1]
-                .split("]", 1)[0]
-                .split(",", 1)
-            )
+            try:
+                lat, longt = (
+                    r.text.split(" " + str(pcode) + '",null,[null,null,', 1)[1]
+                    .split("]", 1)[0]
+                    .split(",", 1)
+                )
+            except:
+                lat = longt = "<MISSING>"
         yield SgRecord(
             locator_domain="https://gambinospizza.com/",
             page_url=link,
