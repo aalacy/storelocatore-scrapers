@@ -117,6 +117,8 @@ def ret_record(record):
     hours_of_operation = (
         str(hours_of_operation).replace("; ;", MISSING).replace(" ;", "")
     )
+    if not page_url or page_url == MISSING:
+        page_url = "https://www.shoepalace.com/pages/store-locator"
     return SgRecord(
         page_url=page_url,
         location_name=location_name,

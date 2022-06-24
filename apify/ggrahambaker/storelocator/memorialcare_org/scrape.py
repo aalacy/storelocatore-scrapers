@@ -44,7 +44,10 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", "")
                 .replace("Phone:", "")
+                .replace("MYMEMCARE", "")
             )
+            if "Fax" in phone:
+                phone = phone.split("Fax")[0]
         except:
             phone = MISSING
         hour_list = soup.find("div", {"class": "open-hours__description"})
@@ -52,12 +55,32 @@ def fetch_data():
             hour_list = hour_list.findAll("p")
             hours_of_operation = ""
             for hour in hour_list:
-                hour = hour.text
+                hour = hour.get_text(separator="|", strip=True).replace("|", " ")
                 if "(" in hour:
                     hour = hour.split("(")[0]
                 hours_of_operation = hours_of_operation + " " + hour
+            if "Monday" not in hours_of_operation:
+                hours_of_operation = MISSING
+            hours_of_operation = (
+                hours_of_operation.replace(
+                    "Patients can call to schedule an appointment or speak to a nurse,",
+                    "",
+                )
+                .replace("Campus Map & Parking", "")
+                .replace("Office Hours", "")
+                .replace("Cardiovasular Surgery:", "")
+                .replace("Pay Bill", "")
+            )
         else:
             hours_of_operation = MISSING
+        if "After" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("After")[0]
+        elif "Please" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Please")[0]
+        elif "Urgent Care Hours:" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Urgent Care Hours:")[
+                1
+            ].split("For")[0]
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
