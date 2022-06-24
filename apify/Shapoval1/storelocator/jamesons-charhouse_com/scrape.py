@@ -1,40 +1,13 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://jamesons-charhouse.com"
     api_url = "https://jamesons-charhouse.com/the-jamesons-experience/"
@@ -76,19 +49,23 @@ def fetch_data():
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-        location_type = "<MISSING>"
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         ad = (
-            " ".join(tree.xpath('//div[./p/strong[text()="ADDRESS"]]/p[2]/text()'))
+            " ".join(
+                tree.xpath(
+                    '//div[./p/strong[text()="ADDRESS"]]/p[2]/text() | //p[./strong[text()="ADDRESS:"]]/text()'
+                )
+            )
             .replace("\n", "")
             .strip()
         )
         a = usaddress.tag(ad, tag_mapping=tag)[0]
         location_name = "".join(
-            tree.xpath('//div[./p/strong[text()="ADDRESS"]]/preceding::h3[1]/text()')
+            tree.xpath(
+                '//div[./p/strong[text()="ADDRESS"]]/preceding::h3[1]/text() | //p[./strong[text()="ADDRESS:"]]/preceding::h3[1]//text()'
+            )
         )
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
@@ -101,14 +78,13 @@ def fetch_data():
 
         country_code = "US"
         city = a.get("city") or "<MISSING>"
-        store_number = "<MISSING>"
         map_link = "".join(tree.xpath("//iframe/@src"))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
         phone = (
             "".join(
                 tree.xpath(
-                    '//div[./p/strong[text()="ADDRESS"]]//a[contains(@href, "tel")]/text()'
+                    '//div[./p/strong[text()="ADDRESS"]]//a[contains(@href, "tel")]/text() | //p[./strong[text()="PHONE:"]]/a//text()'
                 )
             )
             .replace("Call us at", "")
@@ -116,43 +92,55 @@ def fetch_data():
         )
         hours_of_operation = (
             " ".join(
-                tree.xpath('//p[./strong[text()="HOURS"]]/following-sibling::p//text()')
+                tree.xpath(
+                    '//p[./strong[text()="ADDRESS"]]/following::div[1]//p[./strong[text()="HOURS"]]/following-sibling::p//text()'
+                )
             )
             .replace("\n", "")
             .strip()
         )
-        if hours_of_operation.find("*") != -1:
-            hours_of_operation = hours_of_operation.split("*")[0].strip()
-        if street_address.find("1001") != -1:
-            hours_of_operation = hours_of_operation.replace(
-                " Sat: 3:00 – 8:30pm Sun: 3:00 – 8:00pm", ""
-            ).strip()
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[./strong[text()="ADDRESS"]]/following::div[.//p[contains(strong, "HOURS")]][1]//p[./strong[contains(text(), "HOURS")]]/following-sibling::p//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(tree.xpath('//p[./strong[text()="HOURS:"]]/span/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

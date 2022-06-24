@@ -4,14 +4,12 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.pure.co.uk"
     api_url = "https://www.pure.co.uk/shops/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -23,29 +21,14 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         page_url = f"https://www.pure.co.uk{slug}"
 
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        ad = (
-            "".join(tree.xpath('//h4[text()="Address"]/following-sibling::p[1]/text()'))
-            .replace("\r\n", " ")
-            .strip()
-        )
-        if ad.find(":") != -1:
-            ad = ad.split(":")[1].strip()
-        if ad.find("!") != -1:
-            ad = ad.split("!")[2].strip()
-        a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
+        street_address = "".join(tree.xpath('//span[@itemprop="streetAddress"]/text()'))
+        state = "<MISSING>"
+        postal = "".join(tree.xpath('//span[@itemprop="postalCode"]/text()'))
         country_code = "UK"
-        city = a.city or "<MISSING>"
-        if city == "<MISSING>" and "London" in ad:
-            city = "London"
+        city = "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
         latitude = (
             "".join(tree.xpath('//a[text()="View on Google Maps"]/@href'))
             .split("ll=")[1]
@@ -59,11 +42,7 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         phone = (
-            "".join(
-                tree.xpath('//h4[text()="Contact"]/following-sibling::p[1]/text()[1]')
-            )
-            .replace("HQ:", "")
-            .strip()
+            "".join(tree.xpath('//span[@itemprop="telephone"]/text()')) or "<MISSING>"
         )
         hours_of_operation = (
             " ".join(
@@ -96,7 +75,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=ad,
+            raw_address=f"{street_address} {city}, {postal}",
         )
 
         sgw.write_row(row)

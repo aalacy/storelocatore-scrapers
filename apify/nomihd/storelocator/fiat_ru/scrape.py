@@ -67,6 +67,9 @@ def fetch_data():
             if store["dealer_phone"]:
 
                 phone = store["dealer_phone"][0]
+            elif store["dealer_sc_phone"]:
+
+                phone = store["dealer_sc_phone"][0]
             else:
                 phone = "<MISSING>"
             hours_of_operation = "<MISSING>"

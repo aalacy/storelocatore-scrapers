@@ -1,120 +1,95 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import sgzip
-session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        for row in data:
-            writer.writerow(row)
-def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    address = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    result_coords = []
-    data_len = 0
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 100
-    coords = search.next_coord()
-    while coords:
-        try:
-            r = session.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_us-Site/en_US/Address-SearchStoreAddress?longitude="+str(coords[1])+"&latitude="+str(coords[0])+"&deliveryPoint=STORE&radius=7000&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false")
-        except:
-            continue
-        data = r.json()
-        mp = data['shippingAddresses']
-        for i in data['shippingAddresses']:
-            if i["countryCode"] not in ["US","CA"]:
-                continue
-            if 'address' in i:
-                street_address = i['address'].replace("Orlando Florida Mall,","").replace("McArthurGlen Designer Outlet,","").replace("Miromar Outlets,","").replace("Shopping Center Dolphin Mall,","").replace("Miracle Mile Shops,","").strip()
-            else:
-                street_address = "<MISSING>"
-            if 'name' in i:
-                loacation_name = i['name']
-            else:
-                loacation_name = "<MISSING>"
-            if "Desigual" not in loacation_name:
-                continue
-            if 'city' in i:
-                city = i['city']
-            else:
-                city = "<MISSING>"
-            if 'region' in i:
-                state = i['regionSapId']
-            else:
-                state = "<MISSING>"
-            if 'postalCode' in i:
-                zipp =i['postalCode']
-            else:
-                zipp = "<MISSING>"
-            if 'latitude' in i:
-                latitude = i['latitude']
-            else:
-                latitude = "<MISSING>"
-            if 'countryCode' in i:
-                country_code = i['countryCode']
-            else:
-                country_code = "<MISSING>"
-            if 'longitude' in i:
-                longitude = i['longitude']
-            else:
-                longitude = "<MISSING>"
-            result_coords.append((latitude, longitude))
-            if 'storeId' in i:
-                store_number = i['storeId'].replace("R","")
-            else:
-                store_number = "<MISSING>"
-            if 'phone' in i:
-                temp_phone = i['phone'].replace("+1","").replace(" ","").strip()
-                phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
-            else:
-                phone = "<MISSING>"
-            hours = ""
-            days = {1:"Sunday",2:"Monday",3:"Tuesday",4:"Wednesday",5:"Thursday",6:"Friday",7:"Saturday"}
-            if "schedule" in mp and mp["schedule"]:
-                store_hours = mp["schedule"]
-                for hour in store_hours:
-                    hours = hours + " " + days[hour["dayNumber"]] + " " + hour["value"]
-                store.append(hours)
-            if "Desigual" in loacation_name:
-                if i['isOpen'] == True:
-                    hours = "Temporary closed"
-                store = []
-                store.append("https://www.desigual.com/")
-                store.append(loacation_name if loacation_name else "<MISSING>") 
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append(country_code if country_code else "<MISSING>")
-                store.append(store_number if store_number else"<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(hours if hours else "<MISSING>")
-                store.append("<MISSING>")
-                if store[2] in address :
-                    continue
-                address.append(store[2])
-                yield store
-        if data_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif data_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coords = search.next_coord()
-def scrape():
-    data = fetch_data()
-    write_output(data)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
-scrape()
+
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.desigual.com/"
+    api_url = f"https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_globale_north-Site/en_US/Address-SearchStoreAddress?longitude={str(long)}&latitude={str(lat)}&deliveryPoint=STORE&radius=700&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    }
+
+    session = SgRequests()
+
+    r = session.get(api_url, headers=headers)
+    try:
+        js = r.json()["shippingAddresses"]
+    except:
+        return
+    for j in js:
+
+        page_url = j.get("detailUrl") or "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = j.get("address") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = "<MISSING>"
+        postal = j.get("postalCode") or "<MISSING>"
+        country_code = j.get("countryCode") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        hours_list = []
+        hours = j["schedule"]
+        if hours:
+            for hour in hours:
+                day = hour["name"]
+                if hour["isOpen"] is True:
+                    time = hour["value"]
+                else:
+                    time = "Closed"
+                hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+
+    for country in SearchableCountries.ALL:
+        coords = DynamicGeoSearch(
+            country_codes=[f"{country}"],
+            max_search_distance_miles=250,
+            expected_search_radius_miles=70,
+            max_search_results=None,
+        )
+
+        with futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+            for future in futures.as_completed(future_to_url):
+                future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

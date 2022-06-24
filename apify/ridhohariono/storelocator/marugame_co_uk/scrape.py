@@ -4,9 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-import re
 import json
 
 DOMAIN = "marugame.co.uk"
@@ -32,7 +31,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -54,13 +52,6 @@ def pull_content(url):
     return soup
 
 
-def get_latlong(url):
-    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return "<MISSING>", "<MISSING>"
-    return latlong.group(1), latlong.group(2)
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -74,9 +65,10 @@ def fetch_data():
         content = pull_content(page_url)
         info = json.loads(content.find("div", {"id": "map-container"})["data-map"])
         location_name = row.find("span", {"class": "title-text"}).text.strip()
-        raw_address = info["address"]
-        street_address, city, state, _ = getAddress(raw_address)
-        zip_postal = info["post_code"]
+        raw_address = content.find("p", {"class": "google-map__address"}).get_text(
+            strip=True, separator=","
+        )
+        street_address, city, state, zip_postal = getAddress(raw_address)
         phone = MISSING
         hours_of_operation = (
             content.find("div", {"class": "google-map__opening-times"})
@@ -113,15 +105,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

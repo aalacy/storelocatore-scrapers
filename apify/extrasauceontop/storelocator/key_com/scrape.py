@@ -1,35 +1,22 @@
 from sgrequests import SgRequests
 import json
-import pandas as pd
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 
 session = SgRequests()
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
-
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA], granularity=Grain_8()
+)
 
 
-def getdata():
+def get_data():
     x = 0
     for search_lat, search_lon in search:
 
         x = x + 1
 
-        url = f"https://www.key.com/loc/DirectorServlet?action=getEntities&entity=BRCH&entity=MCD&lat={search_lat}&lng={search_lon}&distance=1000&callback=myJsonpCallback"
+        url = f"https://www.key.com/loc/DirectorServlet?action=getEntities&entity=BRCH&entity=MCD&lat={search_lat}&lng={search_lon}&distance=100&callback=myJsonpCallback"
 
         response = session.get(url).text
         response = response.replace("myJsonpCallback(", "")[:-1]
@@ -109,63 +96,60 @@ def getdata():
             if address == "Tbd":
                 continue
 
-            locator_domains.append(locator_domain)
-            page_urls.append(page_url)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            store_numbers.append(store_number)
-            phones.append(phone)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            hours_of_operations.append(hours)
-
             search.found_location_at(latitude, longitude)
 
-    df = pd.DataFrame(
-        {
-            "locator_domain": locator_domains,
-            "page_url": page_urls,
-            "location_name": location_names,
-            "street_address": street_addresses,
-            "city": citys,
-            "state": states,
-            "zip": zips,
-            "store_number": store_numbers,
-            "phone": phones,
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "hours_of_operation": hours_of_operations,
-            "country_code": country_codes,
-            "location_type": location_types,
-        }
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"]),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
-    writedata(df)
-
-
-def writedata(df):
-    df = df.fillna("<MISSING>")
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-
-    df["dupecheck"] = (
-        df["location_name"]
-        + df["street_address"]
-        + df["city"]
-        + df["state"]
-        + df["location_type"]
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+        duplicate_streak_failure_factor=100000,
     )
-
-    df = df.drop_duplicates(subset=["dupecheck"])
-    df = df.drop(columns=["dupecheck"])
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-    df = df.fillna("<MISSING>")
-
-    df.to_csv("data.csv", index=False)
+    pipeline.run()
 
 
-getdata()
+scrape()

@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://killerburger.com/"
+    locator_domain = "https://killerburger.com"
     api_url = "https://killerburger.com/locations/"
     session = SgRequests()
     headers = {
@@ -17,52 +17,50 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="location"]')
-    for d in div:
-
-        page_url = "".join(d.xpath('.//div[@class="heading"]/a/@href'))
-        location_name = "".join(d.xpath('.//span[@class="thick-white"]/text()'))
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "var locations_meta =")]/text()'))
+        .split("var locations_meta =")[1]
+        .split("}];")[0]
+        .strip()
+        + "}]"
+    )
+    js = json.loads(div)
+    for j in js:
+        a = j.get("location")
+        page_url = "https://killerburger.com/locations/"
+        location_name = a.get("branch_name")
+        b = a.get("map_pin")
         street_address = (
-            "".join(d.xpath('.//div[@class="content"]/div[1]/text()'))
-            .replace("\n", "")
-            .strip()
+            f"{b.get('street_number')} {b.get('street_name')}" or "<MISSING>"
         )
-        ad = (
-            " ".join(d.xpath('.//div[@class="content"]/div[2]/text()'))
-            .replace("\n", " ")
-            .strip()
-        )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
+        state = b.get("state") or "<MISSING>"
+        postal = b.get("post_code") or "<MISSING>"
         country_code = "US"
-        city = ad.split(",")[0].strip()
-        jsblock = (
-            "".join(
-                tree.xpath('//script[contains(text(), "var KBLocations = ")]/text()')
+        city = b.get("city") or "<MISSING>"
+        latitude = b.get("lat")
+        longitude = b.get("lng")
+        phone = a.get("store_phone_number") or "<MISSING>"
+        hours = a.get("locations_opening_times")
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if hours:
+            for h in hours:
+                time = h.get("open_times")
+                line = f"{time}"
+                tmp.append(line)
+            hours_of_operation = ", ".join(tmp) or "<MISSING>"
+
+        if street_address.find("None") != -1:
+            street_address = (
+                "".join(
+                    tree.xpath(
+                        f'//div[./h4[contains(text(), "{location_name}")]]/following-sibling::div[1]/p/text()[1]'
+                    )
+                )
+                .replace(",", "")
+                .strip()
             )
-            .split("var KBLocations = ")[1]
-            .split(";")[0]
-        )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        js = json.loads(jsblock)
-        for j in js:
-            title = j.get("name")
-            if location_name == title:
-                latitude = j.get("lat")
-                longitude = j.get("lng")
-        phone = "".join(d.xpath('.//span[@class="thin-red"]/text()'))
-        a = d.xpath('.//p[contains(text(), "Open for")]/text()')
-        hours_of_operation = (
-            " ".join(a[1:])
-            .replace("\n", " ")
-            .replace("(New Hours)", "")
-            .replace("Outdoor Seating Available too!", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if phone == "Coming Soon":
-            phone = "<MISSING>"
+        if str(location_name).find("SOON") != -1:
             hours_of_operation = "Coming Soon"
 
         row = SgRecord(
@@ -80,6 +78,9 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}".replace(
+                "<MISSING>", ""
+            ).strip(),
         )
 
         sgw.write_row(row)

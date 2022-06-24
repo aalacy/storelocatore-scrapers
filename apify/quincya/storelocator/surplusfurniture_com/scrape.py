@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
     for item in items:
         if len(item.text) < 20:
             continue
-        link = locator_domain + item.a["href"]
+        link = locator_domain + item.a["href"].replace("dartmouth", "halifax")
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 

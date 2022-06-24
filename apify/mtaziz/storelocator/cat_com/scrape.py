@@ -9,6 +9,7 @@ import time
 import random
 import tenacity
 from tenacity import retry, stop_after_attempt
+from sgpostal.sgpostal import parse_address_usa
 
 
 try:
@@ -24,8 +25,7 @@ else:
 logger = SgLogSetup().get_logger("cat_com")
 DOMAIN = "cat.com"
 MISSING = SgRecord.MISSING
-API_ENDPOINT_URL = "https://www.cat.com/content/catdotcom/en_US/support/dealer-locator/jcr:content/CATSectionArea/Copy%20of%20dealerlocator_1797052033.dealer-locator.html?searchType=location&maxResults=4500&searchDistance=20000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&searchValue=-150.4352207%2C60.9951298"
-
+API_ENDPOINT_URL = "https://www.cat.com/content/catdotcom/en_US/support/dealer-locator/jcr:content/root/responsivegrid/container/dealerlocator.dealer-locator.html?searchType=location&maxResults=4500&searchDistance=20000&productDivId=1%2C6%2C3%2C5%2C4%2C8%2C7%2C2&serviceId=1%2C2%2C3%2C4%2C8%2C9%2C10%2C5%2C6%2C7%2C12&searchValue=-73.9874105%2C40.7322535"
 
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
@@ -154,15 +154,46 @@ def fetch_data():
 
         # Hours of Operation
         hours_of_operation = get_hoo(idx, _)
+        sta = ""
+        pau = parse_address_usa(street_address)
+        sta1 = pau.street_address_1
+        sta2 = pau.street_address_2
+        if sta1 is not None and sta2 is not None:
+            sta = sta1 + ", " + sta2
+        elif sta1 is not None and sta2 is None:
+            sta = sta1
+        elif sta1 is None and sta2 is not None:
+            sta = sta2
+        else:
+            sta = ""
 
-        raw_address = ""
-        raw_address = raw_address if raw_address else MISSING
-        logger.info(f"[{idx}] Raw Address: {raw_address}")
+        # Comment from Mia - I would keep 855NMC-RENT but remove if it is not part of the phone number,
+        # (so 1 843 660-0225 TRUCK  would just be 1 843 660-0225 ).
+        # I 819 732-9139, zps-service@zeppelin.com, www.zeppelin.ru to be clean.
+
+        if "I 819 732-9139" in phone:
+            phone = "819 732-9139"
+        if "zps-service@zeppelin.com" in phone:
+            phone = ""
+        if "www.zeppelin.ru" in phone:
+            phone = ""
+
+        # TRUC, PARTS, (SALES) and SERVICE required to be removed
+        phone = (
+            phone.replace("TRUCK", "")
+            .replace("PARTS", "")
+            .replace("(SALES)", "")
+            .replace("SERVICE", "")
+            .strip()
+        )
+
+        phone = " ".join(phone.split())
+
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
+            street_address=sta,
             city=city,
             state=state,
             zip_postal=zip_postal,
@@ -173,7 +204,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            raw_address=street_address,
         )
 
 

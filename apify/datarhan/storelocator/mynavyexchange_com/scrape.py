@@ -81,10 +81,8 @@ def fetch_data():
             raw_data = loc_dom.xpath(
                 '//h3[contains(text(), "ADDRESS")]/following-sibling::p[1]/text()'
             )
-            raw_data = [
-                " ".join([l.strip() for l in e.split()]) for e in raw_data if e.strip()
-            ]
-            raw_address = ", ".join(raw_data).replace("WMTC Bridgeport", "").strip()
+            raw_data = " ".join([e.strip() for e in raw_data[0].split() if e.strip()])
+            raw_address = raw_data.replace("WMTC Bridgeport", "").strip()
             location_name = loc_dom.xpath("//div/h2/text()")[0]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
@@ -94,7 +92,7 @@ def fetch_data():
                 continue
             city = addr.city
             if city:
-                street_address = raw_data[0].split(", ")[0][: -(len(city) + 2)]
+                street_address = raw_data.split(", ")[0][: -(len(city) + 2)]
             phone = loc_dom.xpath(
                 '//dt[contains(text(), "Main:")]/following-sibling::dd/text()'
             )[0].strip()

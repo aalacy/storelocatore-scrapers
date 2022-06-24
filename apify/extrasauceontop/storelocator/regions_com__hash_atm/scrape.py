@@ -1,9 +1,9 @@
-import re
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sgscrape import simple_scraper_pipeline as sp
+import html
 
 
 def extract_json(html_string):
@@ -38,117 +38,96 @@ def extract_json(html_string):
 
 
 def get_data():
-    page_urls = []
-    session = SgRequests()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_2()
-    )
-
-    for search_code in search:
-
-        url = (
-            "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
-            + search_code
-            + "&type=branch"
+    with SgRequests(verify_ssl=False) as session:
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA],
+            granularity=Grain_4(),
+            max_search_results=25,
         )
 
-        response = session.get(url).text
-
-        first_objects = extract_json(response)
-        soup = bs(response, "html.parser")
-        grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
-
-        x = 0
-        for location in first_objects:
-            other_check = "failing"
-            try:
-                location_name = location["title"]
-            except Exception:
-                continue
-
-            locator_domain = "regions.com"
-
-            a_tag = grids[x].find("a")
-            x = x + 1
-            try:
-                page_url = "regions.com" + a_tag["href"]
-            except Exception:
-                page_url = "<MISSING>"
-            latitude = location["lat"]
-            longitude = location["lng"]
-            address = location["address"].split("<br />")[0]
-            if bool(re.search("[a-zA-Z]", address)) is False:
-                address = "<MISSING>"
-            city = location["address"].split("<br />")[1].split(",")[0]
-
-            state_parts = (
-                location["address"].split("<br />")[1].split(",")[1].split(" ")
+        for search_code in search:
+            url = (
+                "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
+                + search_code
+                + "&type=branch"
             )
-            state = ""
-            for item in range(len(state_parts) - 1):
-                state = state + state_parts[item] + " "
 
-            state = state.strip()
+            response_stuff = session.get(url)
+            response = response_stuff.text
+            soup = bs(response, "html.parser")
+            grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
 
-            zipp = location["address"].split("<br />")[1].split(",")[1].split(" ")[-1]
-            country_code = "US"
-            store_number = location["itemId"]
-            location_type = "atm"
-            location_type_check = location["type"]
+            for grid in grids:
+                locator_domain = "regions.com"
 
-            if page_url != "<MISSING>":
-                if page_url in page_urls:
-                    continue
+                a_tag = grid.find("a")
+                try:
+                    page_url = ("https://regions.com" + a_tag["href"]).lower()
+                except Exception:
+                    page_url = "<MISSING>"
 
-                response = session.get("https://" + page_url).text
-                if (
-                    "ATM Location and Features" not in response
-                    and "-atm-" not in page_url
-                ):
-                    continue
-                other_check = "passing"
-                json_objects = extract_json(response)
+                if page_url != "<MISSING>":
+                    page_response = session.get(page_url).text
+                    page_soup = bs(page_response, "html.parser")
 
-                for item in json_objects:
-                    if "name" not in item.keys():
+                    json_objects = extract_json(
+                        page_response.split("application/ld+json")[1]
+                    )[0]
+
+                    if (
+                        "-atm-" not in page_url
+                        and "ATM Location and Features" not in page_response
+                    ):
                         continue
-                    else:
-                        try:
-                            phone = item["telephone"].replace("+", "")
-                        except Exception:
-                            phone = "<MISSING>"
-                            pass
 
-                hours_soup = bs(response, "html.parser")
-                lis = hours_soup.find_all("li")
+                    location_name = json_objects["name"]
+                    latitude = json_objects["geo"]["latitude"]
+                    longitude = json_objects["geo"]["longitude"]
+                    search.found_location_at(latitude, longitude)
+                    address = json_objects["address"]["streetAddress"]
+                    store_number = page_response.split("directionId=")[1].split("&")[0]
+                    city = json_objects["address"]["addressLocality"]
+                    state = json_objects["address"]["addressRegion"]
+                    zipp = json_objects["address"]["postalCode"]
 
-                for li in lis:
-                    if "ATM Hours" in li.text.strip():
-                        hours = li.text.strip().replace("ATM Hours: ", "")
-            else:
-                phone = "<MISSING>"
-                hours = "<MISSING>"
+                    phone_checks = page_soup.find_all("a", attrs={"class": "rds-link"})
+                    for phone_check in phone_checks:
+                        if "tel:" in phone_check["href"]:
+                            phone = (
+                                phone_check["href"].replace("tel:", "").replace("+", "")
+                            )
+                            break
 
-            page_urls.append(page_url)
-            if location_type_check != "atm" and other_check != "passing":
-                continue
+                    location_type = "ATM"
 
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+                    try:
+                        lis = page_soup.find_all("li")
+                        for li in lis:
+                            if "ATM Hours" in li.text.strip():
+                                hours = li.text.strip().replace("ATM Hours: ", "")
+                    except Exception:
+                        hours = "<MISSING>"
+
+                    country_code = zipp = json_objects["address"]["addressCountry"][
+                        "name"
+                    ]
+
+                    yield {
+                        "locator_domain": html.unescape(locator_domain),
+                        "page_url": html.unescape(page_url),
+                        "location_name": html.unescape(location_name),
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "city": html.unescape(city),
+                        "store_number": store_number,
+                        "street_address": html.unescape(address),
+                        "state": html.unescape(state),
+                        "zip": html.unescape(zipp),
+                        "phone": phone,
+                        "location_type": html.unescape(location_type),
+                        "hours": html.unescape(hours),
+                        "country_code": country_code,
+                    }
 
 
 def scrape():

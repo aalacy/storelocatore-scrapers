@@ -1,3 +1,4 @@
+import pycountry
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -22,8 +23,23 @@ def fetch_data(sgw: SgWriter):
         city = j.get("city")
         state = j.get("state")
         postal = j.get("postalCode")
-        country = j.get("countryCode")
-        page_url = f"https://www.enterprise.com/en/car-rental/locations/{country}/{state}/-{store_number}.html".lower()
+        country = j.get("countryCode") or ""
+        country_name = (
+            pycountry.countries.get(alpha_2=country)
+            .name.replace("é", "e")
+            .replace(" ", "-")
+        )
+        if "Viet" in country_name:
+            country_name = "Vietnam"
+
+        if country == "US":
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/{country}/{state}/-{store_number}.html".lower()
+        elif country == "GB":
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/uk/-{store_number}.html".lower()
+        else:
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/{country_name}/-{store_number}.html".lower().replace(
+                "virgin-islands,-british", "tortola"
+            )
 
         row = SgRecord(
             page_url=page_url,

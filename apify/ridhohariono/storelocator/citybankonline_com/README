@@ -1,0 +1,9 @@
+--ignore CountryValidator (Confirmed on website)
+Found 1 concerning rows. Examples:
+  state           phone     zip          REASON  rowNumber
+0    TX  (432) 337-2851  797764  INVALID_US_ZIP          0
+
+--ignore LatLngDuplicationValidator (Confirmed on website)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+    latitude   longitude                                     street_address  num_addrs
+16  31.99984  -102.07852  {400 W. Illinois Ave Suite 100, 400 W. Illinoi...          2

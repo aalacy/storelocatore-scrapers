@@ -20,7 +20,7 @@ def fetch_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
         max_search_results=10,
-        max_radius_miles=10,
+        max_search_distance_miles=10,
     )
     identities = set()
     maxZ = search.items_remaining()

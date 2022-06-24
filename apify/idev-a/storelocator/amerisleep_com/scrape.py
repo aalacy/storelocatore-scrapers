@@ -2,17 +2,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import dirtyjson as json
-from sglogging import SgLogSetup
+import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-logger = SgLogSetup().get_logger("amerisleep")
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
 }
-locator_domain = "https://amerisleep.com/"
+locator_domain = "https://amerisleep.com"
 base_url = "https://amerisleep.com/retail/"
 
 
@@ -30,18 +27,14 @@ def _valid(val):
     )
 
 
-def _sign(original, val):
-    if "-" in original:
-        return f"-{val}"
-
-
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "html.parser")
         divlist = soup.select("div.retail-locations-column-info")
         for div in divlist:
             link = div.a["href"]
-            logger.info(link)
+            if not link.startswith("http"):
+                link = locator_domain + link
             soup1 = bs(session.get(link, headers=_headers).text, "lxml")
             loc = json.loads(
                 soup1.find("script", type="application/ld+json")
@@ -66,7 +59,7 @@ def fetch_data():
                 state=loc["address"]["addressRegion"],
                 zip_postal=loc["address"]["postalCode"],
                 country_code="US",
-                location_type=loc["@type"],
+                location_type="",
                 phone=loc["telephone"],
                 latitude=coord[0],
                 longitude=coord[1],

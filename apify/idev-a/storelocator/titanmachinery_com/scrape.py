@@ -10,8 +10,8 @@ _headers = {
 }
 
 locator_domain = "https://titanmachinery.com"
-base_url = "https://titanmachinery.com/api/default/locations?$orderby=MapName&&$format=application/json;odata.metadata=none&$expand=LocationImage"
-country_url = "https://titanmachinery.com/project/vue-scripts?v=C83dTgBrQYohIpDqU1t4B6Teu0n-ookaOf09C1F_gR41"
+base_url = "https://titanmachinery.com/api/default/locations?$orderby=MapName&$format=application/json;odata.metadata=none&$expand=LocationImage"
+country_url = "https://titanmachinery.com/ResourcePackages/Titan/assets/dist/js/main.min.js?id=e7123a282e541733ca7e4ad13148e6e4"
 
 
 def fetch_data():
@@ -43,12 +43,7 @@ def fetch_data():
                 if not val:
                     val = "Closed"
                 store_hours.append(day + " " + val)
-            try:
-                page_url = f"https://titanmachinery.com/dealer-locator/{countries[addr.get('CountryCode')]}/{_['UrlName']}"
-            except:
-                import pdb
-
-                pdb.set_trace()
+            page_url = f"https://titanmachinery.com/dealer-locator/{countries[addr.get('CountryCode')]}/{_['UrlName']}"
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["LocationId"],

@@ -1,0 +1,1 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StateLevelCountValidator (Confirmed scraped correctly)

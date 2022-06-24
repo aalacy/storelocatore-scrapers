@@ -1,58 +1,31 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://foodlandmkt.com/"
-    page_url = "https://foodlandmkt.com/locations"
+    locator_domain = "https://foodlandmkt.com"
+    api_url = "https://foodlandmkt.com/locations"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url, headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@class="location-data"]')
 
     for d in div:
-
+        slug = "".join(d.xpath('.//h3[@class="site-loc-name"]/a/@href'))
+        page_url = f"{locator_domain}{slug}"
         title = (
             "".join(d.xpath('.//h3[@class="site-loc-name"]/a/text()'))
             .replace("\n", "")
             .strip()
         )
-        location_type = "<MISSING>"
         street_address = "".join(d.xpath('.//div[@class="site-loc-address"]/text()'))
         ad = "".join(d.xpath('.//div[@class="site-city-state-zip"]/text()'))
         phone = (
@@ -65,7 +38,7 @@ def fetch_data():
         country_code = "USA"
         city = ad.split(",")[0].strip()
         location_name = title.split("-")[0].strip()
-        store_number = title.split("-")[1].replace("(", "").replace(")", "").strip()
+        store_number = slug.split("+")[-1].strip()
         latitude = "".join(d.xpath(".//@data-lat"))
         longitude = "".join(d.xpath(".//@data-lon"))
         hours_of_operation = (
@@ -74,31 +47,30 @@ def fetch_data():
             .strip()
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {ad}",
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

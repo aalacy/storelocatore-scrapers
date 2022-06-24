@@ -31,7 +31,7 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat")
         longitude = j.get("lng")
         store_number = j.get("fid")
-        location_type = j.get("Location Type_CS")
+        location_type = j.get("Type_CS")
 
         _tmp = []
         text = j.get("hours_sets:primary") or "{}"
