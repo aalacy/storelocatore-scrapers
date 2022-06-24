@@ -22,7 +22,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.zaxbys.com/locations/" in line:
             items = line.split("<loc>https://www.zaxbys.com/locations/")
             for item in items:
@@ -45,7 +44,6 @@ def fetch_data():
             hours = ""
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
                 if "&q;Address&q;:&q;" in line2:
                     add = line2.split("&q;Address&q;:&q;")[1].split("&q;")[0]
                     city = line2.split("&q;City&q;:&q;")[1].split("&q")[0]

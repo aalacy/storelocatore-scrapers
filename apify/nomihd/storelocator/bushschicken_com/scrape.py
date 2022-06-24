@@ -2,7 +2,6 @@
 from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
-import us
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
@@ -22,50 +21,42 @@ def fetch_data():
     with SgRequests() as session:
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        tables = stores_sel.xpath('//div[@class="content"]/table')
-        table_headers = stores_sel.xpath('//div[@class="content"]/h3/text()')
-        for index in range(0, len(table_headers)):
-            location_type = table_headers[index].strip()
-            if len("".join(location_type).strip()) <= 0:
-                continue
-            stores = tables[index].xpath(".//tr")
-            for store in stores:
-                if len("".join(store.xpath("td[1]/text()")).strip()) > 0:
-                    page_url = search_url
-                    locator_domain = website
-                    location_name = "BUSH'S CHICKEN"
-                    street_address = "".join(store.xpath("td[2]/text()")).strip()
-                    city = "".join(store.xpath("td[1]/text()")).strip()
-                    state = "".join(store.xpath("td[3]/text()")).strip()
-                    zip = "".join(store.xpath("td[4]/text()")).strip()
+        stores = stores_sel.xpath('//div[@class="content"]/table//tr')
+        for store in stores:
+            if len("".join(store.xpath("td[1]/text()")).strip()) > 0:
+                page_url = search_url
+                locator_domain = website
+                location_name = "BUSH'S CHICKEN"
+                street_address = "".join(store.xpath("td[2]/text()")).strip()
+                city = "".join(store.xpath("td[1]/text()")).strip()
+                state = "".join(store.xpath("td[3]/text()")).strip()
+                zip = "".join(store.xpath("td[4]/text()")).strip()
 
-                    country_code = "<MISSING>"
-                    if us.states.lookup(state):
-                        country_code = "US"
+                country_code = "US"
 
-                    store_number = "<MISSING>"
-                    phone = "".join(store.xpath("td[5]/text()")).strip()
+                store_number = "<MISSING>"
+                phone = "".join(store.xpath("td[5]/text()")).strip()
+                location_type = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
-                    hours_of_operation = "<MISSING>"
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():

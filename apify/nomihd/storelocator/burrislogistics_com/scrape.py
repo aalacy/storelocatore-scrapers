@@ -4,109 +4,90 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "burrislogistics.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
     "authority": "www.burrislogistics.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "cross-site",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.burrislogistics.com/locations/"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    sections = stores_sel.xpath('//ul[@class="locations-list__items"]')[:-1]
-    for sec in sections:
-        stores = sec.xpath("li/a/@href")
-        for store_url in stores:
-            page_url = store_url
+    search_url = "https://www.burrislogistics.com/location/"
+    with SgRequests() as session:
+        stores_req = session.get(search_url, headers=headers)
+        stores_sel = lxml.html.fromstring(stores_req.text)
+        stores = stores_sel.xpath('//div[@class="drybn-location"]')
+        for store in stores:
+            locator_domain = website
+            page_url = "".join(
+                store.xpath('.//div[@class="drybn-button--alt"]/a/@href')
+            ).strip()
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
-            locator_domain = website
 
-            location_name = " ".join(
-                store_sel.xpath('//div[@class="et_pb_text_inner"]//h1/text()')
+            location_name = "".join(
+                store_sel.xpath('//div[@class="burris-bar-title__content"]/h1/text()')
             ).strip()
 
-            add_sections = store_sel.xpath('//div[@class="et_pb_text_inner"]')
-            add_list = []
-            phone = ""
-            for add in add_sections:
-                if "Address" in "".join(add.xpath("h4/text()")).strip():
-                    address = add.xpath("p[1]/text()")
-                    phone = "".join(
-                        add.xpath('p[1]//a[contains(@href,"tel:")]/text()')
-                    ).strip()
-                    if len(phone) <= 0:
-                        phone = "".join(
-                            add.xpath('.//span[@style="font-weight: 400;"]/text()')
-                        ).strip()
-                    add_list = []
-                    for add in address:
-                        if len("".join(add).strip()) > 0 and (
-                            "Phone" not in "".join(add).strip()
-                            and "Fax" not in "".join(add).strip()
-                        ):
-                            add_list.append("".join(add).strip())
-
-                        if len(phone) <= 0:
-                            if "Phone" in "".join(add).strip():
-                                phone = (
-                                    "".join(add).strip().replace("Phone:", "").strip()
-                                )
-
-                    break
-
-            street_address = add_list[0].strip()
-            city = add_list[-1].strip().split(",")[0].strip()
-            state_zip = add_list[-1].strip().split(",")[-1].strip().split(" ")
-            state = "<MISSING>"
-            zip = "<MISSING>"
-            if len(state_zip) > 1:
-                state = state_zip[0].strip()
-                zip = state_zip[-1].strip()
-            else:
-                state = state_zip[0].strip()
+            raw_address = (
+                "\n".join(
+                    store_sel.xpath(
+                        '//div[@class="drybn-section__content "][.//h2[contains(text(),"Address")]]/p/text()'
+                    )
+                )
+                .strip()
+                .split("Phone")[0]
+                .strip()
+                .split("\n")
+            )
+            street_address = raw_address[0].strip()
+            if street_address and (
+                street_address[-1] == "," or street_address[-1] == "."
+            ):
+                street_address = "".join(street_address[:-1]).strip()
+            city = raw_address[-1].strip().split(",")[0].strip()
+            state = raw_address[-1].strip().split(",")[-1].strip().split(" ")[0].strip()
+            zip = raw_address[-1].strip().split(",")[-1].strip().split(" ")[-1].strip()
 
             country_code = "US"
-
             store_number = "<MISSING>"
 
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[@class="drybn-section__content "][.//h2[contains(text(),"Address")]]//a[contains(@href,"tel:")]/text()'
+                )
+            ).strip()
             if len(phone) <= 0:
-                phone = "".join(store_sel.xpath('//a[@class="callnow"]/text()')).strip()
-                if len(phone) <= 0:
-                    phone = "".join(
-                        store_sel.xpath('//a[@class="callpill"]/text()')
-                    ).strip()
+                sections = store_sel.xpath(
+                    '//div[@class="drybn-section__content "][.//h2[contains(text(),"Address")]]/p/text()'
+                )
+                for sec in sections:
+                    if "Phone" in sec:
+                        phone = "".join(sec).strip().replace("Phone:", "").strip()
+                        break
 
-            phone = phone.split("/")[0].strip()
             location_type = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            map_link = "".join(
-                store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
-            ).strip()
-
-            if len(map_link) > 0:
-                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            latitude = "".join(store.xpath("@data-latitude")).strip()
+            longitude = "".join(store.xpath("@data-longitude")).strip()
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -129,7 +110,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

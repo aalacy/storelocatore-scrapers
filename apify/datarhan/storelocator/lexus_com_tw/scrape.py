@@ -31,7 +31,7 @@ def fetch_data():
             page_url=start_url,
             location_name=poi["BRANCHFULLNM"],
             street_address=poi["ADDR"],
-            city="",
+            city=poi["COMPNM"],
             state=poi["DISTIRCT"],
             zip_postal=poi["ZIP"],
             country_code="TW",

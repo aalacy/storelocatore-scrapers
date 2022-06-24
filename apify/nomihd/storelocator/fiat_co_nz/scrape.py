@@ -92,11 +92,18 @@ def fetch_data():
                     if zip == "no":
                         zip = "<MISSING>"
 
+                    if country_code == "New Zealand":
+                        if city and city.isdigit():
+                            zip = city
+                            city = "<MISSING>"
+
                     phone = store.get("phoneNumber", "<MISSING>")
                     if phone == "no":
                         phone = "<MISSING>"
 
-                    phone = phone.split("/")[0].strip()
+                    if phone:
+                        phone = phone.split("/")[0].strip()
+
                     hours_list = []
                     if "openingHours" in store:
                         hours = store["openingHours"]

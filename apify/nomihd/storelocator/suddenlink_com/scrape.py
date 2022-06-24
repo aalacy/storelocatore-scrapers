@@ -10,7 +10,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "suddenlink.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "suddenlink.com",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -30,33 +29,60 @@ def fetch_data():
     # Your scraper here
     base = "https://suddenlink.com/"
     search_url = "https://www.suddenlink.com/stores/"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath('//li[contains(@class,"list")]//a/@href'))
+        store_list = list(search_sel.xpath('//li[contains(@class,"list")]//a/@href'))
 
-    for store in store_list:
+        page_urls_list = []
+        for store in store_list:
 
-        page_url = base + "stores/" + store
-        locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
+            page_url = base + "stores/" + store
+            locator_domain = website
+            if len(page_url.split("/")) == 7:
+                page_urls_list.append(page_url)
+            else:
+                state_req = session.get(page_url, headers=headers)
+                state_sel = lxml.html.fromstring(state_req.text)
+                cities = state_sel.xpath('//li[@class="c-directory-list-content-item"]')
+                for cit in cities:
+                    if (
+                        "".join(
+                            cit.xpath(
+                                'span[@class="c-directory-list-content-item-count"]/text()'
+                            )
+                        ).strip()
+                        == "(1)"
+                    ):
+                        page_url = (
+                            "https://www.suddenlink.com/stores/"
+                            + "".join(cit.xpath("a/@href")).strip()
+                        )
+                        page_urls_list.append(page_url)
 
-        locations = store_sel.xpath('//li[contains(@class,"list")]//a/@href')
+                    else:
+                        stores_url = (
+                            "https://www.suddenlink.com/stores/"
+                            + "".join(cit.xpath("a/@href")).strip()
+                        )
 
-        if not locations:
-            # append dummy location
-            locations.append("dummy_location")
+                        stores_req = session.get(stores_url, headers=headers)
+                        stores_sel = lxml.html.fromstring(stores_req.text)
+                        stores = stores_sel.xpath(
+                            '//a[@class="Teaser-link Link Link--primary"]/@href'
+                        )
+                        for store_url in stores:
+                            page_urls_list.append(
+                                "https://www.suddenlink.com/stores"
+                                + store_url.replace("../", "/")
+                            )
 
-        for location in locations:
-            if location != "dummy_location":
-                # send new request and update the selector
-                page_url = base + "stores/" + location  # update page_url
-                log.info(page_url)
-                store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)  # update page_url
+        for page_url in page_urls_list:
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
             location_name = "".join(
                 store_sel.xpath('//*[contains(@id,"location-name")]/@content')

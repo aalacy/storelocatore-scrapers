@@ -3,10 +3,11 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import math
+from concurrent.futures import ThreadPoolExecutor
 from sglogging import SgLogSetup
-from tenacity import retry, stop_after_attempt, wait_fixed
 
-logger = SgLogSetup().get_logger("totalenergies")
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "accept": "*/*",
@@ -29,21 +30,45 @@ hr_obj = {
 }
 
 
-@retry(wait=wait_fixed(1), stop=stop_after_attempt(7))
-def _d(store_number):
-    with SgRequests() as http:
-        store_url = f"https://datastore-webapp-p.azurewebsites.net/REVERSE/api/Info/Poi?Lang=fr_FR&AdditionalData=Items&AdditionalDataFields=Items_Code,Items_Price,Items_Availability,Items_UpdateDate&Code={store_number}"
-        res = http.get(store_url, headers=_headers).json()
-        if res["ErrorCode"] == "0001":
-            return {}
+max_workers = 32
 
-        return res["Pois"][0]
+
+def fetchConcurrentSingle(store):
+    logger.info(store["store_id"])
+    url = f"https://api.woosmap.com/stores/{store['store_id']}?key=mapstore-prod-woos"
+    loc = request_with_retries(url).json()
+    return loc
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(10):
-            for b in range(50):
+        for a in range(30):
+            for b in range(100):
                 for c in range(100):
                     logger.info(f"{a, b, c}")
                     try:
@@ -53,12 +78,19 @@ def fetch_data():
                     except:
                         break
                     logger.info(f"[{a, b, c}] {len(data.keys())} found")
-                    for kk, store in data.items():
-                        logger.info(store["store_id"])
-                        url = f"https://api.woosmap.com/stores/{store['store_id']}?key=mapstore-prod-woos"
-                        loc = http.get(url, headers=_headers).json()
+                    stores = [store for kk, store in data.items()]
+                    for loc in fetchConcurrentList(stores):
                         _ = loc["properties"]
                         addr = _["address"]
+                        raw_address = " ".join(addr["lines"])
+                        raw_address += " " + addr["city"]
+                        raw_address += " " + addr.get("zipcode")
+                        raw_address += " " + addr["country_code"]
+                        raw_address = (
+                            raw_address.replace("\n", "")
+                            .replace("\r", " ")
+                            .replace("\t", "")
+                        )
                         hours = []
                         for key, hh in _["weekly_opening"].items():
                             if key.isdigit() and hh["hours"]:
@@ -71,21 +103,77 @@ def fetch_data():
                         if phone and ("contact" in phone.lower() or phone == "-"):
                             phone = ""
 
+                        if phone:
+                            phone = phone.split("&")[0].replace('"', "").strip()
+                            if "Mr" in phone or "Dr" in phone:
+                                phone = phone.split(" - ")[-1].strip()
+
+                            if len(phone.split(" – ")[-1]) > 8:
+                                phone = phone.split(" – ")[0]
+
+                            if len(phone.split(" - ")[-1]) > 8:
+                                phone = phone.split(" - ")[0]
+
+                            if len(phone.split(". ")[-1]) > 10:
+                                phone = phone.split(". ")[0]
+                            if len(phone.split()[-1]) > 10:
+                                phone = phone.split()[0]
+                            if len(phone.split(":")[-1]) > 12:
+                                phone = phone.split(":")[0]
+
+                            if phone and (
+                                "@" in phone
+                                or str(phone) == "0"
+                                or str(phone) == "1"
+                                or ".com" in phone
+                            ):
+                                phone = ""
+                            else:
+                                phone = phone.split(",")[0].split(";")[0].split("/")[0]
+                                if phone.startswith("???."):
+                                    phone = phone.replace("???.", "")
+                                phone = phone.split("?")[0].strip()
+
+                            if phone.endswith("("):
+                                phone = phone[:-1]
+
+                        city = addr["city"]
+                        zip_postal = addr.get("zipcode")
+                        if zip_postal:
+                            zip_postal = zip_postal.replace("NGAOUNDERE", "").strip()
+                            if (
+                                "UNIVERSITE" in zip_postal
+                                or "FAHAMEY" in zip_postal
+                                or "BALLEYARA" in zip_postal
+                                or "HIPPODROME" in zip_postal
+                            ):
+                                zip_postal = ""
+                        if "Excellium" in city:
+                            city = ""
+                        if city and city.isdigit():
+                            city = ""
+
+                        if city:
+                            city = city.split(",")[0]
+
+                        street_address = " ".join(addr["lines"]).strip()
+                        if street_address == "-" or street_address == "#N/A":
+                            street_address = ""
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
-                            street_address=" ".join(addr["lines"]),
-                            city=addr["city"],
-                            state=addr.get("State"),
-                            zip_postal=addr.get("zipcode"),
+                            street_address=street_address,
+                            city=city,
+                            zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
-                            latitude=loc["geometry"]["coordinates"][0],
-                            longitude=loc["geometry"]["coordinates"][1],
+                            latitude=loc["geometry"]["coordinates"][1],
+                            longitude=loc["geometry"]["coordinates"][0],
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
+                            raw_address=raw_address,
                         )
 
 

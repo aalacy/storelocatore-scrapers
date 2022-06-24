@@ -1,36 +1,9 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def get_coords_from_embed(text):
@@ -38,19 +11,21 @@ def get_coords_from_embed(text):
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
 def get_additional(page_url):
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    phone = tree.xpath(
-        "//p[contains(text(), '-') and not(./*)]/text()|//p[./strong[contains(text(), 'Phone')]]/text()"
-    )[0].strip()
+    try:
+        phone = tree.xpath(
+            "//p[contains(text(), '-') and not(./*)]/text()|//p[./strong[contains(text(), 'Phone')]]/text()"
+        )[0].strip()
+    except:
+        phone = SgRecord.MISSING
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
     hours = tree.xpath(
@@ -63,21 +38,19 @@ def get_additional(page_url):
         .replace("pm", "pm;")
         .replace("12pm;", "12pm")
         .strip()
-        or "<MISSING>"
     )
     if "(" in hoo:
         hoo = hoo.split("(")[0].strip()
 
+    if hoo.endswith(";"):
+        hoo = hoo[:-1]
+
     return phone, latitude, longitude, hoo
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.gohugos.com/"
-    api_url = "https://www.gohugos.com/store-locations/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.gohugos.com/store-locations/"
+    r = session.get(api)
     tree = html.fromstring(r.text)
     sections = tree.xpath("//div[contains(@id, 'av_section_')]")
 
@@ -95,7 +68,7 @@ def fetch_data():
             location_name = "".join(
                 a.xpath(".//h3[@itemprop='headline']/text()")
             ).strip()
-            page_url = "".join(a.xpath(".//a[text()='View Details']/@href")) or api_url
+            page_url = "".join(a.xpath(".//a[text()='View Details']/@href")) or api
 
             line = a.xpath(
                 ".//div[contains(@class,'iconbox_content_container')]/p[1]/text()"
@@ -108,43 +81,43 @@ def fetch_data():
             line = line.split(",")[1].strip()
             state = line.split()[0]
             postal = line.split()[-1]
-            country_code = "US"
-            store_number = "<MISSING>"
-            if page_url == api_url:
-                phone = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                hours_of_operation = "<MISSING>"
+            if page_url == api:
+                phone = SgRecord.MISSING
+                latitude = SgRecord.MISSING
+                longitude = SgRecord.MISSING
+                hours_of_operation = SgRecord.MISSING
             else:
                 phone, latitude, longitude, hours_of_operation = get_additional(
                     page_url
                 )
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                location_type=location_type,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.gohugos.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_TYPE}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

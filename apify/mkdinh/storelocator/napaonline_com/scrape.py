@@ -1,18 +1,19 @@
 import re
 import json
+from random import randint
 from time import sleep
 from bs4 import BeautifulSoup as bs
 from datetime import datetime as dt
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
-from sgselenium.sgselenium import SgChrome
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from undetected_chromedriver import Chrome, ChromeOptions
+from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries
 from tenacity import retry, stop_after_attempt
-from sgzip.static import static_zipcode_list
+from sgzip.dynamic import DynamicZipSearch
 from sgscrape.sgpostal import parse_address, USA_Best_Parser
 
 logger = SgLogSetup().get_logger("napaonline_com")
@@ -22,18 +23,9 @@ user_agent = (
 base_url = "https://www.napaonline.com/stores"
 
 
-def get_driver():
-    driver = SgChrome(
-        is_headless=True, seleniumwire_auto_config=False, user_agent=user_agent
-    ).driver()
-    driver.set_script_timeout(600)
-    load_initial_page(driver)
-
-    return driver
-
-
 def fetch(postal, driver, retry=0):
     try:
+        sleep(randint(2, 5))
         html = driver.execute_async_script(
             f"""
             fetch('https://www.napaonline.com/en/store-finder?q={postal}&sort=true&page=50')
@@ -43,7 +35,8 @@ def fetch(postal, driver, retry=0):
         )
 
         return bs(html, "html.parser")
-    except:
+    except Exception as e:
+        logger.error(e)
         if retry < 5:
             return fetch(postal, driver, retry + 1)
 
@@ -69,19 +62,22 @@ def get_hours(store_number, soup):
 
 @retry(stop=stop_after_attempt(3), reraise=True)
 def load_initial_page(driver):
+    sleep(randint(2, 5))
     driver.get("http://www.napaonline.com/store-locator")
     sleep(20)
 
 
-def fetch_locations(postal, driver, writer):
+def fetch_locations(postal, search, driver, writer):
     soup = fetch(postal, driver)
 
     if not soup:
+        search.found_nothing()
         return
 
     canvas = soup.find("div", id="map_canvas")
 
     if not canvas:
+        search.found_nothing()
         return
 
     locations = json.loads(canvas.attrs["data-stores"])
@@ -112,6 +108,8 @@ def fetch_locations(postal, driver, writer):
 
         hours_of_operation = get_hours(store_number, soup)
 
+        search.found_location_at(latitude, longitude)
+
         writer.write_row(
             SgRecord(
                 locator_domain=locator_domain,
@@ -132,18 +130,22 @@ def fetch_locations(postal, driver, writer):
 
 
 def fetch_data():
+    options = ChromeOptions()
+    options.headless = True
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
         )
-    ) as writer, ThreadPoolExecutor(max_workers=1) as executor, get_driver() as driver:
-        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=2)
-        futures = [
-            executor.submit(fetch_locations, postal, driver, writer)
-            for postal in search
-        ]
-        for future in as_completed(futures):
-            pass
+    ) as writer, Chrome(
+        options=options, driver_executable_path=ChromeDriverManager().install()
+    ) as driver:
+        driver.set_script_timeout(600)
+        load_initial_page(driver)
+        search = DynamicZipSearch(
+            country_codes=SearchableCountries.ALL, max_search_distance_miles=50
+        )
+        for postal in search:
+            fetch_locations(postal, search, driver, writer)
 
 
 def scrape():

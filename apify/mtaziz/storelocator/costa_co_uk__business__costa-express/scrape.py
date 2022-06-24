@@ -24,7 +24,7 @@ else:
 logger = SgLogSetup().get_logger("costa_co_uk__business__costa-express")
 DOMAIN = "https://www.costa.co.uk/business/costa-express"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 16
+MAX_WORKERS = 12
 
 
 headers = {
@@ -33,7 +33,7 @@ headers = {
 }
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(60))
 def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
@@ -158,6 +158,10 @@ def fetch_records(latlng, sgw):
             ):
                 hours_of_operation = MISSING
 
+            # Clean street_address
+            if street_address is not None or street_address:
+                street_address = " ".join(street_address.split())
+
             raw_address = MISSING
             item = SgRecord(
                 locator_domain=locator_domain,
@@ -189,7 +193,7 @@ def fetch_data(sgw: SgWriter):
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
         granularity=Grain_8(),
         use_state=False,
     )

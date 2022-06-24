@@ -19,11 +19,10 @@ def get_urls():
     )
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//td/a[contains(@href, 'Store_Detail_S.las?L=')]/@href")
+    return tree.xpath("//a[contains(@href, '/Store/?')]/@href")
 
 
 def get_data(page_url, sgw: SgWriter):
-    page_url = page_url.replace("_Detail_S.las", "/")
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 

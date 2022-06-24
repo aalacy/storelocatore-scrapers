@@ -1,72 +1,78 @@
-import csv
-import os
-from sgselenium import SgSelenium
+from bs4 import BeautifulSoup
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
 
-def fetch_data():
-    locator_domain = 'https://toscanova.com/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
+def fetch_data(sgw: SgWriter):
 
-    links = driver.find_elements_by_css_selector('a.custom-temp-btn')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    locator_domain = "https://toscanova.com"
+    req = session.get(locator_domain, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    links = base.find_all(class_="custom-temp-btn")
     link_list = []
     for link in links:
-        link_list.append(link.get_attribute('href'))
+        link_list.append(link["href"])
 
-    all_store_data = []
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        street_address = driver.find_element_by_css_selector('div.address').text
-        city_state = driver.find_element_by_css_selector('div.city-state').text.split(', ')
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        street_address = base.find(class_="address").text
+        city_state = base.find(class_="city-state").text.split(", ")
         city = city_state[0]
         state = city_state[1]
-        zip_code = driver.find_element_by_css_selector('div.zip').text
-        if zip_code == '':
-            zip_code = '<MISSING>'
+        zip_code = base.find(class_="zip").text
+        if zip_code == "":
+            zip_code = "<MISSING>"
 
-        hours = driver.find_element_by_css_selector('div.hours').text.replace('HOURS', '').replace('\n', ' ').strip()
+        hours = (
+            " ".join(list(base.find(class_="hours").stripped_strings)[1:])
+            .split("Bar")[0]
+            .replace("Restaurant Hours:", "")
+            .strip()
+        )
 
-        phone_number = driver.find_element_by_css_selector('a#contact_us_v3_section_phone_link').text
+        phone_number = base.find(id="contact_us_v3_section_phone_link").text
 
-        scripts = driver.find_elements_by_css_selector('script')
-        for script in scripts:
-            text = script.get_attribute('innerHTML')
-            if 'var LATITUDE' in text:
-                for line in text.split('\n'):
-                    if line.strip().startswith("var LATITUDE"):
-                        lat = driver.execute_script(line + " return LATITUDE")
+        lat = str(base).split("LATITUDE =")[1].split(";")[0].strip()
+        longit = str(base).split("LONGITUDE =")[1].split(";")[0].strip()
 
-                    if line.strip().startswith("var LONGITUDE"):
-                        longit = driver.execute_script(line + " return LONGITUDE")
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
+        start = link.find("//")
+        end = link.find(".to")
+        location_name = link[start + 2 : end]
 
-        start = link.find('//')
-        end = link.find('.to')
-        location_name = link[start + 2: end]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone_number,
+                location_type=location_type,
+                latitude=lat,
+                longitude=longit,
+                hours_of_operation=hours,
+            )
+        )
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
 
-    driver.quit()
-    return all_store_data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

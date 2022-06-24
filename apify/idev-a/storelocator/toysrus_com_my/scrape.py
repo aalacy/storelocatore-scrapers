@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
+from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -27,9 +28,28 @@ def fetch_data():
         locs = json.loads(sp1.select_one("div.map-canvas")["data-locations"])
         locations = sp1.select("div.store.store-item")
         for _ in locations:
-            street_address = _["data-store-address1"]
+            raw_address = _["data-store-address1"]
             if _["data-store-address2"]:
-                street_address += " " + _["data-store-address2"]
+                raw_address += ", " + _["data-store-address2"]
+            raw_address += (
+                ", "
+                + _["data-store-city"]
+                + ", "
+                + _["data-store-statecode"]
+                + ", "
+                + _["data-store-postalcode"]
+            )
+            raw_address = raw_address.strip()
+            while True:
+                if raw_address.endswith(","):
+                    raw_address = raw_address[:-1].strip()
+                else:
+                    break
+            addr = parse_address_intl(raw_address + ", Malaysia")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+
             hours = []
             temp = {}
             for hh in bs(_["data-store-details"], "lxml").select(
@@ -42,20 +62,22 @@ def fetch_data():
                 hours.append(f"{day}: {temp[day]}")
 
             coord = _coord(locs, _["data-store-name"])
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["data-store-id"],
                 location_name=_["data-store-name"],
                 street_address=street_address,
-                city=_["data-store-city"],
-                state=_["data-store-statecode"],
-                zip_postal=_["data-store-postalcode"],
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="My",
                 latitude=coord["latitude"],
                 longitude=coord["longitude"],
                 location_type="toysrus",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 

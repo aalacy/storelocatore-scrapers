@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
 
 
 def get_international(line):
@@ -15,7 +16,7 @@ def get_international(line):
     ).strip()
     city = adr.city or ""
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
 
     return street_address, city, state, postal
 
@@ -36,18 +37,21 @@ def get_urls():
     for s in start:
         base = s.split("/eat/")[0]
         r = session.get(s)
+        log.info(f"{s}: {r}")
         tree = html.fromstring(r.text)
         links = tree.xpath(
             "//a[contains(@href, '/eat/restaurant/') or contains(@href, '/eat/restaurants/') and not(contains(@href, '/all'))]/@href"
         )
         for link in links:
             urls.append(f"{base}{link}".strip())
+        log.info(f"{s}: {len(links)} URLs to crawls")
 
     return urls
 
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
+    log.info(f"{page_url}: {r}")
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
@@ -66,6 +70,8 @@ def get_data(page_url, sgw: SgWriter):
         tree.xpath("//h1/following-sibling::ul/li[1]//text()")
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    if postal == "" and raw_address[-1].isdigit():
+        postal = raw_address.split(",")[-1].strip()
     if city == "" and country != "AE":
         city = raw_address.split(",")[-2].strip()
     if (city == "" and country == "AE") or "Area" in city:
@@ -116,15 +122,17 @@ def get_data(page_url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
+    log.info(f"{len(urls)} total URLs to crawl")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    session = SgRequests()
+    log = sglog.SgLogSetup().get_logger(logger_name="nandos.ae")
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",

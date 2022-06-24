@@ -50,7 +50,11 @@ if __name__ == "__main__":
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], granularity=Grain_8()
     )
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         with SgRequests() as http:
             for rec in fetch_records(http, search):
                 writer.write_row(rec)

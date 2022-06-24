@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -31,12 +30,35 @@ MISSING = SgRecord.MISSING
 MAX_WORKERS = 6
 GLOBAL_LOCATION_URL = "https://www.levi.com/GB/en_GB/store-finder/store-directory"
 DOMAIN = "levi.com"
+
 headers_custom = {
     "accept": "*/*",
     "accept-encoding": "gzip, deflate, br",
     "accept-language": "en-US,en;q=0.9",
     "content-type": "application/json",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+}
+
+
+headers_special_for_api_endpoint = {
+    "authority": "www.levi.com",
+    "method": "POST",
+    "path": "/nextgen-webhooks/?operationName=storeDirectory&locale=GB-en_GB",
+    "scheme": "https",
+    "accept": "*/*, application/json",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "apollographql-client-name": "WebApp",
+    "content-type": "application/json",
+    "origin": "https://www.levi.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"',
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36",
+    "x-brand": "levi",
+    "x-country": "GB",
+    "x-locale": "en_GB",
+    "x-operationname": "storeDirectory",
 }
 
 
@@ -64,9 +86,7 @@ def get_loc_urls():
 
 
 def get_list_of_countries_global():
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgChrome(is_headless=True) as driver:
         driver.get(GLOBAL_LOCATION_URL)
         driver.implicitly_wait(20)
         time.sleep(10)
@@ -103,7 +123,9 @@ def get_response_global(countrynum, country_global):
             "query": "query storeDirectory($countryIsoCode: String!) {\n  storeDirectory(countryIsoCode: $countryIsoCode) {\n    storeFinderData {\n      addLine1\n      addLine2\n      city\n      country\n      departments\n      distance\n      hrsOfOperation {\n        daysShort\n        hours\n        isOpen\n      }\n      latitude\n      longitude\n      mapUrl\n      phone\n      postcode\n      state\n      storeId\n      storeName\n      storeType\n      todaysHrsOfOperation {\n        daysShort\n        hours\n        isOpen\n      }\n      uom\n    }\n  }\n}\n",
         }
         response = http.post(
-            API_ENDPOINT_URL, data=json.dumps(PAYLOAD), headers=headers_custom
+            API_ENDPOINT_URL,
+            data=json.dumps(PAYLOAD),
+            headers=headers_special_for_api_endpoint,
         )
         time.sleep(random.randint(1, 5))
         if response.status_code == 200:
@@ -290,6 +312,10 @@ def fetch_data_us_ca(idx, url, sgw: SgWriter):
     # Raw Address
     raw_address = ""
     raw_address = raw_address if raw_address else MISSING
+    xpath_cs = '//div[@class="location-details"]//div[contains(@class, "location-custom-message")]/text()'
+    coming_soon = "".join(sel_raw.xpath(xpath_cs))
+    if "coming" in coming_soon.lower():
+        location_type = "Coming Soon"
     row = SgRecord(
         locator_domain=locator_domain,
         page_url=page_url,
