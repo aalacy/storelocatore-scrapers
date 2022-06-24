@@ -55,12 +55,12 @@ def fetch_data():
                         hoo_dict[day]["closes"] = closes
 
             for day, hours in hoo_dict.items():
-                opens = hours["opens"]
-                closes = hours["closes"]
+                opens = hours["opens"][:-3]
+                closes = hours["closes"][:-3]
                 hours_of_operation.append(f"{day} {opens} - {closes}")
             hours_of_operation = (
                 ", ".join(hours_of_operation) if hours_of_operation else ""
-            )
+            ).replace("00:00 - 00:00", "closed")
             page_url = "https://locations.monro.com/{}/{}/{}".format(
                 state, city.replace("Leroy", "Le-roy"), street_address.replace(" ", "-")
             )

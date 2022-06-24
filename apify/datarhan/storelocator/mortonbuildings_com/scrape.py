@@ -29,6 +29,8 @@ def fetch_data():
         location_name = poi_html.xpath("//a/text()")[0].strip()
         phone = poi_html.xpath('//a[@class="phone-link"]/text()')[0].strip()
         street_address = poi_html.xpath("//address/text()")[0].strip()
+        if zip_code in street_address:
+            street_address = ""
 
         item = SgRecord(
             locator_domain=domain,

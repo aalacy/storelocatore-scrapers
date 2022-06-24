@@ -39,7 +39,6 @@ def fetch_data():
             store_number = store_data["url"].split("/")[-1]
             phone = store_data["telephone"]
             location_type = store_data["@type"]
-
             geo_data = store_dom.xpath(
                 '//script[contains(text(), "__INITIAL_STATE__")]/text()'
             )[0]

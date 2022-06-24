@@ -26,7 +26,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.myrustybucket.com/wp-json/wp/v2/locations"
+    search_url = "https://www.myrustybucket.com/wp-json/wp/v2/locations/?status=publish&per_page=100"
     with SgFirefox(block_third_parties=True) as driver:
         driver.get(search_url)
         log.info(driver.page_source)
@@ -47,10 +47,10 @@ def fetch_data():
                 + store_json["address"]["street_name"]
             )
 
-            city = store_json["address"]["city"]
-            state = store_json["address"]["state_short"]
-            zip = store_json["address"]["post_code"]
-            country_code = store_json["address"]["country_short"]
+            city = store_json["address"].get("city", "<MISSING>")
+            state = store_json["address"].get("state_short", "<MISSING>")
+            zip = store_json["address"].get("post_code", "<MISSING>")
+            country_code = store_json["address"].get("country_short", "<MISSING>")
 
             phone = store_json.get("phone_number", "<MISSING>")
             location_type = "<MISSING>"

@@ -41,7 +41,7 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "TH"
         city = a.city or "<MISSING>"
-        map_link = "".join(d.xpath(".//preceding::iframe[1]/@nitro-lazy-src"))
+        map_link = "".join(d.xpath(".//preceding::iframe[1]/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
