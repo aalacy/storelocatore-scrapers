@@ -24,7 +24,7 @@ def fetch_data():
         '//li[@class="content-page"]/div/p[b[contains(text(), "Converse")]]'
     )
     for poi_html in all_locations:
-        location_name = poi_html.xpath('.//b/text()')[0]
+        location_name = poi_html.xpath(".//b/text()")[0]
         raw_adr = poi_html.xpath("text()")[3:]
         raw_adr = [e.strip() for e in raw_adr]
         addr = parse_address_intl(" ".join(raw_adr))
