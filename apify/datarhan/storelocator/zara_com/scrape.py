@@ -19,7 +19,11 @@ def fetch_data():
         url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
             all_coords.current_country(), lat, lng
         )
-        all_locations = session.get(url, headers=hdr).json()
+        all_locations = session.get(url, headers=hdr)
+        if all_locations.status_code != 200:
+            all_coords.found_nothing()
+            continue
+        all_locations = all_locations.json()
         if not all_locations:
             all_coords.found_nothing()
         for poi in all_locations:
@@ -66,7 +70,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
