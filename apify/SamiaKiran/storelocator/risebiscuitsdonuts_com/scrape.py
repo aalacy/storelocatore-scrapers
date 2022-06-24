@@ -32,6 +32,8 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             if "Opening Spring" in r.text:
                 continue
+            elif "Opening Summer" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1", {"class": "entry-title"}).text
             hours_of_operation = (
