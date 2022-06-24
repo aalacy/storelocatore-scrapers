@@ -47,12 +47,20 @@ def fetch_data():
             city = strip_accents(
                 soup.find("span", {"itemprop": "addressLocality"}).text
             )
+            if "-" in city:
+                city = city.strip("-")[0]
             zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
             phone = soup.find("span", {"itemprop": "telephone"}).text
             hour_list = soup.findAll("span", {"itemprop": "openingHours"})
             hours_of_operation = ""
             for hour in hour_list:
                 hours_of_operation = hours_of_operation + " " + hour["datetime"]
+            latitude, longitude = (
+                soup.select_one("img[src*=maps]")["src"]
+                .split("center=", 1)[1]
+                .split("&", 1)[0]
+                .split(",")
+            )
             country_code = "DE"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -66,8 +74,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 
