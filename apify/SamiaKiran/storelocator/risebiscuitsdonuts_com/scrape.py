@@ -29,7 +29,7 @@ def fetch_data():
         loclist = soup.find("div", {"class": "entry-content"}).findAll("a")
         for loc in loclist:
             page_url = loc["href"]
-            # log.info(page_url)
+            log.info(page_url)
             r = session.get(page_url, headers=headers)
             if "Opening Spring" in r.text:
                 continue
@@ -48,7 +48,6 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
-            print(address)
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
