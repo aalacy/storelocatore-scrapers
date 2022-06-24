@@ -120,16 +120,12 @@ def get_urls():
 
 
 def get_data():
-    x = 0
     try:
         with SgFirefox(
             block_third_parties=True,
             proxy_country="fr",
         ) as driver:
             for page_url_thing in crawl_state.request_stack_iter():
-                x = x + 1
-                if x == 10:
-                    return
                 page_url = page_url_thing.url.split("?")[0]
                 locator_domain = "carrefour.fr"
 
