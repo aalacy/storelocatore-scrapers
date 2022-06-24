@@ -7,6 +7,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+import time
+
 session = SgRequests()
 website = "extraspace.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -17,6 +22,17 @@ headers = {
 
 DOMAIN = "https://extraspace.com"
 MISSING = SgRecord.MISSING
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
 def fetch_data():
@@ -40,17 +56,24 @@ def fetch_data():
                         '<script id="JsonLdSelfStorageScript" type="application/ld+json">',
                         1,
                     )[1].split("</script>")[0]
-                    content = json.loads(content)
-                    city = content["address"]["addressLocality"]
-                    state = content["address"]["addressRegion"]
-                    zip_postal = content["address"]["postalCode"]
-                    street_address = content["address"]["streetAddress"].replace(
-                        "<br />", " "
+                    city = content.split('"addressLocality": "', 1)[1].split('"')[0]
+                    state = content.split('"addressRegion": "', 1)[1].split('"')[0]
+                    zip_postal = content.split('"postalCode": "', 1)[1].split('"')[0]
+                    street_address = (
+                        content.split('"streetAddress": "', 1)[1]
+                        .split('"')[0]
+                        .replace("<br />", " ")
                     )
-                    location_name = content["name"].replace("?", "")
-                    phone = content["telephone"].replace("+1-", "")
-                    latitude = content["geo"]["latitude"]
-                    longitude = content["geo"]["longitude"]
+                    location_name = (
+                        content.split('"name": "', 1)[1].split('"')[0].replace("?", "")
+                    )
+                    phone = (
+                        content.split('"telephone": "', 1)[1]
+                        .split('"')[0]
+                        .replace("+1-", "")
+                    )
+                    latitude = content.split('"latitude": "', 1)[1].split('"')[0]
+                    longitude = content.split('"longitude": "', 1)[1].split('"')[0]
                     store_number = page_url.split("/")[-2]
                     soup = BeautifulSoup(r.text, "html.parser")
                     hours_of_operation = (
