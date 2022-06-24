@@ -81,6 +81,7 @@ def fetch_data(sgw: SgWriter):
             .replace("Drive-Thru Only", "")
             .replace("Available after hours by appointment.", "")
             .replace("30", ":30")
+            .replace("Closed 1 hour for lunch daily", "")
             .strip()
         )
 
