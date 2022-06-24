@@ -5,7 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from lxml import html
-from proxyfier import ProxyProviders
 import ssl
 from tenacity import retry, stop_after_attempt
 import tenacity
@@ -56,9 +55,7 @@ def get_api_urls():
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(10))
 def get_response(page_url):
-    with SgRequests(
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER
-    ) as s2:
+    with SgRequests() as s2:
         r2 = s2.get(page_url, headers=headers)
         if r2.status_code == 200:
             return r2
@@ -67,10 +64,10 @@ def get_response(page_url):
 
 def fetch_data():
     api_urls = get_api_urls()
-    for pgn, url in enumerate(api_urls[0:1]):
+    for pgn, url in enumerate(api_urls[0:]):
         r1 = get_response(url)
         storesjson = r1.json()["storesjson"]
-        for idx, _ in enumerate(storesjson[0:2]):
+        for idx, _ in enumerate(storesjson[0:]):
             store_name = _["store_name"]
             sn = _["storelocator_id"]
             ph = _["phone"]
@@ -94,8 +91,8 @@ def fetch_data():
                     trstr = "".join(tr.xpath(".//text()"))
                     trstr = " ".join(trstr.split())
                     hoo.append(trstr)
-                    print(trstr)
                 hoo = ", ".join(hoo)
+                logger.info(f"HOO: {hoo}")
                 item = SgRecord(
                     locator_domain="shiekh.com",
                     page_url=page_url,
