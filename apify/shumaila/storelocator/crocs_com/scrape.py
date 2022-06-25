@@ -121,8 +121,10 @@ def fetch_locations(lat, lng):
         title = unidecode.unidecode(title)
         street = unidecode.unidecode(street)
         city = unidecode.unidecode(city)
-        state = unidecode.unidecode(state)
-
+        try:
+            state = unidecode.unidecode(state)
+        except:
+            pass
         locations.append(
             SgRecord(
                 locator_domain="https://www.crocs.com/",
@@ -148,7 +150,7 @@ def fetch_data():
 
     mylist = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=100,
         max_search_distance_miles=1000,
     )
     search = list(mylist)
