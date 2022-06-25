@@ -3,8 +3,6 @@ import ssl
 
 from bs4 import BeautifulSoup
 
-from sglogging import sglog
-
 from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
@@ -13,8 +11,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgselenium.sgselenium import SgChrome
-
-log = sglog.SgLogSetup().get_logger("lecreuset_com")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -30,7 +26,6 @@ def fetch_data(sgw: SgWriter):
     )
 
     with SgChrome(user_agent=user_agent) as driver:
-        log.info(base_link)
         driver.get(base_link)
         base = BeautifulSoup(driver.page_source, "lxml")
 
@@ -47,7 +42,6 @@ def fetch_data(sgw: SgWriter):
         continents = base.find_all(class_="mb-3 mb-md-0")[1:]
         for continent in continents:
             link = continent.a["href"]
-            log.info(link)
             driver.get(link)
             base = BeautifulSoup(driver.page_source, "lxml")
 
@@ -79,7 +73,6 @@ def fetch_data(sgw: SgWriter):
                     continue
 
                 location_name = raw_data[0].replace("\n", " ").strip()
-                log.info(location_name)
 
                 raw_address = " ".join(raw_data[1:-2]).replace("\n", " ")
                 if "le creuset shop" in raw_address.lower():
