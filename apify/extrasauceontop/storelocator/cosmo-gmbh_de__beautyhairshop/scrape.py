@@ -4,23 +4,36 @@ from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import unidecode
 
+
 def get_data():
     url = "https://www.cosmo-gmbh.de/standorte"
     with SgRequests() as session:
         response = session.get(url).text
-        list_object = ["['<div>COSMO" + part[:-1] + "</div>'" for part in response.split("['COSMO")[1:]]
+        list_object = [
+            "['<div>COSMO" + part[:-1] + "</div>'"
+            for part in response.split("['COSMO")[1:]
+        ]
 
         for location in list_object:
             locator_domain = "www.cosmo-gmbh.de"
             location_list = ast.literal_eval(location.split("],")[0] + "]")
-            location_soup = bs(unidecode.unidecode(location_list[0].replace("<br />", "\n")), "html.parser")
-            
+            location_soup = bs(
+                unidecode.unidecode(location_list[0].replace("<br />", "\n")),
+                "html.parser",
+            )
+
             page_url = location_soup.find_all("a")[-1]["href"]
             location_name = location_soup.find("div").text.strip().split("\n")[0]
 
             latitude = location_list[1]
             longitude = location_list[2]
-            city = "".join(part + " " for part in location_soup.find("div").text.strip().split("\n")[2].split(" ")[1:])
+            city = "".join(
+                part + " "
+                for part in location_soup.find("div")
+                .text.strip()
+                .split("\n")[2]
+                .split(" ")[1:]
+            )
             store_number = "<MISSING>"
             address = location_soup.find("div").text.strip().split("\n")[1]
             state = "<MISSING>"
@@ -31,7 +44,15 @@ def get_data():
 
             hours_response = unidecode.unidecode(session.get(page_url).text)
             hours_soup = bs(hours_response, "html.parser")
-            hours = hours_soup.find_all("div", attrs={"class": "salons-two-column"})[-1].text.strip().replace("\n", "").split("iten:")[1].split("Taglich")[0].lower().replace("uhr", "uhr ")
+            hours = (
+                hours_soup.find_all("div", attrs={"class": "salons-two-column"})[-1]
+                .text.strip()
+                .replace("\n", "")
+                .split("iten:")[1]
+                .split("Taglich")[0]
+                .lower()
+                .replace("uhr", "uhr ")
+            )
 
             while "  " in hours:
                 hours = hours.replace("  ", " ")
