@@ -1,52 +1,59 @@
+import json
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api_url = "https://www.rag-bone.com/stores"
-
-    r = session.get(api_url)
+    api = "https://www.rag-bone.com/stores"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='sl-store clearfix sl__store']")
+    text = "".join(tree.xpath("//main/@data-stores-model"))
+    js = json.loads(text)["stores"]
 
-    for d in divs:
-        slug = "".join(d.xpath(".//a[@class='sl__store-details-name']/@href"))
-        page_url = f"https://www.rag-bone.com{slug}"
-        street_address = "".join(
-            d.xpath(".//div[@itemprop='streetAddress']/text()")
-        ).strip()
-        city = "".join(d.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
-        state = "".join(d.xpath(".//span[@itemprop='addressRegion']/text()")).strip()
-        postal = "".join(d.xpath(".//span[@itemprop='postalCode']/text()")).strip()
-        phone = "".join(d.xpath(".//span[@itemprop='telephone']/text()")).strip()
+    for j in js:
+        adr1 = j.get("address1") or ""
+        adr2 = j.get("address2") or ""
+        adr3 = j.get("address3") or ""
 
-        if len(postal) == 5:
-            country_code = "US"
-        elif phone.startswith("+44"):
-            country_code = "GB"
-        else:
-            country_code = SgRecord.MISSING
+        raw_address = " ".join(f"{adr1} {adr2} {adr3}".split())
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("city")
 
-        location_name = "".join(
-            d.xpath(".//a[@class='sl__store-details-name']/text()")
-        ).strip()
+        state = SgRecord.MISSING
+        if "," in adr3 and "/" in adr3:
+            state = adr3.split(",")[-1].split("/")[0].strip()
+        postal = j.get("postalCode") or SgRecord.MISSING
+        country_code = j.get("countryCode") or ""
 
-        text = "".join(d.xpath(".//*[@data-pin]/@data-pin"))
-        try:
-            lat_lon = eval(text)
-            latitude, longitude = lat_lon[1:3]
-        except:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+        if country_code == "AU" and postal == SgRecord.MISSING:
+            street_address, postal = street_address.split(city)
 
-        hours = d.xpath(
-            ".//div[@class='sl__store-details-hours sl__store-details-txt']/text()|.//div[text()='Store Hours']/following-sibling::p[1]/text()"
-        )
-        hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours) or "Closed"
+        if country_code == "AU" and (not state.isupper() or state == SgRecord.MISSING):
+            postal = postal.strip()
+            state, postal = postal.split()
+
+        store_number = j.get("ID")
+        location_name = j.get("name")
+        page_url = f"https://www.rag-bone.com/store-details?storeID={store_number}"
+        phone = j.get("phone")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+
+        _tmp = []
+        source = j.get("storeHours") or "<html>"
+        root = html.fromstring(source)
+        hours = root.xpath("//text()")
+        for h in hours:
+            if not h.strip() or "Regular" in h:
+                continue
+            _tmp.append(h.strip())
+
+        hours_of_operation = ";".join(_tmp)
 
         row = SgRecord(
             page_url=page_url,
@@ -56,18 +63,23 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            phone=phone,
             latitude=latitude,
             longitude=longitude,
-            locator_domain=locator_domain,
+            phone=phone,
+            store_number=store_number,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+            locator_domain=locator_domain,
         )
 
         sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     locator_domain = "https://www.rag-bone.com/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        fetch_data(writer)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    with SgRequests() as session:
+        with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+            fetch_data(writer)

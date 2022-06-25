@@ -22,6 +22,11 @@ def fetch_data():
     for poi in data["entries"].values():
         if type(poi) == bool:
             continue
+        latitude = poi["latitude"]
+        longitude = poi["longitude"]
+        if latitude and "#" in latitude:
+            latitude = ""
+            longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -35,8 +40,8 @@ def fetch_data():
             store_number=poi["storeCode"],
             phone="",
             location_type="",
-            latitude=poi["latitude"],
-            longitude=poi["longitude"],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation="",
         )
 
