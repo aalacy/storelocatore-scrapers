@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import retry, stop_after_attempt
+import tenacity
 import ssl
 from lxml import html
 import time
@@ -50,55 +51,47 @@ def get_response(http, urlnum, url):
     raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
-def get_driver(url, class_name, timeout, driver=None):
-    if driver is not None:
-        driver.quit()
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-            WebDriverWait(driver, timeout).until(
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(30))
+def get_phone(idx1, storenum):
+    class_name = "dmGeoMLocItem"
+    try:
+        with SgChrome(
+            executable_path=ChromeDriverManager().install(),
+            user_agent=user_agent,
+            is_headless=True,
+        ) as driver:
+            driver.get(LOCATION_URL)
+            WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(f"Fix the issue {url}:(")
-            continue
-    return driver
-
-
-def get_phone(storenum):
-    class_name = "dmGeoMLocItem"
-    timeout = 20
-    driver = get_driver(LOCATION_URL, class_name, timeout)
-    location_xpath = (
-        f'//li[contains(@class, "dmGeoMLocItem") and contains(@geoid, "{storenum}")]'
-    )
-    logger.info(f"location xpath: {location_xpath}")
-    WebDriverWait(driver, 40).until(
-        EC.element_to_be_clickable((By.XPATH, location_xpath))
-    )
-    element = driver.find_element_by_xpath(location_xpath)
-    actions = ActionChains(driver)
-    actions.move_to_element(element).perform()
-    driver.find_element_by_xpath(location_xpath).click()
-    logger.info("Location Link Clicked")
-    time.sleep(5)
-    selphone = html.fromstring(driver.page_source, "lxml")
-    phone_xpath = '//a[contains(@href, "tel:")]/@phone'
-    phone = selphone.xpath(phone_xpath)
-    phone = "".join(phone)
-    phone = phone if phone else MISSING
-    logger.info(f"Phone: {phone} for {storenum}")
-    return phone
+            logger.info(
+                f"[{idx1}] Pulling the phone data from the store number {storenum}"
+            )
+            location_xpath = f'//li[contains(@class, "dmGeoMLocItem") and contains(@geoid, "{storenum}")]'
+            logger.info(f"location xpath: {location_xpath}")
+            WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, location_xpath))
+            )
+            logger.info("Element to be clickable performed!")
+            element = driver.find_element_by_xpath(location_xpath)
+            element.location_once_scrolled_into_view
+            actions = ActionChains(driver)
+            actions.move_to_element(element).perform()
+            logger.info("Element to hover over is done!")
+            driver.find_element_by_xpath(location_xpath).click()
+            logger.info("Location Link Clicked")
+            time.sleep(5)
+            selphone = html.fromstring(driver.page_source, "lxml")
+            phone_xpath = '//a[contains(@href, "tel:")]/@phone'
+            phone = selphone.xpath(phone_xpath)
+            phone = "".join(phone)
+            phone = phone if phone else MISSING
+            logger.info(f"Phone: {phone} for {storenum}")
+            return phone
+    except Exception as e:
+        raise Exception(
+            f"Please fix RetryError << {e} >> with sgselenium driver for {storenum}"
+        )
 
 
 def fetch_records(http: SgRequests):
@@ -128,7 +121,9 @@ def fetch_records(http: SgRequests):
 
         cc = pai.country
         cc = cc if cc is not None else MISSING
-        phone = get_phone(sn)
+        logger.info(f"[{idx}] Store Number:{sn}")
+        phone = get_phone(idx, sn)
+        logger.info(f"Phone: {phone}")
         item = SgRecord(
             page_url=LOCATION_URL,
             locator_domain=DOMAIN,

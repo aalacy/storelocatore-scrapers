@@ -1,102 +1,71 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import json
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
-    base_url = "https://shoprite.com/"
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://shoprite.com/"
+    page_url = "https://www.shoprite.com/sm/pickup/rsid/3000/store"
+    session = SgRequests()
     headers = {
-        "accept": "*/*",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-
-    payload = "Region=&SearchTerm=21216&FilterOptions%5B0%5D.IsActive=false&FilterOptions%5B0%5D.Name=Online+Grocery+Delivery&FilterOptions%5B0%5D.Value=MwgService%3AShop2GroDelivery&FilterOptions%5B1%5D.IsActive=false&FilterOptions%5B1%5D.Name=Online+Grocery+Pickup&FilterOptions%5B1%5D.Value=MwgService%3AShop2GroPickup&FilterOptions%5B2%5D.IsActive=false&FilterOptions%5B2%5D.Name=Platters%2C+Cakes+%26+Catering&FilterOptions%5B2%5D.Value=MwgService%3AOrderReady&FilterOptions%5B3%5D.IsActive=false&FilterOptions%5B3%5D.Name=Pharmacy&FilterOptions%5B3%5D.Value=MwgService%3AUmaPharmacy&FilterOptions%5B4%5D.IsActive=false&FilterOptions%5B4%5D.Name=Retail+Dietitian&FilterOptions%5B4%5D.Value=ShoppingService%3ARetail+Dietitian&Radius=50000&Take=999&Redirect="
-
-    soup = BeautifulSoup(
-        session.post(
-            "https://shoprite.com/StoreLocatorSearch", headers=headers, data=payload
-        ).text,
-        "lxml",
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    js_block = (
+        "".join(tree.xpath('//script[contains(text(), "PRELOADED_STATE")]/text()'))
+        .split("PRELOADED_STATE__=")[1]
+        .strip()
     )
-    for dt in soup.find_all("li", {"class": "stores__store"}):
-        addr = list(dt.find("div", {"class": "store__basic"}).stripped_strings)
-        location_name = addr[0]
-        street_address = addr[2]
-        city = addr[3].split(",")[0]
-        if len(addr[3].split(",")[1].strip().split(" ")) == 3:
-            state = " ".join(addr[3].split(",")[1].strip().split(" ")[:2])
-            zipp = addr[3].split(",")[1].strip().split(" ")[-1]
-        else:
-            state = addr[3].split(",")[1].strip().split(" ")[0]
-            zipp = addr[3].split(",")[1].strip().split(" ")[-1]
-        phone = addr[4].replace(" ", "")
-        store_number = json.loads(
-            dt.find("button", {"class": "store__focusResultButton"})["data-json"]
-        )["storeId"]
-        coord = dt.find_all("a")[1]["href"].split("=")[1].split(",")
-        latitude = coord[0].replace("0000000000", "")
-        longitude = coord[1].replace("0000000000", "")
-        hours_of_operation = dt.find(
-            "p", {"class": "hoursAndServices__schedule storeDetails__content"}
-        ).text.strip()
-        page_url = dt.find("a")["href"]
+    js = json.loads(js_block)
+    for j in js["stores"]["allStores"]["items"]:
 
-        store = []
-        store.append(base_url)
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append("US")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("ShopRite")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-        store.append(page_url)
-        yield store
+        location_name = j.get("name") or "<MISSING>"
+        street_address = (
+            f"{j.get('addressLine1')} {j.get('addressLine2') or ''}".replace(
+                "None", ""
+            ).strip()
+            or "<MISSING>"
+        )
+        state = j.get("countyProvinceState") or "<MISSING>"
+        postal = j.get("postCode") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        store_number = j.get("retailerStoreId") or "<MISSING>"
+        latitude = j.get("location").get("latitude") or "<MISSING>"
+        longitude = j.get("location").get("longitude") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours_of_operation = j.get("openingHours") or "<MISSING>"
+        hours_of_operation = str(hours_of_operation).replace("\n", " ").strip()
 
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

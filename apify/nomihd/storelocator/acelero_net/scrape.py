@@ -95,18 +95,18 @@ def fetch_data():
                     pass
 
                 page_link = center.xpath("./p[1]/a/@href")[0].strip()
-                center_page_link = (
-                    page_link if "http" in page_link else (location + page_link)
-                )
+                page_url = page_link if "http" in page_link else (location + page_link)
 
-                log.info(center_page_link)
+                log.info(page_url)
                 hours_of_operation = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
                 try:
                     page_res = SgRequests.raise_on_err(
-                        session.get(center_page_link, headers=headers)
+                        session.get(page_url, headers=headers)
                     )
 
-                    page_url = center_page_link
                     page_sel = lxml.html.fromstring(page_res.text)
 
                     hrs_list = page_sel.xpath(
@@ -122,11 +122,29 @@ def fetch_data():
                             hours_of_operation = "<MISSING>"
                     else:
                         hours_of_operation = "<MISSING>"
+
+                    try:
+                        latitude = (
+                            page_res.text.split('"mapLat":')[1]
+                            .strip()
+                            .split(",")[0]
+                            .strip()
+                        )
+                    except:
+                        pass
+
+                    try:
+                        longitude = (
+                            page_res.text.split('"mapLng":')[1]
+                            .strip()
+                            .split(",")[0]
+                            .strip()
+                        )
+                    except:
+                        pass
                 except SgRequestError as e:
                     log.error(e.status_code)
 
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,

@@ -51,52 +51,59 @@ def pull_content(url):
     return soup
 
 
-def get_latlong(url):
-    latlong = re.search(r"@([\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
-    if not latlong:
-        return MISSING, MISSING
-    return latlong.group(1), latlong.group(2)
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select(
-        "div#shopify-section-store-locator div.section__body div.section__block > div.section__content"
-    )
+    contents = soup.select("div.stores-list__grid--all div.stores-list__store")
+    script_content = soup.find("script", string=re.compile(r"SDG\.Data\.stores"))
+    latlong = re.findall(r"store\['latLng'\] = '(.*)';", script_content.string)
+    phones = re.findall(r"store\['phone'\] = '(.*)';", script_content.string)
+    num = 0
     for row in contents:
-        location_name = row.find("h4").text.strip()
-        info = row.find("ul").find_all("li")
-        raw_address = info[0].text.replace("\n", ",").strip()
+        page_url = (
+            LOCATION_URL
+            + "?location="
+            + row.find("button", {"class": "stores-list__store-title"})[
+                "data-store-handle"
+            ]
+        )
+        store = pull_content(page_url)
+        location_name = row.find(
+            "button", {"class": "stores-list__store-title"}
+        ).text.strip()
+        raw_address = (
+            row.find("div", {"class": "stores-list__store-info"})
+            .get_text(strip=True, separator=",")
+            .replace(" ", "")
+            .strip()
+            .rstrip(",")
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
         try:
-            phone = info[1].find("a").text.strip()
+            phone = bs(phones[num], "lxml").text.strip()
             hours_of_operation = (
-                info[2]
-                .find("table")
-                .get_text(strip=True, separator=",")
-                .replace("day,", "day: ")
-                .replace("a,m", "am")
-                .replace(",-", " -")
-                .replace("1,1", "11")
+                store.find("div", {"class": "stores-list__store-hours"})
+                .get_text(strip=True, separator=" ")
+                .strip()
             )
         except:
             phone = MISSING
             hours_of_operation = MISSING
         location_type = MISSING
-        if "Opening" in info[1].text.strip():
-            location_type = "COMING_SOON"
         country_code = "US"
+        if "Opening" in phone:
+            phone = MISSING
+            hours_of_operation = MISSING
+            location_type = "COMING_SOON"
         if "UK" in location_name:
             country_code = "UK"
             state = MISSING
         store_number = MISSING
-        map_link = row.find("a", text="View on map")["href"]
-        latitude, longitude = get_latlong(map_link)
+        latitude, longitude = latlong[num].split(",")[:2]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -111,6 +118,7 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+        num += 1
 
 
 def scrape():

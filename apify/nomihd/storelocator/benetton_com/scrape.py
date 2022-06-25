@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
@@ -6,6 +7,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.dynamic import SearchableCountries
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 website = "benetton.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -25,47 +29,88 @@ headers = {
 }
 
 
-def fetch_data():
-    # Your scraper here
-    search_url = "https://us.benetton.com/store-locator"
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
+
+    def __init__(self, http: SgRequests, country: str):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
+        self.__country_name = country
+        session = SgRequests()
+        search_url = "https://us.benetton.com/store-locator"
         stores_req = session.get(search_url)
-        API_KEY = (
+        self.__API_KEY = (
             stores_req.text.split('data-publicKey="')[1].strip().split('"')[0].strip()
         )
-        params = (("key", API_KEY),)
 
-        stores_req = session.get(
-            "https://api.woosmap.com/tiles/0-0-0.grid.json",
-            headers=headers,
-            params=params,
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+
+        lat = coord[0]
+        lng = coord[1]
+        log.info(
+            f"fetching data for country: {self.__country_name} having coordinates:{lat},{lng}"
         )
-        stores = json.loads(stores_req.text)["data"]
-        for store_ID in stores.keys():
-            store_number = stores[store_ID]["store_id"]
-            page_url = "<MISSING>"
-            log.info(f"fetching data for record having ID: {store_number}")
-            store_req = session.get(
-                "https://api.woosmap.com/stores/" + store_number,
-                headers=headers,
-                params=params,
-            )
-            store_json = json.loads(store_req.text)
+        params = (
+            ("key", self.__API_KEY),
+            ("lat", lat),
+            ("lng", lng),
+            ("max_distance", "25000"),
+            ("stores_by_page", "40"),
+            ("limit", "40"),
+            ("page", "1"),
+        )
+        stores_req = self.__http.get(
+            "https://api.woosmap.com/stores/search", headers=headers, params=params
+        )
+        stores = json.loads(stores_req.text)["features"]
+        for store in stores:
+            prop = store["properties"]
+            store_number = prop["store_id"]
             locator_domain = website
-            prop = store_json["properties"]
             location_name = prop["name"]
+            raw_address = ""
             street_address = ", ".join(prop["address"]["lines"]).strip()
+            if street_address:
+                raw_address = street_address
+
             city = prop["address"]["city"]
+            if city:
+                raw_address = raw_address + ", " + city
+
             state = "<MISSING>"
             zip = prop["address"]["zipcode"]
+            if zip:
+                if zip == "." or zip == "-":
+                    zip = "<MISSING>"
+                else:
+                    raw_address = raw_address + ", " + zip
 
             country_code = prop["address"]["country_code"]
 
             phone = prop["contact"]["phone"]
+            if not phone:
+                phone = "<MISSING>"
+
+            if phone and phone == "null":
+                phone = "<MISSING>"
+
             location_type = "<MISSING>"
 
-            latitude = store_json["geometry"]["coordinates"][1]
-            longitude = store_json["geometry"]["coordinates"][0]
+            latitude = store["geometry"]["coordinates"][1]
+            longitude = store["geometry"]["coordinates"][0]
+            found_location_at(latitude, longitude)
 
             hours_of_operation = "<MISSING>"
             hours_list = []
@@ -96,7 +141,7 @@ def fetch_data():
                 pass
 
             hours_of_operation = "; ".join(hours_list).strip()
-
+            page_url = "<MISSING>"
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -112,21 +157,32 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
 def scrape():
     log.info("Started")
-    count = 0
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        expected_search_radius_miles=20,
+    )
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+        with SgRequests(dont_retry_status_codes=([404])) as http:
+            countries = SearchableCountries.ALL
+            for country in countries:
+                search_iter = _SearchIteration(http=http, country=country)
+                par_search = ParallelDynamicSearch(
+                    search_maker=search_maker,
+                    search_iteration=search_iter,
+                    country_codes=[country],
+                )
 
-    log.info(f"No of records being processed: {count}")
+                for rec in par_search.run():
+                    writer.write_row(rec)
+
     log.info("Finished")
 
 

@@ -1,65 +1,52 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     base_link = "https://bahamabucks.com/locations/"
+    js_link = "https://bahamabucks.com/wp-content/cache/autoptimize/js/autoptimize_a8a773fbd229a9bf45d2408d87b2c7ec.js"
 
     session = SgRequests()
+    req = session.get(js_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    js = base.text.split("shops:")[1].split(",comingSoon:")[0]
+    stores = json.loads(js)
+
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    js = base.script.contents[0].split("shops:")[1].split("}\n}")[0] + "}}"
-    stores = json.loads(js)
-
     items = base.find_all(class_="location-result")
 
-    data = []
     locator_domain = "bahamabucks.com"
 
     for store_number in stores:
         store = stores[store_number]
         location_name = store["information"]["shop_location"]
         street_address = (
-            store["address"]["line1"].strip() + " " + store["address"]["line2"].strip()
+            (
+                store["address"]["line1"].strip()
+                + " "
+                + store["address"]["line2"].strip()
+            )
+            .split("Typhoon Texas")[0]
+            .split("Cy-Fair")[0]
+            .split("Zaraplex")[0]
+            .split("Shoppes")[0]
+            .split("Minute")[0]
+            .strip()
         )
         city = store["address"]["city"]
         state = store["address"]["state"]
@@ -89,33 +76,47 @@ def fetch_data():
                 link = "https://bahamabucks.com" + item.a["href"].replace(
                     "bayamón", "bayamon"
                 )
+        if link == "https://bahamabucks.com/shop/":
+            link = base_link
+        if (
+            location_name == "Typhoon Texas"
+            and hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            continue
+        if (
+            location_name == "Hudson Oaks"
+            and hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            link = base_link
+        if (
+            hours_of_operation
+            == "Monday Tuesday Wednesday Thursday Friday Saturday Sunday"
+        ):
+            hours_of_operation = ""
+        if not location_name:
+            location_name = "BAHAMA BUCK'S"
 
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

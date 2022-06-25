@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal import sgpostal as parser
+import json
 
 website = "papajohnspizzaguam.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -31,42 +31,45 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://papajohnspizzaguam.com/contact-us/"
+    search_url = "https://www.papajohnsguam.com/store-locator"
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath("//div[./h4[strong] and .//div[@class='address']]")
+    stores = json.loads(
+        "".join(search_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')).strip()
+    )["props"]["pageProps"]["locations"]
 
-    addressess = search_sel.xpath('//div[@class="address"]')
-    phones = search_sel.xpath('//*[contains(text(),"Tel:")]/text()')
-    hours = search_sel.xpath('//*[contains(text(),"Store Hour:")]/text()')
-    for index in range(0, len(store_list)):
-
+    for store in stores:
         page_url = search_url
 
         locator_domain = website
-        location_name = "".join(store_list[index].xpath("h4/strong/text()")).strip()
-        raw_address = ", ".join(addressess[index].xpath("p[1]/text()")).strip()
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+        location_name = store["name"]
+        street_address = (
+            store["address"]["street_number"] + " " + store["address"]["street_name"]
+        )
+        city = store["address"]["city"]
+        state = store["address"]["region"]
+        if state and state == "-":
+            state = "<MISSING>"
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
-        country_code = "Guam"
+        zip = store["address"]["postcode"]
+        country_code = store["address"]["country"]
 
-        store_number = "<MISSING>"
-        phone = "".join(phones[index]).strip().replace("Tel:", "").strip()
+        store_number = store["id"]
+        phone = store["address"]["phone_number"]
         location_type = "<MISSING>"
 
-        hours_of_operation = (
-            "".join(hours[index]).strip().replace("Store Hour:", "").strip()
-        )
+        hours_list = []
+        hours = store["opening_hours"]["pickup"]
+        for day in hours.keys():
+            if not isinstance(hours[day], bool):
+                time = hours[day][0]
+                hours_list.append(day + ":" + time)
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        hours_of_operation = "; ".join(hours_list).strip()
+
+        latitude = store["address"]["latitude"]
+        longitude = store["address"]["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -83,7 +86,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
@@ -91,7 +93,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

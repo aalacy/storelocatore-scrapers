@@ -21,6 +21,8 @@ def fetch_data(sgw: SgWriter):
     for d in div:
         slug = "".join(d.xpath(".//@href"))
         page_url = f"https://www.hotnjuicycrawfish.com{slug}"
+        if page_url == "https://www.hotnjuicycrawfish.com#":
+            continue
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -64,8 +66,11 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = "<MISSING>", "<MISSING>"
         if latitude == "<MISSING>":
             map_link = "".join(tree.xpath("//iframe/@src"))
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            try:
+                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
             "".join(
                 tree.xpath('//div[@class="contact"]/following-sibling::div[1]//text()')

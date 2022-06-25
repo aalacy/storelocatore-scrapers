@@ -27,31 +27,59 @@ def fetch_data():
 
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        content = r.text.split(link.split("/")[-1] + '","address":', 1)[1].split(
-            '},"', 1
-        )[0]
-        content = content + "}"
-        content = json.loads(content)
-
-        street = content["streetAddress"]
-        city = content["addressLocality"]
-        pcode = content["postalCode"]
-        state = content["addressRegion"]
-        ccode = "US"
-
-        lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-        longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0]
-        phone = r.text.split('},"phone":"', 1)[1].split('"', 1)[0]
-        hours = (
-            soup.text.split("OFFICE HOURS", 1)[1]
-            .split("ACCESS HOURS", 1)[0]
-            .replace("pm", "pm ")
-        )
-        hours = re.sub(pattern, " ", hours).strip()
         try:
-            hours = hours.split("(", 1)[0]
+            content = r.text.split(link.split("/")[-1] + '","address":', 1)[1].split(
+                '},"', 1
+            )[0]
+            content = content + "}"
+            content = json.loads(content)
+
+            street = content["streetAddress"]
+            city = content["addressLocality"]
+            pcode = content["postalCode"]
+            state = content["addressRegion"]
+            ccode = "US"
+
+            lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+            longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0]
+            phone = r.text.split("Call Now (", 1)[1].split('"', 1)[0]
+            phone = "(" + phone
+
+            hours = ""
+            hourslist = soup.findAll("div", {"class": "rnl-Content"})
+            for hr in hourslist:
+                try:
+                    if "HOURS" in hr.find("span").text:
+                        hours = hr.text
+                        break
+                except:
+                    continue
+            hours = (
+                hours.split("OFFICE HOURS", 1)[1]
+                .split("ACCESS HOURS", 1)[0]
+                .replace("pm", "pm ")
+            )
+            hours = re.sub(pattern, " ", hours).strip()
+
+            try:
+                hours = hours.split("(", 1)[0]
+            except:
+                pass
+            try:
+                hours = hours.split("hours:", 1)[1].strip()
+            except:
+                pass
         except:
-            pass
+            street = soup.find("span", {"class": "p-street-address"}).text
+            city = soup.find("span", {"class": "p-locality"}).text
+            state = soup.find("span", {"class": "p-region"}).text
+            pcode = soup.find("span", {"class": "p-postal-code"}).text
+            phone = soup.find("span", {"class": "p-tel"}).text
+            hours = (
+                soup.find("div", {"class": "office-hours-condensed"}).find("div").text
+            )
+            lat = r.text.split('"latitude": "', 1)[1].split('"', 1)[0]
+            longt = r.text.split('"longitude": "', 1)[1].split('"', 1)[0]
         ltype = "Store"
         if "Storage Court" in title:
             pass

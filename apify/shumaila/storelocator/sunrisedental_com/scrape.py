@@ -23,17 +23,24 @@ def fetch_data():
     divlist = divlist + soup.select('loc:contains("top")')
     for div in divlist:
         link = div.text
+
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         try:
             title = soup.find("strong").text
         except:
-            title = (
-                soup.find("title")
-                .text.split("-", 1)[0]
-                .replace("Dentist Near Me ", "Sunrise Dental ")
-                .strip()
-            )
+            try:
+                title = (
+                    soup.find("title")
+                    .text.split("-", 1)[0]
+                    .replace("Dentist Near Me ", "Sunrise Dental ")
+                    .strip()
+                )
+            except:
+                title = soup.text.split("Call Sunrise Dental ", 1)[1].split(
+                    " if you have ", 1
+                )[0]
+                title = "Sunrise Dental " + title
         try:
             title = title.split("offers", 1)[0]
         except:
@@ -59,9 +66,21 @@ def fetch_data():
                     2
                 ].text.strip()
             hours = "Monday" + hours.split("Dental", 1)[0]
-        address = (
-            soup.findAll("iframe")[-1]["title"].replace(" United States", "").strip()
-        )
+        coord = ""
+        try:
+            address = (
+                soup.findAll("iframe")[-1]["title"]
+                .replace(" United States", "")
+                .strip()
+            )
+            coord = soup.findAll("iframe")[-1]["src"]
+        except:
+            address = (
+                soup.findAll("iframe")[-2]["title"]
+                .replace(" United States", "")
+                .strip()
+            )
+            coord = soup.findAll("iframe")[-2]["src"]
         address = usaddress.parse(address)
 
         i = 0
@@ -101,6 +120,26 @@ def fetch_data():
             .strip()
         )
 
+        r = session.get(coord, headers=headers)
+        try:
+            lat, longt = (
+                r.text.split(" " + city, 1)[1]
+                .split("[null,null,", 1)[1]
+                .split("]", 1)[0]
+                .split(",")
+            )
+        except:
+
+            try:
+                lat, longt = (
+                    r.text.split(pcode, 1)[1]
+                    .split("[null,null,", 1)[1]
+                    .split("]", 1)[0]
+                    .split(",")
+                )
+            except:
+                longt, lat = r.text.split(",-", 1)[1].split("]", 1)[0].split(",", 1)
+                longt = "-" + str(longt)
         yield SgRecord(
             locator_domain="https://sunrisedental.com/",
             page_url=link,
@@ -113,8 +152,8 @@ def fetch_data():
             store_number=SgRecord.MISSING,
             phone=phone.strip(),
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude="<MISSING>",
+            latitude=str(lat),
+            longitude=str(longt),
             hours_of_operation=hours,
         )
 

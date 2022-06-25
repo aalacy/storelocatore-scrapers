@@ -1,29 +1,14 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-import re
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgSelenium
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "stewartsmarketplace.com"
-BASE_URL = "https://stewartsmarketplace.com/"
+BASE_URL = "https://stewartsmarketplace.com"
 LOCATION_URL = "https://stewartsmarketplace.com/location-choice"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -51,7 +36,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -67,68 +51,52 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def get_latlong(url):
-    latlong = re.search(r".*sll=(-?[\d]*\.[\d]*),(-[\d]*\.[\d]*)", url)
-    if not latlong:
-        return "<MISSING>", "<MISSING>"
-    return latlong.group(1), latlong.group(2)
-
-
-def wait_load(driver):
-    try:
-        WebDriverWait(driver, 5).until(
-            lambda driver: driver.execute_script("return jQuery.active == 0")
-        )
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "mainContent"))
-        )
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//*[contains(text(), 'Store Hours')]")
-            )
-        )
-    except:
-        driver.refresh()
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-    wait_load(driver)
-    btn = driver.find_element_by_css_selector("div#storeInfoContainerFront > div.row")
-    btn.find_element_by_class_name("locationChoice").click()
-    wait_load(driver)
-    contents = driver.find_elements_by_css_selector(
-        "div#storeInfoContainerFront > div.forBackground a.btn.floatLeft"
+    soup = pull_content(BASE_URL)
+    contents = soup.select(
+        "a.v-btn.v-btn--is-elevated.v-btn--has-bg.theme--light.v-size--default.primary.mb-3"
     )
-    page_urls = [elem.get_attribute("href") for elem in contents]
-    for page_url in page_urls:
-        driver.get(page_url)
-        wait_load(driver)
-        soup = bs(driver.page_source, "lxml")
-        location_name = soup.find("span", {"id": "theStoreName"}).text
-        raw_address = (
-            soup.find("h5", text="Store Address")
+    for row in contents:
+        page_url = BASE_URL + row["href"]
+        store = pull_content(page_url)
+        location_name = store.find("h1", {"class": "text-h2"}).text.strip()
+        raw_address = " ".join(
+            store.find("h3", text="Address")
             .find_next("p")
             .get_text(strip=True, separator=",")
+            .split()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = MISSING
-        location_type = "stewartsmarketplace"
-        phone = soup.find("h5", text="Phone Number").find_next("p").text
-        maps_link = driver.find_element_by_xpath(
-            '//*[@id="mapContain"]/iframe'
-        ).get_attribute("src")
-        latitude, longitude = get_latlong(maps_link)
-        hours_of_operation = (
-            soup.find("h5", text="Store Hours")
-            .find_next("div")
+        location_type = MISSING
+        phone = store.find("h3", text="Phone Number").find_next("a").text
+        latitude = MISSING
+        longitude = MISSING
+        hoo = (
+            store.find("h3", text="Store Hours")
+            .find_next("p")
+            .get_text(strip=True, separator=",")
+            .replace(":,", ": ")
+            .replace("Closed to Closed", "Closed")
+            + ", "
+        )
+        hoo += (
+            store.find("h3", text="Store Hours")
+            .find_next("p")
+            .find_next("p")
             .get_text(strip=True, separator=",")
             .replace(":,", ": ")
             .replace("Closed to Closed", "Closed")
         )
+        hours_of_operation = hoo.strip().rstrip(",")
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -147,21 +115,12 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
-    driver.quit()
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

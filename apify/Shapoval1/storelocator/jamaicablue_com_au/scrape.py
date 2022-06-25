@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -28,24 +29,16 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
-        tmp = []
-        for d in days:
-            day = d
-            time = j.get("openHours").get(f"{d}")
-            line = f"{day} {time}"
-            tmp.append(line)
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
         hours_of_operation = (
-            "; ".join(tmp).replace("None", "Closed").strip() or "<MISSING>"
+            " ".join(tree.xpath('//tr[@itemprop="openingHours"]/td//text()'))
+            .replace("\n", "")
+            .strip()
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("New Years Day ") != -1:
+            hours_of_operation = hours_of_operation.split("New Years Day")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -8,7 +8,7 @@ from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "www.bathandbodyworks.it"
+website = "bathandbodyworks.it"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
@@ -46,22 +46,29 @@ def fetch_data():
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
-
-        stores = search_sel.xpath('//p[@class="ccare-shipping" and b]')
-
-        for _, store in enumerate(stores, 1):
+        stores = search_sel.xpath('//div[@class="col-6"]')
+        for store in stores:
 
             page_url = search_url
 
             locator_domain = website
 
-            location_name = "".join(store.xpath("./b/text()")).strip()
+            location_name = "".join(store.xpath(".//b/text()")).strip()
+            if len(location_name) <= 0:
+                continue
             map_link = "".join(store.xpath('.//a[contains(@href,"maps")]/@href'))
             store_info = list(
                 filter(str, [x.strip() for x in store.xpath(".//text()")])
             )
+            add_list = []
+            for index in range(1, len(store_info)):
+                if "Telefono" in store_info[index]:
+                    phone = "".join(store_info[index]).replace("Telefono:", "").strip()
+                else:
+                    if "Trova il negozio su" not in store_info[index]:
+                        add_list.append(store_info[index])
 
-            raw_address = " ".join(store_info[1:-3]).strip()
+            raw_address = " ".join(add_list).strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -76,7 +83,6 @@ def fetch_data():
             country_code = "IT"
 
             store_number = "<MISSING>"
-            phone = store_info[-3].replace("Telefono:", "").strip()
             location_type = "<MISSING>"
 
             hours_of_operation = "<MISSING>"

@@ -14,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://fruits-passion.com"
-base_url = "https://fruits-passion.com/en-ca/amlocator/"
+base_url = "https://fruits-passion.com/en_ca/amlocator/"
 
 
 def _p(val):

@@ -91,7 +91,7 @@ class _SearchIteration(SearchIteration):
             if "results" in json_str:
 
                 for store in json.loads(json_str)["results"]:
-                    page_url = "<MISSING>"
+                    page_url = store.get("WEBSITE", "<MISSING>")
                     locator_domain = website
                     location_name = store["COMPANYNAM"]
                     street_address = store["ADDRESS"]
@@ -110,7 +110,47 @@ class _SearchIteration(SearchIteration):
                     else:
                         location_type = "<MISSING>"
 
-                    hours_of_operation = "<MISSING>"
+                    hours_list = []
+                    try:
+                        hours = store["ACTIVITY"][0]
+                        for key in hours.keys():
+                            if "OPENTIME" in key:
+                                day = hours[key]["DATEWEEK"]
+                                if (
+                                    "MORNING_FROM" in hours[key]
+                                    and "AFTERNOON_TO" in hours[key]
+                                ):
+                                    time = (
+                                        hours[key]["MORNING_FROM"]
+                                        + " - "
+                                        + hours[key]["AFTERNOON_TO"]
+                                    )
+                                elif (
+                                    "MORNING_FROM" in hours[key]
+                                    and "MORNING_TO" in hours[key]
+                                ):
+                                    time = (
+                                        hours[key]["MORNING_FROM"]
+                                        + " - "
+                                        + hours[key]["MORNING_TO"]
+                                    )
+                                elif (
+                                    "AFTERNOON_FROM" in hours[key]
+                                    and "AFTERNOON_TO" in hours[key]
+                                ):
+                                    time = (
+                                        hours[key]["AFTERNOON_FROM"]
+                                        + " - "
+                                        + hours[key]["AFTERNOON_TO"]
+                                    )
+                                else:
+                                    time = "Closed"
+
+                                hours_list.append(day + ":" + time)
+                    except:
+                        pass
+
+                    hours_of_operation = "; ".join(hours_list).strip()
                     latitude = store["YCOORD"]
                     longitude = store["XCOORD"]
 
@@ -133,6 +173,7 @@ class _SearchIteration(SearchIteration):
                     )
 
         except:
+            log.error(self.__country_name)
             pass
 
 

@@ -8,15 +8,17 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("sallybeauty_com")
 
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+    "upgrade-insecure-requests": "1",
 }
 
+
 search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=None,
-    max_search_results=None,
+    country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+    max_search_distance_miles=250,
+    expected_search_radius_miles=100,
 )
 
 
@@ -33,7 +35,12 @@ def fetch_data():
     for curl in canadaurls:
         url = curl
         logger.info(("Pulling Canada URL %s..." % curl))
+        session = SgRequests()
         r = session.get(url, headers=headers)
+        if "disabled or blocked" in r.text:
+            logger.info("BLOCKED BY SITE")
+            session = SgRequests()
+            r = session.get(url, headers=headers)
         try:
             for line in r.iter_lines():
                 if '"ID": "' in line:
@@ -135,6 +142,58 @@ def fetch_data():
             pass
 
     coordslist = [
+        "32.159599,-110.989014",
+        "18.143903,-65.808248",
+        "17.979477,-66.095159",
+        "18.231512,-65.904906",
+        "18.123636,-66.133426",
+        "18.237111,-66.03966",
+        "18.241633,-66.03465",
+        "18.247714,-66.025041",
+        "18.235215,-66.058015",
+        "18.340187,-66.068171",
+        "18.375374,-65.927479",
+        "18.379538,-65.886931",
+        "18.3751,-65.831909",
+        "18.3699,-66.015736",
+        "18.392945,-65.97628",
+        "18.370038,-66.06752",
+        "18.394086,-65.998169",
+        "18.344387,-65.674297",
+        "18.3959,-66.042",
+        "18.369607,-66.109966",
+        "18.400184,-66.074873",
+        "18.383624,-66.13986",
+        "18.273583,-66.272398",
+        "18.360518,-66.188032",
+        "18.008161,-66.383825",
+        "18.40543,-66.1603",
+        "18.422852,-66.162718",
+        "18.411,-66.3205",
+        "18.464049,-66.272534",
+        "18.043514,-66.577051",
+        "18.431551,-66.473689",
+        "17.995108,-66.638353",
+        "18.025773,-66.855708",
+        "18.481498,-66.769889",
+        "18.09064,-67.030716",
+        "18.343308,-66.993613",
+        "18.468512,-67.02345",
+        "18.243415,-67.1619",
+        "18.425295,-67.149301",
+        "40.074863,-80.876674",
+        "40.439648,-80.001022",
+        "40.487874,-79.888025",
+        "40.454142,-80.163224",
+        "40.584376,-79.708917",
+        "40.525709,-80.007169",
+        "40.367084,-80.671435",
+        "40.646048,-79.71222",
+        "40.683031,-80.105587",
+        "40.682719,-80.305781",
+        "40.876961,-79.948567",
+        "41.191946,-79.394133",
+        "41.126253,-78.733591",
         "61.576507,-149.403765",
         "61.226256,-149.743034",
         "61.140596,-149.86516",
@@ -254,7 +313,12 @@ def fetch_data():
             + "&long="
             + str(y)
         )
+        session = SgRequests()
         r = session.get(url, headers=headers)
+        if "disabled or blocked" in r.text:
+            logger.info("BLOCKED BY SITE")
+            session = SgRequests()
+            r = session.get(url, headers=headers)
         try:
             for line in r.iter_lines():
                 if '"ID": "' in line:
@@ -351,104 +415,108 @@ def fetch_data():
         x = xlat
         y = ylng
         logger.info(("Pulling Lat-Long %s,%s..." % (str(x), str(y))))
+        logger.info(f"Coordinates remaining: {search.items_remaining()}")
         url = (
             "https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius=250&radius=250&lat="
             + str(x)
             + "&long="
             + str(y)
         )
+        session = SgRequests()
         r = session.get(url, headers=headers)
-        try:
-            for line in r.iter_lines():
-                if '"ID": "' in line:
-                    hours = ""
-                    loc = "<MISSING>"
-                    add = ""
-                    city = ""
-                    state = ""
-                    zc = ""
-                    country = ""
-                    typ = "<MISSING>"
-                    lat = ""
-                    lng = ""
-                    phone = ""
-                    website = "sallybeauty.com"
-                    store = line.split('"ID": "')[1].split('"')[0]
-                if '"name": "' in line:
-                    name = line.split('"name": "')[1].split('"')[0]
-                if '"address1": "' in line:
-                    add = line.split('"address1": "')[1].split('"')[0]
-                if '"address2": "' in line:
-                    add = add + " " + line.split('"address2": "')[1].split('"')[0]
-                    add = add.strip()
-                if '"city": "' in line:
-                    city = line.split('"city": "')[1].split('"')[0]
-                if '"postalCode": "' in line:
-                    zc = line.split('"postalCode": "')[1].split('"')[0]
-                if '"latitude": ' in line:
-                    lat = line.split('"latitude": ')[1].split(",")[0]
-                if '"longitude": ' in line:
-                    lng = line.split('"longitude": ')[1].split(",")[0]
-                if '"phone": "' in line:
-                    phone = line.split('"phone": "')[1].split('"')[0]
-                if '"stateCode": "' in line:
-                    state = line.split('"stateCode": "')[1].split('"')[0]
-                if '"stateCode": "' in line:
-                    state = line.split('"stateCode": "')[1].split('"')[0]
-                if '"storeHours": "' in line:
-                    days = (
-                        line.split('"storeHours": "')[1]
-                        .split('</div>\\n",')[0]
-                        .split("<div class='store-hours-day'>")
-                    )
-                    for day in days:
-                        if '<span class=\\"hours-of-day\\">' in day:
-                            hrs = (
-                                day.split("\\n")[0]
-                                + day.split('<span class=\\"hours-of-day\\">')[1].split(
-                                    "<"
-                                )[0]
-                            )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
-                    if store not in ids and " " not in zc:
-                        cstore = store.replace("store_", "")
-                        ids.append(store)
-                        logger.info(("Pulling Store ID #%s..." % store))
-                        country = "US"
-                        if zc == "":
-                            zc = "<MISSING>"
-                        if phone == "":
-                            phone = "<MISSING>"
-                        if store == "store_10777":
-                            zc = "06473"
-                        if "." in lat and "." in lng:
-                            loc = (
-                                "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
-                                + lat
-                                + "&long="
-                                + lng
-                            )
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=cstore,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
+        if "disabled or blocked" in r.text:
+            logger.info("BLOCKED BY SITE")
+            session = SgRequests()
+            r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '"ID": "' in line:
+                hours = ""
+                loc = "<MISSING>"
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                country = ""
+                typ = "<MISSING>"
+                lat = ""
+                lng = ""
+                phone = ""
+                website = "sallybeauty.com"
+                store = line.split('"ID": "')[1].split('"')[0]
+            if '"name": "' in line:
+                name = line.split('"name": "')[1].split('"')[0]
+            if '"address1": "' in line:
+                add = line.split('"address1": "')[1].split('"')[0]
+            if '"address2": "' in line:
+                add = add + " " + line.split('"address2": "')[1].split('"')[0]
+                add = add.strip()
+            if '"city": "' in line:
+                city = line.split('"city": "')[1].split('"')[0]
+            if '"postalCode": "' in line:
+                zc = line.split('"postalCode": "')[1].split('"')[0]
+            if '"latitude": ' in line:
+                lat = line.split('"latitude": ')[1].split(",")[0]
+            if '"longitude": ' in line:
+                lng = line.split('"longitude": ')[1].split(",")[0]
+            if '"phone": "' in line:
+                phone = line.split('"phone": "')[1].split('"')[0]
+            if '"stateCode": "' in line:
+                state = line.split('"stateCode": "')[1].split('"')[0]
+            if '"stateCode": "' in line:
+                state = line.split('"stateCode": "')[1].split('"')[0]
+            if '"storeHours": "' in line:
+                days = (
+                    line.split('"storeHours": "')[1]
+                    .split('</div>\\n",')[0]
+                    .split("<div class='store-hours-day'>")
+                )
+                for day in days:
+                    if '<span class=\\"hours-of-day\\">' in day:
+                        hrs = (
+                            day.split("\\n")[0]
+                            + day.split('<span class=\\"hours-of-day\\">')[1].split(
+                                "<"
+                            )[0]
                         )
-        except:
-            pass
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+                if store not in ids and " " not in zc:
+                    cstore = store.replace("store_", "")
+                    ids.append(store)
+                    logger.info(("Pulling Store ID #%s..." % store))
+                    country = "US"
+                    if zc == "":
+                        zc = "<MISSING>"
+                    if phone == "":
+                        phone = "<MISSING>"
+                    if store == "store_10777":
+                        zc = "06473"
+                    if "." in lat and "." in lng:
+                        loc = (
+                            "https://www.sallybeauty.com/store-details/?showMap=true&horizontalView=true&lat="
+                            + lat
+                            + "&long="
+                            + lng
+                        )
+                        search.found_location_at(lat, lng)
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=cstore,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():

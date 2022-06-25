@@ -1,58 +1,28 @@
-import csv
-
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     session = SgRequests()
     headers = {
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     }
     locator_domain = "geico.com"
 
-    max_results = 10
     max_distance = 50
-
-    dup_tracker = set()
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
     )
 
     for postcode in search:
@@ -64,7 +34,11 @@ def fetch_data():
 
         try:
             res_json = session.get(base_link, headers=headers).json()[1:]
+            if not res_json:
+                search.found_nothing()
+                continue
         except:
+            search.found_nothing()
             continue
 
         for loc in res_json:
@@ -74,12 +48,6 @@ def fetch_data():
             if not phone_number:
                 phone_number = "<MISSING>"
             page_url = "https://www.geico.com" + loc["url"]
-
-            if page_url not in dup_tracker:
-                dup_tracker.add(page_url)
-            else:
-                continue
-
             lat = loc["latitude"]
             longit = loc["longitude"]
             search.found_location_at(lat, longit)
@@ -103,29 +71,26 @@ def fetch_data():
                 )
                 if "day" not in hours.lower():
                     hours = "<MISSING>"
-            store_data = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone_number,
-                location_type,
-                lat,
-                longit,
-                hours,
-                page_url,
-            ]
 
-            yield store_data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone_number,
+                    location_type=location_type,
+                    latitude=lat,
+                    longitude=longit,
+                    hours_of_operation=hours,
+                )
+            )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

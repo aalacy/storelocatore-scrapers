@@ -26,7 +26,7 @@ def fetch_data():
         url = start_url.format(zipcode, coord[0], coord[1])
         all_locations = session.get(url, headers=hdr)
         if all_locations.status_code != 200:
-            log.info(f"Status Code: {all_locations.status_code}")
+            log.info(f"Status Code: {all_locations.status_code} for {zipcode}")
             continue
         for poi in all_locations.json():
             location_name = poi["officeDetails"]["name"]
@@ -81,6 +81,8 @@ def fetch_data():
             hoo = hoo.replace("Our opening hours have changed ", "")
             if city:
                 city = city.replace(" Ze2", "")
+            if not street_address:
+                street_address = location_name
 
             item = SgRecord(
                 locator_domain=domain,

@@ -22,20 +22,17 @@ def get_data():
             page_url = "https://vitalitybowls.com/locations/san-jose-brokaw/"
         if page_url == "https://vitalitybowls.com/las-vegas-centennial-hills/":
             page_url = "https://vitalitybowls.com/locations/las-vegas-centennial-hills/"
+        if page_url == "https://vitalitybowls.com/san-jose-cherry-ave/":
+            continue
 
         response = session.get(page_url).text
         soup = bs(response, "html.parser")
         locator_domain = "vitalitybowls.com"
-        location_name = soup.find(
-            "h2", attrs={"class": "et_pb_slide_title"}
-        ).text.strip()
-
-        if "What Are Our Customers Saying?" in location_name:
-            location_name = (
-                soup.find("div", attrs={"class": "et_pb_row et_pb_row_0"})
-                .text.strip()
-                .split("\n")[0]
-            )
+        location_name = (
+            soup.find("div", attrs={"class": "et_pb_row et_pb_row_0"})
+            .text.strip()
+            .split("\n")[0]
+        )
 
         country_code = "US"
         store_number = "<MISSING>"

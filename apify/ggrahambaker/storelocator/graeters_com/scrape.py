@@ -1,141 +1,108 @@
-import usaddress
-from lxml import html
-from sgscrape.sgrecord import SgRecord
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from concurrent import futures
+
+session = SgRequests()
+website = "graeters_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://www.graeters.com"
+MISSING = SgRecord.MISSING
 
 
-def get_urls():
+def fetch_data():
+    if True:
+        url = "https://www.graeters.com/sitemap.xml"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("loc")
+        for loc in loclist:
+            if "/retail-stores" in loc.text:
+                page_url = loc.text
+                log.info(page_url)
+                r = session.get(page_url, headers=headers)
+                if "Permanently Closed" in r.text:
+                    continue
+                soup = BeautifulSoup(r.text, "html.parser")
+                location_name = soup.find("h1").text
+                raw_address = (
+                    r.text.split("located at")[1]
+                    .split("and try")[0]
+                    .replace("\n", " ")
+                    .replace("431476", "43147")
+                    .replace("4504 0", "45040")
+                )
+                try:
+                    phone = soup.find("a", {"class": "location-phone"}).text
+                except:
+                    phone = soup.select("a[href*=tel]")[2].text
+                hours_of_operation = (
+                    soup.findAll("ul")[7]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                coords = (
+                    soup.select_one("a[href*=maps]")["href"].split("/")[-1].split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+                pa = parse_address_intl(raw_address)
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
-    }
-    r = session.get("https://www.graeters.com/sitemap.xml", headers=headers)
-    tree = html.fromstring(r.content)
-    return tree.xpath("//url/loc[contains(text(), '/retail-stores/')]/text()")
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
 
+                city = pa.city
+                city = city.strip() if city else MISSING
 
-def get_data(url, sgw: SgWriter):
-    locator_domain = "http://graeters.com/"
-    page_url = url
+                state = pa.state
+                state = state.strip() if state else MISSING
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
-    }
-    r = session.get(page_url, headers=headers)
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-    tree = html.fromstring(r.text)
-    ad = "".join(tree.xpath('//address[@class="location-address"]/text()'))
-    if page_url == "https://www.graeters.com/stores/retail-stores/louisville/ferncreek":
-        ad = (
-            "".join(tree.xpath('//p[contains(text(),"located at")]/text()'))
-            .split("located at")[1]
-            .split("and")[0]
-            .strip()
-        )
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-    country_code = "US"
-    location_name = "".join(
-        tree.xpath('//div[contains(@class, "location-details")]//h1//text()')
-    )
-    phone = "".join(tree.xpath('//a[@class="location-phone"]/text()')) or "<MISSING>"
-    hours_of_operation = (
-        " ".join(
-            tree.xpath(
-                '//span[text()="Get Directions"]/preceding::ul[1]/li/text() | //span[text()="Get it delivered now"]/preceding::ul[1]/li/text() | //span[text()="Get it delivered now with Uber Eats"]/preceding::ul[1]/li/text()'
-            )
-        )
-        .replace("\n", "")
-        .strip()
-        or "<MISSING>"
-    )
-
-    try:
-        latitude = (
-            "".join(tree.xpath('//a[text()="Get Directions"]/@href'))
-            .split("/")[-1]
-            .split(",")[0]
-            .strip()
-        )
-        longitude = (
-            "".join(tree.xpath('//a[text()="Get Directions"]/@href'))
-            .split("/")[-1]
-            .split(",")[1]
-            .strip()
-        )
-    except:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    p_closed = "".join(tree.xpath('//strong[text()="PERMANENTLY CLOSED"]/text()'))
-    if p_closed:
-        return
-
-    row = SgRecord(
-        locator_domain=locator_domain,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code=country_code,
-        store_number=SgRecord.MISSING,
-        phone=phone,
-        location_type=SgRecord.MISSING,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
-        raw_address=ad,
-    )
-
-    sgw.write_row(row)
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
-def fetch_data(sgw: SgWriter):
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
-    session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
-        fetch_data(writer)
+    scrape()

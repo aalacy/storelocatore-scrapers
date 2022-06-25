@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -8,47 +9,38 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.honda.ae/"
-    api_url = "https://www.honda.ae/cars/locations/?city=&businessFunctions=Sales"
+    locator_domain = "https://honda.ae/"
+    api_url = "https://cars.honda.ae/en/our-locations/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[contains(@class, "list-item locations listing")]')
-    for d in div:
+    div = "".join(tree.xpath('//script[contains(text(), "locationList")]/text()'))
+    js = json.loads(div)
+    for j in js["props"]["pageProps"]["locationLists"]["locationList"]:
 
-        page_url = "".join(d.xpath('.//a[@title="Full Details"]/@href'))
-        page_url = "https:" + page_url
-        location_name = "".join(d.xpath(".//h3//text()"))
-        location_type = "Showroom"
+        slug = j.get("name")
+        page_url = f"https://cars.honda.ae/en/our-locations/{slug}/"
+        location_name = j.get("Location_Name")
+        location_type = j.get("LocationType")
         street_address = (
-            "".join(d.xpath('.//span[@class="address-line1"]/text()'))
-            .replace(",", "")
-            .strip()
+            "".join(j.get("Address")).replace("\n", "").replace("\r", "").strip()
         )
         country_code = "AE"
-        city = (
-            "".join(d.xpath('.//span[@class="address-city"]/text()'))
-            .replace(",", "")
-            .strip()
-        )
+        city = j.get("emirates")
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        ll = "".join(tree.xpath('//iframe[@class="map"]/@src'))
-        latitude = ll.split("q=")[1].split(",")[0].strip()
-        longitude = ll.split("q=")[1].split(",")[1].split("&")[0].strip()
-        phone = (
-            "".join(tree.xpath('//span[contains(@class, "telephony")]/text()'))
-            or "<MISSING>"
-        )
-        hours_of_operation = (
-            " ".join(tree.xpath('//div[@class="loc-hours-table"]//tr/td//text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split())
+        map_link = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+        s_js = json.loads(map_link)["props"]["pageProps"]["locationDetail"]
+        map_link = s_js.get("Google_Map")
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        store_number = s_js.get("Location_Id")
+        phone_list = tree.xpath('//a[contains(@href, "tel")]/@href')
+        phone = "".join(phone_list[0]).replace("tel:", "").strip()
+        hours_of_operation = f"{s_js.get('Opening_Time')} - {s_js.get('Closing_Time')}"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -59,7 +51,7 @@ def fetch_data(sgw: SgWriter):
             state=SgRecord.MISSING,
             zip_postal=SgRecord.MISSING,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=location_type,
             latitude=latitude,

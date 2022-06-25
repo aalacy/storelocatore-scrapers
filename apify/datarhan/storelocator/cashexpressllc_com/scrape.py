@@ -8,22 +8,12 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.cashexpressllc.com/storelocator/getstores"
+    start_url = "https://www.cashexpressllc.com/api/v1/get-stores"
     domain = "cashexpressllc.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    frm = {
-        "txtLocation": "",
-        "selDistance": "5",
-        "txtLat": "",
-        "txtLng": "",
-        "add1": "",
-        "city": "",
-        "statename": "",
-        "zip": "",
-    }
-    data = session.post(start_url, headers=hdr, data=frm).json()
+    data = session.post(start_url, headers=hdr).json()
 
     for poi in data["stores"]:
         street_address = poi["address1"]

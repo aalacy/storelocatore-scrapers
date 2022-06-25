@@ -1,53 +1,55 @@
+import ssl
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+ssl._create_default_https_context = ssl._create_unverified_context
+
 website = "moesitaliansandwiches_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-}
 
-DOMAIN = "https://www.moesitaliansandwiches.com"
+DOMAIN = "https://www.moesitaliansandwiches.com/"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    if True:
-        url = "https://www.moesitaliansandwiches.com/locations"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "pm-location"})
+    with SgChrome() as driver:
+        driver.get("https://www.moesitaliansandwiches.com/locations")
+        loclist = driver.page_source.split('customMetaTitle":"Menu |')[1:]
+        page_list = []
         for loc in loclist:
-
-            location_name = loc.find("h4").text
-            temp = loc.findAll("p")
-            page_url = DOMAIN + loc.find("a", {"class": "location-button"})["href"]
+            page_url = DOMAIN + loc.split('"')[0].lower().strip().replace(" ", "-")
+            if page_url in page_list:
+                continue
+            page_list.append(page_url)
             log.info(page_url)
-            address = temp[0].get_text(separator="|", strip=True).split("|")
-            address = " ".join(address[:-1])
-            phone = temp[1].text
+            driver.get(page_url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             hours_of_operation = (
-                loc.find("div", {"class": "hours"})
+                soup.find("div", {"class": "hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace(
+                    "NOW OFFERING CURBSIDE SERVICE & DELIVERY THROUGH DOOR DASH", ""
+                )
             )
             if "NOW OFFERING" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split(" NOW OFFERING")[0]
-            elif "NEW" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("NEW")[0]
-            elif "ONLINE" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("ONLINE")[0]
-            elif "DELIVERY" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("DELIVERY")[0]
-            address = address.replace(",", " ").replace("inside Mobil", "")
+                hours_of_operation = hours_of_operation.split("NOW OFFERING")[0]
+            elif "ONLINE ORDERING" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("ONLINE ORDERING")[0]
+            elif "DELIVERY NOW" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("DELIVERY NOW")[0]
+            temp = soup.find("div", {"class": "col-md-6 pm-custom-section-col"})
+            location_name = temp.find("h4").text
+            temp = temp.findAll("p")
+            address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+            phone = temp[1].text
+            address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -84,27 +86,24 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,
-                hours_of_operation=hours_of_operation.strip(),
+                hours_of_operation=hours_of_operation,
             )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

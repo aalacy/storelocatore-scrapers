@@ -49,6 +49,16 @@ def fetch_data():
                         '//script[contains(text(), "streetAddress")]/text()'
                     )[0]
                     poi = json.loads(poi)
+                    hoo = []
+                    for e in poi["openingHoursSpecification"]:
+                        day = e["dayOfWeek"].split("/")[-1]
+                        if e.get("opens"):
+                            opens = e["opens"][:-3]
+                            closes = e["closes"][:-3]
+                            hoo.append(f"{day}: {opens} - {closes}")
+                        else:
+                            hoo.append(f"{day}: closed")
+                    hoo = " ".join(hoo)
 
                     item = SgRecord(
                         locator_domain=domain,
@@ -64,7 +74,7 @@ def fetch_data():
                         location_type=poi["@type"],
                         latitude=poi["geo"]["latitude"],
                         longitude=poi["geo"]["longitude"],
-                        hours_of_operation=" ".join(poi["openingHours"]),
+                        hours_of_operation=hoo,
                     )
 
                     yield item
