@@ -102,7 +102,7 @@ class _SearchIteration(SearchIteration):
                 phone = script.find("phone").text.replace("&#xa0;", "")
                 location_type = script.find("icon").text.strip()
                 store_number = script.find("clientkey").text
-                found_location_at(latitude, longitude)
+                found_location_at(float(latitude), float(longitude))
                 if "n/a" in phone:
                     phone = "<MISSING>"
 
