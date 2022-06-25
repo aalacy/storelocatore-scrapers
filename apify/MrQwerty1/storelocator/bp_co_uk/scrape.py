@@ -1,7 +1,7 @@
 import time
 import json
 from sgrequests import SgRequests
-from sglogging import sglog
+from sglogging import sglog  # noqa
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
