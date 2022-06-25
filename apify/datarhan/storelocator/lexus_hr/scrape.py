@@ -24,8 +24,6 @@ def fetch_data():
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/it/it/drive/15.436903/38.051059?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/lt/lt/drive/25.282911/54.687046?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/at/de/drive/15.75/48.33333?count=500&extraCountries=&isCurrentLocation=false",
-        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/se/sv/drive/18.071093/59.325117?count=500&extraCountries=&isCurrentLocation=false",
-
     }
     l_url = {
         "hr": "https://www.lexus.hr/contact/dealers",
