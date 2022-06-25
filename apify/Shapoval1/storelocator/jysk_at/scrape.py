@@ -23,6 +23,7 @@ def fetch_data(sgw: SgWriter):
         if country_url == "https://jysk.ru/":
             continue
         country_code = "".join(d.xpath(".//text()"))
+
         r = session.get(country_url)
         tree = html.fromstring(r.text)
         slug = "".join(
@@ -31,6 +32,7 @@ def fetch_data(sgw: SgWriter):
         single_page_url = f"{country_url}{slug}".replace("//", "/").replace(
             "https:/", "https://"
         )
+
         r = session.get(single_page_url)
         tree = html.fromstring(r.text)
         js_block = (
@@ -44,6 +46,7 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         js = json.loads(js_block)
+
         for j in js:
             location_name = j.get("name")
             latitude = j.get("lat")
@@ -59,40 +62,30 @@ def fetch_data(sgw: SgWriter):
                 "//", "/"
             ).replace("https:/", "https://")
             location_type = "<MISSING>"
-            try:
-                street_address = f"{js.get('street')} {js.get('house')}".strip()
-                state = "<MISSING>"
-                postal = js.get("zipcode")
-                city = js.get("city")
-                phone = js.get("tel") or "<MISSING>"
-                hours = js.get("opening")
-                tmp = []
-                for h in hours:
-                    day = (
-                        "".join(h.get("day"))
-                        .replace("0", "Sunday")
-                        .replace("1", "Monday")
-                        .replace("2", "Tuesday")
-                        .replace("3", "Wednesday")
-                        .replace("4", "Thursday")
-                        .replace("5", "Friday")
-                        .replace("6", "Saturday")
-                    )
-                    time = h.get("format_time")
-                    line = f"{day} {time}"
-                    if line == "Sunday 0:00 - 24:00":
-                        line = "Sunday Closed"
-                    tmp.append(line)
-                hours_of_operation = "; ".join(tmp)
-            except:
-                street_address, city, state, postal, phone, hours_of_operation = (
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
+            street_address = f"{js.get('street')} {js.get('house')}".strip()
+            state = "<MISSING>"
+            postal = js.get("zipcode")
+            city = js.get("city")
+            phone = js.get("tel") or "<MISSING>"
+            hours = js.get("opening")
+            tmp = []
+            for h in hours:
+                day = (
+                    str(h.get("day"))
+                    .replace("0", "Sunday")
+                    .replace("1", "Monday")
+                    .replace("2", "Tuesday")
+                    .replace("3", "Wednesday")
+                    .replace("4", "Thursday")
+                    .replace("5", "Friday")
+                    .replace("6", "Saturday")
                 )
+                time = h.get("format_time")
+                line = f"{day} {time}"
+                if line == "Sunday 0:00 - 24:00":
+                    line = "Sunday Closed"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
             if street_address == "<MISSING>":
                 continue
 

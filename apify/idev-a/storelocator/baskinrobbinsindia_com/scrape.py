@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         search.found_location_at(lat, long)
         for j in js:
 
-            page_url = "https://www.chopard.com/en-intl/store-locator.html"
+            page_url = "https://baskinrobbinsindia.com/pages/store-locator"
             location_name = j.get("name") or "<MISSING>"
             ad = j.get("address_line_1") or "<MISSING>"
             if ad:
