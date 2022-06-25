@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
 
@@ -19,7 +19,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def pull_content(url):
@@ -35,10 +35,11 @@ def fetch_data():
     for row in data["props"]["pageProps"]["locations"]:
         page_url = LOCATION_URL + row["slug"]
         content = pull_content(page_url)
-        info = json.loads(
-            content.find("script", {"type": "application/ld+json"}).string
-        )
+        json_string = content.find_all("script", {"type": "application/ld+json"})
+        info = json.loads(json_string[0].string)
         location_name = row["name"]
+        if "address" not in info:
+            info = json.loads(json_string[1].string)
         street_address = info["address"]["streetAddress"]
         city = info["address"]["addressLocality"]
         state = info["address"]["addressRegion"]
@@ -77,15 +78,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
