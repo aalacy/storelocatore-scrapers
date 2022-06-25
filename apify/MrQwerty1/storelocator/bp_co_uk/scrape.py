@@ -66,7 +66,7 @@ def fetch_single_co_ord(coord, retry=1):
 
 def fetch_data():
     coords = fetch_all_coord([-89, -179, 89, 179])
-    log.info(f"Total co ordinates = {len(coords)}")
+    log.info(f"Total co-ordinates = {len(coords)}")
 
     count = 0
     store_added = 0
@@ -76,11 +76,10 @@ def fetch_data():
         log.debug(f"{count}. stores = {len(stores)}")
 
         for store in stores:
-            if store.get("open_status") == "unknown":
-                continue
+
             location_name = store.get("name")
-            store_number = store.get("id")
-            location_type = store.get("site_brand")
+            store_number = store.get("id").strip()
+            location_type = store.get("site_brand") + ", " + store.get("open_status")
             street_address = store.get("address")
             city = store.get("city")
             state = store.get("state")
