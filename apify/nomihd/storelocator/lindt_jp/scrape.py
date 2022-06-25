@@ -58,7 +58,15 @@ def fetch_data():
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
+            if (
+                "オープン予定"
+                in "".join(
+                    store_sel.xpath('//div[@class="info_content"]/p/text()')
+                ).strip()
+            ):
 
+                log.info("\nskipped\n")
+                continue
             types = store_sel.xpath('//div[@class="tag-group"]/div//text()')
             loc_type_list = []
             for typ in types:
@@ -112,6 +120,9 @@ def fetch_data():
                 .replace("Sat;", "Sat:")
                 .replace("Sun;", "Sun:")
                 .replace("Thurs;", "Thurs:")
+                .strip()
+                .split("; ※")[0]
+                .strip()
             )
 
             store_number = page_url.split("/")[-2]

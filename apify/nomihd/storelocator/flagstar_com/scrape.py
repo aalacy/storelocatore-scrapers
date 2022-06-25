@@ -74,9 +74,17 @@ def fetch_data():
                 state = "".join(store.xpath("@data-state")).strip()
                 zip = "".join(store.xpath("@data-zip")).strip()
                 country_code = "US"
-                phone = "".join(store.xpath("@data-bankingphone")).strip()
+                phone = store.xpath('td[5]//a[contains(@href,"tel:")]/text()')
+                if len(phone) > 0:
+                    phone = phone[0]
+                else:
+                    phone = ""
+
                 if len(phone) <= 0:
-                    phone = "".join(store.xpath("@data-loanphone")).strip()
+                    phone = "".join(store.xpath("@data-bankingphone")).strip()
+                    if len(phone) <= 0:
+                        phone = "".join(store.xpath("@data-loanphone")).strip()
+
                 store_number = "".join(store.xpath("@data-branchnum")).strip()
                 latitude = "".join(store.xpath("@data-lattitude")).strip()
                 longitude = "".join(store.xpath("@data-longitude")).strip()

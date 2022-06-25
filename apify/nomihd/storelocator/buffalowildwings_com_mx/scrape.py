@@ -52,7 +52,7 @@ def fetch_data():
     search_url = "https://www.buffalowildwings.com.mx/ubicaciones"
     search_res = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(search_res.text)
-    stores = stores_sel.xpath('//div[@role="listitem"]')
+    stores = stores_sel.xpath('//div[@class="sucursales-list-item w-dyn-item"]')
     for store in stores:
         page_url = search_url
         locator_domain = website
@@ -60,7 +60,6 @@ def fetch_data():
         location_name = "".join(
             store.xpath('div[@class="title-div-sucursal-item"]/h3[1]/text()')
         ).strip()
-
         street_address = ", ".join(
             store.xpath('.//h4[@class="direccionsucursal"]/text()')
         ).strip()

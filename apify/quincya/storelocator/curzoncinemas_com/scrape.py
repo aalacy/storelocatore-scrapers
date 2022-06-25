@@ -32,6 +32,7 @@ def fetch_data(sgw: SgWriter):
     for script in all_scripts:
         if '"postcode"' in str(script):
             script = str(script)
+            break
     raw_data = script.split('"cinemas":')[1].split('}],"curzonHome')[0] + "}]"
 
     stores = json.loads(raw_data)

@@ -52,7 +52,7 @@ def fetch_data(sgw: SgWriter):
     page_url = "https://www.leboulangercafe.com/locations"
     with SgChrome() as fox:
         fox.get(page_url)
-        time.sleep(3)
+        time.sleep(10)
         source = fox.page_source
 
     tree = html.fromstring(source)

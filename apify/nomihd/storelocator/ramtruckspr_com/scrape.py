@@ -41,7 +41,7 @@ def fetch_data():
 
     search_url = "https://www.ramtruckspr.com/en/concesionarios.html"
 
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 
@@ -54,6 +54,9 @@ def fetch_data():
             locator_domain = website
 
             location_name = "".join(store.xpath(".//h4//text()")).strip()
+            if len(location_name) <= 0:
+                continue
+
             page_url = search_url
             store_info = list(
                 filter(
@@ -114,6 +117,7 @@ def fetch_data():
                     hours_of_operation = "".join(hours_of_operation[1:]).strip()
 
             map_link = "".join(store.xpath('.//iframe[contains(@src,"maps")]/@src'))
+            log.info(map_link)
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(

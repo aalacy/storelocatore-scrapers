@@ -1165,6 +1165,124 @@ def scrape_iraq(session, headers):
     return locs
 
 
+def scrape_qatar(session, headers):
+    response = session.get("https://qatar.texaschicken.com/en/Locations").text
+    lines = response.split("\n")
+
+    locs = []
+    for line in lines:
+
+        if "markers.push" in line:
+            line = (
+                line.replace("markers.push([", "")
+                .replace("]);", "")
+                .strip()
+                .replace("\t", "")
+                .replace("\r", "")
+                .replace("'", "")
+                .split(",")
+            )
+
+            locator_domain = "qatar.texaschicken.com"
+            page_url = "https://qatar.texaschicken.com/en/Locations"
+            location_name = line[0]
+            latitude = line[2]
+            longitude = line[1]
+            store_number = line[-1].strip()
+
+            params = {
+                "ID": int(store_number),
+                "Text": "",
+                "isDelivery": "",
+                "isWifi": "",
+                "isDrive": "",
+                "isKidsArea": "",
+                "isHandicap": "",
+                "isHours": "",
+                "_isMall": "",
+                "_isBreakfast": "",
+                "_isfacility": "",
+                "_isfacility2": "",
+                "_isfacility3": "",
+                "lang": "en",
+            }
+
+            location_response = session.post(
+                "https://qatar.texaschicken.com/Locations/AjaxSearch",
+                headers=headers,
+                json=params,
+            ).text
+            location_soup = bs(location_response, "html.parser")
+
+            address_parts = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+                .split(", ")
+            )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
+            address = "".join(part + " " for part in address_parts[:-2])
+
+            if address == "":
+                address = "".join(part + " " for part in address_parts)
+
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "Qatar"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+
+            try:
+                hours = (
+                    location_soup.find("p", attrs={"class": "font-15"})
+                    .text.strip()
+                    .replace("Opening ", "")
+                    .replace("\r", " ")
+                    .replace("\n", " ")
+                    .replace("\t", " ")
+                    .replace("                          ", " ")
+                )
+
+                if hours.lower() == "daily: closed":
+                    continue
+
+            except Exception:
+                hours = "<MISSING>"
+
+            if "temporarily closed" in hours.lower():
+                continue
+
+            locs.append(
+                {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                    "raw_address": raw_address,
+                }
+            )
+
+    return locs
+
+
 def get_data():
     headers = {
         "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
@@ -1279,6 +1397,12 @@ def get_data():
 
         elif country == "Iraq":
             locs = scrape_iraq(session, headers)
+
+            for loc in locs:
+                yield loc
+
+        elif country == "Qatar":
+            locs = scrape_qatar(session, headers)
 
             for loc in locs:
                 yield loc

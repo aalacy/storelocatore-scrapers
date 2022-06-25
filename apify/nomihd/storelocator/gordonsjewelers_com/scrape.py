@@ -6,23 +6,26 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import json
 
 website = "gordonsjewelers.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
+
 headers = {
     "authority": "www.gordonsjewelers.com",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
     "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
     "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "sec-fetch-site": "none",
     "sec-fetch-mode": "navigate",
     "sec-fetch-user": "?1",
     "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
@@ -41,6 +44,8 @@ def fetch_data():
         state_url = base + "/store-finder/" + "".join(state.xpath(".//@href"))
 
         log.info(state_url)
+        if "/contact-us" in state_url:
+            break
         state_res = session.get(state_url, headers=headers)
         state_sel = lxml.html.fromstring(state_res.text)
 
@@ -92,8 +97,20 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours_of_operation = "<MISSING>"
+            hours = json.loads(
+                store_res.text.split("var storeInformation = ")[1]
+                .strip()
+                .split(";")[0]
+                .strip()
+                .replace("},", "}")
+                .strip()
+            )["openings"]
+            hours_list = []
+            for day in hours.keys():
+                time = hours[day]
+                hours_list.append(day + time)
 
+            hours_of_operation = "; ".join(hours_list).strip()
             latitude, longitude = (
                 "".join(store_sel.xpath('.//*[@itemprop="latitude"]//text()')).strip(),
                 "".join(store_sel.xpath('.//*[@itemprop="longitude"]//text()')).strip(),

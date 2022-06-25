@@ -9,11 +9,12 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
+import html
 
 DOMAIN = "slimchickens.com"
 BASE_URL = "https://www.slimchickens.com/"
 LOCATION_URL = "https://slimchickens.com/location-menus/"
-UK_LOCATION_URL = "https://www.slimchickens.co.uk/location-menus/"
+UK_LOCATION_URL = "https://www.slimchickens.co.uk/locations"
 API_URL = "https://storerocket.io/api/user/56wpZ22pAn/locations?radius=50&units=miles"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -25,6 +26,9 @@ session = SgRequests(verify_ssl=False)
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 MISSING = "<MISSING>"
+
+
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def pull_content(url):
@@ -117,6 +121,7 @@ def fetch_data():
             if hours_of_operation
             else SgRecord.MISSING
         )
+        hours_of_operation = hours_of_operation.replace("Hours:", "").strip()
         phone = [e for e in row["fields"] if e["name"] == "Phone"]
         phone = phone[0]["pivot_field_value"] if phone else SgRecord.MISSING
         if not row["country"]:
@@ -146,62 +151,70 @@ def fetch_data():
             raw_address=raw_address,
         )
 
+    def load_json(content):
+        return json.loads(html.unescape(content))
+
     # Scrape UK
     soup = pull_content(UK_LOCATION_URL)
-    links = soup.find("li", {"id": "nav-menu-item-11723"}).find_all("a")
-    del links[0]
-    for row in links:
-        if "coming-soon" in row["href"]:
-            continue
-        if "slimchickens.co.uk" not in row["href"]:
-            page_url = "https://www.slimchickens.co.uk" + row["href"]
-        else:
-            page_url = row["href"].replace("http:", "https:")
-        content = pull_content(page_url)
-        location_name = content.find(
-            "div", {"class": "title_subtitle_holder_inner"}
-        ).text.strip()
-        raw_address = (
-            content.find("div", {"id": "MapAddress"})
-            .get_text(strip=True, separator=",")
+    stores = load_json(
+        str(soup.find("div", id="app").find("locations-controller"))
+        .split(':restaurants="')[1]
+        .split('"></locations')[0]
+    )
+    for row in stores:
+        page_url = row["yext_link"]
+        location_name = row["title"]
+        street_address = (
+            " ".join([addr["address_line"] for addr in row["street_address"]])
+            .replace("Slim Chickens", "")
             .strip()
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        if zip_postal == MISSING:
-            zip_postal = raw_address.split(",")[-1]
-        phone = (
-            content.find(
-                re.compile(r"h4|strong"), text=re.compile(r"PHONE:|PHONE:&nbsp;")
-            )
-            .find_next(re.compile(r"p|div"))
-            .text.strip()
-        )
-        if phone == "TBC":
-            phone = MISSING
-        hours_of_operation = (
-            content.find(
-                re.compile(r"strong|h4"),
-                text=re.compile(r"HOURS.*"),
-            )
-            .find_previous("div")
-            .get_text(strip=True, separator=",")
-            .replace("STANDARD HOURS (4th Jan):,", "")
-            .replace("STANDARD", "")
-            .replace("HOURS:,", "")
-            .replace("HOURS:", "")
-            .strip()
-        )
+        city = row["city"]
+        state = MISSING
+        zip_postal = row["post_code"]
         country_code = "UK"
+        phone = row["telephone_number"].replace("TBC", "") or MISSING
         store_number = MISSING
         location_type = "slimchickens-" + country_code
-        try:
-            map_link = content.find("iframe", {"src": re.compile(r"\/maps\/embed\?")})[
-                "src"
-            ]
-            latitude, longitude = get_latlong(map_link)
-        except:
-            latitude = MISSING
-            longitude = MISSING
+        if not page_url:
+            page_url = row["permalink"]
+            content = pull_content(page_url)
+            json_content = load_json(
+                str(content.find("div", id="app").find("restaurant-page"))
+                .split(":restaurant-data='")[1]
+                .split("'></restaurant")[0]
+            )
+            hoo = ""
+            for hday in json_content["opening_hours"]:
+                hoo += (
+                    hday["day_range"]
+                    + ": "
+                    + hday["opening_time"]
+                    + " - "
+                    + hday["closing_time"]
+                    + ", "
+                )
+            hours_of_operation = hoo.strip().rstrip(",")
+        else:
+            content = pull_content(page_url)
+            hours = (
+                content.find(
+                    re.compile(r"h3|strong"),
+                    text=re.compile(r"HOURS.*"),
+                )
+                .find_previous("div")
+                .find_next("ul")
+                .find_next("ul")
+                .find_all("li")
+            )
+            hoo = ""
+            for i in range(len(days)):
+                hoo += days[i] + ": " + hours[i].text.strip() + ", "
+            hours_of_operation = hoo.strip().rstrip(",")
+            if phone == MISSING:
+                phone = content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+        latitude = row["latitude"]
+        longitude = row["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -218,7 +231,6 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
     # Kuait Location

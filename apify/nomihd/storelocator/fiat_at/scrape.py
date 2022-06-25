@@ -173,6 +173,7 @@ class _SearchIteration(SearchIteration):
                     )
 
         except:
+            log.error(self.__country_name)
             pass
 
 

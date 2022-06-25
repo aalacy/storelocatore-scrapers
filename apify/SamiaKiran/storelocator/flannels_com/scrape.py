@@ -38,7 +38,10 @@ def fetch_data():
             page_url = "https://www.flannels.com" + loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            loc = json.loads(r.text.split("var store =")[1].split("};")[0] + "}")
+            try:
+                loc = json.loads(r.text.split("var store =")[1].split("};")[0] + "}")
+            except:
+                continue
             location_name = loc["name"]
             store_number = loc["code"]
             phone = loc["telephone"]

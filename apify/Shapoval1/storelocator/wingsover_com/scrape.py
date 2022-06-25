@@ -18,8 +18,8 @@ def get_hours(hours) -> str:
             .replace("6", "Sat")
             .replace("0", "Sun")
         )
-        opens = h.get("pickupOpen")
-        closes = h.get("pickupClose")
+        opens = h.get("dineInOpen")
+        closes = h.get("dineInClose")
         line = f"{day} {opens} - {closes}"
         if opens == closes:
             line = f"{day} Closed"
@@ -56,6 +56,7 @@ def fetch_data(sgw: SgWriter):
         "https://patron.lunchbox.io/v0/locations", headers=headers, data=data
     )
     js = r.json()
+
     for j in js:
         a = j.get("address")
         page_url = "https://order.wingsover.com/"
