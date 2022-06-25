@@ -1,45 +1,16 @@
-# coding=UTF-8
-
-import csv
 import re
 
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    addressess = []
+def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
@@ -67,40 +38,36 @@ def fetch_data():
             state = addr[1].strip()
             country_code = "US"
 
-        digit = re.search(r"\d", street_address).start(0)
-        if digit != 0:
-            street_address = street_address[digit:]
+        if re.search(r"\d", street_address):
+            digit = str(re.search(r"\d", street_address))
+            start = int(digit.split("(")[1].split(",")[0])
+            street_address = street_address[start:]
 
         zipp = val["Foodprovider"]["PostalCode"]
         store_number = val["Foodprovider"]["Id"]
         phone = val["Foodprovider"]["Tell"]
-        latitude = val["Foodprovider"]["Longitude"]
-        longitude = val["Foodprovider"]["Latitude"]
+        latitude = val["Foodprovider"]["Latitude"]
+        longitude = val["Foodprovider"]["Longitude"]
 
-        store = []
-        store.append(base_url if base_url else "<MISSING>")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code if country_code else "<MISSING>")
-        store.append(store_number if store_number else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
-        yield store
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url="https://onlineordering.heroburgers.com/en/#/HeroCertifiedBurgers/online/restaurant-selection",
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation="",
+            )
+        )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

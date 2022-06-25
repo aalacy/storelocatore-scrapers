@@ -22,7 +22,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.brookshires.com/stores/?coordinates=33.081696254439834,-95.94856100000001&zoom=4"
+    base_link = "https://www.brookshires.com/stores/?coordinates=33.081696254439834,-95.94856100000001&zoom=6"
 
     options = uc.ChromeOptions()
     options.headless = True
@@ -30,20 +30,20 @@ def fetch_data(sgw: SgWriter):
     with uc.Chrome(
         driver_executable_path=ChromeDriverManager().install(), options=options
     ) as driver:
-
-        driver.get(base_link)
-        try:
-            WebDriverWait(driver, 60).until(
-                EC.presence_of_element_located(
-                    (By.CLASS_NAME, "store-list__scroll-container")
-                )
-            )
-        except:
+        for i in range(5):
+            log.info(f"Loading main page {base_link}")
+            driver.get(base_link)
             time.sleep(60)
-
-        soup = BeautifulSoup(driver.page_source, "lxml")
-
-        grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+            try:
+                soup = BeautifulSoup(driver.page_source, "lxml")
+                grids = soup.find(
+                    "div", class_="store-list__scroll-container"
+                ).find_all("li")
+                if grids:
+                    log.info("Got Grids")
+                    break
+            except:
+                pass
 
         for grid in grids:
             name = grid.find("span", {"class": "store-name"}).text.strip()
@@ -59,17 +59,19 @@ def fetch_data(sgw: SgWriter):
                 + "/"
                 + grid["id"].split("-")[-1]
             )
-
-            driver.get(page_url)
-            log.info("Pull content => " + page_url)
-            try:
-                WebDriverWait(driver, 20).until(
-                    EC.presence_of_element_located(
-                        (By.CLASS_NAME, "store-details-store-hours__content")
+            time.sleep(2)
+            for i in range(10):
+                driver.get(page_url)
+                log.info("Pull content => " + page_url)
+                try:
+                    WebDriverWait(driver, 30).until(
+                        EC.presence_of_element_located(
+                            (By.CLASS_NAME, "store-details-store-hours__content")
+                        )
                     )
-                )
-            except:
-                time.sleep(20)
+                    break
+                except:
+                    time.sleep(10)
 
             location_soup = BeautifulSoup(driver.page_source, "lxml")
 

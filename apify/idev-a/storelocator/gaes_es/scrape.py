@@ -21,6 +21,7 @@ logger = SgLogSetup().get_logger("gaes")
 
 locator_domain = "https://www.gaes.es"
 base_url = "https://www.gaes.es/nuestros-centros-auditivos"
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
@@ -66,11 +67,20 @@ def fetch_data():
                 continue
             phone = ""
             if sp1.select_one("span.phone-list"):
-                phone = sp1.select_one("span.phone-list").text.strip()
+                phone = sp1.select_one("span.phone-list").text.split("/")[0].strip()
             hours = []
-            for hh in _["openingHoursSpecification"]:
-                day = hh["dayOfWeek"]
-                hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
+            temp = {}
+            if _.get("openingHoursSpecification"):
+                for hh in _["openingHoursSpecification"]:
+                    day = hh["dayOfWeek"]
+                    if not temp.get(day):
+                        temp[day] = []
+                    temp[day].append(f"{hh['opens']} - {hh['closes']}")
+            for day in days:
+                if temp.get(day):
+                    hours.append(f"{day}: {' | '.join(temp[day])}")
+                else:
+                    hours.append(f"{day}: Closed")
             addr = _["address"]
             yield SgRecord(
                 page_url=page_url,

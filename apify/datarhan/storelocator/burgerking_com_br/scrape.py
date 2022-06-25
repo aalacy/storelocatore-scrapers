@@ -19,9 +19,14 @@ def fetch_data():
     frm = {"address": "rio", "localization": {}}
     data = session.post(start_url, headers=hdr, json=frm).json()
 
-    for poi in data["entries"]:
+    for poi in data["entries"].values():
         if type(poi) == bool:
             continue
+        latitude = poi["latitude"]
+        longitude = poi["longitude"]
+        if latitude and "#" in latitude:
+            latitude = ""
+            longitude = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -30,14 +35,14 @@ def fetch_data():
             street_address=poi["addressLineOne"],
             city=poi["locality"],
             state=poi["administrativeArea"],
-            zip_postal=SgRecord.MISSING,
+            zip_postal="",
             country_code="BR",
             store_number=poi["storeCode"],
-            phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
-            latitude=poi["latitude"],
-            longitude=poi["longitude"],
-            hours_of_operation=SgRecord.MISSING,
+            phone="",
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation="",
         )
 
         yield item

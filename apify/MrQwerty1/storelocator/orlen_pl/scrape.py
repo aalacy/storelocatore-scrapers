@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 
 
@@ -65,6 +65,7 @@ def get_data(_id, sgw: SgWriter):
     city = j.get("City")
     postal = j.get("PostalCode")
     country_code = j.get("Country")
+    raw_address = " ".join(f"{street_address} {city} {postal} {country_code}".split())
     phone = j.get("Phone") or ""
     if ";" in phone:
         phone = phone.split(";")[0].strip()
@@ -89,6 +90,7 @@ def get_data(_id, sgw: SgWriter):
         phone=phone,
         location_type=location_type,
         locator_domain=locator_domain,
+        raw_address=raw_address,
         hours_of_operation=hours_of_operation,
     )
 
@@ -119,5 +121,9 @@ if __name__ == "__main__":
     session = SgRequests()
     token = get_session()
 
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
+        )
+    ) as writer:
         fetch_data(writer)
