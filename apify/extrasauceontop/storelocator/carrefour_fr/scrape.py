@@ -147,7 +147,7 @@ def get_data():
                     address = "<MISSING>"
 
                 state = "<MISSING>"
-                zipp = location_deets.split("location_name")[1].split("&==")[0]
+                zipp = location_deets.split("zipp=")[1].split("&==")[0]
 
                 log.info("page_url: " + page_url)
 
