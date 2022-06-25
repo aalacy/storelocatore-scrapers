@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import unidecode
+
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -14,8 +15,7 @@ headers = {
 
 
 def fetch_locations(lat, lng):
-    
-   
+
     headers = {
         "Connection": "keep-alive",
         "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
@@ -64,7 +64,6 @@ def fetch_locations(lat, lng):
         ).json()["response"]["collection"]
     except:
         return []
-
     weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
     locations = []
     for loc in loclist:
@@ -111,12 +110,12 @@ def fetch_locations(lat, lng):
                 hours = "<MISSING>"
         try:
             if len(phone) < 3:
-                phone = '<MISSING>'
+                phone = "<MISSING>"
         except:
-            phone = '<MISSING>'
-        phone = phone.replace('t. ','').replace('?','').strip()
+            phone = "<MISSING>"
+        phone = phone.replace("t. ", "").replace("?", "").strip()
         try:
-            phone = phone.split(',',1)[0]
+            phone = phone.split(",", 1)[0]
         except:
             pass
         title = unidecode.unidecode(title)
@@ -126,7 +125,6 @@ def fetch_locations(lat, lng):
             state = unidecode.unidecode(state)
         except:
             pass
-
         locations.append(
             SgRecord(
                 locator_domain="https://www.crocs.com/",
@@ -145,7 +143,6 @@ def fetch_locations(lat, lng):
                 hours_of_operation=hours,
             )
         )
-
     return locations
 
 
@@ -157,9 +154,8 @@ def fetch_data():
         max_search_distance_miles=1000,
     )
     search = list(mylist)
-    search = search +[(50.4501,30.5234)]
+    search = search + [(50.4501, 30.5234)]
 
-   
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
         for future in as_completed(futures):
