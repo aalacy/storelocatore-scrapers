@@ -30,7 +30,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         loclist = r.text.replace("\n", "")
         loclist = json.loads(loclist)["stores"]
-        print(len(loclist))
         for loc in loclist:
             page_url = DOMAIN + loc["url"]
             log.info(page_url)
