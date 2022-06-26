@@ -35,6 +35,7 @@ def fetch_data(sgw: SgWriter):
         street_address = (
             f"{a.street_address_1} {a.street_address_2}".replace("ิ ", "")
             .replace("None", "")
+            .replace("/P>", "")
             .strip()
         )
         state = a.state or "<MISSING>"
