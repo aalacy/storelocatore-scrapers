@@ -1,10 +1,18 @@
 import tabula as tb  # noqa
+from lxml import html
 from io import BytesIO
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+
+
+def get_page_url():
+    r = session.get("http://www.parmarstores.com/store-locator")
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//a[contains(@href, '.pdf')]/@href"))
 
 
 def fetch_data(sgw: SgWriter):
@@ -31,13 +39,13 @@ def fetch_data(sgw: SgWriter):
     for ab in dfs:
         for _, row in ab.iterrows():
             store_number = row.store_number
-            street_address = row.street_address
+            street_address = " ".join(row.street_address.split())
             city = row.city
             state = row.state
             postal = str(row.zip_postal)
             phone = row.phone
-            hoo = row.hoo
-            location_type = row.Brand
+            hoo = " ".join(row.hoo.split())
+            location_type = " ".join(row.Brand.split())
             if location_type == "Unbrand" or location_type == "x":
                 location_type = SgRecord.MISSING
             country_code = "US"
@@ -62,10 +70,8 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "http://www.parmarstores.com/"
-    page_url = (
-        "http://www.parmarstores.com/wp-content/uploads/2022/03/Par-Mar-Stores.pdf"
-    )
     session = SgRequests()
+    locator_domain = "http://www.parmarstores.com/"
+    page_url = get_page_url()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
