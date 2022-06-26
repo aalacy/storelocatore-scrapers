@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_8
 import lxml.html
-from sgzip.static import static_zipcode_list
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import us
 
 website = "renasantbank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -21,24 +21,16 @@ url_list = []
 
 def fetch_data():
 
-    search_url = "https://www.renasantbank.com/api/location/locationfinder/locationsearch?key={}&latitude={}&longitude={}&radius=100"
+    search_url = "https://www.renasantbank.com/api/location/locationfinder/locationsearch?key={}&searchMethod=state"
 
-    zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
-
-    for zip_code in zips:
-        log.info(zip_code)
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA],
-            max_radius_miles=100,
-            max_search_results=50,
-            granularity=Grain_8(),
-        )
-        for lat, lng in search:
-            log.info(f"pulling records for coordinates: {lat,lng}")
-
-            stores_req = session.get(
-                search_url.format(zip_code, lat, lng), headers=headers
-            )
+    states = us.states.STATES
+    for stat in states:
+        key = stat.abbr
+        log.info(key)
+        with SgRequests() as session:
+            stores_req = session.get(search_url.format(key), headers=headers)
+            if isinstance(stores_req, SgRequestError):
+                continue
             stores = json.loads(stores_req.text)["LocationItemList"]
             if stores is not None:
                 for store in stores:
@@ -62,6 +54,8 @@ def fetch_data():
                         .replace("\n", "")
                         .strip()
                     )
+                    if len(address) <= 0:
+                        continue
                     add_list = address.split(",")
                     street_address = ", ".join(add_list[:-3]).strip()
 
@@ -82,12 +76,16 @@ def fetch_data():
                         if (
                             "far fa-clock"
                             == "".join(
-                                sec.xpath('div[@class="info-icon"]/i/@class')
+                                sec.xpath('div[@class="info-icon"]/*/@class')
                             ).strip()
                         ):
-                            hours_of_operation = "; ".join(
-                                sec.xpath('div[@class="info-info"]/p/text()')
-                            ).strip()
+                            hours_of_operation = (
+                                "; ".join(sec.xpath('div[@class="info-info"]/p/text()'))
+                                .strip()
+                                .replace("\n", "")
+                                .strip()
+                            )
+                            break
 
                     latitude = store["Latitude"]
                     longitude = store["Longitude"]
@@ -113,7 +111,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

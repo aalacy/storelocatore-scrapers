@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "webergrillrestaurant.com"
@@ -24,6 +26,27 @@ headers = {
 }
 
 
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
+
+
 def fetch_data():
     # Your scraper here
     search_url = "https://webergrillrestaurant.com/"
@@ -32,7 +55,11 @@ def fetch_data():
     search_sel = lxml.html.fromstring(search_res.text)
 
     store_list = list(
-        set(search_sel.xpath('//div[contains(@id,"locations-bar")]//a/@href'))
+        set(
+            search_sel.xpath(
+                '//li[.//a/span[contains(text(),"Locations")]]//ul/li/a/@href'
+            )
+        )
     )
 
     for store in store_list:
@@ -43,98 +70,64 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        location_name = "".join(store_sel.xpath("//title/text()"))
-
-        street_address = " ".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//*[@itemprop="streetAddress"]//text()'
-                        )
-                    ],
-                )
-            )
+        location_name = "".join(
+            store_sel.xpath("//h1[@class='fl-heading']//text()")
         ).strip()
 
-        city = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//*[@itemprop="addressLocality"]//text()'
-                        )
-                    ],
-                )
+        raw_address = list(
+            filter(
+                str,
+                store_sel.xpath(
+                    '//div[@class="uabb-infobox-content"][./div[@class="uabb-infobox-title-wrap"]/h3[contains(text(),"Location")]]/div[@class="uabb-infobox-text-wrap"]//p[1]//text()'
+                ),
             )
-        ).strip()
-        state = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//*[@itemprop="addressRegion"]//text()'
-                        )
-                    ],
-                )
-            )
-        ).strip()
-        zip = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath('//*[@itemprop="postalCode"]//text()')
-                    ],
-                )
-            )
-        ).strip()
+        )
+        if len(raw_address) <= 0:
+            continue
+
+        street_address = raw_address[0].strip()
+        city_state_zip = (
+            raw_address[1]
+            .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", ",")
+            .strip()
+            .replace(" ", ",")
+        )
+        city = city_state_zip.split(",")[0].strip()
+        state = city_state_zip.split(",")[-2].strip()
+        zip = city_state_zip.split(",")[-1].strip()
         country_code = "US"
 
         store_number = "<MISSING>"
-        phone = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath('//*[@itemprop="telephone"]//text()')
-                    ],
-                )
-            )
-        ).strip()
+        phone = "<MISSING>"
+        for index in range(0, len(raw_address)):
+            if "Tel:" in raw_address[index]:
+                phone = raw_address[index + 1]
 
         location_type = "<MISSING>"
 
         hours = list(
             filter(
                 str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//*[@itemprop="openingHours"]//text()')
-                ],
+                store_sel.xpath(
+                    '//div[@class="uabb-infobox-content"][./div[@class="uabb-infobox-title-wrap"]/h3[contains(text(),"Hours")]]/div[@class="uabb-infobox-text-wrap"]//p//text()'
+                ),
             )
         )
+        hours_of_operation = "; ".join(hours).strip().replace("\n", "").strip()
 
-        hours_of_operation = "; ".join(hours).replace("day;", "day:")
-
-        latitude = store_res.text.split('"latitude":')[1].split(",")[0].strip()
-        longitude = (
-            store_res.text.split('"longitude":')[1]
-            .split(",")[0]
-            .strip()
-            .replace("}", "")
-            .strip()
-        )
+        map_link = "".join(
+            store_sel.xpath(
+                '//div[@class="uabb-infobox-content"][./div[@class="uabb-infobox-title-wrap"]/h3[contains(text(),"Location")]]/div[@class="uabb-infobox-text-wrap"]//p/a/@href'
+            )
+        ).strip()
 
         raw_address = "<MISSING>"
+
+        latitude, longitude = get_latlng(map_link)
+        longitude = longitude.split("/")[0].strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -158,7 +151,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

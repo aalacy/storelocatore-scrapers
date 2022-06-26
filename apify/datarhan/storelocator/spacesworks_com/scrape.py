@@ -10,7 +10,6 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
     domain = "spacesworks.com"
@@ -18,12 +17,8 @@ def fetch_data():
 
     headers = {
         "accept": "application/json, text/plain, */*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "authorization": "Basic c3BhY2Vzd29ya3NAc3BhY2VzYnYtSzdUTVJIOmVmNmJlYWJjLTYwMTctNGYzMC04NDlhLTQ1YjY0N2I1NWVkMg==",
+        "authorization": "Basic c3BhY2Vzd29ya3NAc3BhY2VzYnYtSzdUTVJIOmQxMjY5YjVkLTEyODctNGYyZC05NWE1LTMxOWY2MzhkNjYyNQ==",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36",
-        "x-ga-clientid": "1722608705.1614690743",
-        "x-geo-iso2": "US",
     }
     response = session.get(start_url, headers=headers)
     data = json.loads(response.text)
@@ -37,24 +32,15 @@ def fetch_data():
         all_locations += data["data"]["items"]
 
     for poi in all_locations:
-        street_address = poi["addressLine1"]
+        street_address = poi.get("addressLine1")
         if poi.get("addressLine2"):
             street_address += " " + poi["addressLine2"]
-        street_address = street_address if street_address else "<MISSING>"
-        state = poi.get("state")
-        state = state if state else "<MISSING>"
-        zip_code = poi.get("postalCode")
-        zip_code = zip_code if zip_code else SgRecord.MISSING
-        phone = poi.get("phone")
-        phone = phone if phone else "<MISSING>"
+        if not street_address:
+            street_address = poi["name"]
         time = str(poi["openingDate"])
-        location_type = SgRecord.MISSING
+        location_type = ""
         if datetime.fromisoformat(time) > datetime.now(timezone.utc):
             location_type = "coming soon"
-        latitude = poi["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
         hoo = []
         days_dict = {
             0: "Sunday",
@@ -82,14 +68,14 @@ def fetch_data():
             location_name=poi["name"],
             street_address=street_address,
             city=poi["city"],
-            state=state,
-            zip_postal=zip_code,
-            country_code=poi["countryId"],
+            state=poi.get("state"),
+            zip_postal=poi.get("postalCode"),
+            country_code=poi.get("countryId"),
             store_number=poi["id"],
-            phone="",
+            phone=poi.get("phone"),
             location_type=location_type,
-            latitude="",
-            longitude="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hours_of_operation,
         )
 

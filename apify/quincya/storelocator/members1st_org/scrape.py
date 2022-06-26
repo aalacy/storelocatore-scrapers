@@ -1,154 +1,91 @@
-import csv
-import re
-import ssl
-import time
-
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
 
-logger = SgLogSetup().get_logger("members1st_org")
+def fetch_data(sgw: SgWriter):
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+    base_link = "https://webapps.members1st.org/BranchLocatorApi/finder/location/40.1732512/-76.9988669/200?CrowFliesDistanceOnly=false"
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://www.members1st.org/atm-and-locations"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    driver = SgChrome(user_agent=user_agent).driver()
-
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    stores = session.get(base_link, headers=headers).json()["items"]
 
-    items = base.find(class_="row justify-content-between").find_all("li")
-    locator_domain = "members1st.org"
+    locator_domain = "https://www.members1st.org/"
 
-    for item in items:
-        link = "https://www.members1st.org" + item.a["href"]
-        logger.info(link)
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-
-        location_name = base.h1.text.strip()
-        street_address = base.find(
-            "span", attrs={"itemprop": "streetAddress"}
-        ).text.strip()
-        city = (
-            base.find("span", attrs={"itemprop": "addressLocality"})
-            .text.split(",")[0]
-            .strip()
-        )
-        state = (
-            base.find("span", attrs={"itemprop": "addressLocality"})
-            .text.split(",")[1]
-            .strip()
-        )
-        zip_code = base.find("span", attrs={"itemprop": "postalCode"}).text.strip()
+    for store in stores:
+        if store["locationTypeName"] != "Branch":
+            continue
+        location_name = store["name"]
+        street_address = store["address"]
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["zip"]
         country_code = "US"
-        store_number = "<MISSING>"
-        location_type = (
-            base.find(class_="services-table").text.strip().replace("\n", ",")
-        )
-        phone = (
-            base.find("span", attrs={"itemprop": "telephone"})
-            .text.replace("Phone:", "")
-            .strip()
-        )
-        hours_of_operation = (
-            base.find(class_="lobby-hours")
-            .text.replace("Lobby Hours", "")
-            .strip()
-            .replace("\n", " ")
-        )
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
-
-        map_link = base.find(class_="b_map_img")["src"]
-        driver.get(map_link)
-        time.sleep(4)
+        store_number = ""
+        location_type = ""
+        latitude = store["latitude"]
+        longitude = store["longitude"]
         try:
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located((By.TAG_NAME, "a"))
+            link = (
+                "https://www.members1st.org/atm-and-locations/"
+                + store["branchPageUrlId"]
             )
-            time.sleep(4)
-            raw_gps = driver.find_element_by_tag_name("a").get_attribute("href")
-            latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find(",")].strip()
-            longitude = raw_gps[raw_gps.find(",") + 1 : raw_gps.find("&")].strip()
         except:
-            latitude = "<INACCESSIBLE>"
-            longitude = "<INACCESSIBLE>"
+            continue
 
-        yield [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-    driver.close()
+        hours_of_operation = ""
+        try:
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            phone = (
+                base.find("span", attrs={"itemprop": "telephone"})
+                .text.replace("Phone:", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(
+                list(base.find(class_="lobby-hours").table.stripped_strings)
+            )
+        except:
+            raw_hours = store["timeframes"]
+            for row in raw_hours:
+                if row["serviceTypeName"] == "Lobby":
+                    day = row["dayName"]
+                    if row["openTime"]:
+                        hours = row["openTime"] + "-" + row["closeTime"]
+                    else:
+                        hours = "Closed"
+                    hours_of_operation = (
+                        hours_of_operation + " " + day + " " + hours
+                    ).strip()
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

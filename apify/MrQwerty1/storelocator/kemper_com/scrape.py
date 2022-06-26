@@ -1,117 +1,97 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(param):
-    rows = []
-    locator_domain = "https://www.kemper.com/"
-    page_url = "<MISSING>"
-    headers = {"Content-Type": "application/json"}
-    data = (
-        '{"radius":50,"address":"","city":"","state":"","zip":"'
-        + param
-        + '","lineOfBusinessList":["AUTOP","AUTOB","HOME","RENTER","CONDO"]}'
+def fetch_data(sgw: SgWriter):
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
-
-    session = SgRequests()
-    r = session.post(
-        "https://customer.kemper.com/faa/v1/agency/ka", headers=headers, data=data
-    )
-    js = r.json()["businessUnitList"][0]["agencyList"]
-
-    for j in js:
-        location_name = " ".join(j.get("name").split())
-        street_address = (
-            f'{j.get("addressLine1")} {j.get("addressLine2") or ""}'.strip()
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
-
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    postals = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {
-            executor.submit(get_data, postal): postal for postal in postals
+    for _zip in search:
+        json_data = {
+            "radius": 60,
+            "address": "",
+            "city": "",
+            "state": "",
+            "zip": _zip,
+            "lineOfBusinessList": [
+                "AUTOP",
+                "AUTOB",
+                "HOME",
+                "RENTER",
+                "CONDO",
+            ],
         }
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                check = tuple(row[2:7])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
+        r = session.post(api, headers=headers, json=json_data)
+        jss = r.json().get("businessUnitList")
+        if not jss:
+            search.found_nothing()
+            continue
 
-    return out
+        js = jss[0]["agencyList"]
+        if not js:
+            search.found_nothing()
+            continue
 
+        for j in js:
+            adr1 = j.get("addressLine1") or ""
+            adr2 = j.get("addressLine2") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("zip")
+            country_code = "US"
+            store_number = j.get("Id")
+            location_name = j.get("name") or ""
+            location_name = " ".join(location_name.split())
+            phone = j.get("phone") or ""
+            phone = phone.replace("--", "").strip()
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            search.found_location_at(latitude, longitude)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            row = SgRecord(
+                location_name=location_name,
+                page_url=page_url,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.kemper.com/"
+    page_url = "https://www.kemper.com/get-started/find-an-agent"
+    api = "https://customer.kemper.com/faa/v1/agency/ka"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Origin": "https://customer.kemper.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-site",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
+        )
+    ) as writer:
+        fetch_data(writer)

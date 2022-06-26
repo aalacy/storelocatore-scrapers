@@ -1,25 +1,33 @@
-from lxml import html
-import time
-from typing import Iterable
-import json
-
 from sgrequests import SgRequests
+from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import json
+from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+import time
+import ssl
+import pycountry
+from lxml import html
 
-website = "puma.com"
-MISSING = SgRecord.MISSING
-STORE_JSON_URL = "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator?coordinates={}%2C{}8&loadMore=5"
-headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
-}
+ssl._create_default_https_context = ssl._create_unverified_context
 
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+DOMAIN = "puma.com"
+logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+STORE_JSON_URL = (
+    "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator"
+)
+MISSING = "<MISSING>"
+http = SgRequests()
+
+
+def do_fuzzy_search(country):
+    try:
+        result = pycountry.countries.search_fuzzy(country)
+    except Exception:
+        return MISSING
+    else:
+        return result[0].alpha_2
 
 
 def get_var_name(value):
@@ -42,104 +50,118 @@ def get_json_objectVariable(Object, varNames, noVal=MISSING):
     return value
 
 
-def fetch_single_store(http, store, countryCode):
-    country_code = countryCode
-    store_number = store["StoreId"]
-    location_name = store["StoreName"]
-    phone = store["PhoneNumber"]
-    latitude = store["Lat"]
-    longitude = store["Lng"]
-    page_url = f"https://about.puma.com{store['Url']}"
-    location_type = "Outlet" if "Outlet" in location_name else "Store"
-    log.debug(f"Scrapping {page_url}...")
-    response = http.get(page_url)
-    body = html.fromstring(response.text, "lxml")
+def fetch_single_store(countryjson, page_url, retry=0):
+    try:
+        if "ROMANIA_EEMEA" in str(countryjson):
+            countryjson = "ROMANIA"
+        if "Lithuanta" in str(countryjson):
+            countryjson = "Lithuania"
 
-    data = body.xpath('//script[contains(@id, "current-store-details")]/text()')
-    if len(data) == 0:
-        storeData = {}
-    else:
-        storeData = json.loads(data[0])
+        country_code = do_fuzzy_search(countryjson)
+        logger.info(f"Crawling {page_url} ...")
+        response = http.get(page_url)
+        body = html.fromstring(response.text, "lxml")
 
-    street_address = get_json_objectVariable(storeData, "address.streetAddress")
-    city = get_json_objectVariable(storeData, "address.addressLocality")
-    zip_postal = get_json_objectVariable(storeData, "address.postalCode")
-    state = get_json_objectVariable(storeData, "address.addressRegion")
-    hours = get_json_objectVariable(storeData, "openingHoursSpecification", [])
-    hoo = []
-    for hour in hours:
-        hoo.append(
-            f"{hour['dayOfWeek']}: {hour['opens']} - {hour['closes']}".replace(
-                "http://schema.org/", ""
+        data = body.xpath('//script[contains(@id, "current-store-details")]/text()')
+        if len(data) == 0:
+            storeData = {}
+        else:
+            storeData = json.loads(data[0])
+
+        street_address = get_json_objectVariable(storeData, "address.streetAddress")
+
+        hours = get_json_objectVariable(storeData, "openingHoursSpecification", [])
+        hoo = []
+        for hour in hours:
+            hoo.append(
+                f"{hour['dayOfWeek']}: {hour['opens']} - {hour['closes']}".replace(
+                    "http://schema.org/", ""
+                )
             )
+
+        hoo = "; ".join(hoo)
+        return country_code, street_address, hoo
+    except Exception as e:
+        if retry > 3:
+            try:
+                logger.error(f"Error loading {page_url}, message={e}")
+            except Exception as e1:
+                logger.error(f"Error , message={e1}")
+                pass
+            return None
+        else:
+            return fetch_single_store(countryjson, page_url, retry + 1)
+
+
+def parse_json(store):
+    data = {}
+    data["locator_domain"] = DOMAIN
+    data["store_number"] = store["StoreId"]
+    data["page_url"] = "https://about.puma.com" + store["Url"]
+    data["location_name"] = store["StoreName"]
+    data["location_type"] = "Outlet" if "Outlet" in data["location_name"] else "Store"
+    data["city"] = store["City"]
+    data["state"] = store["State"]
+    if data["state"] is None:
+        data["state"] = MISSING
+    countryjson = store["Country"]
+    data["zip_postal"] = store["PostalCode"]
+    data["phone"] = store["PhoneNumber"]
+    data["latitude"] = store["Lat"]
+    data["longitude"] = store["Lng"]
+
+    (
+        data["country_code"],
+        data["street_address"],
+        data["hours_of_operation"],
+    ) = fetch_single_store(countryjson, data["page_url"])
+    if "None" in str(data["hours_of_operation"]):
+        data["hours_of_operation"] = ""
+
+    return data
+
+
+def fetch_data():
+    with SgChrome() as driver:
+        driver.get(STORE_JSON_URL)
+        time.sleep(15)
+        data_json = json.loads(
+            driver.find_element(by=By.CSS_SELECTOR, value="body").text
         )
-
-    hoo = "; ".join(hoo)
-    return SgRecord(
-        locator_domain=website,
-        store_number=store_number,
-        page_url=page_url,
-        location_name=location_name,
-        location_type=location_type,
-        street_address=street_address,
-        city=city,
-        zip_postal=zip_postal,
-        state=state,
-        country_code=country_code,
-        phone=phone,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hoo,
-    )
-
-
-def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
-    state = CrawlStateSingleton.get_instance()
-
-    for lat, lng in search:
-        countryCode = search.current_country()
-        pageUrl = STORE_JSON_URL.format(lat, lng)
-        response = http.get(pageUrl)
-        decoded_data = response.text.encode().decode("utf-8-sig")
-        data = json.loads(decoded_data)
-        if "StoreLocatorItems" in data:
-            stores = data["StoreLocatorItems"]
-            log.debug(f"Total stores from {lat}, {lng} ={len(stores)}")
-            for store in stores:
-                try:
-                    yield fetch_single_store(http, store, countryCode.upper())
-                    rec_count = state.get_misc_value(
-                        countryCode, default_factory=lambda: 0
-                    )
-                    state.set_misc_value(countryCode, rec_count + 1)
-                except Exception as e:
-                    log.error(f"Fat store from  {lat}, {lng} message={e}")
+        logger.info(f'Total Stores: {len(data_json["StoreLocatorItems"])}')
+        for store in data_json["StoreLocatorItems"]:
+            yield parse_json(store)
 
 
 def scrape():
-    log.info(f"Start scrapping {website} ...")
-    start = time.time()
-    country_codes = SearchableCountries.ALL
-    search = DynamicGeoSearch(
-        country_codes=country_codes, expected_search_radius_miles=50
+    logger.info(f"Start Crawling {DOMAIN} ...")
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(DOMAIN),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(mapping=["location_name"]),
+        latitude=sp.MappingField(mapping=["latitude"]),
+        longitude=sp.MappingField(mapping=["longitude"]),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        with SgRequests() as http:
-            for rec in fetch_records(http, search):
-                writer.write_row(rec)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=5,
+    )
 
-    state = CrawlStateSingleton.get_instance()
-    log.debug("Printing number of records by country-code:")
-    for country_code in SearchableCountries.ALL:
-        try:
-            count = state.get_misc_value(country_code, default_factory=lambda: 0)
-            log.debug(f"{country_code}: {count}")
-        except Exception as e:
-            log.info(f"Country codes: {country_code}, message={e}")
-            pass
-    end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+    pipeline.run()
 
 
 if __name__ == "__main__":

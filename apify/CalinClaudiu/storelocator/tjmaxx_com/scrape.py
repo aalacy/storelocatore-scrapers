@@ -1,81 +1,204 @@
-from sgscrape.simple_scraper_pipeline import *
-from sgscrape import simple_network_utils as net_utils
-from sgscrape import simple_utils as utils
-from sgrequests import SgRequests
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
-import sgzip
-from sgzip import DynamicGeoSearch, SearchableCountries
-import json
 
-def parse_store(k):
-    k['error'] = False
-    k['page_url'] = 'https://tjmaxx.tjx.com/store/stores/' + str(k['City'].replace(' ','+'))+'-'+str(k['State'])+'-'+str(k['Zip'])+'/'+str(k['StoreID'])+'/aboutstore'
-    return k    
-    
-def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name='Scraper')
-    url = "https://mktsvc.tjx.com/storelocator/GetSearchResults?geolat=37.09024&geolong=-95.712891&chain=8&maxstores=10000&radius=10000"
-    headers = {
-                'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'        }
-    session = SgRequests()
-    son = session.get(url, headers = headers).json()
-    search = sgzip.DynamicGeoSearch(country_codes=[SearchableCountries.USA])
-    search.initialize()
-    coord = search.next()
-    identities = set()
-    while coord:
-        lat, long = coord
-        son = session.get('https://mktsvc.tjx.com/storelocator/GetSearchResults?geolat='+str(lat)+'&geolong='+str(long)+'&chain=8&maxstores=10000&radius=10000', headers = headers).json()
-        result_lats = []
-        result_longs = []
-        result_coords = []
-        topop = 0
-        stores = son['Stores']
-        if len(stores)!=0:
-            for j in stores:
-                k = {}
-                k = parse_store(j)
-                if k['error'] != True:
-                    result_lats.append(k['Latitude'])
-                    result_longs.append(k['Longitude'])
-                    if str(str(k['Latitude'])+str(k['Longitude'])) not in identities:
-                        identities.add(str(str(k['Latitude'])+str(k['Longitude'])))
-                        yield k
-                    else:
-                        topop += 1
-        result_coords = list(zip(result_lats,result_longs))
-        logzilla.info(f'Zipcodes remaining: {search.zipcodes_remaining()}; Last request yields {len(result_coords)-topop} stores.')
-        search.update_with(result_coords)
-        coord = search.next()
-    logzilla.info(f'Finished grabbing data!!')
+# This is a code change
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def strip_para(x):
+    copy = []
+    inside = False
+    for i in x:
+        if i == "<" or inside:
+            inside = True
+            continue
+        elif i == ">":
+            inside = False
+            continue
+        else:
+            copy.append(i)
+    return "".join(copy)
 
-def scrape():
-    url="https://www.tjmaxx.tjx.com/"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain = ConstantField(url),
-        page_url=MappingField(mapping=['page_url']),
-        location_name=MappingField(mapping=['Name']),
-        latitude=MappingField(mapping=['Latitude']),
-        longitude=MappingField(mapping=['Longitude']),
-        street_address=MultiMappingField(mapping=[['Address'],['Address2']], multi_mapping_concat_with = ', ', value_transform = lambda x : x.replace(   'None','')),
-        city=MappingField(mapping=['City'], value_transform = lambda x : x.replace('None','<MISSING>')),
-        state=MappingField(mapping=['State'], value_transform = lambda x : x.replace('None','<MISSING>')),
-        zipcode=MappingField(mapping=['Zip'], value_transform = lambda x : x.replace('None','<MISSING>'), is_required = False),
-        country_code=MappingField(mapping=['Country'], value_transform = lambda x : x.replace('None','<MISSING>')),
-        phone=MappingField(mapping=['Phone'], value_transform = lambda x : x.replace('None','<MISSING>') , is_required = False),
-        store_number=MappingField(mapping=['StoreID']),
-        hours_of_operation=MappingField(mapping=['Hours']),
-        location_type=MissingField()
-    )
 
-    pipeline = SimpleScraperPipeline(scraper_name='nofrills.ca',
-                                     data_fetcher=fetch_data,
-                                     field_definitions=field_defs,
-                                     log_stats_interval=15)
+def fix_comma(x):
+    h = []
+    try:
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
+                h.append(i)
+        return ", ".join(h)
+    except Exception:
+        return x
 
-    pipeline.run()
+
+def replac(x):
+    x = str(x)
+    x = x.replace("'", "").replace("(", "").replace(")", "").replace(",", "")
+    if len(x) < 1:
+        return "<MISSING>"
+    return x
+
+
+class ExampleSearchIteration:
+    def do(search, coord, http1):
+        lat, lng = coord
+        numbers = "21%2C20"
+        nCA = "93%2C91%2C90"
+        nUS = "8%2C10%2C28%2C29%2C50"
+        nAU = "20"
+        if search.current_country() == "ca":
+            numbers = nCA
+        elif search.current_country() == "us":
+            numbers = nUS
+        elif search.current_country() == "au":
+            numbers = nAU
+        elif search.current_country() == "nf":
+            numbers = nAU
+        elif search.current_country() == "cx":
+            numbers = nAU
+
+        url = str(
+            f"https://marketingsl.tjx.com/storelocator/GetSearchResults?geolat={lat}&geolong={lng}&chain={numbers}&maxstores=25&radius=100"
+        )
+        headers = {}
+        headers["accept"] = "*/*"
+        headers["accept-encoding"] = "gzip, deflate, br"
+        headers["accept-language"] = "en-US,en;q=0.9,ro;q=0.8,es;q=0.7"
+        headers["cache-control"] = "no-cache"
+        headers["origin"] = "https://www.tjx.com"
+        headers["pragma"] = "no-cache"
+        headers["referer"] = "https://www.tjx.com/"
+        headers[
+            "sec-ch-ua"
+        ] = '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"'
+        headers["sec-ch-ua-mobile"] = "?0"
+        headers["sec-ch-ua-platform"] = '"Windows"'
+        headers["sec-fetch-dest"] = "empty"
+        headers["sec-fetch-mode"] = "cors"
+        headers["sec-fetch-site"] = "same-site"
+        headers[
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
+        locations = None
+        try:
+            locations = SgRequests.raise_on_err(http1.get(url, headers=headers)).json()
+        except Exception as e:
+            logzilla.error(f"{e}")
+        MISSING = "<MISSING>"
+        if locations:
+            if locations["Status"] == 0:
+                for rec in locations["Stores"]:
+                    location_name = str(
+                        str(rec["Name"]).strip(),
+                    )
+                    street_address = str(
+                        str(rec["Address"]).strip()
+                        + ", "
+                        + str(rec["Address2"]).strip(),
+                    )
+                    city = str(
+                        str(rec["City"]).strip(),
+                    )
+                    state = str(
+                        str(rec["State"]).strip(),
+                    )
+                    zip_postal = str(
+                        str(rec["Zip"]).strip(),
+                    )
+                    country_code = str(
+                        str(rec["Country"]).strip(),
+                    )
+                    store_number = str(
+                        str(rec["StoreID"]).strip(),
+                    )
+                    phone = str(
+                        str(rec["Phone"]).strip(),
+                    )
+                    location_type = str(
+                        str(rec["Chain"]).strip(),
+                    )
+                    latitude = str(
+                        rec["Latitude"],
+                    )
+                    longitude = str(
+                        rec["Longitude"],
+                    )
+                    hours_of_operation = str(
+                        strip_para(str(rec["Hours"])).strip(),
+                    )
+                    if latitude:
+                        if longitude:
+                            search.found_location_at(
+                                replac(str(latitude)), replac(str(longitude))
+                            )
+                    yield SgRecord(
+                        page_url=MISSING,
+                        location_name=replac(location_name)
+                        if location_name
+                        else MISSING,
+                        street_address=replac(fix_comma(street_address))
+                        if street_address
+                        else MISSING,
+                        city=replac(city) if city else MISSING,
+                        state=replac(state) if state else MISSING,
+                        zip_postal=replac(zip_postal) if zip_postal else MISSING,
+                        country_code=replac(country_code) if country_code else MISSING,
+                        store_number=replac(store_number) if store_number else MISSING,
+                        phone=replac(phone) if phone else MISSING,
+                        location_type=replac(location_type)
+                        if location_type
+                        else MISSING,
+                        latitude=replac(latitude) if latitude else MISSING,
+                        longitude=replac(longitude) if longitude else MISSING,
+                        locator_domain=MISSING,
+                        hours_of_operation=replac(hours_of_operation)
+                        if hours_of_operation
+                        else MISSING,
+                        raw_address=MISSING,
+                    )
+
+
+def dattafetch(search, http1):
+    for coord in search:
+        for item in ExampleSearchIteration.do(search, coord, http1):
+            yield item
+
 
 if __name__ == "__main__":
-    scrape()
+    tocrawl = []
+    tocrawl.append(SearchableCountries.CANADA)
+    tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.NORFOLK_ISLAND)
+    tocrawl.append(SearchableCountries.CHRISTMAS_ISLAND)
+    tocrawl.append(SearchableCountries.AUSTRALIA)
+    tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    tocrawl = tocrawl + SearchableCountries.SovereigntyGroups["UK"]
+    search = DynamicGeoSearch(
+        country_codes=tocrawl,
+        granularity=Grain_1_KM(),
+        expected_search_radius_miles=1.242742,
+    )
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        with SgRequests() as http1:
+            for rec in dattafetch(search, http1):
+                writer.write_row(rec)

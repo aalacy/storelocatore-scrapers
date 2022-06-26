@@ -5,6 +5,18 @@ from sgselenium import SgChrome
 from sgrequests import SgRequests
 import re
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("flemingssteakhouse")
 
@@ -14,24 +26,12 @@ _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
 }
 
-
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa0\\xa", " ")
-        .replace("\\xa0", " ")
-        .replace("\\xa", " ")
-        .replace("\\xae", "")
-    )
+locator_domain = "https://www.flemingssteakhouse.com/"
+base_url = "https://www.flemingssteakhouse.com/locations/"
 
 
 def fetch_data():
     with SgChrome() as driver:
-        locator_domain = "https://www.flemingssteakhouse.com/"
-        base_url = "https://www.flemingssteakhouse.com/locations/"
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         links = soup.select("ul.locations li a")
@@ -42,16 +42,20 @@ def fetch_data():
                 cookies.append(f"{cookie['name']}={cookie['value']}")
             _headers["cookie"] = "; ".join(cookies)
             for link in links:
+                if "COMING SOON" in link.text:
+                    continue
                 logger.info(link["href"])
                 soup1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
                 block = soup1.find("p", string=re.compile(r"^Address", re.IGNORECASE))
                 _content = list(block.find_next_sibling().stripped_strings)
-                hour_block = soup1.find("p", string=re.compile(r"^Hours"))
+                phone = _content[-1]
+                del _content[-1]
+                _hr = soup1.find("p", string=re.compile(r"^Hours"))
                 hours = []
-                for hh in list(hour_block.find_next_sibling("p").stripped_strings):
+                for hh in list(_hr.find_next_sibling("p").stripped_strings):
                     if hh == "Curbside Pickup":
                         break
-                    if "Outdoor Dining" in hh:
+                    if "Dining" in hh:
                         continue
                     hours.append(hh)
 
@@ -59,18 +63,23 @@ def fetch_data():
                     page_url=link["href"],
                     location_name=soup1.h1.text.strip().replace("’", "'"),
                     street_address=_content[0],
-                    city=_content[1].split(",")[0].strip(),
-                    state=_content[1].split(",")[1].strip().split(" ")[0].strip(),
-                    zip_postal=_content[1].split(",")[1].strip().split(" ")[-1].strip(),
+                    city=_content[-1].split(",")[0].strip(),
+                    state=_content[-1].split(",")[1].strip().split(" ")[0].strip(),
+                    zip_postal=_content[-1]
+                    .split(",")[1]
+                    .strip()
+                    .split(" ")[-1]
+                    .strip(),
                     country_code="US",
-                    phone=_content[-1],
+                    phone=phone,
                     locator_domain=locator_domain,
-                    hours_of_operation=_valid("; ".join(hours[1:])),
+                    hours_of_operation="; ".join(hours),
+                    raw_address=" ".join(_content),
                 )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

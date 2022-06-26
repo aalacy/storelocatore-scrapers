@@ -1,0 +1,9 @@
+--ignore CountryCodeFillRateChecker (INTERNATIONAL)
+
+
+--ignore LatLngDuplicationValidator (Confirmed on website)
+Found 3 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+          latitude       longitude                                 street_address  num_addrs
+90   31.2741630000  121.4517380000       {6号 沪太路1111弄 2层, 2008号601-7 共和新路 601-8室}          2
+118  34.2259600000  108.9476270000                       {118号 碑林区长安北路, 65号 长安中路}          2
+161  36.4072880000   94.9028780000  {988号 吴航路, 口华兴购物广场4F小肥羊火锅餐厅 青海省格尔木市八一中路与昆仑中路}          2

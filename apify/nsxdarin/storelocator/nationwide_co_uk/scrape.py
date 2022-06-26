@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,48 +13,40 @@ headers = {
 logger = SgLogSetup().get_logger("nationwide_co_uk")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    url = "https://locations.nationwidebranches.co.uk/sitemap.xml"
+    cities = []
+    url = "https://www.nationwide.co.uk/branches/index.html"
     r = session.get(url, headers=headers)
     website = "nationwide.co.uk"
     typ = "<MISSING>"
     country = "GB"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://locations.nationwidebranches.co.uk/" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
-            if lurl.count("/") >= 4:
-                locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
+        if '<a class="Directory-listLink" href="' in line:
+            items = line.split('<a class="Directory-listLink" href="')
+            for item in items:
+                if "<!doctype html>" not in item:
+                    lurl = "https://www.nationwide.co.uk/branches/" + item.split('"')[0]
+                    if 'data-count="(' in item:
+                        cities.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
+                    else:
+                        locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
+    for curl in cities:
+        logger.info(curl)
+        r = session.get(curl, headers=headers)
+        for line in r.iter_lines():
+            if 'Teaser-title Link--extraLarge" href="' in line:
+                items = line.split('Teaser-title Link--extraLarge" href="')
+                for item in items:
+                    if 'data-ya-track="businessname' in item:
+                        lurl = (
+                            "https://www.nationwide.co.uk/branches/"
+                            + item.split('"')[0]
+                        )
+                        locs.append(lurl.replace("&#39;", "'").replace("&amp;", "&"))
     for loc in locs:
+        Closed = False
         logger.info(loc)
         name = ""
         add = ""
@@ -65,11 +60,19 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'c-bread-crumbs-name">' in line2:
-                name = line2.split('"c-bread-crumbs-name">')[1].split("<")[0]
+            if "permanently closed" in line2.lower():
+                Closed = True
+            if "details_name']= \"" in line2:
+                name = line2.split("details_name']= \"")[1].split('"')[0]
             if add == "" and 'class="c-address-street-1">' in line2:
                 add = line2.split('class="c-address-street-1">')[1].split("<")[0]
+                if 'class="c-address-street-2">' in line2:
+                    add = (
+                        add
+                        + " "
+                        + line2.split('class="c-address-street-2">')[1].split("<")[0]
+                    )
+                    add = add.strip()
                 city = line2.split('class="c-address-city">')[1].split("<")[0]
                 state = "<MISSING>"
                 try:
@@ -106,27 +109,33 @@ def fetch_data():
         if lat == "":
             lat = "<MISSING>"
             lng = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        city = city.replace("&#39;", "'")
+        name = name.replace("&#39;", "'")
+        add = add.replace("&#39;", "'")
+        if Closed is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,50 +1,65 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+import dirtyjson as json
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 
 logger = SgLogSetup().get_logger("softrontax")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
-    locator_domain = "https://www.softrontax.com/"
-    base_url = "https://www.softrontax.com/location-ajax/"
-    with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()
-        for _ in locations:
-            page_url = _["website"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours = [hh.text.strip() for hh in sp1.select("ul.sloc_hours_list li")]
-            cnt = 0
-            for hh in hours:
-                if "closed" in hh.split(":")[-1].lower():
-                    cnt += 1
-            if cnt == 7:
-                hours = ["Closed"]
-            yield SgRecord(
-                page_url=page_url,
-                location_name=_["locname"],
-                street_address=_["address"],
-                city=_["city"],
-                state=_["state"],
-                zip_postal=_["postal"],
-                latitude=_["lat"],
-                longitude=_["lng"],
-                country_code=_["country"],
-                phone=_["phone"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+    locator_domain = "https://www.softrontax.com"
+    base_url = "https://www.softrontax.com/location"
+    with SgRequests(verify_ssl=False) as http:
+        locations = bs(http.get(base_url, headers=_headers), "lxml").select(
+            "div.container div.column li a"
+        )
+        for loc in locations:
+            url = locator_domain + loc["href"]
+            locs = json.loads(
+                bs(http.get(url, headers=_headers).text, "lxml")
+                .select_one("script#__NEXT_DATA__")
+                .string
+            )["props"]["pageProps"]["location_data"]
+            for _ in locs:
+                hours = []
+                for x, hh in enumerate(_["times"]):
+                    hours.append(f"{days[x]}: {hh}")
+                yield SgRecord(
+                    page_url=f"https://www.softrontax.com/location/{_['id']}",
+                    location_name=_["locationtitle"],
+                    street_address=_["address"],
+                    city=_["city"].split(",")[0].strip(),
+                    state=_["city"].split(",")[-1].strip(),
+                    zip_postal=_["pcode"],
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    country_code="CA",
+                    phone=_["pnumber"].split("/")[0],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
+            break
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

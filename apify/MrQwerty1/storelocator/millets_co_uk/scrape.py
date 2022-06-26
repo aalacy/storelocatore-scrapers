@@ -1,55 +1,29 @@
-import re
-import csv
 import json
-
-from concurrent import futures
+import re
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
+from sglogging import sglog
 
-logger = SgLogSetup().get_logger("millets_co_uk")
 
+def get_tree(url):
+    r = session.get(url, headers=headers)
+    tree = html.fromstring(r.text)
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return tree
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.millets.co.uk/stores")
-    tree = html.fromstring(r.text)
-
+    tree = get_tree("https://www.millets.co.uk/stores")
     return tree.xpath("//ul[contains(@id, 'brands_')]//a/@href")
 
 
-def fetch_page_schema(session, url):
-    r = session.get(url)
-    tree = html.fromstring(r.text)
+def fetch_page_schema(url):
+    tree = get_tree(url)
     src = tree.xpath("//script[contains(@src, 'yextpages.net')]/@src").pop()
     r = session.get(src)
 
@@ -62,76 +36,71 @@ def fetch_page_schema(session, url):
     return entity["schema"]
 
 
-def get_data(url, session):
-    locator_domain = "https://www.millets.co.uk/"
-    page_url = f"https://www.millets.co.uk{url}"
-    data = fetch_page_schema(session, page_url)
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://www.millets.co.uk{slug}"
+    data = fetch_page_schema(page_url)
 
     a = data.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
+    street_address = a.get("streetAddress") or ""
+    city = a.get("addressLocality") or ""
+    if f", {city}" in street_address:
+        street_address = street_address.split(f", {city}")[0].strip()
+    postal = a.get("postalCode")
     country_code = "GB"
 
     location_name = f"{data.get('name')} {city}"
-    store_number = data.get("@id") or "<MISSING>"
-    phone = data.get("telephone") or "<MISSING>"
+    store_number = data.get("@id")
+    phone = data.get("telephone")
 
     geo = data.get("geo")
-    latitude = geo.get("latitude") or "<MISSING>"
-    longitude = geo.get("longitude") or "<MISSING>"
-    location_type = data.get("@type").pop()
+    latitude = geo.get("latitude")
+    longitude = geo.get("longitude")
+    location_type = (data.get("@type") or [SgRecord.MISSING]).pop()
 
-    hours_of_operation = []
+    _tmp = []
     for time in data.get("openingHoursSpecification"):
         day = time["dayOfWeek"]
         opens = time.get("opens")
         closes = time.get("closes")
         if opens and closes:
-            hours_of_operation.append(f"{day}: {opens}-{closes}")
-    hours_of_operation = ",".join(hours_of_operation) or "<MISSING>"
+            _tmp.append(f"{day}: {opens}-{closes}")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    hours_of_operation = ",".join(_tmp)
 
-    return row
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    session = SgRequests()
-    session.get("https://www.millets.co.uk/stores")
 
-    with futures.ThreadPoolExecutor() as executor:
-        future_to_url = {executor.submit(get_data, url, session): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.millets.co.uk/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="millets.co.uk")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

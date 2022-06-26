@@ -1,139 +1,126 @@
 import re
-import json
-import sgzip
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from sgrequests import SgRequests
-from Scraper import Scrape
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sglogging import sglog
 
-URL = "https://www.vw.com"
+logger = sglog.SgLogSetup().get_logger(logger_name="vw.com")
 
 
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
-
-    def fetch_data(self):
-        session = SgRequests()
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-        countries = []
-        dealers = []
-        seen = []
-
-        # Fetch stores from location menu
-        for zip_search in sgzip.for_radius(50):
-            location_url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{zip_search}.json"
-            
-            response = session.get(location_url)
-            if response.status_code == 200:
+def fetch_data(sgw: SgWriter):
+    with SgRequests() as session:
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        )
+        for postal in search:
+            if len(postal) == 4:
+                postal = "0" + postal
+            url = f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{postal}.json"
+            logger.info(f"Crawling {url}")
+            response = session.get(url)
+            try:
                 data = response.json()
-                dealers.extend(data.get('dealers', []))
+                dealers = data.get("dealers", [])
 
-        for dealer in dealers:
-            # Store ID
-            location_id = dealer["dealerid"]
+                for dealer in dealers:
+                    # Page Url
+                    page_url = dealer["url"]
 
-            # Name
-            location_title = dealer["name"]
+                    # Store ID
+                    store_number = dealer["dealerid"]
 
-            # Street
-            street_address = (dealer["address1"] + " " + dealer["address2"]).strip()
+                    # Name
+                    location_name = dealer["name"]
 
-            # Country
-            country = dealer["country"]
+                    # Street
+                    street_address = (
+                        dealer["address1"] + " " + dealer["address2"]
+                    ).strip()
 
-            # State
-            state = dealer["state"]
+                    # Country
+                    country = dealer["country"]
 
-            # city
-            city = dealer["city"]
+                    # State
+                    state = dealer["state"]
 
-            # zip
-            zipcode = dealer["postalcode"]
+                    # city
+                    city = dealer["city"]
 
-            # Lat
-            lat = dealer["latlong"].split(",")[0]
+                    # zip
+                    postal = dealer["postalcode"]
 
-            # Long
-            lon = dealer["latlong"].split(",")[1]
+                    # Lat
+                    latitude = dealer["latlong"].split(",")[0]
 
-            # Phone
-            phone = dealer["phone"]
+                    # Long
+                    longitude = dealer["latlong"].split(",")[1]
+                    search.found_location_at(latitude, longitude)
+                    # Phone
+                    phone = dealer["phone"]
 
-            # hour
-            regex = re.compile("sale", re.IGNORECASE)
-            department_hours = dealer["hours"]
-            sale_department = next((x for x in department_hours if regex.match(x.get('departmentName'))), None)
+                    # hour
+                    regex = re.compile("sale", re.IGNORECASE)
+                    department_hours = dealer["hours"]
+                    department = next(
+                        (
+                            x
+                            for x in department_hours
+                            if regex.match(x.get("departmentName"))
+                        ),
+                        None,
+                    )
 
-            sale_hours = sale_department.get('departmentHours', '<MISSING>') if sale_department else '<MISSING>'
+                    if not department:
+                        department = next(
+                            (x for x in department_hours if x["departmentHours"]), None
+                        )
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(sale_hours)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
+                    hours_of_operation = (
+                        department.get("departmentHours", "<MISSING>")
+                        if department
+                        else "<MISSING>"
+                    )
 
-        for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-            country,
-        ) in zip(
-            locations_titles,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-            countries,
-        ):
-            if location_id not in seen:
-                self.data.append(
-                    [
-                        self.url,
-                        locations_title,
-                        street_address,
-                        city,
-                        state,
-                        zipcode,
-                        country,
-                        location_id,
-                        phone_number,
-                        "<MISSING>",
-                        latitude,
-                        longitude,
-                        hour,
-                    ]
-                )
-                seen.append(location_id)
+                    if isinstance(hours_of_operation, list):
+                        hours = []
+                        for day in hours_of_operation:
+                            day_text = day["dayText"]
+
+                            if day["isClosed"] == "Y":
+                                hours.append(f"{day_text}: Closed")
+                            else:
+                                hours.append(
+                                    f'{day_text}: {day["openHour"]}-{day["closeHour"]}'
+                                )
+
+                        hours_of_operation = ", ".join(hours)
+
+                    sgw.write_row(
+                        SgRecord(
+                            locator_domain="vw.com",
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=postal,
+                            country_code=country,
+                            store_number=store_number,
+                            phone=phone,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                        )
+                    )
+                if not dealers:
+                    search.found_nothing()
+            except:
+                search.found_nothing()
+                pass
 
 
-scrape = Scraper(URL)
-scrape.scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
