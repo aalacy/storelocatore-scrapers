@@ -35,7 +35,8 @@ def fetch_data():
             address = addresslist[i].text.splitlines()
             city, state = address[-1].split(", ")
             state, pcode = state.lstrip().split(" ", 1)
-            street = " ".join(address[0 : len(address) - 1])
+
+            street = address[-2]
 
             yield SgRecord(
                 locator_domain="https://shulasbarandgrill.com/",

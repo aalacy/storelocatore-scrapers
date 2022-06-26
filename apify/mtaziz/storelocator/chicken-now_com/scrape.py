@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import ssl
+import re
 
 try:
     _create_unverified_https_context = (
@@ -38,7 +39,8 @@ def get_locs():
         radd_from_gmapurl = []
         for loc in locations:
             gmapurl = loc["href"]
-            radd_from_gmapurl.append(gmapurl)
+            locname = loc["title"]
+            radd_from_gmapurl.append((gmapurl, locname))
         return radd_from_gmapurl
 
 
@@ -74,13 +76,48 @@ def get_hoo(tel_last_part):
     return hoo
 
 
+def remove_hash(t):
+    found = "".join(re.findall(r"#\d+\w+", t))
+    logger.info(f"found: {found}")
+    t1 = ""
+    if found:
+        t1 = t.replace(found, ",").replace(" ,", ",")
+    elif "#F19" in t:
+        t1 = t.replace("#F19", ",").replace(" ,", ",")
+    else:
+        t1 = t
+    return t1
+
+
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        latlng = map_link.split("@")[1].split("z/data")[0]
+        lat = latlng.split(",")[0].strip()
+        lng = latlng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        latlng = map_link.split("ll=")[1].split("&")[0]
+        lat = latlng.split(",")[0]
+        lng = latlng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        lat = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        lng = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        lat = map_link.split("/@")[1].split(",")[0].strip()
+        lng = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        lat = "<MISSING>"
+        lng = "<MISSING>"
+    return lat, lng
+
+
 def fetch_data():
     urls = get_locs()
-    for idx, purl in enumerate(urls[0:]):
+    for idx, pgurl_ln in enumerate(urls[0:]):
         with SgRequests(proxy_country="us") as http:
+            purl, locname = pgurl_ln
+            r = http.get(purl)
+            text = r.text
             try:
-                r = http.get(purl)
-                text = r.text
                 tel_last_part = text.split("tel:")[-1]
                 tlp = tel_last_part.split('"')
                 tel = "".join(tlp[0].split()).replace("\\", "")
@@ -133,7 +170,13 @@ def fetch_data():
                 )
                 longitude = latlng[-2]
                 latitude = latlng[-1]
+                if state.strip() == "617":
+                    state = ""
+                if "617" in state.strip():
+                    state = ""
 
+                if "Confirmed" in hours_of_operation:
+                    hours_of_operation = ""
                 item = SgRecord(
                     locator_domain="chicken-now.com",
                     page_url=purl,
@@ -154,7 +197,39 @@ def fetch_data():
                 logger.info(f"[{idx}] ITEM: {item.as_dict()}")
                 yield item
             except:
-                pass
+                logger.info(f"Problematic URL: {purl}")
+                try:
+                    add_from_url = purl.split("&q=")[-1].split("&")[0].replace("+", " ")
+                    if "maps.google" not in add_from_url:
+                        add_from_url = remove_hash(add_from_url)
+                        sta = add_from_url.split(",")[0].strip()
+                        city = add_from_url.split(",")[1].strip()
+                        state_zc = add_from_url.split(",")[-1].strip().split(" ")
+                        state = state_zc[0].strip()
+                        zc = state_zc[-1].strip()
+                        lat, lng = get_latlng(purl)
+                        ln = locname.split(",")[0].strip()
+                        item = SgRecord(
+                            locator_domain="chicken-now.com",
+                            page_url=purl,
+                            location_name=ln,
+                            street_address=sta,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code="US",
+                            store_number="",
+                            phone="",
+                            location_type="",
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation="",
+                            raw_address=add_from_url,
+                        )
+                        logger.info(f"[{idx}] ITEM: {item.as_dict()}")
+                        yield item
+                except Exception as e:
+                    logger.info(f"FixError at {purl} || <{e}>")
 
 
 def scrape():
