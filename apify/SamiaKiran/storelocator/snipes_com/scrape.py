@@ -1,3 +1,4 @@
+import json
 import unicodedata
 from sglogging import sglog
 from sgrequests import SgRequests
@@ -26,7 +27,9 @@ def strip_accents(text):
 def fetch_data():
     if True:
         url = "https://www.snipes.com/on/demandware.store/Sites-snse-SOUTH-Site/de_DE/Stores-FindStores?lat=0&long=0&radius=10000000"
-        loclist = session.get(url, headers=headers).json()["stores"]
+        r = session.get(url, headers=headers)
+        loclist = r.text.replace("\n", "")
+        loclist = json.loads(loclist)["stores"]
         for loc in loclist:
             page_url = DOMAIN + loc["url"]
             log.info(page_url)
