@@ -1,187 +1,169 @@
 # -*- coding: utf-8 -*-
-import csv
-from sgrequests import SgRequests
-import json
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "hannaford.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "authority": "www.hannaford.com",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
-def get_formated_street_address(street_address):
-
-    if "&nbsp;" in street_address:
-        add_before_nbsp = street_address.split("&nbsp;")[0].strip()
-        if add_before_nbsp[0].isdigit():
-            street_address = (
-                street_address.split("&nbsp;")[0].strip().replace(",", "").strip()
-            )
-        else:
-            add_after_nbsp = (
-                street_address.split("&nbsp;")[1].strip().replace(",", "").strip()
-            )
-            if add_after_nbsp[0].isdigit():
-                street_address = add_after_nbsp.replace("&nbsp;", " ").strip()
-            else:
-                street_address = street_address.replace("&nbsp;", " ").strip()
-
-    return street_address
 
 
 def fetch_data():
     # Your scraper here
-    locator_domain = website
-    page_url = ""
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zip = ""
-    country_code = ""
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
-    loc_list = []
 
-    sitemap_resp = session.get(
-        "https://www.hannaford.com/sitemap/store_1.xml",
-        headers=headers,
-    )
+    with SgRequests() as session:
+        sitemap_resp = session.get(
+            "https://www.hannaford.com/sitemap/store_1.xml",
+            headers=headers,
+        )
 
-    store_links = sitemap_resp.text.split("<loc>")
-    for store in store_links:
-        if "/locations/" in store:
-            store_url = store.split("</loc>")[0].strip()
-            store_resp = session.get(store_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_resp.text)
-            json_data = json.loads(
-                "".join(
-                    store_sel.xpath('//script[@type="application/ld+json"]' "/text()")
+        store_links = sitemap_resp.text.split("<loc>")
+        for store in store_links:
+            if "https://www.hannaford.comhttps://stores" in store:
+                page_url = (
+                    store.split("</loc>")[0]
+                    .strip()
+                    .replace("https://www.hannaford.comhttps:", "https:")
                 )
-            )
+                log.info(page_url)
+                store_req = session.get(page_url, headers=headers)
+                if isinstance(store_req, SgRequestError):
+                    continue
+                store_sel = lxml.html.fromstring(store_req.text)
+                locator_domain = website
 
-            location_name = json_data["name"]
-            street_address = json_data["address"]["streetAddress"].strip()
-            street_address = get_formated_street_address(street_address)
+                location_name = " ".join(
+                    store_sel.xpath("//h1[@id='location-name']//text()")
+                ).strip()
 
-            city = json_data["address"]["addressLocality"]
-            state = json_data["address"]["addressRegion"]
-            zip = json_data["address"]["postalCode"]
-            store_number = store_url.split("/")[-1].split("-")[-1].strip()
-            location_type = json_data["@type"]
-            if location_type == "":
-                location_type = "<MISSING>"
-            latitude = json_data["geo"]["latitude"]
-            longitude = json_data["geo"]["longitude"]
-
-            country_code = json_data["address"]["addressCountry"]
-            if country_code == "":
-                country_code = "<MISSING>"
-
-            phone = json_data["telephone"]
-            if phone == "":
-                phone = "<MISSING>"
-            page_url = store_url
-
-            openingHoursSpecification = json_data["openingHoursSpecification"]
-            hours_of_operation = ""
-            for spec in openingHoursSpecification:
-                opens = spec["opens"]
-                closes = spec["closes"]
-                if isinstance(spec["dayOfWeek"], list):
-                    days_list = spec["dayOfWeek"]
-                    for day in days_list:
-                        hours_of_operation = (
-                            hours_of_operation + day + ": " + opens + "-" + closes + " "
-                        )
-                else:
-                    day = spec["dayOfWeek"]
-                    hours_of_operation = (
-                        hours_of_operation + day + ": " + opens + "-" + closes + " "
+                street_address = ", ".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[contains(@class,"Address-field Address-line")]/text()'
                     )
-            hours_of_operation = hours_of_operation.strip()
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
+                ).strip()
+                city = "".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[@class="Address-field Address-city"]/text()'
+                    )
+                ).strip()
+                state = "".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[@itemprop="addressRegion"]/text()'
+                    )
+                ).strip()
+                zip = "".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[@itemprop="postalCode"]/text()'
+                    )
+                ).strip()
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+                country_code = "US"
 
-            loc_list.append(curr_list)
-            # break
+                store_number = page_url.split("/")[-1].strip()
 
-    return loc_list
+                section = store_sel.xpath('//div[@class="Core-storeInfoWrapper"]')
+                if len(section) > 0:
+                    phone = "".join(
+                        section[0].xpath('.//div[@class="Core-storeContact"]/text()')
+                    ).strip()
+                    if len(phone) <= 0:
+                        phone = "".join(
+                            section[0].xpath(
+                                './/div[@class="Core-pharmContact"]/text()'
+                            )
+                        ).strip()
+
+                location_type = "<MISSING>"
+
+                hours = []
+                hours_section = store_sel.xpath(
+                    '//div[@class="Core-storeHoursWrapper"]'
+                )
+                if len(hours_section) > 0:
+                    hours = hours_section[0].xpath(
+                        './/table[@class="c-hours-details"]//tbody/tr'
+                    )
+                else:
+                    hours_section = store_sel.xpath(
+                        '//div[@class="Core-pharmacyHoursInfo"]'
+                    )
+                    if len(hours_section) > 0:
+                        hours = hours_section[0].xpath(
+                            './/table[@class="c-hours-details"]//tbody/tr'
+                        )
+
+                hours_list = []
+                for hour in hours:
+                    day = "".join(
+                        hour.xpath('td[@class="c-hours-details-row-day"]/text()')
+                    ).strip()
+                    time = "".join(
+                        hour.xpath('td[@class="c-hours-details-row-intervals"]//text()')
+                    ).strip()
+                    hours_list.append(day + ":" + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
+
+                latitude = "".join(
+                    store_sel.xpath(
+                        '//span[@class="Address-coordinates"]/meta[@itemprop="latitude"]/@content'
+                    )
+                ).strip()
+                longitude = "".join(
+                    store_sel.xpath(
+                        '//span[@class="Address-coordinates"]/meta[@itemprop="longitude"]/@content'
+                    )
+                ).strip()
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

@@ -23,6 +23,9 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("entity_url")
         page_url = f"https://preferredhotels.com{slug}"
         location_name = j.get("title") or "<MISSING>"
+        if str(location_name).find("-") != -1:
+            location_name = " ".join(str(location_name).split("-")[1:])
+        location_name = " ".join(location_name.split())
         street_address = a.get("address_line1") or "<MISSING>"
         state = j.get("field_state_name") or "<MISSING>"
         country_code = a.get("country_code") or "<MISSING>"

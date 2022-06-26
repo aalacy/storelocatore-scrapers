@@ -44,7 +44,7 @@ def fetch_data():
         logger.info(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            if '<a href="/en_AE/findus/location/store/' in line2:
+            if '<a href="/en_ae/findus/location/store/' in line2.lower():
                 otherlocs.append(
                     "https://www.tesla.com" + line2.split('href="')[1].split('"')[0]
                 )

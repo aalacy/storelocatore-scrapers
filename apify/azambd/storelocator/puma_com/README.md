@@ -18,7 +18,5 @@ Please crawl puma.com & include all locations globally.
 - Store Locator: `https://about.puma.com/en/storelocator#store-locator/`
 - include Puma Stores & Puma Outlets but please indicate which is why in location_name or location_type, please check the example data US/CA.
 
-### R&D:
-
-- there are more than 30 countries globally `https://about.puma.com/en/careers/locations`
+We have updated the API Endpoint to `https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator`
 
