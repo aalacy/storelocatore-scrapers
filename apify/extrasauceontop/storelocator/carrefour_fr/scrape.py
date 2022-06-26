@@ -131,11 +131,7 @@ def get_data():
             block_third_parties=True,
             proxy_country="fr",
         ) as driver:
-            x = 0
             for page_url_thing in crawl_state.request_stack_iter():
-                x = x + 1
-                if x == 10:
-                    return
                 page_url = page_url_thing.url.split("?")[0]
                 locator_domain = "carrefour.fr"
 
@@ -266,8 +262,7 @@ while True:
         raise Exception("Check errors")
     try:
         scrape()
-    break
+        break
 
-except Exception as e:
-    print(e)
-    continue
+    except Exception:
+        continue
