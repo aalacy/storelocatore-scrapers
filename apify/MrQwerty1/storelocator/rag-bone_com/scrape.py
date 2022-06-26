@@ -51,6 +51,10 @@ def fetch_data(sgw: SgWriter):
         for h in hours:
             if not h.strip() or "Regular" in h:
                 continue
+            if "Tempora" in h:
+                if "closed" in h:
+                    location_name = f"{location_name} (Temporarily Closed)"
+                continue
             _tmp.append(h.strip())
 
         hours_of_operation = ";".join(_tmp)

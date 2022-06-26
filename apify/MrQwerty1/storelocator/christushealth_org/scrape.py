@@ -23,6 +23,8 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name")
         slug = j.get("url")
         page_url = f"https://www.christushealth.org{slug}"
+        if "/locations/" not in page_url:
+            continue
         phone = j.get("phone")
         latitude = j.get("latitude")
         longitude = j.get("longitude")
