@@ -44,6 +44,7 @@ def fetch_data(sgw: SgWriter):
                 )
             if "laiks:" in li:
                 hours = li.split("laiks:")[-1].strip()
+                break
 
         latitude, longitude = coords.get(store_number) or (
             SgRecord.MISSING,
