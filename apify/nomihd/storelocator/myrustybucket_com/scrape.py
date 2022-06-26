@@ -48,6 +48,9 @@ def fetch_data():
             )
 
             city = store_json["address"].get("city", "<MISSING>")
+            if city == "<MISSING>":
+                city = store_json["address"]["address"].split(",")[1].strip()
+
             state = store_json["address"].get("state_short", "<MISSING>")
             zip = store_json["address"].get("post_code", "<MISSING>")
             country_code = store_json["address"].get("country_short", "<MISSING>")
