@@ -1,86 +1,88 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "k-bobs.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.k-bobs.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-  
-    base_url= "https://www.k-bobs.com/locations/"
-    r = session.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    data = soup.find_all("div",{"class":"fw-text-inner"})
-    hours = []
-    name_store=[]
-    store_detail=[]
-    phone=[]
-    return_main_object=[]
-    names = soup.find_all("h6")
-    for n in names:
-       if "Follow Us On" in n.text.replace("\n",""):
-            pass
-       else:
-            name_store.append(n.text.replace("\n",""))
-    
-    for i in data:
-        tem_var =[]
-        if i.find("p").a:
-            pass
-        else:
-            hours.append(i.find("p").text)
+    if True:
 
-        if len(list(i.stripped_strings))==4:
-            if "Sun–Sat:" in list(i.stripped_strings) or "Sat–Sun:" in list(i.stripped_strings):
-                pass
-            else:
-                street_address = list(i.stripped_strings)[0]
-                city = list(i.stripped_strings)[1].split(',')[0]
-                state  = list(i.stripped_strings)[1].split(',')[1].split( )[0]
-                zipcode = list(i.stripped_strings)[1].split(',')[1].split( )[1]
-                phone.append(list(i.stripped_strings)[3])
-                
-                tem_var.append(street_address)
-                tem_var.append(city)
-                tem_var.append(state)
-                tem_var.append(zipcode)
-                store_detail.append(tem_var)
-    
-    for i in range(len(name_store)):
-        store = list()
-        store.append("https://www.k-bobs.com")
-        store.append(name_store[i])
-        store.extend(store_detail[i])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone[i])
-        store.append("k-bobs")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours[i])
-        return_main_object.append(store)
-
-    return return_main_object
+        url = "https://www.k-bobs.com/locations/"
+        r = session.get(url, headers=headers)
+        loclist = r.text.split('<h6 class="fw-special-title">')[1:]
+        for loc in loclist:
+            loc = '<h6 class="fw-special-title">' + loc
+            soup = BeautifulSoup(loc, "html.parser")
+            location_name = soup.find("h6").text
+            log.info(location_name)
+            temp = soup.findAll("div", {"class": "fw-text-inner"})
+            address = temp[0].get_text(separator="|", strip=True).split("|")
+            if "Temporarily Closed" in address[0]:
+                location_type = "Temporarily Closed"
+                address = address[1:]
+            phone = address[-1]
+            street_address = address[0]
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            location_type = MISSING
+            hours_of_operation = temp[1]
+            if "JOIN THE WAITLIST" in hours_of_operation.text:
+                hours_of_operation = temp[2]
+            hours_of_operation = (
+                hours_of_operation.find("p")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

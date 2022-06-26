@@ -29,6 +29,11 @@ def fetch_data():
         city = raw_data[0]
         if len(city.split("-")) == 3:
             city = ""
+        hoo = etree.HTML(poi["note"]).xpath("//text()")[-1].strip()
+        if hoo.startswith("Viernes"):
+            hoo = etree.HTML(poi["note"]).xpath("//text()")[-2:]
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hoo = " ".join(hoo).strip()
 
         item = SgRecord(
             locator_domain=domain,
@@ -44,8 +49,7 @@ def fetch_data():
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation="",
-            raw_address=hoo,
+            hours_of_operation=hoo,
         )
 
         yield item

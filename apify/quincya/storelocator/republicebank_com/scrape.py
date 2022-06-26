@@ -1,110 +1,92 @@
-import csv
-
+import ssl
+import time
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+import undetected_chromedriver as uc
+from webdriver_manager.chrome import ChromeDriverManager
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
-    base_link = "https://republicebank.com/locations/"
+    raw_link = "https://republicebank.locatorsearch.com/GetItems.aspx"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     locator_domain = "republicebank.com"
 
-    items = (
-        base.find(class_="page-content")
-        .find_all(class_="wpv-grid")[0]
-        .find_all(class_="wpv-grid")[2:]
-    )
-    for item in items:
-        raw_data = list(item.stripped_strings)
-        location_name = "<MISSING>"
-        raw_address = raw_data[0].split(",")
-        street_address = "".join(raw_address[:-1])
-        city = raw_address[-1][:-6].strip()
-        state = "IL"
-        zip_code = raw_address[-1][-6:].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = raw_data[1].split("f")[0].replace("p", "").replace("Retail", "").strip()
-        location_type = "<MISSING>"
-        latitude = "<INACCESSIBLE>"
-        longitude = "<INACCESSIBLE>"
+    payload = {
+        "lat": "42.011295",
+        "lng": "-87.73964",
+        "searchby": "FCS|",
+        "SearchKey": "",
+        "rnd": "1656034914901",
+    }
+    req = session.post(raw_link, data=payload, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+    raw_items = base.markers.find_all("marker")
 
-        hours_of_operation = ""
-        for i, row in enumerate(raw_data):
-            if "lobby hours" in row.lower():
-                break
-        for y in range(5):
-            text = raw_data[y + i + 1]
-            if "day" in text.lower():
-                hours_of_operation = (hours_of_operation + " " + text).strip()
-            else:
-                break
+    base_link = "https://republicebank.locatorsearch.com/index.aspx?s=FCS#"
+    options = uc.ChromeOptions()
+    options.headless = True
 
-        data.append(
-            [
-                locator_domain,
-                base_link,
-                location_name,
-                street_address,
-                city,
-                state.strip(),
-                zip_code.strip(),
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
+    with uc.Chrome(
+        driver_executable_path=ChromeDriverManager().install(), options=options
+    ) as driver:
+        driver.get(base_link)
+        time.sleep(5)
+        base = BeautifulSoup(driver.page_source, "lxml")
 
-    return data
+        items = base.table.find_all(class_="row")
+        for i, item in enumerate(items):
+            raw_data = list(item.span.stripped_strings)
+            location_name = item.b.text.strip()
+            street_address = raw_data[0]
+            if "1st Floor" in location_name:
+                street_address = street_address + " 1st Floor"
+                location_name = location_name.replace("1st Floor", "").strip()
+            city_line = raw_data[1].strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[-1].strip().split()[0].strip()
+            zip_code = city_line[-1].strip().split()[1].strip()
+            country_code = "US"
+            store_number = item["id"].replace("tablerow", "")
+            phone = raw_data[2]
+            location_type = ""
+            latitude = raw_items[i]["lat"]
+            longitude = raw_items[i]["lng"]
+            hours_of_operation = raw_items[i].table.get_text(" ")
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url="https://republicebank.com/locations/",
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

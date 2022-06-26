@@ -56,7 +56,7 @@ def fetch_store_links():
     storeLinks = []
     for key in compProps.keys():
         if "skin" in compProps[key] and compProps[key]["skin"] == "BasicButton":
-            url = compProps[key]["link"]["href"]
+            url = compProps[key]["link"]["href"].replace("south-dakota", "rapid-city")
             if "LOCATIONS" in compProps[key]["label"]:
                 for link in fetch_location_stores(url):
                     if link not in storeLinks:
@@ -110,7 +110,7 @@ def fetch_store_details(link):
 
     location_name = (
         (" ".join(body.xpath("//h1/span/span/text()"))).replace("&nbsp;", " ").strip()
-    )
+    ).replace("  ", " ")
     if not location_name:
         try:
             location_name = body.xpath("//h1//text()")[0].strip()
