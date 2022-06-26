@@ -73,9 +73,9 @@ def fetch_data(sgw: SgWriter):
 
         for store in stores:
             location_name = store["name"]
-            if store["isUpcomingStore"]:
-                search.found_nothing()
-                continue
+            # if store["isUpcomingStore"]:
+            #     search.found_nothing()
+            #     continue
             try:
                 street_address = (store["address1"] + " " + store["address2"]).strip()
             except:
