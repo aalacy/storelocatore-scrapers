@@ -121,7 +121,7 @@ function grep_and_get_exit_code() {
 function piprottest() {
   lib=$(echo $1 | cut -d'=' -f1)
   ver=$(echo $1 | cut -d'=' -f3)
-  latest=$(pip install --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/ ${lib}== 2>&1 | grep versions: | rev | cut -d',' -f1 | rev | sed -r 's/[ \)]//g')
+  latest=$(pip install --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/ ${lib}== 2>&1 | grep versions: | sed -E "s/.*\(from versions: (.*)\).*/\1/" | awk -F',' '{print $NF}' | tr -d " ")
   [[ "$ver" == "$latest" ]] || echo "${lib}==${ver} is not latest (${latest})"
 }
 

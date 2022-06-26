@@ -6,18 +6,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
-from sgselenium import SgSelenium
+from sgselenium import SgChrome
 import re
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 DOMAIN = "commercialtire.com"
 BASE_URL = "https://commercialtire.com"
@@ -65,22 +58,16 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-    soup = bs(driver.page_source, "lxml")
-    contents = soup.find("div", {"id": "1968833344"}).find_all(
-        "a", {"data-display-type": "block"}
-    )
-    for row in contents:
-        page_url = BASE_URL + row["href"]
-        content = pull_content(page_url)
-        info = content.find(
-            "div",
-            {"class": re.compile(r"u_(.*) dmRespRow fullBleedChanged fullBleedMode")},
+    with SgChrome() as driver:
+        driver.get(LOCATION_URL)
+        driver.implicitly_wait(10)
+        soup = bs(driver.page_source, "lxml")
+        contents = soup.find("div", {"id": "1968833344"}).find_all(
+            "a", {"data-display-type": "block"}
         )
-        if not info:
-            driver.get(page_url)
-            content = bs(driver.page_source, "lxml")
+        for row in contents:
+            page_url = BASE_URL + row["href"]
+            content = pull_content(page_url)
             info = content.find(
                 "div",
                 {
@@ -89,63 +76,75 @@ def fetch_data():
                     )
                 },
             )
-        location_name = row.text.strip()
-        addr_info = info.find("div", {"data-type": "inlineMap"})
-        raw_address = (
-            info.find("span", text="LOCATION:")
-            .find_next("p")
-            .get_text(strip=True, separator=",")
-        )
-        if "boise---state" in page_url:
-            raw_address = "1190 W State St, Downtown Boise, Boise, ID, United States"
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        street_address = street_address.replace("Winstead Park", "").replace(
-            "Yakima", ""
-        )
-        store_number = MISSING
-        phone_content = info.find(
-            re.compile(r"p|span"),
-            {
-                "class": re.compile(
-                    r"m-font-size-19 font-size-24|m-size-17 size-24|font-size-24 m-font-size-19"
+            if not info:
+                driver.get(page_url)
+                content = bs(driver.page_source, "lxml")
+                info = content.find(
+                    "div",
+                    {
+                        "class": re.compile(
+                            r"u_(.*) dmRespRow fullBleedChanged fullBleedMode"
+                        )
+                    },
                 )
-            },
-        )
-        try:
-            phone = phone_content.text.replace("\n", "").strip()
-        except:
-            phone = MISSING
-        phone = phone.replace("﻿", "").strip()
-        country_code = "US"
-        location_type = "commercialtire"
-        addr_info = info.find("div", {"data-type": "inlineMap"})
-        latitude = addr_info["data-lat"]
-        longitude = addr_info["data-lng"]
-        hours_of_operation = ", ".join(
-            info.find("span", text="HOURS:")
-            .find_parent("div")
-            .get_text(strip=True, separator="@")
-            .split("@")[3:]
-        )
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-    driver.quit()
+            location_name = row.text.strip()
+            addr_info = info.find("div", {"data-type": "inlineMap"})
+            raw_address = (
+                info.find("span", text="LOCATION:")
+                .find_next("p")
+                .get_text(strip=True, separator=",")
+            )
+            if "boise---state" in page_url:
+                raw_address = (
+                    "1190 W State St, Downtown Boise, Boise, ID, United States"
+                )
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            street_address = street_address.replace("Winstead Park", "").replace(
+                "Yakima", ""
+            )
+            store_number = MISSING
+            phone_content = info.find(
+                re.compile(r"p|span"),
+                {
+                    "class": re.compile(
+                        r"m-font-size-19 font-size-24|m-size-17 size-24|font-size-24 m-font-size-19"
+                    )
+                },
+            )
+            try:
+                phone = phone_content.text.replace("\n", "").strip()
+            except:
+                phone = MISSING
+            phone = phone.replace("﻿", "").strip()
+            country_code = "US"
+            location_type = "commercialtire"
+            addr_info = info.find("div", {"data-type": "inlineMap"})
+            latitude = addr_info["data-lat"]
+            longitude = addr_info["data-lng"]
+            hours_of_operation = ", ".join(
+                info.find("span", text="HOURS:")
+                .find_parent("div")
+                .get_text(strip=True, separator="@")
+                .split("@")[3:]
+            )
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

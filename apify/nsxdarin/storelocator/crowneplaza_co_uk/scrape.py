@@ -48,26 +48,22 @@ def fetch_data():
                 hours = "<MISSING>"
                 r2 = session.get(loc, headers=headers)
                 for line2 in r2.iter_lines():
-                    if 'id="currencycode" value="GBP"' in line2:
+                    if '"addressCountry": "United Kingdom"' in line2:
                         GB = True
                     if '"og:title" content="' in line2:
                         name = line2.split('"og:title" content="')[1].split('"')[0]
-                    if 'location:latitude"  content="' in line2:
-                        lat = line2.split('location:latitude"  content="')[1].split(
-                            '"'
-                        )[0]
-                    if 'location:longitude" content="' in line2:
-                        lng = line2.split('location:longitude" content="')[1].split(
-                            '"'
-                        )[0]
+                    if '"latitude": "' in line2:
+                        lat = line2.split('"latitude": "')[1].split('"')[0]
+                    if '"longitude": "' in line2:
+                        lng = line2.split('"longitude": "')[1].split('"')[0]
                     if '"streetAddress": "' in line2:
                         add = line2.split('"streetAddress": "')[1].split('"')[0]
                     if '"addressLocality": "' in line2:
                         city = line2.split('"addressLocality": "')[1].split('"')[0]
                     if '"postalCode": "' in line2:
                         zc = line2.split('"postalCode": "')[1].split('"')[0]
-                    if '<a href="tel:' in line2:
-                        phone = line2.split('<a href="tel:')[1].split('"')[0]
+                    if '"telephone": "' in line2:
+                        phone = line2.split('"telephone": "')[1].split('"')[0]
                 if GB is True:
                     yield SgRecord(
                         locator_domain=website,

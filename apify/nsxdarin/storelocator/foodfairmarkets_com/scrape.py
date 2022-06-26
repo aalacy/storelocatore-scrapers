@@ -1,94 +1,74 @@
-import ssl
-import time
-from sgrequests import SgRequests
-from sgselenium import SgChrome
-from sgscrape.sgwriter import SgWriter
+import datetime
+import json
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+    session = SgRequests()
 
-    base_link = "https://www.foodfairmarkets.com/"
+    locator_domain = "https://www.foodfairmarkets.com/"
+    api_url = "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&is_selectable=true&limit=100&token={}"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "foodfair_market",
+        "referrer": "https://www.foodfairmarkets.com/",
+        "utc": str(unixtime).split(".")[0],
+    }
+    r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    token = r["token"]
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    r = session.get(api_url.format(token))
+    js = json.loads(r.text)
 
-    driver = SgChrome(user_agent=user_agent).driver()
-    driver.get(base_link)
-    time.sleep(6)
-    token = driver.get_cookie("fp-session")["value"].split("%22")[-2]
-    driver.close()
+    for j in js["items"]:
 
-    url = (
-        "https://api.freshop.com/1/stores?app_key=foodfair_market&has_address=true&limit=-1&token="
-        + token
-    )
-    items = session.get(url, headers=headers).json()["items"]
-    website = "foodfairmarkets.com"
-    typ = "<MISSING>"
-    country = "US"
-    for item in items:
-        store = item["id"]
-        name = item["name"]
-        lat = item["latitude"]
-        lng = item["longitude"]
-        loc = item["url"]
-        add = item["address_1"]
-        city = item["city"]
-        try:
-            state = item["state"]
-        except:
-            state = "<MISSING>"
-        zc = item["postal_code"]
-        hours = item["hours_md"]
-        try:
-            phone = item["phone_md"]
-        except:
-            phone = "<MISSING>"
-        if city == "Ironton":
-            state = "OH"
-        if city == "West Hamlin":
-            state = "WV"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
+        street_address = f"{j.get('address_1')} {j.get('address_2')}".replace(
+            "None", ""
+        ).strip()
+        city = j.get("city")
+        postal = j.get("postal_code")
+        state = j.get("state")
+        country_code = "US"
+        store_number = j.get("store_number")
+        location_name = j.get("name")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        page_url = (
+            j.get("url") or "https://www.foodfairmarkets.com/my-store/store-locator"
+        )
+        phone = j.get("phone_md")
+        hours_of_operation = (
+            "".join(j.get("hours_md")).replace("Open", "").replace("\n", ", ").strip()
+        )
+        if hours_of_operation.find("First") != -1:
+            hours_of_operation = hours_of_operation.split("First")[0].strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
             city=city,
             state=state,
-            zip_postal=zc,
-            country_code=country,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
             phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-
-def scrape():
-    results = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        for rec in results:
-            writer.write_row(rec)
+        sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sglogging import sglog
 from tenacity import stop_after_attempt, wait_fixed, retry
 
 
@@ -12,6 +13,7 @@ from tenacity import stop_after_attempt, wait_fixed, retry
 def get_hours(_id):
     _tmp = []
     r = session.get(f"https://twomenandatruck.com/location-blocks/{_id}")
+    log.info(f"{_id}: {r}")
     source = r.json().get("tmt_location_footer") or "<html>"
     tree = html.fromstring(source)
     divs = tree.xpath("//div[contains(@class, 'office-hours__item')]")
@@ -33,14 +35,16 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         ids.append(j.get("location_id"))
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    log.info(f"{len(js)} URLs to crawl")
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {executor.submit(get_hours, _id): _id for _id in ids}
         for future in futures.as_completed(future_to_url):
+            _id = future_to_url[future]
             try:
                 row = future.result()
-                _id = future_to_url[future]
                 hours[_id] = row
-            except:
+            except Exception as e:
+                log.info(f"{_id} failed, reason: {e}")
                 pass
 
     for j in js:
@@ -80,6 +84,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://twomenandatruck.com/"
+    log = sglog.SgLogSetup().get_logger(logger_name="twomenandatruck.com")
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
