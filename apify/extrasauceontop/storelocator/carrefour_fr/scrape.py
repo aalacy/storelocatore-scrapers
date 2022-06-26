@@ -259,15 +259,15 @@ def scrape():
     pipeline.run()
 
 
-# x = 0
-# while True:
-#     x = x + 1
-#     if x == 5:
-#         raise Exception("Check errors")
-#     try:
-scrape()
-#     break
+x = 0
+while True:
+    x = x + 1
+    if x == 5:
+        raise Exception("Check errors")
+    try:
+        scrape()
+    break
 
-# except Exception as e:
-#     print(e)
-#     continue
+except Exception as e:
+    print(e)
+    continue
