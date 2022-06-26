@@ -1,5 +1,6 @@
 from lxml import etree
 
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -42,12 +43,16 @@ def fetch_data():
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
-        country_code = addr.country
+        country_code = "US"
         phone = raw_data[1]
-        hoo = loc_dom.xpath(
-            '//div[div[h6[contains(text(), "Regular Hours")]]]/following-sibling::div[1]//li/text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Lunch")[0]
+
+        base = BeautifulSoup(loc_response.text, "lxml")
+        hoo = " ".join(
+            list(base.find(string="Regular Hours").find_next("ul").stripped_strings)
+        ).split("Lunch")[0]
+
+        if "day" not in hoo:
+            hoo = ""
 
         item = SgRecord(
             locator_domain=domain,

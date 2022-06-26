@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
         postal = j.get("zipCode")
         country_code = "US"
         store_number = j.get("id")
-        location_type = j.get("entity")
+        location_type = j.get("entity") or j.get("type")
         location_name = j.get("name")
         slug = j.get("url")
         page_url = f"https://www.christushealth.org{slug}"
