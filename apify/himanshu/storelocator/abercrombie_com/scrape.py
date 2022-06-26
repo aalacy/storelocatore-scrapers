@@ -51,16 +51,13 @@ def get_data(url, sgw: SgWriter):
         "".join(tree.xpath('//meta[@itemprop="addressCountry"]/@content'))
         or "<MISSING>"
     )
-    location_name = (
-        "".join(tree.xpath('//meta[@itemprop="name"]/@content')) or "<MISSING>"
-    )
     phone = "".join(tree.xpath('//meta[@itemprop="telephone"]/@content')) or "<MISSING>"
     hours_of_operation = ""
     latitude = "".join(tree.xpath("//main/@data-latitude"))
     longitude = "".join(tree.xpath("//main/@data-longitude"))
     store_number = page_url.split("/")[-1].strip()
     js_block = (
-        "".join(tree.xpath('//script[contains(text(), "physicalStore")]/text()'))
+        "".join(tree.xpath('//script[contains(text(), "geoNodeUniqueId")]/text()'))
         .split("physicalStore',")[1]
         .split(");")[0]
         .strip()
@@ -76,6 +73,7 @@ def get_data(url, sgw: SgWriter):
     location_type = location_type.replace("ACF", "abercrombie and fitch").replace(
         "KID", "abercrombie and fitch Kids"
     )
+    location_name = location_type
     index = 0
     days = [
         "Sunday",

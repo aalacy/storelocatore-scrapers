@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from sgpostal.sgpostal import parse_address_usa
 
 
 DOMAIN = "laclinica.org"
@@ -65,22 +65,30 @@ def fetch_data():
                 store.find("p", {"class": "phone"}).text.replace("Phone:", "").strip()
             )
         except:
-            phone = (
-                store.find("span", text="Phone:")
-                .parent.text.replace("Phone:", "")
-                .strip()
-            )
+            try:
+                phone = (
+                    store.find("span", text="Phone:")
+                    .parent.text.replace("Phone:", "")
+                    .strip()
+                )
+            except:
+                phone = "<MISSING>"
+
         country_code = "US"
         try:
             hours_of_operation = (
                 store.find("p", {"class": "hours"}).text.replace("Hours:", "").strip()
             )
         except:
-            hours_of_operation = (
-                store.find("p", {"class": "dept-hour"})
-                .text.replace("Hours:", "")
-                .strip()
-            )
+            try:
+                hours_of_operation = (
+                    store.find("p", {"class": "dept-hour"})
+                    .text.replace("Hours:", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = "<MISSING>"
+
         location_type = MISSING
         store_number = MISSING
         latitude = row["point"]["lat"]

@@ -32,6 +32,7 @@ class _SearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
+        found_nothing,
     ) -> Iterable[SgRecord]:
 
         log.info(f"pulling data for zipcode: {zipcode}")
@@ -43,7 +44,7 @@ class _SearchIteration(SearchIteration):
             ("lang", "en_US"),
             (
                 "xml_request",
-                f'<request><appkey>3D71930E-EC80-11E6-A0AE-8347407E493E</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>10000</limit><geolocs><geoloc><addressline>{zipcode}</addressline><longitude></longitude><latitude></latitude><country>UK</country></geoloc></geolocs><searchradius>100</searchradius><order>RANK, _distance</order><stateonly>1</stateonly><radiusuom></radiusuom><proximitymethod>drivetime</proximitymethod><cutoff>500</cutoff><cutoffuom>mile</cutoffuom><distancefrom>0.01</distancefrom><where><or><curbside><eq></eq></curbside><cakesforsale><eq></eq></cakesforsale><catering><eq></eq></catering><fcd><eq></eq></fcd><flavorserved><eq></eq></flavorserved></or><icon><in>Shop,SHOP,shop,CINEMA,Cinema,default</in></icon><clientkey><notin></notin></clientkey></where></formdata></request>',
+                f'<request><appkey>3D71930E-EC80-11E6-A0AE-8347407E493E</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>10000</limit><geolocs><geoloc><addressline>{zipcode}</addressline><longitude></longitude><latitude></latitude><country>UK</country></geoloc></geolocs><searchradius>1000</searchradius><order>RANK, _distance</order><stateonly>1</stateonly><radiusuom></radiusuom><proximitymethod>drivetime</proximitymethod><cutoff>500</cutoff><cutoffuom>mile</cutoffuom><distancefrom>0.01</distancefrom><where><or><curbside><eq></eq></curbside><cakesforsale><eq></eq></cakesforsale><catering><eq></eq></catering><fcd><eq></eq></fcd><flavorserved><eq></eq></flavorserved></or><icon><in>Shop,SHOP,shop,CINEMA,Cinema,default</in></icon><clientkey><notin></notin></clientkey></where></formdata></request>',
             ),
         )
 
@@ -71,7 +72,12 @@ class _SearchIteration(SearchIteration):
             hours_of_operation = "<MISSING>"
             page_url = "<MISSING>"
 
-            for script in soup.find_all("poi"):
+            stores = soup.find_all("poi")
+            if len(stores) <= 0:
+                found_nothing()
+
+            log.info(len(stores))
+            for script in stores:
 
                 location_name = script.find("name").text
                 log.info(location_name)
@@ -96,7 +102,7 @@ class _SearchIteration(SearchIteration):
                 phone = script.find("phone").text.replace("&#xa0;", "")
                 location_type = script.find("icon").text.strip()
                 store_number = script.find("clientkey").text
-
+                found_location_at(float(latitude), float(longitude))
                 if "n/a" in phone:
                     phone = "<MISSING>"
 
@@ -151,6 +157,7 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
+            found_nothing()
             pass
 
 
@@ -159,7 +166,7 @@ def scrape():
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicZipSearch",
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=200,
     )
 
     with SgWriter(

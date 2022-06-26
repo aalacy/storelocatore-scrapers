@@ -1,49 +1,121 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
+import re
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("gabrielsliquor")
+session = SgRequests()
+website = "gabrielsliquor.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
+
+DOMAIN = "https://gabrielsliquor.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    locator_domain = "https://gabrielsliquor.com/"
-    base_url = "https://gabrielsliquor.com/"
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select(
-            "div.elementor-widget-container article a.elementor-post__thumbnail__link"
-        )
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            block = list(sp1.select("div.elementor-text-editor p")[-1].stripped_strings)
-            addr = block[0].split(":")[-1].split(" ")
-            zip_postal = addr[-1].strip()
-            street_address = " ".join(addr[:-1])
-            if not zip_postal.isdigit():
-                zip_postal = ""
-                street_address = " ".join(addr)
+    if True:
+        pattern = re.compile(r"\s\s+")
+        r = session.get(DOMAIN, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = r.text.split("href%3D%5C%22%2Fpages%2F")[1:]
+        for loc in loclist:
+            page_url = "https://gabrielsliquor.com/pages/" + loc.split("%")[0]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text
+            temp = (
+                soup.find("div", {"class": "u_content_text"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .split("Address:")[1]
+            )
+            temp = temp.split("Phone:")
+            address = temp[0]
+            phone = temp[1].replace("Email Us!", "")
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            hours_of_operation = (
+                soup.find("div", {"class": "business-hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Business Hours ", "")
+            )
+            state = "TX"
+            city = "San Antonio"
+            hours_of_operation = re.sub(pattern, "\n", hours_of_operation).splitlines()
+            hours_of_operation = " ".join(hours_of_operation)
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!3m", 1)[0]
+                .split("!3d")
+            )
+            country_code = "US"
             yield SgRecord(
+                locator_domain=DOMAIN,
                 page_url=page_url,
-                location_name=sp1.select_one("h2.elementor-heading-title").text.strip(),
+                location_name=location_name,
                 street_address=street_address,
+                city=city,
+                state=state,
                 zip_postal=zip_postal,
-                country_code="US",
-                phone=block[2],
-                locator_domain=locator_domain,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
 
-if __name__ == "__main__":
-    with SgWriter() as writer:
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

@@ -6,12 +6,13 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 
+session = SgRequests()
+
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.caferouge.com/"
     api_url = "https://www.caferouge.com/sitemap.xml"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -21,13 +22,13 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//text()"))
-        r = session.get(page_url, headers=headers)
         if (
-            page_url
+            page_url == "https://www.caferouge.com/restaurants/birmingham/bullring"
+            or page_url
             == "https://www.caferouge.com/restaurants/haywards-heath/the-broadway"
-            or page_url == "https://www.caferouge.com/restaurants/birmingham/bullring"
         ):
-            r = session.get("https://www.rougebrasserie.com/find")
+            continue
+        r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
         location_name = (
@@ -73,69 +74,6 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.count("CLOSED") == 7:
             hours_of_operation = "CLOSED"
 
-        if page_url == "https://www.caferouge.com/restaurants/birmingham/bullring":
-            ad = (
-                "".join(
-                    tree.xpath(
-                        '//div[@id="find-birmingham-bullring_overlay"]//p/text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            street_address = " ".join(ad.split(",")[:2])
-            city = ad.split(",")[2].split()[0].strip()
-            postal = " ".join(ad.split(",")[2].split()[1:])
-            phone = "".join(
-                tree.xpath(
-                    '//div[@id="find-birmingham-bullring_overlay"]//p/a[2]/text()'
-                )
-            )
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//div[@id="find-birmingham-bullring_overlay"]//h5[./strong[text()="Opening Hours"]]/following-sibling::text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            location_name = "".join(
-                tree.xpath(
-                    '//div[@id="text-birmingham-bullring_overlay"]/div[1]//text()'
-                )
-            )
-
-        if (
-            page_url
-            == "https://www.caferouge.com/restaurants/haywards-heath/the-broadway"
-        ):
-            ad = (
-                "".join(
-                    tree.xpath('//div[@id="find-hayward-heath_overlay"]//p/text()[1]')
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            street_address = ad.split(",")[0].strip()
-            city = ad.split(",")[1].strip()
-            postal = ad.split(",")[2].strip()
-            phone = "".join(
-                tree.xpath('//div[@id="find-hayward-heath_overlay"]//p/a[2]/text()')
-            )
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//div[@id="find-hayward-heath_overlay"]//h5[./strong[text()="Opening Hours"]]/following-sibling::text()[position() < 3]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            location_name = "".join(
-                tree.xpath('//div[@id="text-haywards-heath_overlay"]/div[1]//text()')
-            )
-
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -152,6 +90,66 @@ def fetch_data(sgw: SgWriter):
             longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=ad,
+        )
+
+        sgw.write_row(row)
+
+    locator_domain = "https://www.caferouge.com/"
+
+    headers = {
+        "Authorization": "Bearer 30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c",
+    }
+
+    params = {
+        "content_type": "restaurant",
+        "include": "10",
+    }
+
+    r = session.get(
+        "https://cdn.contentful.com/spaces/6qprbsfbbvrl/environments/master/entries",
+        params=params,
+        headers=headers,
+    )
+    js = r.json()["items"]
+    for j in js:
+
+        a = j.get("fields")
+        page_url = f"https://www.rougebrasserie.com/restaurants/{a.get('city')}/{a.get('slug')}"
+        location_name = a.get("title")
+        street_address = a.get("addressLine1")
+        postal = a.get("postcode")
+        country_code = "UK"
+        city = a.get("addressCity")
+        store_number = a.get("storeId")
+        latitude = a.get("addressLocation").get("lat")
+        longitude = a.get("addressLocation").get("lon")
+        phone = a.get("phoneNumber")
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="opening-hours"]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=SgRecord.MISSING,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {postal}",
         )
 
         sgw.write_row(row)
