@@ -1,99 +1,99 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.pizzaartista.com"
-    api_url = "https://www.google.com/maps/d/u/2/embed?mid=1KjES1dEX3tsN6XA9yZKQ_R_6o7F3-3fX&ll=30.289660713227608%2C-92.91648246562497&z=8"
+    locator_domain = "https://pizzaartista.com/"
+    api_url = "https://pizzaartista.com/contact-us/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    cleaned = (
-        r.text.replace("\\t", " ")
-        .replace("\t", " ")
-        .replace("\\n]", "]")
-        .replace("\n]", "]")
-        .replace("\\n,", ",")
-        .replace("\\n", "#")
-        .replace('\\"', '"')
-        .replace("\\u003d", "=")
-        .replace("\\u0026", "&")
-        .replace("\\", "")
-        .replace("\xa0", " ")
-    )
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//li[./a[text()="Contact Us"]]/following-sibling::li/a')
+    for d in div:
 
-    locations = json.loads(
-        cleaned.split('var _pageData = "')[1].split('";</script>')[0]
-    )[1][6]
-
-    for l in locations:
-
-        location_name = l[2]
-        latitude = l[4][0][4][0][1][0]
-        longitude = l[4][0][4][0][1][1]
-
-        page_url = "https://www.pizzaartista.com/contact/"
-        session = SgRequests()
+        page_url = "".join(d.xpath(".//@href"))
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
+        div = tree.xpath('//a[contains(@href, "maps")]')
+        for d in div:
 
-        street_address = "".join(
-            tree.xpath(f'//li[contains(text(), "{location_name}")]/span/text()[1]')
-        )
-        ad = (
-            "".join(
-                tree.xpath(
-                    f'//li[contains(text(), "{location_name}")]/span/span/text()'
-                )
+            location_name = (
+                " ".join(tree.xpath("//h1//text()")).replace("\n", "").strip()
             )
-            .replace("\n", "")
-            .strip()
-        )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        country_code = "US"
-        city = ad.split(",")[0].strip()
-        phone = (
-            "".join(
-                tree.xpath(
-                    f'//li[contains(text(), "{location_name}")]/following-sibling::li[1]/text()'
-                )
+            location_name = " ".join(location_name.split())
+            ad = " ".join(d.xpath("./text()")).replace("\n", "").strip()
+            ad = " ".join(ad.split())
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
             )
-            .replace("\n", "")
-            .strip()
-        )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "US"
+            city = a.city or "<MISSING>"
+            phone = (
+                "".join(d.xpath('.//following::a[contains(@href, "tel")][1]//text()'))
+                or "<MISSING>"
+            )
+            hours_of_operation = (
+                " ".join(
+                    d.xpath(
+                        './/following::p[./strong[text()="Hours"]][1]/text() | .//following::p[contains(text(), "Hours:")]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .replace("Hours:", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    "".join(
+                        tree.xpath(
+                            f'//a[contains(text(), "{street_address}")]/following-sibling::text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                )
+                hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+            if hours_of_operation.find("Open") != -1:
+                hours_of_operation = hours_of_operation.split("Open")[1].strip()
 
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
-        )
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=ad,
+            )
 
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)
