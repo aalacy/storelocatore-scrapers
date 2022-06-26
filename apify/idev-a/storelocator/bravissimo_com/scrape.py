@@ -31,7 +31,14 @@ def fetch_data(sgw: SgWriter):
                     tree.xpath('//script[@type="application/ld+json"]/text()')
                 )
                 js = json.loads(js_block)
-                location_name = js.get("name") or "<MISSING>"
+                location_name = (
+                    "".join(
+                        tree.xpath('//h1[contains(@class, "c-bandeau__title")]//text()')
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
                 location_type = js.get("@type") or "<MISSING>"
                 b = js.get("address")
                 street_address = b.get("streetAddress") or "<MISSING>"

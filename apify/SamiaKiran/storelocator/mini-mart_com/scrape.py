@@ -31,6 +31,10 @@ def fetch_data():
             for loc in loclist:
                 loc = loc.get_text(separator="|", strip=True).split("|")
                 location_name = loc[0]
+                try:
+                    store_number = location_name.split("#")[1]
+                except:
+                    store_number = MISSING
                 log.info(location_name)
                 try:
                     street_address = loc[1]
@@ -46,7 +50,7 @@ def fetch_data():
                     state=MISSING,
                     zip_postal=MISSING,
                     country_code=country_code,
-                    store_number=MISSING,
+                    store_number=store_number,
                     phone=MISSING,
                     location_type=MISSING,
                     latitude=MISSING,

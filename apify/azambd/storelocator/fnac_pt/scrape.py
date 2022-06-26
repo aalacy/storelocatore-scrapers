@@ -43,7 +43,7 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgFirefox() as driver:
         driver.get(store_url)
         random_sleep(driver, 20)
         jsontxt = (
@@ -104,7 +104,7 @@ def fetch_data():
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
-        phone = "707313435"  # Default phone is actually their helpline so I think its better to include it rather than missing.
+        phone = "211536000"  # Default phone is actually their helpline so I think its better to include it rather than missing.
         coord = (
             get_JSON_object_variable(store, "Coord")
             .replace("(", "")
