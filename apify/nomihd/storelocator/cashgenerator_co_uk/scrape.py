@@ -40,14 +40,35 @@ def fetch_data():
 
             locator_domain = website
             location_name = store["title"]
+            if (
+                "test store" in location_name.lower()
+                or "testram" in location_name.lower()
+            ):
+                continue
 
             street_address = store["line1"]
             if len(street_address) > 0 and street_address.isdigit():
                 street_address = street_address + " " + store["line2"]
 
+            if len(street_address) > 0 and (
+                street_address == "Unit 1"
+                or street_address == "Unit 50"
+                or street_address == "Unit 2 TEST"
+                or street_address == "Unit 36"
+            ):
+                street_address = (
+                    street_address.replace("TEST", "").strip() + ", " + store["line2"]
+                )
+
             city = store["town"]
+            if not city:
+                city = location_name
             state = "<MISSING>"
             zip = store["postCode"]
+            if zip and zip == "Peterborough PE1 1EL":
+                zip = "PE1 1EL"
+                city = "Peterborough"
+
             country_code = "GB"
 
             store_number = store["storeId"]

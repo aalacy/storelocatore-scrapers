@@ -1,4 +1,5 @@
-import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -8,45 +9,55 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    start_url = "https://www.mcdonalds.it/store_closest.js"
+    session = SgRequests()
+    start_url = "https://www.mcdonalds.it/elenco-ristoranti"
     domain = "mcdonalds.it"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text.split("closest =")[-1])
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//div[@class="store-list--content"]//a/@href')
 
-    for poi in data["sites"]:
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath("//h1/span/text()")
+        if not location_name:
+            continue
+        location_name = location_name[0]
+        raw_address = loc_dom.xpath('//div[@class="store__address"]/text()')
+        latitude = loc_dom.xpath("//@data-lat")[0]
+        longitude = loc_dom.xpath("//@data-lng")[0]
+        hoo = loc_dom.xpath('//div[@class="hours__list"]/text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Tutti")[0]
+        phone = loc_dom.xpath('//div[@class="store__address"]/a/text()')
+        phone = phone[0] if phone else ""
+
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.mcdonalds.it/ristorante",
-            location_name=SgRecord.MISSING,
-            street_address=poi["address"].strip().replace("\r\n", " "),
-            city=poi["city"],
-            state=SgRecord.MISSING,
-            zip_postal=SgRecord.MISSING,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1],
+            state="",
+            zip_postal="",
             country_code="IT",
-            store_number=poi["id"],
-            phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
-            latitude=poi["lat"],
-            longitude=poi["lng"],
-            hours_of_operation=SgRecord.MISSING,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
         )
 
         yield item
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         for item in fetch_data():
             writer.write_row(item)
 

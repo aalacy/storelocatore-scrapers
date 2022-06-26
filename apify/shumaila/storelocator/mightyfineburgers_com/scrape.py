@@ -30,6 +30,7 @@ def fetch_data():
         if "feedback" in link:
             continue
         r = session.get(link, headers=headers)
+
         soup = BeautifulSoup(r.text, "html.parser")
         content = r.text.split('data-block-json="', 1)[1].split(';"', 1)[0]
         content = (
@@ -39,6 +40,7 @@ def fetch_data():
             .replace("};,", "},")
             .replace(";}", "}")
         )
+        ltype = "<MISSING>"
         content = json.loads(content)
         content = content["location"]
         title = r.text.split('"fullSiteTitle":"', 1)[1].split("\\u2014 ", 1)[0]
@@ -47,9 +49,13 @@ def fetch_data():
         state, pcode = state.lstrip().split(" ", 1)
         lat = content["markerLat"]
         longt = content["markerLng"]
-        hours, phone = soup.text.split("Monday", 1)[1].split("\n", 1)[0].split("(")
-        hours = "Monday " + hours.replace("PM", "PM ")
-        phone = "(" + phone
+        try:
+            hours, phone = soup.text.split("Monday", 1)[1].split("\n", 1)[0].split("(")
+            hours = "Monday " + hours.replace("PM", "PM ")
+            phone = "(" + phone
+        except:
+            hours = phone = "<MISSING>"
+            ltype = "Coming Soon"
         if "1335 E Whitestone" in street:
             street = street + "  Suite 100"
         yield SgRecord(
@@ -57,13 +63,13 @@ def fetch_data():
             page_url=link,
             location_name=title,
             street_address=street.strip(),
-            city=city.strip(),
-            state=state.strip(),
+            city=city.replace(",", "").strip(),
+            state=state.replace(",", "").strip(),
             zip_postal=pcode.strip(),
             country_code="US",
             store_number=SgRecord.MISSING,
             phone=phone.replace("\xa0", "").strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,

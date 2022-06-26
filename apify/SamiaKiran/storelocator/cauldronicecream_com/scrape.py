@@ -25,7 +25,7 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "pf-c"})
-        for loc in loclist[2:-3]:
+        for loc in loclist:
             if "[coming soon]" in loc.text:
                 continue
             elif "[COMing SOON]" in loc.text:
@@ -39,36 +39,47 @@ def fetch_data():
             hours_of_operation = (
                 temp[1].get_text(separator="|", strip=True).replace("|", " ")
             )
+            if "Last call" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Last call")[0]
             if "Please call ahead to check" in hours_of_operation:
                 hours_of_operation = MISSING
-            address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
-            i = 0
-            street_address = ""
-            city = ""
-            state = ""
-            zip_postal = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street_address = street_address + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    zip_postal = zip_postal + " " + temp[0]
-                i += 1
-            country_code = "US"
+            if "Qatar" in temp[0].text:
+                address = temp[0].get_text(separator="|", strip=True).split("|")
+                street_address = address[0]
+                address = address[1].split(",")
+                city = address[0]
+                country_code = address[1]
+                state = MISSING
+                zip_postal = MISSING
+            else:
+                address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                address = address.replace(",", " ")
+                address = usaddress.parse(address)
+                i = 0
+                street_address = ""
+                city = ""
+                state = ""
+                zip_postal = ""
+                while i < len(address):
+                    temp = address[i]
+                    if (
+                        temp[1].find("Address") != -1
+                        or temp[1].find("Street") != -1
+                        or temp[1].find("Recipient") != -1
+                        or temp[1].find("Occupancy") != -1
+                        or temp[1].find("BuildingName") != -1
+                        or temp[1].find("USPSBoxType") != -1
+                        or temp[1].find("USPSBoxID") != -1
+                    ):
+                        street_address = street_address + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        zip_postal = zip_postal + " " + temp[0]
+                    i += 1
+                country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

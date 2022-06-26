@@ -49,6 +49,7 @@ class _SearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
+        found_nothing,
     ) -> Iterable[SgRecord]:
 
         lat = coord[0]
@@ -69,7 +70,8 @@ class _SearchIteration(SearchIteration):
         try:
             stores_sel = lxml.html.fromstring(api_res.text)
             store_list = stores_sel.xpath('//input[@class="json-parker"]')
-
+            if len(store_list) <= 0:
+                found_nothing()
             for store in store_list:
 
                 page_url = "https://manageparking.citizensparking.com/FindParking/MainFindParkingResult"
@@ -148,8 +150,8 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
-            raise
-            # pass
+            found_nothing()
+            pass
 
 
 def scrape():

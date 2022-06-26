@@ -66,6 +66,9 @@ def get_data():
 
         hours = hours[:-2]
 
+        if "Su" not in hours:
+            hours = "Su Closed, " + hours
+
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
