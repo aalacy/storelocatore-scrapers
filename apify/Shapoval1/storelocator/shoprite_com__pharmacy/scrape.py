@@ -46,31 +46,32 @@ def fetch_data(sgw: SgWriter):
             r = session.get(
                 f"https://storefrontgateway.brands.wakefern.com/api/{ids}/attributes"
             )
-            js = r.json()["attributes"][0]
+            js = r.json()["attributes"]
         except:
             continue
-        location_type = js.get("name")
-        if location_type != "Pharmacy":
-            continue
+        for j in js:
+            location_type = j.get("name")
+            if location_type != "Pharmacy":
+                continue
 
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
