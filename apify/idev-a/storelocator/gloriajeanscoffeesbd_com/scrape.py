@@ -12,7 +12,7 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domain = "https://gloriajeanscoffeesbd.com/"
-base_url = "https://gloriajeanscoffeesbd.com/"
+base_url = "https://gloriajeanscoffeesbd.com/#find-outlet"
 
 
 def fetch_data():

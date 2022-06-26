@@ -1,58 +1,59 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
+# -*- coding: utf-8 -*-
 from sgrequests import SgRequests
-import dirtyjson as json
-from bs4 import BeautifulSoup as bs
-from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    locator_domain = "https://www.mackage.com/"
-    base_url = "https://www.mackage.com/us/en/store-locator?load=true"
-    with SgRequests() as session:
-        sp1 = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = json.loads(
-            sp1.select_one("div.storeJSON")["data-storejson"]
-            .replace("&quot;", '"')
-            .replace("&#40;", "(")
-            .replace("&#41;", ")")
+    session = SgRequests()
+
+    start_url = "https://stockist.co/api/v1/u11471/locations/all"
+    domain = "mackage.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    all_locations = session.get(start_url, headers=hdr).json()
+    for poi in all_locations:
+        street_address = poi["address_line_1"]
+        if street_address and poi["address_line_2"]:
+            street_address += " " + poi["address_line_2"]
+        else:
+            street_address = poi["address_line_2"]
+        phone = " ".join(poi["phone"].split()) if poi["phone"] else ""
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.mackage.com/pages/store-locator-1",
+            location_name=poi["name"],
+            street_address=street_address,
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["postal_code"],
+            country_code=poi["country"],
+            store_number=poi["id"],
+            phone=phone,
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation="",
         )
-        for _ in locations:
-            country_code = _["countryCode"]
-            state = _["stateCode"]
-            if not country_code:
-                addr = parse_address_intl(
-                    f"{_['address1']}, {_['address2']}, {_['city']}, {_['stateCode']}"
-                )
-                if addr.country:
-                    country_code = addr.country
-                state = addr.state
-            street_address = _["address1"]
-            if _["address2"]:
-                street_address += " " + _["address2"]
-            yield SgRecord(
-                page_url=base_url,
-                location_name=_["name"],
-                street_address=street_address,
-                city=_["city"],
-                state=state,
-                zip_postal=_["postalCode"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
-                country_code=country_code,
-                phone=_["phone"],
-                locator_domain=locator_domain,
+
+        yield item
+
+
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    scrape()
