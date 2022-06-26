@@ -30,11 +30,16 @@ def fetch_data(sgw: SgWriter):
     with uc.Chrome(
         driver_executable_path=ChromeDriverManager().install(), options=options
     ) as driver:
-        for i in range(5):
+        for i in range(10):
             log.info(f"Loading main page {base_link}")
             driver.get(base_link)
-            time.sleep(60)
             try:
+                WebDriverWait(driver, 60).until(
+                    EC.presence_of_element_located(
+                        (By.CLASS_NAME, "store-list__scroll-container")
+                    )
+                )
+                time.sleep(10)
                 soup = BeautifulSoup(driver.page_source, "lxml")
                 grids = soup.find(
                     "div", class_="store-list__scroll-container"
