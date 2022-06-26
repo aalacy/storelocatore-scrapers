@@ -28,7 +28,7 @@ def fetch_data(sgw: SgWriter):
     for item in items:
         raw_address = list(item.stripped_strings)
         location_name = raw_address[0]
-        street_address = raw_address[1]
+        street_address = raw_address[1].split("(")[0].strip()
         city = raw_address[2].split(",")[0].strip()
         state = raw_address[2].split(",")[1].strip().split()[0]
         zip_code = raw_address[2].split(",")[1].strip().split()[1]

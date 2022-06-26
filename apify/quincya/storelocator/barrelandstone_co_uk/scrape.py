@@ -63,8 +63,44 @@ def fetch_data(sgw: SgWriter):
             phone = ""
         try:
             hours_of_operation = (
-                base.find(string="Opening Hours").find_next().text.replace("\n", " ")
+                " ".join(
+                    list(base.find(string="Opening Hours").find_next().stripped_strings)
+                )
+                .replace("\n", " ")
+                .replace("The Terrace", "")
+                .replace("Opening times", "")
+                .replace("to visitors and the public", "")
+                .replace("The Poacher Pub", "")
+                .replace("Oxen Bar & Grill Open for breakfast, lunch and dinner", "")
+                .replace("KITCHEN HOURS:", "")
+                .replace("Room service also available", "")
+                .replace("The Bar is Open:", "")
+                .replace("Opening hours:", "")
+                .replace("Opening Times:", "")
+                .replace("Terrace Bistro", "")
+                .replace("Lounge Bar", "")
+                .replace("Bloomsbury", "")
+                .replace("Restaurant & Bar:", "")
+                .replace("Squares", "")
+                .replace("\t", " ")
+                .replace("  ", " ")
+                .split("( last")[0]
+                .split("(bank")[0]
+                .split("Food Service")[0]
+                .split("Food is ")[0]
+                .split("If there is")[0]
+                .split("Kitchen is open")[0]
+                .split("Pizza &")[0]
+                .split("Whites Restaurant:")[0]
+                .split("PLEASE NOTE")[0]
+                .split("For Stadium")[0]
+                .strip()
             )
+            if (
+                "The Hill restaurant" in hours_of_operation
+                or "website" in hours_of_operation
+            ):
+                hours_of_operation = ""
         except:
             hours_of_operation = ""
 

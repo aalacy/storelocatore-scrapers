@@ -1,26 +1,24 @@
 import json
+import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
 
 
-def get_urls():
-    r = session.get(
-        "https://www.tessuti.co.uk/store-locator/all-stores/", headers=headers
-    )
-    tree = html.fromstring(r.text)
+def get_urls(driver):
+    driver.get("https://www.tessuti.co.uk/store-locator/all-stores/")
+    tree = html.fromstring(driver.page_source)
 
     return tree.xpath("//a[@class='storeCard guest']/@href")
 
 
-def get_data(slug, sgw: SgWriter):
+def get_data(slug, driver):
     page_url = f"https://www.tessuti.co.uk{slug}"
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    driver.get(page_url)
+    tree = html.fromstring(driver.page_source)
     text = "".join(
         tree.xpath("//script[contains(text(), 'openingHoursSpecification')]/text()")
     )
@@ -44,7 +42,9 @@ def get_data(slug, sgw: SgWriter):
 
     a = j.get("address") or {}
     street_address = a.get("streetAddress")
-    city = a.get("addressLocality")
+    city = a.get("addressLocality") or ""
+    if "," in city:
+        city = city.split(",")[-1].strip()
     state = a.get("addressRegion")
     postal = a.get("postalCode")
     phone = j.get("telephone") or ""
@@ -55,7 +55,7 @@ def get_data(slug, sgw: SgWriter):
     latitude = g.get("latitude")
     longitude = g.get("longitude")
 
-    row = SgRecord(
+    return SgRecord(
         page_url=page_url,
         location_name=location_name,
         street_address=street_address,
@@ -72,34 +72,18 @@ def get_data(slug, sgw: SgWriter):
         hours_of_operation=hours_of_operation,
     )
 
-    sgw.write_row(row)
 
-
-def fetch_data(sgw: SgWriter):
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+def fetch_data():
+    with SgChrome(is_headless=True) as driver:
+        urls = get_urls(driver)
+        for url in urls:
+            yield get_data(url, driver)
 
 
 if __name__ == "__main__":
     locator_domain = "https://www.tessuti.co.uk/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "cross-site",
-        "Sec-Fetch-User": "?1",
-        "Cache-Control": "max-age=0",
-        "TE": "trailers",
-    }
-    session = SgRequests()
+    ssl._create_default_https_context = ssl._create_unverified_context
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        fetch_data(writer)
+        data = fetch_data()
+        for row in data:
+            writer.write_row(row)

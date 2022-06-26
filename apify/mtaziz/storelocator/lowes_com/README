@@ -1,0 +1,5 @@
+
+# Ignore following validation checks
+
+--ignore StreetAddressHasNumber (Confirmed scrape crrectly)
+--ignore StreetAddressHasStateName (No state name)

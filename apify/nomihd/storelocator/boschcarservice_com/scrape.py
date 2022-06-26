@@ -10,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgpostal import sgpostal as parser
 
 
 website = "boschcarservice.com"
@@ -50,12 +51,13 @@ class _SearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
+        found_nothing,
     ) -> Iterable[SgRecord]:
 
         lat = coord[0]
         lng = coord[1]
-        log.info(f"cood:{lat},{lng}")
-        search_url = "https://dl-emea.dxtservice.com/dl/api/search?latitude={}&longitude={}&searchRadius=100&includeStores=COUNTRY&pageIndex={}&pageSize=100&minDealers=10&maxDealers=20&storeTags=[103]"
+        log.info(f"coord:{lat},{lng}")
+        search_url = "https://dl-emea.dxtservice.com/dl/api/search?latitude={}&longitude={}&searchRadius=1000&includeStores=COUNTRY&pageIndex={}&pageSize=100&minDealers=10&maxDealers=20&storeTags=[103]"
         page_no = 0
         while True:
 
@@ -65,6 +67,7 @@ class _SearchIteration(SearchIteration):
             try:
                 status = json.loads(stores_req.text)["httpStatus"]
                 if "No Content" == status or "External API error" == status:
+                    found_nothing()
                     break
                 for store in json.loads(stores_req.text)["data"]["items"]:
                     page_url = "<MISSING>"
@@ -94,6 +97,9 @@ class _SearchIteration(SearchIteration):
                     if zip and len(zip) > 0:
                         raw_address = raw_address + ", " + zip
 
+                    formatted_addr = parser.parse_address_intl(raw_address)
+
+                    city = formatted_addr.city
                     country_code = store["address"]["country"]
                     store_number = store["storeId"]
                     phone = store["address"]["officePhoneNumber"]
@@ -113,7 +119,7 @@ class _SearchIteration(SearchIteration):
                     latitude = store["geoCoordinates"]["latitude"]
                     longitude = store["geoCoordinates"]["longitude"]
 
-                    found_location_at(lat, lng)
+                    found_location_at(latitude, longitude)
                     yield SgRecord(
                         locator_domain=locator_domain,
                         page_url=page_url,
@@ -133,6 +139,7 @@ class _SearchIteration(SearchIteration):
                     )
 
             except:
+                found_nothing()
                 log.error(stores_req.text)
                 pass
 

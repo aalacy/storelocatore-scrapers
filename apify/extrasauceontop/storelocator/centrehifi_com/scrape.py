@@ -2,7 +2,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
 import re
@@ -12,46 +11,20 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    return driver
-
-
 def get_data():
     url = "https://www.centrehifi.com/en/store-locator/"
     class_name = "popup-language-header"
-    driver = get_driver(url, class_name)
-    response = driver.page_source
+
+    with SgChrome(
+        block_third_parties=False,
+    ) as driver:
+        driver.get(url)
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, class_name))
+        )
+        response = driver.page_source
 
     soup = bs(response, "html.parser")
-    driver.quit()
 
     grids = soup.find_all("div", attrs={"class": "js-single-store-info"})
 
@@ -122,12 +95,38 @@ def get_data():
                     + address_parts.split(", ")[-1].strip().split(" ")[-1]
                 )
                 state = "<MISSING>"
-
+        address = address.strip()
         store_number = grid["data-store-id"]
-        phone = ""
         location_type = ""
-        hours = ""
         country_code = "CA"
+
+        if "," == address[-1]:
+            address = address[:-1]
+
+        phone_test = grid.find_all("a")
+        for test in phone_test:
+            if "tel:" in test["href"]:
+                phone = test["href"].replace("tel:", "")
+                break
+
+        hours = ""
+        hours_parts = (
+            grid.find("div", attrs={"class": "opening-hours"})
+            .find("tbody")
+            .find_all("tr")
+        )
+
+        for part in hours_parts:
+            hours = (
+                hours
+                + part.text.strip()
+                .replace("\n", " ")
+                .replace("\r", " ")
+                .replace("\t", " ")
+                + ", "
+            )
+
+        hours = unidecode.unidecode(hours[:-2])
 
         yield {
             "locator_domain": locator_domain,
@@ -186,4 +185,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

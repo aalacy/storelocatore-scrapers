@@ -13,49 +13,59 @@ def get_urls():
     tree = html.fromstring(r.content)
     links = tree.xpath("//loc/text()")
     for link in links:
-        if link.count("/") == 5:
+        if link.count("/") == 6:
             urls.append(link)
 
     return urls
 
 
 def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url + ".json")
-    j = r.json()["profile"]
-    a = j.get("address") or {}
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
 
-    location_name = j["c_heroSection"]["storeName"]
-    street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
-    city = a.get("city")
-    state = a.get("region")
-    postal = a.get("postalCode")
-    country_code = a.get("countryCode")
-    try:
-        phone = j["mainPhone"]["display"]
-    except KeyError:
-        phone = SgRecord.MISSING
+    location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
+    street_address = ", ".join(
+        tree.xpath(
+            "//div[@class='Address Hero-address']//span[contains(@class, 'Address-field Address-line')]/text()"
+        )
+    ).strip()
+    city = "".join(
+        tree.xpath("//span[@class='Address-field Address-city']/text()")
+    ).strip()
+    state = "".join(
+        tree.xpath(
+            "//span[contains(@class, 'Address-field Address-region Address-region')]/text()"
+        )
+    ).strip()
+    postal = "".join(
+        tree.xpath("//span[@class='Address-field Address-postalCode']/text()")
+    ).strip()
+    if "/usa/" in page_url:
+        country_code = "US"
+    else:
+        country_code = "CA"
+    phone = "".join(
+        tree.xpath("//span[@class='Text Phone-text Phone-display']/text()")
+    ).strip()
 
-    latitude = j["yextDisplayCoordinate"]["lat"]
-    longitude = j["yextDisplayCoordinate"]["long"]
+    latitude = "".join(tree.xpath("//meta[@itemprop='latitude']/@content"))
+    longitude = "".join(tree.xpath("//meta[@itemprop='longitude']/@content"))
 
     _tmp = []
-    try:
-        hours = j["hours"]["normalHours"]
-    except KeyError:
-        hours = []
+    hours = tree.xpath(
+        "//div[contains(text(), 'Store Hours')]/following-sibling::div//tr[contains(@class, 'c-hours-details-row js-day-of-week-row highlight-text')]"
+    )
 
     for h in hours:
-        day = h.get("day")
-        if h.get("isClosed"):
-            _tmp.append(f"{day}: Closed")
-        else:
-            start = str(h["intervals"][0]["start"])
-            end = str(h["intervals"][0]["end"])
-            if len(start) == 3:
-                start = f"0{start}"
-            _tmp.append(f"{day}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}")
+        day = "".join(h.xpath("./td[1]//text()")).strip()
+        inter = " ".join("".join(h.xpath("./td[2]//text()")).split())
+        _tmp.append(f"{day}: {inter}")
 
     hours_of_operation = ";".join(_tmp)
+    if "coming" in location_name.lower():
+        hours_of_operation = "Coming Soon"
+    if hours_of_operation.count("Closed") == 7:
+        return
 
     row = SgRecord(
         page_url=page_url,
@@ -78,7 +88,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

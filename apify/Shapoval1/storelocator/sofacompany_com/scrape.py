@@ -1,4 +1,3 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -35,40 +34,23 @@ def fetch_data(sgw: SgWriter):
             city = city.split("(")[0].strip()
         if city.find(".") != -1:
             city = city.split(".")[0].strip()
-        if country_code == "NL":
+        if country_code == "NL" and str(postal).find(" ") != -1:
             state = postal.split()[1].strip()
             postal = postal.split()[0].strip()
         latitude = j.get("storelocator_lat") or "<MISSING>"
         longitude = j.get("storelocator_lon") or "<MISSING>"
         phone = j.get("storelocator_phone") or "<MISSING>"
-        hours = j.get("working_hours_block")
-        a = html.fromstring(hours)
-        hours_of_operation = " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
-        hours_of_operation = (
-            " ".join(hours_of_operation.split())
-            .replace("Book videorådgivning", "")
-            .replace("Normale åpningstider:", "")
-            .strip()
-            or "<MISSING>"
+        hours = (
+            "".join(j.get("working_hours_block"))
+            .replace("<br> <br>", "<br><br>")
+            .split("<br><br>")
         )
-        if hours_of_operation.find("Helligdage") != -1:
-            hours_of_operation = hours_of_operation.split("Helligdage")[0].strip()
-        if hours_of_operation.find("Notera att") != -1:
-            hours_of_operation = hours_of_operation.split("Notera att")[0].strip()
-        if hours_of_operation.find("COVID-19:") != -1:
-            hours_of_operation = "<MISSING>"
-        if hours_of_operation.find("Een adviesgesprek") != -1:
-            hours_of_operation = hours_of_operation.split("Een adviesgesprek")[
-                0
-            ].strip()
-        if hours_of_operation.find("Husk du") != -1:
-            hours_of_operation = hours_of_operation.split("Husk du")[0].strip()
-        if hours_of_operation.find("Det finns") != -1:
-            hours_of_operation = hours_of_operation.split("Det finns")[0].strip()
+        hours_of_operation = "".join(hours[0]).replace("<br>", " ").strip()
+        page_url = "https://sofacompany.com/da-dk/storelocator"
 
         row = SgRecord(
             locator_domain=locator_domain,
-            page_url=SgRecord.MISSING,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

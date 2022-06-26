@@ -1,4 +1,5 @@
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -10,7 +11,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.sweetchick.com/menu/"
+    start_url = "https://www.sweetchick.com/"
     domain = "sweetchick.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -19,32 +20,35 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//p[span[strong[u[contains(text(), "LOCATIONS")]]]]/following-sibling::p'
-    )[:5]
-    for poi_html in all_locations:
-        raw_data = " ".join(
-            [e.strip() for e in poi_html.xpath(".//text()") if e.strip()]
-        )
-        raw_address = raw_data.split("- ")[-1].split(", ")
-        zip_code = raw_address[2].split()[-1]
-        if len(zip_code) == 2:
-            zip_code = ""
+        '//button[contains(text(), "Locations")]/following-sibling::div[1]//a/@href'
+    )
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = page_url.split("/")[-2].replace("-", " ").title()
+        raw_address = loc_dom.xpath('//a[@data-bb-track-label="Location"]/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        hoo = loc_dom.xpath('//p[contains(text(), "Brunch")]/text()')
+        hoo += loc_dom.xpath('//p[contains(text(), "Lunch ")]/text()')
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
-            location_name=raw_data.split("- ")[0].strip(),
-            street_address=raw_address[0],
-            city=raw_address[1],
-            state=raw_address[2].split()[0],
-            zip_postal=zip_code,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0].replace(",", ""),
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[1].split()[0],
+            zip_postal=raw_address[1].split(", ")[1].split()[1],
             country_code="",
             store_number="",
             phone="",
             location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation="<INACCESIBLE>",
+            latitude=loc_dom.xpath("//@data-gmaps-lat")[0],
+            longitude=loc_dom.xpath("//@data-gmaps-lng")[0],
+            hours_of_operation=hoo,
         )
 
         yield item

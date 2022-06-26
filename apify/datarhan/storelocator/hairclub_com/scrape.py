@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -6,72 +5,67 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-
+    session = SgRequests()
     domain = "hairclub.com"
-    start_url = "https://www.hairclub.com/locations/"
+    start_url = "https://leads-api-prod.hairclub.com/api/Center/cards?ZipCode={}"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//a[contains(text(), "Center Information")]/@href')
-    for url in all_locations:
-        store_url = "https://www.hairclub.com" + url
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-
-        address_raw = store_dom.xpath(
-            '//ul[@class="center-info-address-list center-info-list list-unstyled"]/li/text()'
-        )
-        if len(address_raw) == 4:
-            address_raw = (
-                [address_raw[0]] + [", ".join(address_raw[1:3])] + address_raw[3:]
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        expected_search_radius_miles=100,
+    )
+    for code in all_codes:
+        hdr = {
+            "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2NvcmVzZXJ2aWNlcy1hcGktcHJvZC5henVyZXdlYnNpdGVzLm5ldC8iLCJpYXQiOm51bGwsImV4cCI6bnVsbCwiYXVkIjoiaHR0cHM6Ly9jb3Jlc2VydmljZXMtYXBpLXByb2QuYXp1cmV3ZWJzaXRlcy5uZXQvIiwic3ViIjoiIn0.sFasu1GnH1rdp48mj-wjMuBlZCswQp-UBXXWvhxyUtA"
+        }
+        all_locations = session.get(start_url.format(code), headers=hdr)
+        if not all_locations.text.strip():
+            all_codes.found_nothing()
+            continue
+        for poi in all_locations.json():
+            hoo = []
+            for e in poi["availability"]:
+                if e.get("openingHour"):
+                    hoo.append(f'{e["day"]}: {e["openingHour"]} - {e["closingHour"]}')
+                else:
+                    hoo.append(f'{e["day"]}: closed')
+            hoo = " ".join(hoo)
+            page_url = (
+                f'https://www.hairclub.com/locations/hair-loss-clinic-{poi["idCenter"]}'
             )
-        location_name = address_raw[0]
-        street_address = address_raw[1].strip()
-        city = address_raw[2].split(",")[0]
-        state = address_raw[2].split(",")[-1].split()[0]
-        zip_code = address_raw[2].split(",")[-1].split()[-1]
-        store_number = re.findall(r"\d+", address_raw[0])
-        store_number = store_number[0] if store_number else "<MISSING>"
-        phone = store_dom.xpath("//@data-js-web-phone")
-        phone = phone[0].strip() if phone else ""
-        phone = phone if phone else "<MISSING>"
-        latitude = store_dom.xpath("//@data-js-lat")
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = store_dom.xpath("//@data-js-lon")
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hours_of_operation = store_dom.xpath(
-            '//ul[@class="center-info-hours-list center-info-list list-unstyled"]//text()'
-        )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            zip_code = loc_dom.xpath('//div[@class="address-line-2"]/p/text()')
+            if not zip_code:
+                zip_code = loc_dom.xpath('//div[@class="hours-block"]/p[1]/text()')
+            zip_code = zip_code[0].split()[-1]
+            all_codes.found_location_at(
+                poi["position"]["latitude"], poi["position"]["longitude"]
+            )
+            hoo = loc_dom.xpath('//div[@class="day-and-hour"]//text()')
+            hoo = " ".join(hoo)
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=SgRecord.MISSING,
-            store_number=store_number,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["name"],
+                street_address=poi["address"],
+                city=poi["city"],
+                state=poi["state"],
+                zip_postal=zip_code,
+                country_code=poi["country"],
+                store_number=poi["idCenter"],
+                phone=poi["phone"],
+                location_type=SgRecord.MISSING,
+                latitude=poi["position"]["latitude"],
+                longitude=poi["position"]["longitude"],
+                hours_of_operation=hoo,
+            )
 
-        yield item
+            yield item
 
 
 def scrape():

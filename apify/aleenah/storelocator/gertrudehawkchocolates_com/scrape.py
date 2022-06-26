@@ -68,8 +68,18 @@ def fetch_data():
         location_name = info[0].strip()
         raw_address = ", ".join(info[1:-1])
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == "Carbondale Dickson City":
+            street_address = street_address + " " + city.split()[0]
+            city = city.replace(city.split()[0], "")
         if len(zip_postal) < 5:
             zip_postal = "0" + zip_postal
+        if "1201 Hooper" in street_address:
+            address = raw_address.split(",")
+            street_address = address[0]
+            city = address[1]
+            address = address[2].split()
+            state = address[0] + " " + address[1]
+            zip_postal = address[-1]
         phone = re.sub(r"Back Room.*", "", info[-1].replace(":", "")).strip()
         country_code = "US"
         store_number = store["data-amid"]
@@ -103,6 +113,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

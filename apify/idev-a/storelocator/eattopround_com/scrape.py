@@ -34,7 +34,7 @@ def fetch_data():
             _hr = link.find("strong", string=re.compile(r"^Hours", re.IGNORECASE))
             hours = []
             if _hr:
-                hours.append(_hr.find_next_sibling().text.strip())
+                hours.append(list(_hr.find_parent().stripped_strings)[1])
                 if "Phone" not in _hr.find_parent().find_next_sibling().text:
                     hours.append(_hr.find_parent().find_next_sibling().text.strip())
 

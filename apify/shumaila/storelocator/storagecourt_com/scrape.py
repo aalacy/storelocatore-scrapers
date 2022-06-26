@@ -1,97 +1,117 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-from sglogging import sglog
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from bs4 import BeautifulSoup
 import re
 import json
-
-DOMAIN = "storagecourt.com"
-BASE_URL = "https://www.storagecourt.com"
-LOCATION_URL = "https://www.storagecourt.com/self-storage"
-HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-}
-MISSING = "<MISSING>"
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
-
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    contents = soup.select("a.ogep3VRb_llXipWczX6wu")
-    for row in contents:
-        page_url = BASE_URL + row["href"]
-        store = pull_content(page_url)
-        info = json.loads(
-            store.find(
-                "script", type="application/ld+json", string=re.compile(r'"latitude.*')
-            ).string
-        )
-        location_name = info["name"].strip()
-        street_address = info["address"]["streetAddress"]
-        city = info["address"]["addressLocality"]
-        state = info["address"]["addressRegion"]
-        zip_postal = info["address"]["postalCode"]
-        country_code = "US"
-        phone = info["telephone"]
-        store_number = MISSING
-        hours = (
-            store.find("span", text=re.compile(r"HOURS|WINTER HOURS"))
-            .parent.parent.text.split("OFFICE HOURS", 1)[1]
-            .split("ACCESS HOURS", 1)[0]
-            .replace("CLOSED", "CLOSED ")
-            .replace("pm", "pm ")
-            .replace("PM", "PM ")
-        )
-        hours_of_operation = re.sub(
-            r"\s\s+|\(.*\)|The office is operated remotely during these hours:",
-            " ",
-            hours,
-        ).strip()
-        location_type = info["@type"]
-        latitude = info["geo"]["latitude"]
-        longitude = info["geo"]["longitude"]
-        log.info("Append {} => {}".format(location_name, street_address))
+
+    pattern = re.compile(r"\s\s+")
+
+    url = "https://www.storagecourt.com/self-storage"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.findAll("a", {"class": "ogep3VRb_llXipWczX6wu"})
+    for link in linklist:
+        title = link.text
+        link = "https://www.storagecourt.com" + link["href"]
+
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        try:
+            content = r.text.split(link.split("/")[-1] + '","address":', 1)[1].split(
+                '},"', 1
+            )[0]
+            content = content + "}"
+            content = json.loads(content)
+
+            street = content["streetAddress"]
+            city = content["addressLocality"]
+            pcode = content["postalCode"]
+            state = content["addressRegion"]
+            ccode = "US"
+
+            lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+            longt = r.text.split('"longitude":', 1)[1].split(",", 1)[0]
+            phone = r.text.split("Call Now (", 1)[1].split('"', 1)[0]
+            phone = "(" + phone
+
+            hours = ""
+            hourslist = soup.findAll("div", {"class": "rnl-Content"})
+            for hr in hourslist:
+                try:
+                    if "HOURS" in hr.find("span").text:
+                        hours = hr.text
+                        break
+                except:
+                    continue
+            hours = (
+                hours.split("OFFICE HOURS", 1)[1]
+                .split("ACCESS HOURS", 1)[0]
+                .replace("pm", "pm ")
+            )
+            hours = re.sub(pattern, " ", hours).strip()
+
+            try:
+                hours = hours.split("(", 1)[0]
+            except:
+                pass
+            try:
+                hours = hours.split("hours:", 1)[1].strip()
+            except:
+                pass
+        except:
+            street = soup.find("span", {"class": "p-street-address"}).text
+            city = soup.find("span", {"class": "p-locality"}).text
+            state = soup.find("span", {"class": "p-region"}).text
+            pcode = soup.find("span", {"class": "p-postal-code"}).text
+            phone = soup.find("span", {"class": "p-tel"}).text
+            hours = (
+                soup.find("div", {"class": "office-hours-condensed"}).find("div").text
+            )
+            lat = r.text.split('"latitude": "', 1)[1].split('"', 1)[0]
+            longt = r.text.split('"longitude": "', 1)[1].split('"', 1)[0]
+        ltype = "Store"
+        if "Storage Court" in title:
+            pass
+        else:
+            ltype = "Dealer"
         yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            locator_domain="https://www.storagecourt.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code=ccode,
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
 
 
 def scrape():
-    log.info("start {} Scraper".format(DOMAIN))
-    count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
-            count = count + 1
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
 
 
 scrape()

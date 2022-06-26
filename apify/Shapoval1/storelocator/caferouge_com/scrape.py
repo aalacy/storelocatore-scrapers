@@ -1,107 +1,163 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
+
+session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.caferouge.com/"
+    api_url = "https://www.caferouge.com/sitemap.xml"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.content)
+    div = tree.xpath('//url/loc[contains(text(), "/restaurants/")]')
+    for d in div:
+
+        page_url = "".join(d.xpath(".//text()"))
+        if (
+            page_url == "https://www.caferouge.com/restaurants/birmingham/bullring"
+            or page_url
+            == "https://www.caferouge.com/restaurants/haywards-heath/the-broadway"
+        ):
+            continue
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        location_name = (
+            "".join(tree.xpath('//h2[@class="restaurant-title"]//text()'))
+            or "<MISSING>"
         )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
+        ad = (
+            "".join(tree.xpath('//div[@class="address"]//text()'))
+            .replace("\n", "")
+            .strip()
         )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.caferouge.com"
-    api_url = "https://api.bigtablegroup.com/pagedata?brandKey=caferouge&path=/spaces/hlvdy7x28mmo/entries?access_token=bad26202af27c0f9ca3921ab7fb67bc6eea2b34ba73fe53168bf041548707f8c%26select=fields.title,fields.slug,fields.city,fields.heroTile,fields.description,fields.addressLocation,fields.deliverooLink,fields.email,fields.phoneNumber,fields.amenities,fields.miscellaneous,fields.metaTags,fields.metaTagsForBookNowTab,fields.imageGallery,fields.promotionStack,fields.offersTitle,fields.offersDescription,fields.showOffers,fields.eventSection,fields.takeawayCollectionService,fields.takeawayDeliveryServices,fields.storeId,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.hours,fields.alternativeHours,fields.takeATourUrl,fields.bookingProviderUrl,fields.priceBandId,fields.collectionMessage%26content_type=restaurant%26include=10%26limit=1000"
-    session = SgRequests()
-
-    r = session.get(api_url)
-    js = r.json()
-
-    for j in js["items"]:
-        ad = j.get("fields")
-        location_name = ad.get("title")
-        street_address = f"{ad.get('addressLine1')} {ad.get('addressLine2')}".strip()
-        city = ad.get("city")
-        slug = "".join(ad.get("slug"))
-        page_url = f"https://www.caferouge.com/bistro-brasserie/{city}/{slug}"
-        state = ad.get("county")
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        if street_address == "<MISSING>" or street_address.isdigit():
+            street_address = ad.split(",")[0].strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "UK"
-        store_number = "<MISSING>"
-        latitude = ad.get("addressLocation").get("lat")
-        longitude = ad.get("addressLocation").get("lon")
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        phone = ad.get("phoneNumber")
-        postal = ad.get("postCode")
-        if location_name == "Center Parcs Sherwood Forest":
-            for j in js["includes"]["Entry"]:
-                aaa = j.get("fields").get("name")
-                tmp = [
-                    "monday",
-                    "tuesday",
-                    "wednesday",
-                    "thursday",
-                    "friday",
-                    "saturday",
-                    "sunday",
-                ]
-                _tmp = []
-                if aaa == "Center Parcs Sherwood":
-                    for i in tmp:
-                        days = i
-                        Open = j.get("fields").get(f"{i}Open")
-                        Close = j.get("fields").get(f"{i}Close")
-                        line = f"{days} {Open} - {Close}"
-                        _tmp.append(line)
-                    hours_of_operation = " ; ".join(_tmp)
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        city = a.city or "<MISSING>"
+        if city == "<MISSING>":
+            city = location_name
+        if location_name == "<MISSING>":
+            location_name = city
+        text = "".join(tree.xpath('//a[contains(text(), "Get directions")]/@href'))
+        try:
+            latitude = text.split(",")[-2].split("/")[-1].strip()
+            longitude = text.split(",")[-1]
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = "".join(tree.xpath('//a[@id="phonenumber"]/text()')) or "<MISSING>"
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//h2[text()="Opening Hours"]/following-sibling::text()')
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.count("CLOSED") == 7:
+            hours_of_operation = "CLOSED"
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
+        sgw.write_row(row)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    locator_domain = "https://www.caferouge.com/"
+
+    headers = {
+        "Authorization": "Bearer 30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c",
+    }
+
+    params = {
+        "content_type": "restaurant",
+        "include": "10",
+    }
+
+    r = session.get(
+        "https://cdn.contentful.com/spaces/6qprbsfbbvrl/environments/master/entries",
+        params=params,
+        headers=headers,
+    )
+    js = r.json()["items"]
+    for j in js:
+
+        a = j.get("fields")
+        page_url = f"https://www.rougebrasserie.com/restaurants/{a.get('city')}/{a.get('slug')}"
+        location_name = a.get("title")
+        street_address = a.get("addressLine1")
+        postal = a.get("postcode")
+        country_code = "UK"
+        city = a.get("addressCity")
+        store_number = a.get("storeId")
+        latitude = a.get("addressLocation").get("lat")
+        longitude = a.get("addressLocation").get("lon")
+        phone = a.get("phoneNumber")
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="opening-hours"]/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=SgRecord.MISSING,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {postal}",
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

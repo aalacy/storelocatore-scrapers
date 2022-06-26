@@ -22,13 +22,13 @@ def fetch_data():
     url = "https://www.enterprise.com/en/car-rental/locations/us.html"
     r = get(url)
     for line in r.iter_lines():
-        if '<h3 class="state-title"><a class="heading-link" href="' in line:
+        if '<a class="heading-link" href="/en/car-rental/locations/us/' in line:
             lurl = "https://www.enterprise.com" + line.split('href="')[1].split('"')[0]
             states.append(lurl + "|US")
     url = "https://www.enterprise.com/en/car-rental/locations/canada.html"
     r = get(url)
     for line in r.iter_lines():
-        if '<h3 class="state-title"><a class="heading-link" href="' in line:
+        if '<a class="heading-link" href="/en/car-rental/locations/canada/' in line:
             lurl = "https://www.enterprise.com" + line.split('href="')[1].split('"')[0]
             states.append(lurl + "|CA")
     for state in states:
@@ -81,16 +81,22 @@ def fetch_data():
                                         if '"closed_all_day":true' in day:
                                             hrs = day.split('"')[0] + ": Closed"
                                         else:
+                                            ot = day.split('{"open_time":"')[1].split(
+                                                '"'
+                                            )[0]
+                                            ct = day.split('"close_time":"')[1].split(
+                                                '"'
+                                            )[0]
+                                            if len(ot) == 4:
+                                                ot = ot[:2] + ":" + ot[-2:]
+                                            if len(ct) == 4:
+                                                ct = ct[:2] + ":" + ct[-2:]
+                                            if len(ot) == 3:
+                                                ot = ot[:1] + ":" + ot[-2:]
+                                            if len(ct) == 3:
+                                                ct = ct[:1] + ":" + ct[-2:]
                                             hrs = (
-                                                day.split('"')[0]
-                                                + ": "
-                                                + day.split('{"open_time":"')[1].split(
-                                                    '"'
-                                                )[0]
-                                                + "-"
-                                                + day.split('"close_time":"')[1].split(
-                                                    '"'
-                                                )[0]
+                                                day.split('"')[0] + ": " + ot + "-" + ct
                                             )
                                         if hours == "":
                                             hours = hrs

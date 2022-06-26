@@ -6,14 +6,13 @@ function getOrDefault(value) {
 }
 
 Apify.main(async () => {
-  const requestList = await Apify.openRequestList('locations', [
-    {
-      url: 'http://www.charochicken.com/locations/',
-    },
-  ]);
+  const requestQueue = await Apify.openRequestQueue();
+  await requestQueue.addRequest({
+    url: 'https://charochicken.com/delivery/locations/',
+  });
 
   const crawler = new Apify.CheerioCrawler({
-    requestList,
+    requestQueue,
     async handlePageFunction({ $, request }) {
       const locations = $('iframe')
         .map(function () {
@@ -35,7 +34,7 @@ Apify.main(async () => {
         const [streetAddress, city] = splitted;
         const [state, zip] = stateAndZip.split(' ');
 
-        const CITY_REGEX = new RegExp(`\s*${city}\s*`);
+        const CITY_REGEX = new RegExp(`\s*${city}\s*`); // eslint-disable-line
         const cleaned_address = streetAddress.replace(CITY_REGEX, '').trim();
 
         return {

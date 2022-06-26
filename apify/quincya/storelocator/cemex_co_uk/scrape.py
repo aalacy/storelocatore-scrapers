@@ -15,7 +15,7 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    api_link = "https://www.cemex.co.uk/find-your-location.aspx?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=Great%20Britain"
+    api_link = "https://www.cemex.co.uk/find-a-plant?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=Great%20Britain"
     stores = session.get(api_link, headers=headers).json()["theNearestLocations"]
 
     locator_domain = "cemex.co.uk"
@@ -34,6 +34,7 @@ def fetch_data(sgw: SgWriter):
 
         hours_of_operation = store["openingHours"]
         location_type = ", ".join(store["productList"])
+        location_type = location_type.replace(" ,", ",")
         phone = store["locationContact"]["locationOrdersPhone"]
         if store["url"]:
             link = "https://www.cemex.co.uk" + store["url"]

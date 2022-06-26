@@ -27,7 +27,7 @@ def fetch_data(sgw: SgWriter):
 
         location_name = "".join(tree.xpath("//h1/text()"))
         ad = (
-            " ".join(tree.xpath("//h1/following-sibling::p[1]/span/text()"))
+            " ".join(tree.xpath("//h1/following-sibling::p[1]//text()"))
             .replace("\n", "")
             .strip()
         )
@@ -35,10 +35,11 @@ def fetch_data(sgw: SgWriter):
             ad = ad.split("Tel")[0].strip()
         if ad.find("Aperto") != -1:
             ad = ad.split("Aperto")[0].strip()
-        if ad.find("Orario") != -1:
-            ad = ad.split("Orario")[0].strip()
+        if ad.find("Orari") != -1:
+            ad = ad.split("Orari")[0].strip()
         if ad.find("Dal") != -1:
             ad = ad.split("Dal")[0].strip()
+
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""

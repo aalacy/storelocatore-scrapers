@@ -1,117 +1,102 @@
-import re
-from bs4 import BeautifulSoup
-
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+# -*- coding: utf-8 -*-
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
-def addy_ext(addy):
-    address = addy.split(",")
-    city = address[0]
-    state_zip = address[1].strip().split(" ")
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-def fetch_data(sgw: SgWriter):
-    locator_domain = "https://www.matchboxrestaurants.com"
-
-    base_link = "https://matchboxrestaurants.com/"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
+def fetch_data():
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
 
-    hrefs = base.find(class_="Header-nav-folder").find_all("a")
-    link_list = []
-    for href in hrefs:
-        link_list.append(locator_domain + href["href"])
+    start_url = "https://www.matchboxrestaurants.com/home-locations"
+    domain = "matchboxrestaurants.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    for link in link_list:
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+    all_locations = dom.xpath(
+        '//a[@href="/menu-and-locations"]/following-sibling::span/a/@href'
+    )
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        c_soon = loc_dom.xpath('//em[contains(text(), "coming soon")]')
+        if c_soon:
+            continue
 
-        content = list(
-            base.find(class_="Main-content")
-            .find(class_="sqs-block html-block sqs-block-html")
-            .stripped_strings
+        raw_data = loc_dom.xpath(
+            '//p[strong[contains(text(), "LOCATION")]]/following-sibling::p/text()'
+        )[:2]
+        if "suite" in raw_data[1]:
+            raw_data = loc_dom.xpath(
+                '//p[strong[contains(text(), "LOCATION")]]/following-sibling::p/text()'
+            )[:3]
+            raw_data = [", ".join(raw_data[:2])] + raw_data[2:]
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        if not phone:
+            phone = loc_dom.xpath('//p[contains(text(), "call")]/text()')
+        phone = phone[0].replace("call ", "") if phone else ""
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        hoo = loc_dom.xpath(
+            '//p[strong[contains(text(), "HOURS")]]/following-sibling::p/text()'
         )
-
-        location_name = base.h1.text
-        street_address = content[1]
-        city_line = content[2]
-        if "," not in city_line:
-            street_address = street_address + " " + city_line
-            city_line = content[3]
-        city, state, zip_code = addy_ext(city_line)
-        phone_number = (
-            base.find(class_="Main-content")
-            .find(class_="sqs-block html-block sqs-block-html")
-            .a.text.strip()
-        )
-        if "-" not in phone_number:
-            phone_number = content[3].replace("call", "").strip()
-        hours = " ".join(
-            list(
-                base.find(class_="Main-content")
-                .find_all(class_="sqs-block html-block sqs-block-html")[2]
-                .stripped_strings
-            )[1:]
-        )
-        hours = (
-            hours.split("happy")[0]
-            .split("Follow")[0]
-            .split("milk")[0]
-            .split("PRIVATE")[0]
+        hoo = (
+            " ".join(" ".join(hoo).split())
+            .split("dine")[0]
             .replace("\xa0", "")
-            .replace("now open!", "")
-            .strip()
+            .split("social hour")[0]
+            .split("From")[0]
+            .split("Follow")[0]
         )
-        hours = (re.sub(" +", " ", hours)).strip()
+        latitude = ""
+        longitude = ""
+        geo = (
+            loc_dom.xpath('//a[contains(text(), "get directions")]/@href')[0]
+            .split("/@")[-1]
+            .split(",")[:2]
+        )
+        if len(geo) > 1:
+            latitude = geo[0]
+            longitude = geo[1]
 
-        map_link = base.find(class_="Main-content").find("a", string="get directions")[
-            "href"
-        ]
-        start_idx = map_link.find("/@")
-        if start_idx > 0:
-            end_idx = map_link.find("z/data")
-            coords = map_link[start_idx + 2 : end_idx].split(",")
-            lat = coords[0]
-            longit = coords[1]
-        else:
-            lat = "<MISSING>"
-            longit = "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_data[0],
+            city=raw_data[1].split(", ")[0],
+            state=raw_data[1].split(", ")[-1].split()[0],
+            zip_postal=raw_data[1].split(", ")[-1].split()[1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
 
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=link,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone_number,
-                location_type=location_type,
-                latitude=lat,
-                longitude=longit,
-                hours_of_operation=hours,
+        yield item
+
+
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             )
         )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-    fetch_data(writer)
+if __name__ == "__main__":
+    scrape()

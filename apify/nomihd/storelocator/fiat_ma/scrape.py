@@ -43,6 +43,8 @@ def fetch_data():
             location_name = "".join(
                 store.xpath('.//div[@class="grid-subtitle"]/text()')
             )
+            if len(location_name) <= 0:
+                continue
             page_url = search_url
 
             location_type = "<MISSING>"
