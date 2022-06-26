@@ -1,63 +1,71 @@
 from sgrequests import SgRequests
-import ast
-from bs4 import BeautifulSoup as bs
+import json
 from sgscrape import simple_scraper_pipeline as sp
-import unidecode
+from sgselenium import SgFirefox
+import html
+import time
+
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
 def get_data():
-    url = "https://www.cosmo-gmbh.de/standorte"
+    url = "https://connect.shore.com/bookings/beautyhairshop-heilbronn-stadtgalerie/locations?locale=de&origin=standalone"
     with SgRequests() as session:
         response = session.get(url).text
-        list_object = [
-            "['<div>COSMO" + part[:-1] + "</div>'"
-            for part in response.split("['COSMO")[1:]
+
+        json_objects = extract_json(response)
+        locations = json_objects[0]["beautyhairshop-heilbronn-stadtgalerie"][
+            "locations"
         ]
-
-        for location in list_object:
-            locator_domain = "www.cosmo-gmbh.de"
-            location_list = ast.literal_eval(location.split("],")[0] + "]")
-            location_soup = bs(
-                unidecode.unidecode(location_list[0].replace("<br />", "\n")),
-                "html.parser",
+        for store_number in locations.keys():
+            locator_domain = "cosmo-gmbh.de/beautyhairshop"
+            page_url = (
+                "https://connect.shore.com/bookings/"
+                + locations[store_number]["id"]
+                + "/services?locale=de&origin=standalone"
             )
-
-            page_url = location_soup.find_all("a")[-1]["href"]
-            location_name = location_soup.find("div").text.strip().split("\n")[0]
-
-            latitude = location_list[1]
-            longitude = location_list[2]
-            city = "".join(
-                part + " "
-                for part in location_soup.find("div")
-                .text.strip()
-                .split("\n")[2]
-                .split(" ")[1:]
-            )
-            store_number = "<MISSING>"
-            address = location_soup.find("div").text.strip().split("\n")[1]
+            location_name = locations[store_number]["name"]
+            city = locations[store_number]["cityName"].split(" (")[0]
+            address = html.unescape(locations[store_number]["street"])
             state = "<MISSING>"
-            zipp = location_soup.find("div").text.strip().split("\n")[2].split(" ")[0]
-            phone = location_soup.find("div").text.strip().split("\n")[3]
+            zipp = locations[store_number]["postalCode"]
             location_type = "<MISSING>"
             country_code = "DE"
 
-            hours_response = unidecode.unidecode(session.get(page_url).text)
-            hours_soup = bs(hours_response, "html.parser")
-            hours = (
-                hours_soup.find_all("div", attrs={"class": "salons-two-column"})[-1]
-                .text.strip()
-                .replace("\n", "")
-                .split("iten:")[1]
-                .split("Taglich")[0]
-                .lower()
-                .replace("uhr", "uhr ")
-            )
+            with SgFirefox(is_headless=True) as driver:
+                driver.get(page_url)
+                time.sleep(30)
+                driver.switch_to.frame(driver.find_element_by_tag_name("iframe"))
+                page_response = driver.page_source
 
-            while "  " in hours:
-                hours = hours.replace("  ", " ")
+            latitude = page_response.split("www.google.com/maps/@")[1].split(",")[0]
+            longitude = page_response.split("www.google.com/maps/@")[1].split(",")[1]
 
-            hours = "".join(part + "uhr" for part in hours.split("uhr")[:-1])
+            hours = "<MISSING>"
+            phone = "<MISSING>"
 
             yield {
                 "locator_domain": locator_domain,
