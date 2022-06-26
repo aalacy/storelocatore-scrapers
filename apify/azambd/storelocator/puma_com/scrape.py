@@ -129,7 +129,7 @@ def fetch_data():
             driver.find_element(by=By.CSS_SELECTOR, value="body").text
         )
         logger.info(f'Total Stores: {len(data_json["StoreLocatorItems"])}')
-        for store in data_json["StoreLocatorItems"][0:15]:
+        for store in data_json["StoreLocatorItems"]:
             yield parse_json(store)
 
 
