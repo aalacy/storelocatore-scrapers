@@ -1,30 +1,20 @@
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 DOMAIN = "citgo.com"
-API_URL = "https://www.citgo.com/api/locations/search?location={}"
+API_URL = "https://www.citgo.com/api/locations/search?location=66002&radius=10000"
 LOCATION_URL = "https://www.citgo.com/station-locator"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests()
-
-
-def pull_content(url):
-    log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
 
 
 def build_hours(row):
@@ -46,27 +36,21 @@ def build_hours(row):
     return hours.strip()
 
 
+def clean_string(string):
+    return string.replace("&apos;", "'").replace("&amp;", "&").strip()
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
-        max_search_results=5,
-    )
-    for zipcode in search:
-        url = API_URL.format(zipcode)
-        log.info("Pull content => " + url)
-        try:
-            stores = session.get(url, headers=HEADERS).json()
-        except:
-            continue
+    with SgRequests() as session:
+        stores = session.get(API_URL, headers=HEADERS).json()
         for row in stores["locations"]:
-            location_name = row["name"]
-            street_address = row["address"]
+            location_name = clean_string(row["name"])
+            street_address = clean_string(row["address"])
             city = row["city"]
             state = row["state"]
             zip_postal = row["zip"]
-            country_code = row["country"]
+            country_code = row["country"].replace("null", "") or MISSING
             phone = row["phone"]
             hours_of_operation = build_hours(row)
             location_type = MISSING

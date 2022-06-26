@@ -86,9 +86,12 @@ def fetch_data():
             if hr:
                 hours = list(hr.find_next_sibling().stripped_strings)
 
+            location_name = soup1.h1.text.strip()
+            if "Relocated" in location_name:
+                continue
             yield SgRecord(
                 page_url=page_url,
-                location_name=soup1.h1.text.replace("(Relocated)", "").strip(),
+                location_name=location_name,
                 street_address=street_address,
                 city=city,
                 state=state,

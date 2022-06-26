@@ -12,7 +12,9 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         street_address = j.get("streetAndNumber")
-        city = j.get("city")
+        city = j.get("city") or ""
+        if "/" in city:
+            city = city.split("/")[0].strip()
         postal = j.get("zip")
         country_code = j.get("country")
         store_number = j.get("id")

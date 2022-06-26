@@ -19,9 +19,7 @@ def get_js(tree):
 
 def get_urls():
     urls = set()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.GERMANY], expected_search_radius_miles=15
-    )
+    search = DynamicZipSearch(country_codes=[SearchableCountries.GERMANY])
     for _zip in search:
         api = f"https://www.jet-tankstellen.de/kraftstoff/filialfinder/?location={_zip}&place_id=&feature=&radius=25"
         r = session.get(api, headers=headers)
@@ -64,6 +62,20 @@ def get_data(slug, sgw: SgWriter):
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = ";".join(hours)
 
+    _types = []
+    images = tree.xpath(
+        "//h3[contains(text(), 'Service')]/following-sibling::div//img/@src"
+    )
+    for img in images:
+        if "-bistro" in img:
+            _types.append("Bistro")
+        if "-waeesche" in img:
+            _types.append("Jet Wäsche")
+        if "-autogas" in img:
+            _types.append("Autogas")
+
+    location_type = ";".join(_types)
+
     row = SgRecord(
         page_url=page_url,
         location_name=location_name,
@@ -75,6 +87,7 @@ def get_data(slug, sgw: SgWriter):
         longitude=longitude,
         phone=phone,
         locator_domain=locator_domain,
+        location_type=location_type,
         hours_of_operation=hours_of_operation,
     )
 

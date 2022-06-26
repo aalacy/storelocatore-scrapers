@@ -1,40 +1,13 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://theyard.com/"
     api_url = "https://theyard.com/new-york-city-coworking-office-space/"
@@ -78,8 +51,9 @@ def fetch_data():
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
+        if page_url.find("post_type") != -1:
+            continue
         location_name = "".join(d.xpath(".//text()"))
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -98,14 +72,10 @@ def fetch_data():
         postal = a.get("postal") or "<MISSING>"
         country_code = "USA"
         city = a.get("city") or "<MISSING>"
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = "<MISSING>"
         hoo = tree.xpath('//div[@class="address"]/p//text()')
         hoo = list(filter(None, [a.strip() for a in hoo]))
         hours_of_operation = " ".join(hoo[1:])
 
-        session = SgRequests()
         r = session.get(
             "https://theyard.com/new-york-city-coworking-office-space/", headers=headers
         )
@@ -122,31 +92,27 @@ def fetch_data():
             )
             or "<MISSING>"
         )
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=SgRecord.MISSING,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
