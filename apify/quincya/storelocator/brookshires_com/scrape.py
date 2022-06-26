@@ -22,7 +22,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.brookshires.com/stores/?coordinates=33.081696254439834,-95.94856100000001&zoom=6"
+    base_link = "https://www.brookshires.com/stores/?coordinates=33.081696254439834,-95.94856100000001&zoom=7"
 
     options = uc.ChromeOptions()
     options.headless = True

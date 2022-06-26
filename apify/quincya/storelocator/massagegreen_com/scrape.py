@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -35,7 +35,7 @@ def fetch_data(sgw: SgWriter):
                     city_line = loc.find_all("h4")[1].text.split(",")
                 except:
                     continue
-                if city in str(city_line):
+                if city in str(city_line).replace("Twp", "Township"):
                     found = True
                     street_address = loc.h4.text
                     phone = list(loc.stripped_strings)[2]
@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
             phone = base.find(string="Call Now:").find_next().text.strip()
             hours_of_operation = base.find(string="SPA Hours:").find_next().text.strip()
 
-        city = city_line[0].strip()
+        city = city_line[0].replace("Twp", "Township").strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
         location_name = "Massage Green SPA - " + item.text
@@ -85,5 +85,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)
