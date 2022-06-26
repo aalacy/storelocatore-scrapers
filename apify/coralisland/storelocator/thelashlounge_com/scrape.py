@@ -30,63 +30,64 @@ def fetch_data():
             page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            base = BeautifulSoup(r.text, "html.parser")
-            temp = base.find("script", attrs={"type": "application/ld+json"}).contents[
-                0
-            ]
-            temp = json.loads(temp)
-            location_name = temp["name"]
-            try:
-                phone = temp["telephone"]
-            except:
-                phone = base.find(class_="pre-footer-details").a.text.strip()
-            address = temp["address"]
-            city = address["addressLocality"]
-            state = address["addressRegion"]
-            zip_postal = address["postalCode"]
-            street_address = (
-                address["streetAddress"]
-                .replace("<br/>", "")
-                .replace(" </br>", "")
-                .replace(city, "")
-                .replace(state, "")
-                .replace(zip_postal, "")
-                .replace("Shoppes at", "")
-                .strip()
-            )
-            country_code = address["addressCountry"]
-            latitude = str(temp["geo"]["latitude"])
-            longitude = str(temp["geo"]["longitude"])
-            if (
-                "COMING SOON"
-                in base.find_all(class_="home-contact-content")[-1].text.upper()
-            ):
-                continue
-            try:
-                if "COMING SOON" in base.find(class_="banner-title").text.upper():
+            if r.status_code == 200:
+                base = BeautifulSoup(r.text, "html.parser")
+                temp = r.text.split("<script type='application/ld+json'> ")[1].split(
+                    "</script>"
+                )[0]
+                temp = json.loads(temp)
+                location_name = temp["name"]
+                try:
+                    phone = temp["telephone"]
+                except:
+                    phone = base.find(class_="pre-footer-details").a.text.strip()
+                address = temp["address"]
+                city = address["addressLocality"]
+                state = address["addressRegion"]
+                zip_postal = address["postalCode"]
+                street_address = (
+                    address["streetAddress"]
+                    .replace("<br/>", "")
+                    .replace(" </br>", "")
+                    .replace(city, "")
+                    .replace(state, "")
+                    .replace(zip_postal, "")
+                    .replace("Shoppes at", "")
+                    .strip()
+                )
+                country_code = address["addressCountry"]
+                latitude = str(temp["geo"]["latitude"])
+                longitude = str(temp["geo"]["longitude"])
+                if (
+                    "COMING SOON"
+                    in base.find_all(class_="home-contact-content")[-1].text.upper()
+                ):
                     continue
-            except:
-                pass
-            hours_of_operation = " ".join(
-                list(base.find(class_="hours").stripped_strings)
-            )
+                try:
+                    if "COMING SOON" in base.find(class_="banner-title").text.upper():
+                        continue
+                except:
+                    pass
+                hours_of_operation = " ".join(
+                    list(base.find(class_="hours").stripped_strings)
+                )
 
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone,
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():

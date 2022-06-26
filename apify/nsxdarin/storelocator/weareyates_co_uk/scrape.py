@@ -42,7 +42,12 @@ def get_data(zips, sgw: SgWriter):
         slug = j.get("UrlText")
         page_url = f"https://www.greatukpubs.co.uk/{slug}"
         location_name = j.get("UnitName") or "<MISSING>"
-        street_address = j.get("Address1") or "<MISSING>"
+        street_address = (
+            f"{j.get('Address1')} {j.get('Address2')}".replace("Market House", "")
+            .replace("Marshall House", "")
+            .strip()
+        )
+        street_address = " ".join(street_address.split())
         city = j.get("TownCity") or "<MISSING>"
         state = "<MISSING>"
         postal = j.get("PostCode") or "<MISSING>"
@@ -50,6 +55,8 @@ def get_data(zips, sgw: SgWriter):
         phone = j.get("Telephone") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
+        if longitude == "0" or longitude == 0:
+            longitude = "<MISSING>"
         r = session.get(page_url)
         tree = html.fromstring(r.text)
         hours_of_operation = (

@@ -92,18 +92,19 @@ def fetch_data():
             except:
                 pass
 
-            hours_of_operation = ""
-            try:
-                hours_of_operation = (
-                    desc.split("<p>Hours")[1]
-                    .strip()
-                    .split(">")[1]
-                    .strip()
-                    .split("</strong")[0]
-                    .strip()
-                )
-            except:
-                pass
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
+            hours = store_sel.xpath(
+                '//div[contains(@class,"icon-box-time quick-icon-box-time2")]//div[@class="elementor-icon-box-content"]'
+            )
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath(".//h3/span/text()")).strip()
+                time = "".join(hour.xpath(".//p/text()")).strip()
+                hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
 
             latitude, longitude = (
                 store["lat"],

@@ -29,12 +29,12 @@ def get_additional(page_url):
 
 def fetch_data(sgw: SgWriter):
     apis = [
-        "https://www.cemexmexico.com/donde-estamos-ubicados?p_p_id=com_mediamonks_cemex_evolution_web_map_search_CemexMapSearchPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_com_mediamonks_cemex_evolution_web_map_search_CemexMapSearchPortlet_locationName=M%C3%A9xico",
-        "https://www.cemex.pl/znajdz-swoja-lokalizacje?p_p_id=com_mediamonks_cemex_evolution_web_map_search_CemexMapSearchPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_com_mediamonks_cemex_evolution_web_map_search_CemexMapSearchPortlet_locationName=Polska",
+        "https://www.cemexmexico.com/donde-estamos-ubicados?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=M%C3%A9xico",
+        "https://www.cemex.pl/znajdz-swoja-lokalizacje?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=Polska",
         "https://www.cemex.hr/lokacije?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=Hrvatska",
         "https://www.cemex.fr/implantations?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=R%C3%A9publique%20fran%C3%A7aise",
         "https://www.cemex.es/acerca-de-cemex/donde-estamos-ubicados?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=Espa%C3%B1a",
-        "https://www.cemex.de/standorte?p_p_id=com_mediamonks_cemex_evolution_web_map_search_CemexMapSearchPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_com_mediamonks_cemex_evolution_web_map_search_CemexMapSearchPortlet_locationName=Deutschland",
+        "https://www.cemex.de/standorte?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=Deutschland",
         "https://www.cemex.cz/betonarny-cementarny-kamenolomy-piskovny?p_p_id=CEMEX_MAP_SEARCH&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=findTheNearestLocations&p_p_cacheability=cacheLevelPage&_CEMEX_MAP_SEARCH_locationName=%C4%8Cesk%C3%A1%20republika",
     ]
     for api in apis:
@@ -51,9 +51,11 @@ def fetch_data(sgw: SgWriter):
 
             a = j.get("locationAddress") or {}
             street_address = a.get("locationStreet")
-            city = a.get("locationCity")
+            city = a.get("locationCity") or ""
             state = a.get("locationRegion")
-            postal = a.get("locationPostcode")
+            postal = a.get("locationPostcode") or ""
+            if city.isdigit() and postal.isalpha():
+                postal, city = city, postal
 
             g = a.get("locationCoordinates") or {}
             latitude = g.get("latitude")

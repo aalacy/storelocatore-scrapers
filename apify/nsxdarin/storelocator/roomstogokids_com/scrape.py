@@ -1,159 +1,93 @@
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
-logger = SgLogSetup().get_logger("roomstogokids_com")
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
 
 
-def fetch_data():
-    locs = []
-    url = "https://www.roomstogo.com/stores"
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '<div class="link-container"><a href="' in line:
-            items = line.split('<div class="link-container"><a href="')
-            for item in items:
-                if "Rooms To Go Store Locator" not in item:
-                    locs.append("https://www.roomstogo.com" + item.split('"')[0])
-    for loc in locs:
-        logger.info(("Pulling Location %s..." % loc))
-        rs = session.get(loc, headers=headers)
-        website = "roomstogo.com"
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        hours = ""
-        country = "US"
-        store = ""
-        lat = ""
-        lng = ""
-        for line2 in rs.iter_lines():
-            if '<link as="fetch" rel="preload" href="' in line2:
-                link = (
-                    "https://www.roomstogo.com"
-                    + line2.split('<link as="fetch" rel="preload" href="')[1].split(
-                        '"'
-                    )[0]
-                )
-                rl = session.get(link, headers=headers)
-                for line3 in rl.iter_lines():
-                    if ',"StoreNumber":' in line3:
-                        store = line3.split(',"StoreNumber":')[1].split(",")[0]
-                        name = line3.split('"PageTitle":"')[1].split('"')[0]
-                        phone = line3.split('"PhoneNumber":"')[1].split('"')[0]
-                        typ = line3.split('"StoreType":"')[1].split('"')[0]
-                        try:
-                            lat = line3.split('"latitude\\": \\"')[1].split("\\")[0]
-                        except:
-                            lat = line3.split('"latitude":')[1].split(",")[0]
-                        try:
-                            lng = line3.split('"longitude\\": \\"')[1].split("\\")[0]
-                        except:
-                            lng = line3.split('"longitude":')[1].split("}")[0]
-                        try:
-                            add = line3.split('"streetAddress\\": \\"')[1].split("\\")[
-                                0
-                            ]
-                        except:
-                            add = line3.split('"Address1":"')[1].split('"')[0]
-                        try:
-                            city = line3.split('"addressLocality\\": \\"')[1].split(
-                                "\\"
-                            )[0]
-                        except:
-                            city = line3.split('"City":"')[1].split('"')[0]
-                        try:
-                            state = line3.split('"addressRegion\\": \\"')[1].split(
-                                "\\"
-                            )[0]
-                        except:
-                            state = line3.split('"State":"')[1].split('"')[0]
-                        try:
-                            zc = line3.split('"postalCode\\": \\"')[1].split("\\")[0]
-                        except:
-                            zc = line3.split('"Zip":"')[1].split('"')[0]
-                        hours = (
-                            "Mon: "
-                            + line3.split('"mondayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"mondayClosed":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Tue: "
-                            + line3.split('"tuesdayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"tuesdayClosed":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Wed: "
-                            + line3.split('"wednesdayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"wednesdayClosed":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Thu: "
-                            + line3.split('"thursdayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"thursdayClosed":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Fri: "
-                            + line3.split('"fridayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"fridayClosed":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Sat: "
-                            + line3.split('"saturdayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"saturdayClosed":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Sun: "
-                            + line3.split('"sundayOpen":"')[1].split('"')[0]
-                            + "-"
-                            + line3.split('"sundayClosed":"')[1].split('"')[0]
-                        )
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.roomstogo.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Referer": "https://www.roomstogo.com/stores",
+        "Proxy-Authorization": "Basic ZG1pdHJpeTIyc2hhcGFAZ21haWwuY29tOnJxeFN6YzI0NnNzdnByVVZwdHJT",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+
+    r = session.get(
+        "https://www.roomstogo.com/page-data/stores/page-data.json", headers=headers
+    )
+    js = r.json()["result"]["pageContext"]["stores"]["stores"]
+    for j in js:
+        slug = j.get("slug")
+        page_url = f"https://www.roomstogo.com{slug}"
+        location_name = j.get("StoreName") or "<MISSING>"
+        location_type = j.get("StoreType") or "<MISSING>"
+        street_address = f"{j.get('Address1')} {j.get('Address2') or ''}".replace(
+            "None", ""
+        ).strip()
+        state = j.get("State") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("City") or "<MISSING>"
+        store_number = j.get("StoreNumber") or "<MISSING>"
+        latitude = j.get("Location").get("latLng").get("lat") or "<MISSING>"
+        longitude = j.get("Location").get("latLng").get("lng") or "<MISSING>"
+        phone = j.get("PhoneNumber") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        hours = j.get("StoreHours")
+        tmp = []
+        if hours:
+            for d in days:
+                day = str(d).capitalize()
+                opens = hours.get(f"{d}Open")
+                closes = hours.get(f"{d}Closed")
+                line = f"{day} {opens} - {closes}"
+                if opens == closes:
+                    line = f"{day} Closed"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

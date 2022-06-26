@@ -1,46 +1,20 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("buffaloexchange.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.buffaloexchange.com/locations"
 
@@ -50,8 +24,6 @@ def fetch_data():
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
-
-    data = []
 
     items = base.find(id="locations_list").find_all("a")
     locator_domain = "buffaloexchange.com"
@@ -85,16 +57,25 @@ def fetch_data():
                 zip_code = "<MISSING>"
         except:
             zip_code = "<MISSING>"
+        if "At E Southern" in street_address:
+            state = "Arizona"
+            zip_code = "85282"
+
         country_code = "US"
         store_number = base.article["id"].split("-")[1]
         location_type = "<MISSING>"
         phone = base.find(class_="tel").text.strip()
-        hours_of_operation = (
-            base.find(id="loc-details")
-            .find_all("p")[2]
-            .text.replace("Store Hours:", "")
-            .replace("\xa0", "")
-        )
+
+        try:
+            hours_of_operation = (
+                base.find(id="loc-details")
+                .find_all("p")[2]
+                .text.replace("Store Hours:", "")
+                .replace("\xa0", "")
+                .split("; cafe")[0]
+            )
+        except:
+            hours_of_operation = ""
 
         map_link = base.iframe["src"]
         req = session.get(map_link, headers=headers)
@@ -108,31 +89,25 @@ def fetch_data():
         latitude = geo[0]
         longitude = geo[1]
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

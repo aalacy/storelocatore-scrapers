@@ -31,6 +31,13 @@ base_url = "https://carlsjr.cl/locales/?jsf=jet-engine&pagenum={}"
 map_url = "https://www.google.com/maps/search/"
 
 
+def get_driver():
+    return SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    )
+
+
 class url_has_at(object):
     """An expectation for checking that an element has a particular css class.
 
@@ -49,7 +56,10 @@ class url_has_at(object):
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ) as driver:
         with SgRequests() as session:
             page = 1
             while True:
@@ -84,12 +94,14 @@ def fetch_data():
                         times = list(_hr2.find_parent().stripped_strings)[-1]
                         if times:
                             hours.append(f"Sunday: {times}")
-                    driver.get(
+                    url = (
                         map_url
                         + sp1.select_one("div.elementor-widget-google_maps").iframe[
                             "src"
                         ]
                     )
+                    logger.info(url)
+                    driver.get(url)
                     WebDriverWait(driver, 10).until(url_has_at())
                     coord = (
                         driver.current_url.split("/@")[1].split("/data")[0].split(",")

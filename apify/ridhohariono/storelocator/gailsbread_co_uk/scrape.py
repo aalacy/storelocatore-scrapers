@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
+import re
 
 MISSING = "<MISSING>"
 
@@ -42,10 +42,24 @@ def fetch_data():
             search.found_location_at(lat, long)
             page_url = store["permalink"]
             location_name = store["store"].replace("&#8217;", "'")
-            street_address = store["address"]
+            street_address = (store["address"] + " " + store["address2"]).strip()
             city = store["city"] or MISSING
             state = store["state"] or MISSING
-            zip_postal = store["zip"]
+            zip_postal = store["zip"] or MISSING
+            if zip_postal == MISSING:
+                zip = street_address.split(",")[-1].strip()
+                if len(zip) > 5 and len(zip) <= 8 and len(zip.split(" ")) > 1:
+                    zip_postal = zip
+                if (
+                    store["country"] != "United Kingdom"
+                    and len(store["country"]) > 5
+                    and len(store["country"]) <= 8
+                    and len(store["country"].split(" ")) > 1
+                ):
+                    zip_postal = store["country"]
+            street_address = re.sub(
+                r",?\s?" + city + r"|,?\s?" + zip_postal, "", street_address
+            )
             country_code = "UK"
             phone = store["phone"]
             hours_of_operation = (
@@ -55,7 +69,7 @@ def fetch_data():
                 .strip()
             ) or MISSING
             location_type = MISSING
-            store_number = MISSING
+            store_number = store["id"]
             latitude = store["lat"]
             longitude = store["lng"]
             log.info("Append {} => {}".format(location_name, street_address))

@@ -32,13 +32,16 @@ def fetch_data():
                     )
                     locs.append(lurl)
     for loc in locs:
+        CS = False
         r = session.get(loc, headers=headers)
         logger.info(loc)
         hours = ""
         store = "<MISSING>"
         for line in r.iter_lines():
-            if '<h2 class="nurseryName pb-1">' in line:
-                name = line.split('<h2 class="nurseryName pb-1">')[1].split("<")[0]
+            if "is opening " in line:
+                CS = True
+            if '<h1 class="nurseryName pb-1">' in line:
+                name = line.split('<h1 class="nurseryName pb-1">')[1].split("<")[0]
                 days = ""
             if '"latitude":' in line:
                 lat = line.split('"latitude":')[1].split(",")[0]
@@ -76,22 +79,32 @@ def fetch_data():
             hours = "<MISSING>"
         if ",Monday" in hours:
             hours = "Monday" + hours.split(",Monday")[1]
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if " next to" in add:
+            add = add.split(" next to")[0]
+        if " We are " in add:
+            add = add.split(" We are ")[0]
+        if ", West of " in add:
+            add = add.split(", West of ")[0]
+        if ", (" in add:
+            add = add.split(", (")[0]
+        add = add.replace("&#39", "'")
+        if CS is False:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

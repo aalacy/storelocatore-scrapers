@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore StateLevelCountValidator (['OK' 'MD' 'IL'] not found)
+--ignore StreetAddressHasNumber --ignore CountValidator --ignore StateLevelCountValidator (['OK' 'MD' 'IL' 'AZ' 'AR'] not found)
