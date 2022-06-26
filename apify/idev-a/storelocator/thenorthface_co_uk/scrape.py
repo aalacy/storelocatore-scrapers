@@ -17,7 +17,7 @@ headers = {
 locator_domain = "https://www.thenorthface.com"
 us_app_key_url = "https://www.thenorthface.co.uk/store-locator.html"
 country_url = "https://hosted.where2getit.com/northfaceeu/ajax?lang=en_GB&xml_request=%3Crequest%3E%3Cappkey%3E{}%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EAccount%3A%3ACountry%3C%2Fobjectname%3E%3Cwhere%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
-json_url = "https://hosted.where2getit.com/northfaceeu/ajax?lang=en_GB&xml_request=%3Crequest%3E%3Cappkey%3E{}%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Erank%2C_distance%3C%2Forder%3E%3Csearchradius%3E200%3C%2Fsearchradius%3E%3Cradiusuom%3Emile%3C%2Fradiusuom%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3ELondon%3C%2Faddressline%3E%3Clongitude%3E{}%3C%2Flongitude%3E%3Clatitude%3E{}%3C%2Flatitude%3E%3Ccountry%3E{}%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Cwhere%3E%3Cor%3E%3Cnorthface%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fnorthface%3E%3Cretailstore%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fretailstore%3E%3Coutletstore%3E%3Ceq%3E%3C%2Feq%3E%3C%2Foutletstore%3E%3C%2For%3E%3Cand%3E%3Cor%3E%3Cyouth%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fyouth%3E%3Capparel%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fapparel%3E%3Cmountain_athletics%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fmountain_athletics%3E%3Cfootwear%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ffootwear%3E%3Cequipment%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fequipment%3E%3Csummit%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fsummit%3E%3Cmt%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fmt%3E%3C%2For%3E%3C%2Fand%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
+json_url = "https://hosted.where2getit.com/northfaceeu/ajax?lang=en_GB&xml_request=%3Crequest%3E%3Cappkey%3E{}%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Erank%2C_distance%3C%2Forder%3E%3Csearchradius%3E5000%3C%2Fsearchradius%3E%3Cradiusuom%3Emile%3C%2Fradiusuom%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E%3C%2Faddressline%3E%3Clongitude%3E{}%3C%2Flongitude%3E%3Clatitude%3E{}%3C%2Flatitude%3E%3Ccountry%3E{}%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Cwhere%3E%3Cor%3E%3Cnorthface%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Fnorthface%3E%3Cretailstore%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fretailstore%3E%3Coutletstore%3E%3Ceq%3E1%3C%2Feq%3E%3C%2Foutletstore%3E%3C%2For%3E%3Cand%3E%3Cor%3E%3Cyouth%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fyouth%3E%3Capparel%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fapparel%3E%3Cmountain_athletics%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fmountain_athletics%3E%3Cfootwear%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ffootwear%3E%3Cequipment%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fequipment%3E%3Csummit%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fsummit%3E%3Cmt%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fmt%3E%3C%2For%3E%3C%2Fand%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
 
 
 def get_us_app_key():
@@ -121,6 +121,7 @@ class ExampleSearchIteration(SearchIteration):
         current_country,
         items_remaining,
         found_location_at,
+        found_nothing,
     ):
         with SgRequests() as session:
             locations = bs(
@@ -133,6 +134,8 @@ class ExampleSearchIteration(SearchIteration):
                 "lxml",
             ).select("poi")
             logger.info(f"[{current_country}] found: {len(locations)}")
+            if len(locations) == 0:
+                found_nothing()
             for _ in locations:
                 page_url = "https://www.thenorthface.co.uk/store-locator.html"
                 street_address = _.address1.text.strip()
@@ -140,7 +143,7 @@ class ExampleSearchIteration(SearchIteration):
                     street_address += " " + _.address2.text.strip()
 
                 state = _.state.text.strip() if _.state else _.province.text.strip()
-                location_type = "the north face"
+                location_type = ""
                 north_store = _.northface.text.strip() if _.northface else ""
                 if str(north_store) == "1":
                     location_type = "the north face store"
@@ -148,11 +151,17 @@ class ExampleSearchIteration(SearchIteration):
                 if str(outlet_store) == "1":
                     location_type = "the north face outletstore"
 
+                if not location_type:
+                    icon = _.icon.text.strip() if _.icon else ""
+                    if icon == "Outletstore":
+                        location_type = "the north face outletstore"
                 phone = (
                     _.phone.text.strip().split("or")[0].split("and")[0]
                     if _.phone is not None and _.phone.text.strip() != "TBD"
                     else "<MISSING>"
                 )
+                if phone == "0":
+                    phone = ""
 
                 hours = []
                 if _.m and _.m.text.strip():

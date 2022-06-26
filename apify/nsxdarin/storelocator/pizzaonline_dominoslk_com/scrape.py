@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
-session = SgRequests()
+session = SgRequests(proxy_country="lk")
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "api_key": "X24EZOH3IL",
@@ -70,6 +70,8 @@ def fetch_data():
                 rawadd = rawadd.split("Ph.N")[0].strip()
             if " Hotline" in rawadd:
                 rawadd = rawadd.split(" Hotline")[0].strip()
+            if "Ph." in add:
+                add = add.split("Ph.")[0].strip()
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

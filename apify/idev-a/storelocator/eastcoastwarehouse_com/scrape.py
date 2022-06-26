@@ -1,59 +1,96 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-import re
-
-logger = SgLogSetup().get_logger("eastcoastwarehouse")
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
-locator_domain = "https://eastcoastwarehouse.com"
-base_url = "https://eastcoastwarehouse.com/contact/"
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = (
-            soup.find("b", string=re.compile(r"Warehouse"))
-            .find_parent()
-            .find_next_siblings("p")[2:]
-        )
-        logger.info(f"{len(links)} found")
-        for link in links:
-            if not link.text.strip():
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://eastcoastwarehouse.com/"
+    api_url = "https://eastcoastwarehouse.com/contact/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath("//h1/a")
+    for d in div:
+
+        page_url = "".join(d.xpath(".//@href"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//section[@class="content-section"]//h2')
+        for d in div:
+
+            location_name = "".join(d.xpath(".//text()")).strip()
+            if location_name == "Facility Information":
                 continue
-            addr = list(link.stripped_strings)
-            if "@" in addr[-1]:
-                del addr[-1]
-            if len(addr) == 1:
-                continue
-            if len(addr) <= 3 and "Phone" in "".join(addr):
-                continue
-            try:
-                coord = link.a["href"].split("/@")[1].split("/data")[0].split(",")
-            except:
-                coord = ["", ""]
-            yield SgRecord(
-                page_url=base_url,
-                location_name=addr[0],
-                street_address=addr[1],
-                city=addr[2].split(",")[0].strip(),
-                state=addr[2].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[2].split(",")[1].strip().split(" ")[-1].strip(),
-                country_code="US",
-                latitude=coord[0],
-                longitude=coord[1],
-                locator_domain=locator_domain,
+            street_address = (
+                "".join(d.xpath("./following-sibling::p[1]/text()[1]"))
+                .replace("\n", "")
+                .strip()
             )
+            ad = (
+                "".join(d.xpath("./following-sibling::p[1]/text()[2]"))
+                .replace("\n", "")
+                .strip()
+            )
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
+            country_code = "US"
+            city = ad.split(",")[0].strip()
+            info = d.xpath("./following-sibling::p[1]//text()")
+            info = list(filter(None, [a.strip() for a in info]))
+            phone = "<MISSING>"
+            for i in info:
+                if "Phone:" in i:
+                    phone = str(i).replace("Phone:", "").strip()
+            if phone == "TBD":
+                phone = "<MISSING>"
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        './/following::h2[./strong[contains(text(), "Facility Information")]]/following-sibling::ul[1]/li[1]/text()[1] | .//following::h2[contains(text(), "Facility Information")]/following-sibling::ul[1]/li[1]/text()[1]'
+                    )
+                )
+                .replace("*", "")
+                .replace("\n", "")
+                .strip()
+            )
+            if street_address == "202 Port Jersey Boulevard" and tree.xpath(
+                '//li[contains(text(), "202 Port Jersey Blvd Location is open until 6:00pm")]/text()'
+            ):
+                hours_of_operation = "Monday-Friday 8:00am-6:00pm"
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {ad}",
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
+        fetch_data(writer)

@@ -56,48 +56,55 @@ def handle_missing(x):
 
 def fetch_data():
     for code in search:
-        logger.info("Pulling Zip Code %s..." % code)
-        url = (
-            "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode="
-            + code
-        )
-        r = session.get(url, headers=headers)
-        dealers = json.loads(r.content)["dealer"]
-        logger.info(f"found {len(dealers)} dealers")
-        for dealer in dealers:
-            store_number = handle_missing(dealer["dealerCode"])
-            website = "dodge.com"
-            typ = "<MISSING>"
-            name = handle_missing(dealer["dealerName"])
-            country = handle_missing(dealer["dealerShowroomCountry"])
-            add = handle_missing(dealer["dealerAddress1"])
-            add2 = dealer["dealerAddress2"]
-            if add2:
-                add = f"add {add2}"
-            state = handle_missing(dealer["dealerState"])
-            city = handle_missing(dealer["dealerCity"])
-            zc = handle_missing(dealer["dealerZipCode"][0:5])
-            purl = handle_missing(dealer["website"])
-            phone = handle_missing(dealer["phoneNumber"])
-            lat = handle_missing(dealer["dealerShowroomLatitude"])
-            lng = handle_missing(dealer["dealerShowroomLongitude"])
-            hours = parse_hours(dealer["departments"]["sales"]["hours"])
-            yield SgRecord(
-                locator_domain=website,
-                page_url=purl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store_number,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
+        try:
+            logger.info("Pulling Zip Code %s..." % code)
+            url = (
+                "https://www.dodge.com/bdlws/MDLSDealerLocator?brandCode=D&func=SALES&radius=50&resultsPage=1&resultsPerPage=100&zipCode="
+                + code
             )
+            r = session.get(url, headers=headers)
+            dealers = json.loads(r.content)["dealer"]
+            logger.info(f"found {len(dealers)} dealers")
+            if "dealerCode" not in r.content:
+                search.found_nothing()
+            for dealer in dealers:
+                store_number = handle_missing(dealer["dealerCode"])
+                website = "dodge.com"
+                typ = "<MISSING>"
+                name = handle_missing(dealer["dealerName"])
+                country = handle_missing(dealer["dealerShowroomCountry"])
+                add = handle_missing(dealer["dealerAddress1"])
+                add2 = dealer["dealerAddress2"]
+                if add2:
+                    add = f"add {add2}"
+                state = handle_missing(dealer["dealerState"])
+                city = handle_missing(dealer["dealerCity"])
+                zc = handle_missing(dealer["dealerZipCode"][0:5])
+                purl = handle_missing(dealer["website"])
+                phone = handle_missing(dealer["phoneNumber"])
+                lat = handle_missing(dealer["dealerShowroomLatitude"])
+                lng = handle_missing(dealer["dealerShowroomLongitude"])
+                search.found_location_at(lat, lng)
+                hours = parse_hours(dealer["departments"]["sales"]["hours"])
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store_number,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+        except:
+            search.found_nothing()
+            pass
 
 
 def scrape():

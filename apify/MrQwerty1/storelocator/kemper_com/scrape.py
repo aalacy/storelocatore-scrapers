@@ -47,13 +47,15 @@ def fetch_data(sgw: SgWriter):
             store_number = j.get("Id")
             location_name = j.get("name") or ""
             location_name = " ".join(location_name.split())
-            phone = j.get("phone")
+            phone = j.get("phone") or ""
+            phone = phone.replace("--", "").strip()
             latitude = j.get("latitude")
             longitude = j.get("longitude")
             search.found_location_at(latitude, longitude)
 
             row = SgRecord(
                 location_name=location_name,
+                page_url=page_url,
                 street_address=street_address,
                 city=city,
                 state=state,
@@ -71,6 +73,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.kemper.com/"
+    page_url = "https://www.kemper.com/get-started/find-an-agent"
     api = "https://customer.kemper.com/faa/v1/agency/ka"
 
     headers = {
@@ -88,9 +91,7 @@ if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
         )
     ) as writer:
         fetch_data(writer)
