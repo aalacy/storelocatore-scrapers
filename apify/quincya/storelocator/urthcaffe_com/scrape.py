@@ -1,4 +1,5 @@
 import json
+import re
 
 from bs4 import BeautifulSoup
 
@@ -19,13 +20,6 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
-
-    js = str(base.find(id="popmenu-apollo-state"))
-
-    js_id = js.split("RestaurantLocation:")[1].split('"')[0]
-    js_city = js.split('city":"')[1].split('"')[0]
-    js_lat = js.split('lat":')[1].split(",")[0]
-    js_lng = js.split('lng":')[1].split(",")[0]
 
     store_data = base.find_all("script", attrs={"type": "application/ld+json"})
 
@@ -53,15 +47,26 @@ def fetch_data(sgw: SgWriter):
         store_number = ""
         latitude = ""
         longitude = ""
-        if city == js_city:
-            store_number = js_id
-            latitude = js_lat
-            longitude = js_lng
         hours_of_operation = " ".join(store["openingHours"])
         link = (
             "https://www.urthcaffe.com/"
             + location_name.replace(" LA", "").replace(" ", "-").lower()
         )
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        js = str(base.find(id="popmenu-apollo-state"))
+
+        js_ids = re.findall(r"RestaurantLocation:[0-9]+", str(js))
+        zips = re.findall(r'postalCode":"[0-9]+', str(js))
+        js_lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(js))
+        js_lngs = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', str(js))
+        for i, z in enumerate(zips):
+            if zip_code in z:
+                store_number = js_ids[i].split(":")[1]
+                latitude = js_lats[i].split(":")[1]
+                longitude = js_lngs[i].split(":")[1]
+                break
 
         sgw.write_row(
             SgRecord(
