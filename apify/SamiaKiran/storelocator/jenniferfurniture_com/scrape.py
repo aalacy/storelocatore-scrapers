@@ -31,8 +31,8 @@ def fetch_data():
         )
         r = session.get(api_url, headers=headers)
         loclist = (
-            r.text.split("locationsRaw:")[1]
-            .split(",app_url")[0]
+            r.text.split('"locationsRaw":"')[1]
+            .split('","app_url"')[0]
             .replace('\\"', '"')
             .replace("'", "")
         )

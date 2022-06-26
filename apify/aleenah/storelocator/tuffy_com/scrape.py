@@ -10,7 +10,7 @@ import time
 import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
-DOMAIN = "tuffy_com"
+DOMAIN = "https://www.tuffy.com/"
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 

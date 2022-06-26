@@ -46,10 +46,12 @@ def get_data(url, sgw: SgWriter):
         street_address = a.get("streetAddress") or "<MISSING>"
         street_address = str(street_address).replace("&#039;", "`").strip()
         city = a.get("addressLocality") or "<MISSING>"
+        city = str(city).replace("&#039;", "`").strip()
         state = "<MISSING>"
         postal = a.get("postalCode") or "<MISSING>"
         country_code = a.get("addressCountry") or "<MISSING>"
         location_name = js.get("name") or "<MISSING>"
+        location_name = str(location_name).replace("&#039;", "`").strip()
         phone = js.get("telephone") or "<MISSING>"
         try:
             hours_of_operation = (
@@ -63,6 +65,8 @@ def get_data(url, sgw: SgWriter):
             hours_of_operation = "<MISSING>"
         latitude = js.get("geo").get("latitude")
         longitude = js.get("geo").get("longitude")
+        if hours_of_operation.endswith(","):
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

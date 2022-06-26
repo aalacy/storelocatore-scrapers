@@ -23,6 +23,7 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        phone = poi["phone"].split("доб")[0] if poi["phone"] else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -34,7 +35,7 @@ def fetch_data():
             zip_postal="",
             country_code="",
             store_number=poi["id"],
-            phone=poi["phone"],
+            phone=phone,
             location_type="",
             latitude=poi["latitude"],
             longitude=poi["longitude"],

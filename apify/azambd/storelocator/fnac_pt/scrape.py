@@ -43,12 +43,14 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgFirefox() as driver:
         driver.get(store_url)
         random_sleep(driver, 20)
-        return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
-            "Store"
-        ]
+        jsontxt = (
+            driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
+        ).replace("&quot;", '"')
+        return json.loads(jsontxt)["Store"]
+
     return []
 
 
@@ -102,7 +104,7 @@ def fetch_data():
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
-        phone = "707313435"  # Default phone is actually their helpline so I think its better to include it rather than missing.
+        phone = "211536000"  # Default phone is actually their helpline so I think its better to include it rather than missing.
         coord = (
             get_JSON_object_variable(store, "Coord")
             .replace("(", "")

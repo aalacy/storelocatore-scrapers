@@ -17,12 +17,24 @@ else:
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def fix_comma(x):
+    try:
+        x = x.split(",")
+        copy = []
+        for i in x:
+            if len(i) > 0:
+                copy.append(i)
+        return ",".join(copy)
+    except Exception:
+        return x
+
+
 def fix_record2(rec):
     country = rec[1]
+    cc = rec[2]
     rec = rec[0]
     k = {}
     k["host"] = "<MISSING>"
-
     try:
         k["name"] = rec["storeDisplayName"]
     except Exception:
@@ -45,13 +57,54 @@ def fix_record2(rec):
     k["zip"] = "<MISSING>"
 
     try:
+        k["state"] = rec["address"]["stateProvince"]
+    except Exception:
+        k["state"] = "<MISSING>"
+
+    try:
+        k["zip"] = rec["address"]["fullPostalCode"]
+    except Exception:
+        k["zip"] = "<MISSING>"
+
+    try:
         k["city"] = rec["address"]["city"]
     except Exception:
         k["city"] = "<MISSING>"
 
+    try:
+        k["phone"] = rec["formattedPhoneNumber"]
+        phone = []
+        for i in k["phone"]:
+            if i.isdigit():
+                phone.append(i)
+        k["phone"] = "".join(phone)
+    except Exception:
+        k["phone"] = "<MISSING>"
+
+    try:
+        k["page_url"] = rec["storeUrl"]
+    except Exception:
+        k["page_url"] = "<MISSING>"
+
+    try:
+        k["host"] = rec["storeUrl"].split("/")[2]
+    except Exception:
+        k["host"] = "<MISSING>"
+
     k["country"] = country
     k["id"] = "<MISSING>"
     k["hours"] = "<MISSING>"
+    if k["hours"] == "<MISSING>":
+        try:
+            k["hours"] = str(rec["timings1"]) + ", " + str(rec["timings2"])
+        except Exception:
+            k["hours"] = "<MISSING>"
+    k["country"] = cc
+
+    if cc == "ME":
+        k["address"] = k["name"]
+        k["name"] = "<MISSING>"
+
     return k
 
 
@@ -141,16 +194,56 @@ def fix_record(rec, host):
             k["hours"] = "<MISSING>"
 
     try:
+        temphr = []
+        for day in rec["storeHours"]:
+            try:
+                if "rue" in day["closed"]:
+                    temphr.append(str(day["rolledDays"] + ": Closed"))
+            except Exception:
+                pass
+
+            try:
+                temphr.append(str(day["rolledDays"] + ": " + day["rolledHours"]))
+            except Exception:
+                pass
+
+        k["hours"] = "; ".join(temphr)
+    except Exception:
+        try:
+            temphr = []
+            for day in list(rec["storeHoursMap"]):
+                temphr.append(str(str(day) + ": " + str(rec["storeHoursMap"][day])))
+            k["hours"] = "; ".join(temphr)
+        except Exception:
+            k["hours"] = "<MISSING>"
+
+    try:
         k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
     except Exception:
         k["type"] = "<MISSING>"
+    try:
+        k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
+    except Exception:
+        k["type"] = "<MISSING>"
+
+    try:
+        k["phone"] = rec["phone"]
+    except Exception:
+        try:
+            k["phone"] = rec["address"]["unFormattedDayPhone"]
+        except Exception:
+            try:
+                k["phone"] = rec["address"]["dayPhone"]
+            except Exception:
+                k["phone"] = "<MISSING>"
+
     return k
 
 
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
         for rec in data["statesAndProvinces"][country]["stores"]:
-            yield (rec, country)
+            yield (rec, country, data["countryCode"])
 
 
 def main_all(session, url):
@@ -229,7 +322,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
-            mapping=["address"], part_of_record_identity=True
+            mapping=["address"], part_of_record_identity=True, is_required=False
         ),
         city=sp.MappingField(
             mapping=["city"], is_required=False, part_of_record_identity=True
@@ -239,13 +332,17 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["country"], is_required=False, part_of_record_identity=True
         ),
-        phone=sp.MissingField(),
+        phone=sp.MappingField(
+            mapping=["phone"], part_of_record_identity=True, is_required=False
+        ),
         store_number=sp.MappingField(
             mapping=["id"],
             is_required=False,
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours"], is_required=False, value_transform=fix_comma
+        ),
         location_type=sp.MappingField(mapping=["type"], is_required=False),
         raw_address=sp.MissingField(),
     )

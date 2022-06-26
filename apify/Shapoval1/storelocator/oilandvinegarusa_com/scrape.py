@@ -22,6 +22,12 @@ def fetch_data(sgw: SgWriter):
         page_url = f"https://www.oilandvinegarusa.com/{slug}"
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("street") or "<MISSING>"
+        street_address = (
+            str(street_address)
+            .replace("Latitude Landings", "")
+            .replace("Clackamas Town Center", "")
+            .strip()
+        )
         state = j.get("region") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
         if str(postal).find(" ") != -1:
@@ -35,14 +41,26 @@ def fetch_data(sgw: SgWriter):
         phone = (
             "".join(
                 tree.xpath(
-                    '//h3[contains(text(), "Phone")]/following-sibling::div[1]//text()'
+                    '//strong[contains(text(), "Oil & Vinegar")]/following-sibling::text()[1]'
                 )
             )
-            .replace("Phone", "")
-            .replace(":", "")
+            .replace("Phone:", "")
+            .replace("E-mail:", "")
             .strip()
             or "<MISSING>"
         )
+        if phone == "<MISSING>":
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//h3[contains(text(), "Phone")]/following-sibling::div[1]//text()'
+                    )
+                )
+                .replace("Phone", "")
+                .replace(":", "")
+                .strip()
+                or "<MISSING>"
+            )
         if phone == "<MISSING>":
             phone = (
                 "".join(

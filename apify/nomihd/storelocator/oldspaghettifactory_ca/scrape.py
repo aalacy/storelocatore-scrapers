@@ -56,7 +56,13 @@ def fetch_data():
         ).strip()
 
         address = store_sel.xpath('//ul[@class="address"]/li/text()')
-        street_address = ", ".join(address[:-1]).strip()
+        street_address = "<MISSING>"
+        temp_street = address[:-1]
+        for street in temp_street:
+            if street.strip().split(" ")[0].strip().replace("-", "").strip().isdigit():
+                street_address = street
+                break
+
         city_zip = address[-1].strip()
         city = city_zip.split(",")[0].strip()
         state = "".join(

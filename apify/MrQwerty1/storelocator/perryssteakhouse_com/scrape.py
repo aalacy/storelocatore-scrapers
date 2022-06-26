@@ -25,6 +25,7 @@ def get_friendswood(sgw: SgWriter):
         "//p[./a[contains(@href, 'google')]]/preceding-sibling::p[1]/text()"
     )
     line = list(filter(None, [l.strip() for l in line]))
+
     phone = line.pop()
     street_address = line.pop(0)
     line = line.pop()
@@ -68,8 +69,18 @@ def get_data(page_url, sgw: SgWriter):
     line = tree.xpath(
         "//div[@class='info']//span[@class='vertical'][1]/following-sibling::span/p[1]/text()"
     )
+
+    cnt = 0
+    for li in line:
+        if " - " in li or " – " in li:
+            break
+        cnt += 1
+
+    if cnt < len(line):
+        line = line[:cnt]
+
     street_address = line.pop(0)
-    if "Plaza" in street_address:
+    if "Plaza" in street_address or "Town Center" in street_address:
         street_address = line.pop(0)
     line = line[0]
     city = line.split(",")[0].strip()

@@ -22,7 +22,7 @@ def fetch_data():
     if True:
         r = session.get(DOMAIN, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "inner"})[1].findAll("li")
+        loclist = soup.find("div", {"class": "second"}).findAll("li")
         for loc in loclist:
             location_name = loc.text
             page_url = loc.find("a")["href"]
@@ -67,7 +67,7 @@ def fetch_data():
                 .split("!2m", 1)[0]
                 .split("!3d")
             )
-
+            street_address = street_address.replace(zip_postal, "")
             hours_of_operation = "<INACCESSIBLE>"
             country_code = "CA"
             yield SgRecord(

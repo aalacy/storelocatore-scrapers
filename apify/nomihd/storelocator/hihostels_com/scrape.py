@@ -168,7 +168,7 @@ def fetch_location(page_url, retry=0):
 
 def fetch_data():
     urls = fetch_locations()
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(fetch_location, url) for url in urls]
         for future in as_completed(futures):
             poi = future.result()

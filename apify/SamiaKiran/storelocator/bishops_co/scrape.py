@@ -53,6 +53,9 @@ def fetch_data():
                     .replace("|", " ")
                     .replace("Hours", "")
                 )
+                if "Phone" in hours_of_operation:
+                    phone = hours_of_operation.split("Phone")[1]
+                    hours_of_operation = MISSING
                 try:
                     coords = address["href"].split("@")[1].split(",")
                     latitude = coords[0]

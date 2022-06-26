@@ -105,6 +105,13 @@ def fetch_data():
                 city = "Manchester"
             if "-london-hotel-uk" in loc:
                 city = "London"
+            if " NSW" in city:
+                city = city.split(" NSW")[0]
+                state = "NSW"
+            if "amsnl" in loc:
+                zc = "1012 RC"
+            if "--" in phone:
+                phone = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

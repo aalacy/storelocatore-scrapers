@@ -71,10 +71,38 @@ def fetch_data():
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
+                location_type="restaurant",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=" ".join(raw_address),
             )
+
+        # head office
+        block = list(
+            soup.find("h3", string=re.compile(r"^Head Office"))
+            .find_next_sibling()
+            .stripped_strings
+        )[1:]
+        addr = block[:2]
+        phone = (
+            soup.find("h3", string=re.compile(r"^Head Office"))
+            .find_next_sibling()
+            .a["href"]
+        )
+
+        yield SgRecord(
+            page_url="https://industriapizzeria.com/our-restaurants/",
+            location_name="HEAD OFFICE",
+            street_address=addr[0],
+            city=addr[1].split(",")[0].strip(),
+            state=addr[1].split(",")[1].strip().split()[0].strip(),
+            zip_postal=" ".join(addr[1].split(",")[1].strip().split()[1:]),
+            country_code="CA",
+            phone=phone,
+            location_type="HEAD OFFICE",
+            locator_domain=locator_domain,
+            raw_address=" ".join(addr),
+        )
 
 
 if __name__ == "__main__":

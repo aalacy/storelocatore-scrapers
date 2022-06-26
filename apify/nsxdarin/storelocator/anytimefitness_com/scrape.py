@@ -16,7 +16,10 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()
     for j in js:
+
         a = j.get("content")
+        status = a.get("status")
+
         page_url = a.get("url") or "<MISSING>"
         location_name = a.get("title") or "<MISSING>"
         street_address = (
@@ -35,6 +38,8 @@ def fetch_data(sgw: SgWriter):
         if country_code == "NL" and str(postal).find(" ") != -1:
             state = str(postal).split()[1].strip()
             postal = str(postal).split()[0].strip()
+        if str(postal).find("Singapore") != -1:
+            postal = str(postal).replace("Singapore", "").strip()
         store_number = a.get("number") or "<MISSING>"
         latitude = j.get("latitude")
         longitude = j.get("longitude")
@@ -43,17 +48,109 @@ def fetch_data(sgw: SgWriter):
             phone = str(phone).split("/")[0].strip()
         if str(phone).find(",") != -1:
             phone = str(phone).split(",")[0].strip()
-        hours_of_operation = "<MISSING>"
         hours = a.get("hours")
-        tmp = []
+        tmp_1 = []
+        tmp_2 = []
+        tmp_3 = []
+        tmp_4 = []
+        tmp_5 = []
+        tmp_6 = []
+        tmp_7 = []
+
         if hours:
             for h in hours:
                 day = h.get("dayOfWeek")
-                opens = str(h.get("openTime"))[:2] + ":" + str(h.get("openTime"))[2:]
-                closes = str(h.get("closeTime"))[:2] + ":" + str(h.get("closeTime"))[2:]
+                if day != "monday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
                 line = f"{day} {opens} - {closes}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+                tmp_1.append(line)
+        monday = "; ".join(tmp_1).replace("; monday", " |").strip() or "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("dayOfWeek")
+                if day != "tuesday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
+                line = f"{day} {opens} - {closes}"
+                tmp_2.append(line)
+        tuesday = "; ".join(tmp_2).replace("; tuesday", " |").strip() or "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("dayOfWeek")
+                if day != "wednesday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
+                line = f"{day} {opens} - {closes}"
+                tmp_3.append(line)
+        wednesday = "; ".join(tmp_3).replace("; wednesday", " |").strip() or "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("dayOfWeek")
+                if day != "thursday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
+                line = f"{day} {opens} - {closes}"
+                tmp_4.append(line)
+        thursday = "; ".join(tmp_4).replace("; thursday", " |").strip() or "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("dayOfWeek")
+                if day != "friday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
+                line = f"{day} {opens} - {closes}"
+                tmp_5.append(line)
+        friday = "; ".join(tmp_5).replace("; friday", " |").strip() or "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("dayOfWeek")
+                if day != "saturday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
+                line = f"{day} {opens} - {closes}"
+                tmp_6.append(line)
+        saturday = "; ".join(tmp_6).replace("; saturday", " |").strip() or "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("dayOfWeek")
+                if day != "sunday":
+                    continue
+                opens = h.get("openTime")
+                opens = "".join(opens[:-2]) + ":" + "".join(opens[-2:])
+                closes = h.get("closeTime")
+                closes = "".join(closes[:-2]) + ":" + "".join(closes[-2:])
+                line = f"{day} {opens} - {closes}"
+                tmp_7.append(line)
+        sunday = "; ".join(tmp_7).replace("; sunday", " |").strip() or "<MISSING>"
+        hours_of_operation = (
+            f"{monday}; {tuesday}; {wednesday}; {thursday}; {friday}; {saturday}; {sunday}".replace(
+                "; <MISSING>", ""
+            ).strip()
+            or "<MISSING>"
+        )
+        if status == "1" or status == "2":
+            hours_of_operation = "Coming Soon"
+        if hours_of_operation != "<MISSING>":
+            hours_of_operation = hours_of_operation.replace("<MISSING>;", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

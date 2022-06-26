@@ -35,6 +35,10 @@ def fetch_data(sgw: SgWriter):
             location_type = "Nah&Frisch"
         if j.get("is_nah_frisch_markt") == "0":
             location_type = "Markant"
+        if str(location_name).find("nah&frisch") != -1:
+            location_type = "Nah&Frisch"
+        if str(location_name).find("Markant") != -1:
+            location_type = "Markant"
         street_address = j.get("street") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
         country_code = "DE"

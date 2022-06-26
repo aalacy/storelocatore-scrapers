@@ -4,7 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("freightliner_com")
 
@@ -27,7 +27,6 @@ def fetch_data():
                 locs.append(line.split('href="')[1].split('"')[0])
     website = "freightliner.com"
     typ = "<MISSING>"
-    store = "<MISSING>"
     lat = "<MISSING>"
     hours = "<MISSING>"
     lng = "<MISSING>"
@@ -147,13 +146,20 @@ def fetch_data():
                 except:
                     pass
                 rawadd = rawadd.replace("&#39;", "'")
-                city = city.replace("&#39;", "'")
+                try:
+                    city = city.replace("&#39;", "'")
+                except:
+                    city = "<MISSING>"
                 name = (
                     name.replace("&#243;", "o")
                     .replace("&#250;", "u")
                     .replace("&#225;", "a")
                     .replace("&#233;", "e")
                 )
+                try:
+                    store = str(lurl).split("code=")[1].split("&")[0].strip()
+                except:
+                    store = "<MISSING>"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=lurl,

@@ -1,11 +1,8 @@
-import time
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
@@ -19,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     tmp = []
     for d in div[1:]:
         tmp.append(d.split('"')[0])
-    api_url = "https://www.monsterselfstorage.com/_nuxt/23b7782.js"
+    api_url = "https://www.monsterselfstorage.com/_nuxt/35baf56.js"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -44,43 +41,45 @@ def fetch_data(sgw: SgWriter):
         phone = (
             str(block).split(',phone_number:"')[1].split('"')[0].strip() or "<MISSING>"
         )
-        with SgFirefox() as driver:
-            time.sleep(5)
-            driver.get(page_url)
-            time.sleep(5)
-            a = driver.page_source
+        hours = (
+            str(block)
+            .split("hours:[")[1]
+            .split("address")[0]
+            .split('type:"office"')[1]
+            .strip()
+        )
+        if hours.find("gate") != -1:
+            hours = hours.split("gate")[0].strip()
+        hoo = hours.split("id_json_formatted_text")[1:]
+        lmp = []
+        for h in hoo:
+            times = str(h).split('"')[1]
+            lmp.append(times)
 
-            tree = html.fromstring(a)
+        hours_of_operation = "; ".join(lmp).replace("; ;", "; ").strip()
+        if hours_of_operation.startswith(";"):
+            hours_of_operation = "".join(hours_of_operation[1:]).strip()
+        if hours_of_operation.endswith(";"):
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//h6[text()="Office Hours"]/following-sibling::div//text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=SgRecord.MISSING,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
-
-            sgw.write_row(row)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":

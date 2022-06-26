@@ -5,7 +5,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
@@ -28,12 +27,17 @@ def fetch_data(sgw: SgWriter):
             l = b.get("ctas")
             if l is None:
                 continue
-            slug = l[0].get("link")
+            try:
+                slug = l[0].get("link")
+            except IndexError:
+                continue
             if str(slug).find("http") != -1:
                 continue
             ad = b.get("body")
-            ad = html.fromstring(ad)
-            ad = ad.xpath("//*//text()")
+
+            m = html.fromstring(ad)
+            ad = m.xpath("//*//text()")
+            store_number = str(b).split("storeId={")[1].split("}")[0].strip()
             adr = "".join(ad[1]).replace("\n", "").strip() or "<MISSING>"
             page_url = f"{locator_domain}{slug}"
             location_name = b.get("headline")
@@ -60,41 +64,45 @@ def fetch_data(sgw: SgWriter):
             phone = phone.replace("Tel:", "").strip()
             if phone.find("This") != -1:
                 phone = phone.split("This")[0].strip()
-            with SgFirefox() as driver:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+            r = session.get("https://www.harryrosen.com/api/stores", headers=headers)
+            js = r.json()
+            days = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+            tmp = []
+            for j in js:
+                ids = j.get("id")
+                if ids == store_number:
+                    latitude = j.get("latitude")
+                    longitude = j.get("longitude")
+                    for d in days:
+                        day = d
+                        opens = j.get("openingHours").get(f"{d}").get("start")
+                        closes = j.get("openingHours").get(f"{d}").get("end")
+                        line = f"{day} {opens} - {closes}"
+                        tmp.append(line)
 
-                driver.get(page_url)
-                a = driver.page_source
-                tree = html.fromstring(a)
-                hours_of_operation = (
-                    " ".join(
-                        tree.xpath(
-                            '//div[text()="Store Hours"]/following-sibling::div[1]//text()'
-                        )
-                    )
-                    .replace("\n", "")
-                    .strip()
-                    or "<MISSING>"
-                )
-                hours_of_operation = " ".join(hours_of_operation.split())
+            hours_of_operation = (
+                "; ".join(tmp).replace("CLOSED - CLOSED", "CLOSED").strip()
+            )
 
-                row = SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=postal,
-                    country_code=country_code,
-                    store_number=SgRecord.MISSING,
-                    phone=phone,
-                    location_type=SgRecord.MISSING,
-                    latitude=SgRecord.MISSING,
-                    longitude=SgRecord.MISSING,
-                    hours_of_operation=hours_of_operation,
-                )
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-                sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":

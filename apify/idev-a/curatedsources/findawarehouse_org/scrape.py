@@ -118,6 +118,8 @@ def _detail(_, json_locations, session):
         street_address = (
             street_address.split("PO Box")[0].split("P.O. Box")[0].split("P O Box")[0]
         )
+        if city and city in street_address:
+            street_address = street_address.split(city)[0].strip()
     if not city and not addr.state and not addr.postcode:
         return None
     return SgRecord(

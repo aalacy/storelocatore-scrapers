@@ -1,3 +1,4 @@
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -48,7 +49,7 @@ def fetch_data():
                 "Limited Menu Order Now", ""
             )
             store_number = loc["id"]
-            location_name = loc["name"]
+            location_name = html.unescape(loc["name"])
             try:
                 street_address = loc["address"] + " " + loc["address2"]
             except:

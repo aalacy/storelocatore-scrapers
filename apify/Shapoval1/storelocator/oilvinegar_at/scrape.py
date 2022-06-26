@@ -49,6 +49,28 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation == "<MISSING>":
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//h3[text()="Adresse"]/following::a[contains(@href, "tel")][1]//text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h4[text()="Öffnungszeiten"]/following-sibling::div[1]/p[1]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,

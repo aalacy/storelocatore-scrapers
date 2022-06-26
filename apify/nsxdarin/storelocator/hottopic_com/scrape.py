@@ -59,6 +59,8 @@ def fetch_data():
             website = "hottopic.com"
             typ = "Store"
             loc = "https://www.hottopic.com/store-details?StoreId=" + store
+            if "undef" in hours:
+                hours = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

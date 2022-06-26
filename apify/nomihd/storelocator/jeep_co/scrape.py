@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import lxml.html
 from sgpostal import sgpostal as parser
 
-website = "jeep,co"
+website = "jeep.com.co"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "cache-control": "max-age=0",

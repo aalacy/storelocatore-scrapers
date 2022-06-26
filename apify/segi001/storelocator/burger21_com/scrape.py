@@ -1,13 +1,13 @@
+from sgselenium import SgFirefox
 import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 website = "burger21_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
@@ -20,16 +20,17 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    if True:
+    with SgFirefox() as driver:
         url = "https://www.burger21.com/locations/"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
+        driver.get(url)
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         loclist = soup.findAll("div", {"class": "location-item"})
         for loc in loclist:
             page_url = loc.find("a")["href"]
             log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
+            driver.get(page_url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             location_name = soup.find("h1").text
             address = soup.find("h2").get_text(separator="|", strip=True).split("|")
             phone = address[-1].replace("P:", "")
@@ -43,8 +44,7 @@ def fetch_data():
             city = ""
             state = ""
             zip_postal = ""
-            while i < len(address):
-                temp = address[i]
+            for temp in address:
                 if (
                     temp[1].find("Address") != -1
                     or temp[1].find("Street") != -1
@@ -75,6 +75,7 @@ def fetch_data():
                 hours_of_operation = hours_of_operation.split("Thanksgiving")[0]
             elif "Holiday Hours: " in hours_of_operation:
                 hours_of_operation = hours_of_operation.split("Holiday Hours: ")[0]
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

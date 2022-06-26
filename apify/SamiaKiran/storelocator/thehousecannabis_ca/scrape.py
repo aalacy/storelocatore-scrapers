@@ -45,6 +45,7 @@ def fetch_data():
                 address = loc["address"]
                 country_code = address["addressCountry"]
                 street_address = address["streetAddress"]
+                phone = soup.select_one("a[href*=tel]").text
                 if temp_street.split()[0] == street_address.split()[0]:
                     street_address = address["streetAddress"]
                     latitude = loc["geo"]["latitude"]
@@ -54,25 +55,38 @@ def fetch_data():
                     zip_postal = address["postalCode"]
                 else:
                     street_address = soup.find("h3").text
+                    address = (
+                        r.text.split(street_address)[2]
+                        .split("</p><p>")[1]
+                        .split("</p>")[0]
+                        .split(",")[-1]
+                        .split()
+                    )
+                    phone = r.text.split("@thehousecannabis.ca</p><p>")[1].split(
+                        "</p>"
+                    )[0]
                     latitude = MISSING
                     longitude = MISSING
                     city = page_url.split("/")[-2]
-                    state = MISSING
-                    zip_postal = MISSING
+                    state = address[-3]
+                    zip_postal = address[-2] + " " + address[-1]
                 location_name = "House of Cannabis " + city
-                phone = soup.select_one("a[href*=tel]").text
+
                 try:
                     temp_list = r.text.split("MONDAY")[1].split("Order Online")[0]
                 except:
-                    temp_list = r.text.split("Monday")[1].split("Order Online")[0]
+                    temp_list = r.text.split("Monday")[2].split("Order Online")[0]
+
                 temp_list = "MONDAY " + BeautifulSoup(
                     temp_list, "html.parser"
-                ).get_text(separator="|", strip=True).replace("|", " ")
-                temp_list = (
-                    temp_list.replace("SUNDAY", "SUNSAY#")
-                    .replace(" - ", "-")
-                    .split("#")
+                ).get_text(separator="|", strip=True).replace("|", " ").replace(
+                    " - ", "-"
                 )
+                if "SUNDAY" in temp_list:
+                    temp_list = temp_list.replace("SUNDAY", "SUNDAY#")
+                elif "Sunday" in temp_list:
+                    temp_list = temp_list.replace("Sunday", "Sunday#")
+                temp_list = temp_list.split("#")
                 day_list = temp_list[0].split()
                 time_list = temp_list[1].split()
                 hours_of_operation = ""

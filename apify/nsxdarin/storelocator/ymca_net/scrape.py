@@ -24,61 +24,73 @@ def fetch_data():
         for line in r.iter_lines():
             if "<loc>https://www.ymca.org/locations/" in line:
                 locs.append(line.split("<loc>")[1].split("<")[0])
+            if "<loc>http://national/locations/" in line:
+                lurl = (
+                    line.split("<loc>")[1]
+                    .split("<")[0]
+                    .replace("national", "www.ymca.org")
+                )
+                locs.append(lurl)
     for loc in locs:
-        r = session.get(loc, headers=headers)
-        website = "ymca.org"
-        typ = "<MISSING>"
-        country = "US"
-        hours = ""
-        logger.info(loc)
-        for line in r.iter_lines():
-            if '"shortlink" href="https://www.ymca.org/node/' in line:
-                store = line.split('"shortlink" href="https://www.ymca.org/node/')[
-                    1
-                ].split('"')[0]
-            if '"og:title" content="' in line:
-                name = line.split('"og:title" content="')[1].split('"')[0]
-            if 'data-lat="' in line:
-                lat = line.split('data-lat="')[1].split('"')[0]
-                lng = line.split('data-lng="')[1].split('"')[0]
-            if '<span class="address-line1">' in line:
-                add = line.split('<span class="address-line1">')[1].split("<")[0]
-            if 'class="locality">' in line:
-                city = line.split('class="locality">')[1].split("<")[0]
-            if '<span class="administrative-area">' in line:
-                state = line.split('<span class="administrative-area">')[1].split("<")[
-                    0
-                ]
-            if '<span class="postal-code">' in line:
-                zc = line.split('<span class="postal-code">')[1].split("<")[0]
-            if '><a href="tel:' in line:
-                phone = line.split('><a href="tel:')[1].split('"')[0].replace("+", "")
-            if ":</td>" in line:
-                hrs = line.split("<td>")[1].split("<")[0]
-            if "m</td>" in line:
-                hrs = hrs + " " + line.split("<td>")[1].split("<")[0]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if hours == "":
-            hours = "<MISSING>"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        try:
+            r = session.get(loc, headers=headers)
+            website = "ymca.org"
+            typ = "<MISSING>"
+            country = "US"
+            hours = ""
+            logger.info(loc)
+            for line in r.iter_lines():
+                if '"shortlink" href="https://www.ymca.org/node/' in line:
+                    store = line.split('"shortlink" href="https://www.ymca.org/node/')[
+                        1
+                    ].split('"')[0]
+                if '"og:title" content="' in line:
+                    name = line.split('"og:title" content="')[1].split('"')[0]
+                if 'data-lat="' in line:
+                    lat = line.split('data-lat="')[1].split('"')[0]
+                    lng = line.split('data-lng="')[1].split('"')[0]
+                if '<span class="address-line1">' in line:
+                    add = line.split('<span class="address-line1">')[1].split("<")[0]
+                if 'class="locality">' in line:
+                    city = line.split('class="locality">')[1].split("<")[0]
+                if '<span class="administrative-area">' in line:
+                    state = line.split('<span class="administrative-area">')[1].split(
+                        "<"
+                    )[0]
+                if '<span class="postal-code">' in line:
+                    zc = line.split('<span class="postal-code">')[1].split("<")[0]
+                if '><a href="tel:' in line:
+                    phone = (
+                        line.split('><a href="tel:')[1].split('"')[0].replace("+", "")
+                    )
+                if ":</td>" in line:
+                    hrs = line.split("<td>")[1].split("<")[0]
+                if "m</td>" in line:
+                    hrs = hrs + " " + line.split("<td>")[1].split("<")[0]
+                    if hours == "":
+                        hours = hrs
+                    else:
+                        hours = hours + "; " + hrs
+            if hours == "":
+                hours = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        except:
+            pass
 
 
 def scrape():

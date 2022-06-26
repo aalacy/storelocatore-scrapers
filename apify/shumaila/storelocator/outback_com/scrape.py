@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import unidecode
 
 from sgrequests import SgRequests
 
@@ -34,10 +34,17 @@ def fetch_data():
             title = loc.split("\n", 1)[0]
 
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
-            phone = address.split("\n")[-1]
 
+            phone = address.split("\n")[-1]
+            try:
+                phone = phone.split("/", 1)[0]
+            except:
+                pass
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
+            raw_address = unidecode.unidecode(raw_address)
+            title = unidecode.unidecode(title)
+
             hours = "<MISSING>"
             lat = longt = "<MISSING>"
             pa = parse_address_intl(raw_address)
@@ -55,10 +62,31 @@ def fetch_data():
             pcode = zip_postal.strip() if zip_postal else MISSING
             if "Address" in title:
                 title = raw_address
-            pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
+            pcode = pcode.replace("CEP", "").replace("-DONG", "").replace("-GA", "")
+
+            street = unidecode.unidecode(street)
+            city = unidecode.unidecode(city)
+            state = unidecode.unidecode(state)
+            try:
+                phone = phone.split(" (", 1)[0]
+            except:
+                pass
+            if (
+                phone.replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .replace(".", "")
+                .replace(" ", "")
+                .strip()
+                .isdigit()
+            ):
+                pass
+            else:
+                phone = "<MISSING>"
+            ltype = title + " - " + street
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
-                page_url="<MISSING>",
+                page_url=url,
                 location_name=title,
                 street_address=street.strip(),
                 city=city.strip(),
@@ -67,7 +95,7 @@ def fetch_data():
                 country_code=ccode,
                 store_number=SgRecord.MISSING,
                 phone=phone.strip(),
-                location_type=SgRecord.MISSING,
+                location_type=ltype,
                 latitude=SgRecord.MISSING,
                 longitude="<MISSING>",
                 hours_of_operation=hours,
@@ -146,11 +174,18 @@ def fetch_data():
                 pcode = soup.find("span", {"class": "c-address-postal-code"}).text
                 try:
                     phone = soup.find("div", {"id": "phone-main"}).text
+                    try:
+                        phone = phone.split("/", 1)[0]
+                    except:
+                        pass
                 except:
                     phone = "<MISSING>"
-                hours = soup.find("table", {"class": "c-hours-details"}).text.replace(
-                    "PM", "PM "
-                )
+                try:
+                    hours = soup.find(
+                        "table", {"class": "c-hours-details"}
+                    ).text.replace("PM", "PM ")
+                except:
+                    hours = "<MISSING>"
                 try:
                     hours = hours.split("Week", 1)[1]
                 except:
@@ -160,7 +195,24 @@ def fetch_data():
                 except:
                     pass
                 hours = hours.replace("day", "day ").replace("osed", "osed ").strip()
-
+                raw_address = street + " " + city + " " + state + " " + pcode
+                try:
+                    phone = phone.split(" (", 1)[0]
+                except:
+                    pass
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(".", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    pass
+                else:
+                    phone = "<MISSING>"
+                ltype = title + " - " + state
                 yield SgRecord(
                     locator_domain="https://www.outback.com/",
                     page_url=branch,
@@ -172,19 +224,17 @@ def fetch_data():
                     country_code="US",
                     store_number=str(store),
                     phone=phone.strip(),
-                    location_type=SgRecord.MISSING,
+                    location_type=ltype,
                     latitude=str(lat),
                     longitude=str(longt),
                     hours_of_operation=hours,
+                    raw_address=raw_address,
                 )
 
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
-            duplicate_streak_failure_factor=5,
-        )
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_TYPE}))
     ) as writer:
         results = fetch_data()
         for rec in results:

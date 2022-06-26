@@ -48,8 +48,15 @@ def fetch_data():
                 )
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers).text
-                coord = json.loads(res.split("var position =")[1].split(";")[0].strip())
+                try:
+                    coord = json.loads(
+                        res.split("var position =")[1].split(";")[0].strip()
+                    )
+                except:
+                    coord = {"lat": "", "lng": ""}
                 sp1 = bs(res, "lxml")
+                if not sp1.select_one("div.store p"):
+                    continue
                 addr = list(sp1.select_one("div.store p").stripped_strings)
                 hours = [
                     ": ".join(hh.stripped_strings)
