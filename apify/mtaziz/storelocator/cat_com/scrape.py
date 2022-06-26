@@ -9,6 +9,7 @@ import time
 import random
 import tenacity
 from tenacity import retry, stop_after_attempt
+from sgpostal.sgpostal import parse_address_usa
 
 
 try:
@@ -153,15 +154,46 @@ def fetch_data():
 
         # Hours of Operation
         hours_of_operation = get_hoo(idx, _)
+        sta = ""
+        pau = parse_address_usa(street_address)
+        sta1 = pau.street_address_1
+        sta2 = pau.street_address_2
+        if sta1 is not None and sta2 is not None:
+            sta = sta1 + ", " + sta2
+        elif sta1 is not None and sta2 is None:
+            sta = sta1
+        elif sta1 is None and sta2 is not None:
+            sta = sta2
+        else:
+            sta = ""
 
-        raw_address = ""
-        raw_address = raw_address if raw_address else MISSING
-        logger.info(f"[{idx}] Raw Address: {raw_address}")
+        # Comment from Mia - I would keep 855NMC-RENT but remove if it is not part of the phone number,
+        # (so 1 843 660-0225 TRUCK  would just be 1 843 660-0225 ).
+        # I 819 732-9139, zps-service@zeppelin.com, www.zeppelin.ru to be clean.
+
+        if "I 819 732-9139" in phone:
+            phone = "819 732-9139"
+        if "zps-service@zeppelin.com" in phone:
+            phone = ""
+        if "www.zeppelin.ru" in phone:
+            phone = ""
+
+        # TRUC, PARTS, (SALES) and SERVICE required to be removed
+        phone = (
+            phone.replace("TRUCK", "")
+            .replace("PARTS", "")
+            .replace("(SALES)", "")
+            .replace("SERVICE", "")
+            .strip()
+        )
+
+        phone = " ".join(phone.split())
+
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
+            street_address=sta,
             city=city,
             state=state,
             zip_postal=zip_postal,
@@ -172,7 +204,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            raw_address=street_address,
         )
 
 

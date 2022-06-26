@@ -1,6 +1,6 @@
 # SgSelenium client certificates & temp dirs
-browser.crt
-private.key
+*.crt
+*.key
 .chrometmpdir
 
 # Config files in crawler subdirs
@@ -114,6 +114,7 @@ __pycache__/
 *.swp
 
 data.csv
+state.json
 .vscode/
 
 ### macOS ###

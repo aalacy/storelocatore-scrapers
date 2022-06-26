@@ -1,44 +1,35 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
-import json
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
-import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "hannaford.com"
+website = "https://hannaford.com/pharmacy"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "authority": "www.hannaford.com",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
 }
-
-
-def get_formated_street_address(street_address):
-
-    if "&nbsp;" in street_address:
-        add_before_nbsp = street_address.split("&nbsp;")[0].strip()
-        if add_before_nbsp[0].isdigit():
-            street_address = (
-                street_address.split("&nbsp;")[0].strip().replace(",", "").strip()
-            )
-        else:
-            add_after_nbsp = (
-                street_address.split("&nbsp;")[1].strip().replace(",", "").strip()
-            )
-            if add_after_nbsp[0].isdigit():
-                street_address = add_after_nbsp.replace("&nbsp;", " ").strip()
-            else:
-                street_address = street_address.replace("&nbsp;", " ").strip()
-
-    return street_address
 
 
 def fetch_data():
     # Your scraper here
-    locator_domain = website
+
     with SgRequests() as session:
         sitemap_resp = session.get(
             "https://www.hannaford.com/sitemap/store_1.xml",
@@ -47,61 +38,92 @@ def fetch_data():
 
         store_links = sitemap_resp.text.split("<loc>")
         for store in store_links:
-            if "/locations/" in store:
-                store_url = store.split("</loc>")[0].strip()
-                log.info(store_url)
-                store_resp = session.get(store_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_resp.text)
-                json_data = json.loads(
-                    "".join(
-                        store_sel.xpath(
-                            '//script[@type="application/ld+json"]' "/text()"
-                        )
-                    )
+            if "https://www.hannaford.comhttps://stores" in store:
+                page_url = (
+                    store.split("</loc>")[0]
+                    .strip()
+                    .replace("https://www.hannaford.comhttps:", "https:")
                 )
-
-                location_name = json_data["name"]
-                street_address = json_data["address"]["streetAddress"].strip()
-                street_address = get_formated_street_address(street_address)
-
-                city = json_data["address"]["addressLocality"]
-                state = json_data["address"]["addressRegion"]
-                zip = json_data["address"]["postalCode"]
-                store_number = store_url.split("/")[-1].split("-")[-1].strip()
-                location_type = store_sel.xpath(
-                    '//li[@class="storeContact-info"]/text()'
-                )
-                if len(location_type) > 0:
-                    location_type = location_type[0]
-                else:
-                    location_type = "<MISSING>"
-
-                if "pharmacy" not in location_type.lower():
+                log.info(page_url)
+                store_req = session.get(page_url, headers=headers)
+                if isinstance(store_req, SgRequestError):
                     continue
+                store_sel = lxml.html.fromstring(store_req.text)
+                locator_domain = website
 
-                latitude = json_data["geo"]["latitude"]
-                longitude = json_data["geo"]["longitude"]
+                location_name = " ".join(
+                    store_sel.xpath("//h1[@id='location-name']//text()")
+                ).strip()
 
-                country_code = json_data["address"]["addressCountry"]
-                if country_code == "":
-                    country_code = "<MISSING>"
-
-                phone = "".join(
+                street_address = ", ".join(
                     store_sel.xpath(
-                        '//li[@class="storeContact-info small-text"][contains(text(),"Pharmacy")]/a/text()'
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[contains(@class,"Address-field Address-line")]/text()'
+                    )
+                ).strip()
+                city = "".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[@class="Address-field Address-city"]/text()'
+                    )
+                ).strip()
+                state = "".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[@itemprop="addressRegion"]/text()'
+                    )
+                ).strip()
+                zip = "".join(
+                    store_sel.xpath(
+                        '//div[@class="Core-addressWrapper"]//address[@itemprop="address"]//span[@itemprop="postalCode"]/text()'
                     )
                 ).strip()
 
-                page_url = store_url
+                country_code = "US"
 
-                hours = store_sel.xpath('//div[@class="hoursDisplay pharmacy"]/p')
+                store_number = page_url.split("/")[-1].strip()
+
+                section = store_sel.xpath('//div[@class="Core-storeInfoWrapper"]')
+                location_type = "<MISSING>"
+
+                if len(section) > 0:
+                    location_type = "".join(
+                        section[0].xpath('.//div[@class="Core-title"]/text()')
+                    ).strip()
+                    phone = "".join(
+                        section[0].xpath('.//div[@class="Core-pharmContact"]/text()')
+                    ).strip()
+
+                if "pharmacy" not in location_type.lower():
+                    continue
+                hours = []
+                hours_section = store_sel.xpath(
+                    '//div[@class="Core-pharmacyHoursInfo"]'
+                )
+                if len(hours_section) > 0:
+                    hours = hours_section[0].xpath(
+                        './/table[@class="c-hours-details"]//tbody/tr'
+                    )
+
                 hours_list = []
                 for hour in hours:
-                    day = "".join(hour.xpath("text()")).strip()
-                    time = "".join(hour.xpath("span/text()")).strip()
-                    hours_list.append(day + time)
+                    day = "".join(
+                        hour.xpath('td[@class="c-hours-details-row-day"]/text()')
+                    ).strip()
+                    time = "".join(
+                        hour.xpath('td[@class="c-hours-details-row-intervals"]//text()')
+                    ).strip()
+                    hours_list.append(day + ":" + time)
 
                 hours_of_operation = "; ".join(hours_list).strip()
+
+                latitude = "".join(
+                    store_sel.xpath(
+                        '//span[@class="Address-coordinates"]/meta[@itemprop="latitude"]/@content'
+                    )
+                ).strip()
+                longitude = "".join(
+                    store_sel.xpath(
+                        '//span[@class="Address-coordinates"]/meta[@itemprop="longitude"]/@content'
+                    )
+                ).strip()
 
                 yield SgRecord(
                     locator_domain=locator_domain,

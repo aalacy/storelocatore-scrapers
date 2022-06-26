@@ -12,7 +12,7 @@ def get_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         granularity=Grain_8(),
-        max_search_distance_miles=1000,
+        max_search_distance_miles=100,
     )
 
     with SgChrome(
@@ -42,8 +42,7 @@ def get_data():
             for location in locations:
                 locator_domain = "prismahealth.org"
                 page_url = data_url
-                location_name = location["Title"]
-
+                location_name = location["Title"].split(" – ")[0]
                 address = location["Address"][0] + " " + location["Address"][1]
 
                 city = location["Address"][2].split(",")[0]
@@ -108,6 +107,7 @@ def scrape():
         data_fetcher=get_data,
         field_definitions=field_defs,
         log_stats_interval=15,
+        duplicate_streak_failure_factor=-1,
     )
     pipeline.run()
 

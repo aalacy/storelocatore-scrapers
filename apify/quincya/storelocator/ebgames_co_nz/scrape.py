@@ -55,7 +55,19 @@ def fetch_data(sgw: SgWriter):
             latitude = store["Geolocation"]["Latitude"]
             longitude = store["Geolocation"]["Longitude"]
             link = "https://www.ebgames.co.nz/stores/store/" + store["StoreUrl"]
+            log.info(link)
+            driver.get(link)
+            base = BeautifulSoup(driver.page_source, "lxml")
+            raw_hours = base.table.find_all(class_="header")[-1].find_all_next("tr")
             hours_of_operation = ""
+            for row in raw_hours:
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + row.find(class_="day").text
+                    + " "
+                    + row.find(class_="time").text
+                ).strip()
 
             sgw.write_row(
                 SgRecord(
