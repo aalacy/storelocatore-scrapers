@@ -1,3 +1,4 @@
+from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -76,6 +77,10 @@ def fetch_data():
                 zc = formatted_addr.postcode if formatted_addr.postcode else "<MISSING>"
                 if lurl != "<MISSING>":
                     r2 = session.get(lurl, headers=headers)
+                    tree = html.fromstring(r2.text)
+                    typs = tree.xpath("//h4//text()")
+                    typs = list(filter(None, [c.strip() for c in typs]))
+                    typ = ", ".join(typs) or "<MISSING>"
                     days = 0
                     hours = ""
                     lines = r2.iter_lines()
@@ -160,6 +165,7 @@ def fetch_data():
                     store = str(lurl).split("code=")[1].split("&")[0].strip()
                 except:
                     store = "<MISSING>"
+
                 yield SgRecord(
                     locator_domain=website,
                     page_url=lurl,
