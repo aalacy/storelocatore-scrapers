@@ -73,6 +73,7 @@ class _SearchIteration(SearchIteration):
         current_country: str,
         items_remaining: int,
         found_location_at: Callable[[float, float], None],
+        found_nothing,
     ) -> Iterable[SgRecord]:
 
         lat = coord[0]
@@ -185,8 +186,12 @@ class _SearchIteration(SearchIteration):
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
                     )
-
+            else:
+                log.error(stores_req.text)
+                found_nothing()
         except:
+            raise
+            found_nothing()
             pass
 
 
@@ -195,7 +200,6 @@ def scrape():
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=5,
     )
 
     country_list = [
@@ -231,6 +235,9 @@ def scrape():
                     SgRecord.Headers.STATE,
                     SgRecord.Headers.PHONE,
                     SgRecord.Headers.ZIP,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.COUNTRY_CODE,
                 }
             ),
             duplicate_streak_failure_factor=-1,

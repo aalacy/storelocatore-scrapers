@@ -1,182 +1,92 @@
-import csv
-
+# -*- coding: utf-8 -*-
 from lxml import etree
-
-from sglogging import sglog
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-log = sglog.SgLogSetup().get_logger(logger_name="agents.farmers.com")
-
-base_url = "https://agents.farmers.com"
-
-
-def validate(item):
-    if type(item) == list:
-        item = " ".join(item)
-    return item.strip()
-
-
-def get_value(item):
-    if item is None:
-        item = "<MISSING>"
-    item = validate(item)
-    if item == "":
-        item = "<MISSING>"
-    return item
-
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != "":
-            rets.append(item)
-    return rets
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def parse_detail(store, link):
-    output = []
-    output.append(base_url)  # url
-    output.append(link)  # url
-    location_name = get_value(store.xpath('.//h1[@itemprop="name"]//text()'))
-    output.append(location_name)  # location name
-    street = validate(store.xpath('.//meta[@itemprop="streetAddress"]//@content')[0])
-    output.append(get_value(street))  # address
-    output.append(
-        get_value(store.xpath('.//meta[@itemprop="addressLocality"]//@content')[0])
-    )  # city
-    output.append(
-        get_value(store.xpath('.//abbr[@class="c-address-state"]//text()')[0].strip())
-    )  # state
-    output.append(
-        get_value(
-            store.xpath('.//span[@class="c-address-postal-code"]//text()')[0].strip()
-        )
-    )  # zipcode
-    output.append("US")  # country code
-    store_number = (
-        store.xpath('.//script[@id="js-agent-id"]//text()')[0].replace('"', "").strip()
-    )
-    output.append(store_number)  # store_number
-    output.append(
-        get_value(store.xpath('.//span[@itemprop="telephone"]//text()')[0])
-    )  # phone
-    output.append("<MISSING>")  # location type
-    geo = validate(store.xpath('.//meta[@name="geo.position"]//@content')).split(";")
-    if len(geo) > 0:
-        output.append(geo[0])  # latitude
-        output.append(geo[1])  # longitude
-    output.append(
-        get_value(
-            eliminate_space(
-                store.xpath(
-                    './/table[@class="c-location-hours-details"]//tbody//text()'
-                )
-            )
-        )
-    )  # opening hours
-    return location_name + street, output
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    output_list = []
-    found = []
-    url = "https://agents.farmers.com"
     session = SgRequests()
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    start_url = "https://agents.farmers.com/index.html"
+    domain = "farmersagent.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+    }
 
-    request = session.get(url, headers=headers)
-    response = etree.HTML(request.text)
-    state_list = response.xpath('//a[@class="Directory-listLink"]/@href')
-    for state in state_list:
-        state = url + "/" + state
-        log.info(state)
-        state_response = etree.HTML(session.get(state, headers=headers).text)
-        if state_response is not None:
-            city_list = state_response.xpath('//a[@class="Directory-listLink"]/@href')
-            store_list = state_response.xpath('//a[@class="location-title-link"]/@href')
-            if len(city_list) > 0:
-                for city in city_list:
-                    city = url + "/" + city
-                    city_response = etree.HTML(session.get(city, headers=headers).text)
-                    if city_response is not None:
-                        store_list = city_response.xpath(
-                            '//a[@class="location-title-link"]/@href'
-                        )
-                        if len(store_list) > 0:
-                            for store in store_list:
-                                store = url + store[2:]
-                                store_response = etree.HTML(
-                                    session.get(store, headers=headers).text
-                                )
-                                if store_response is not None:
-                                    store_number, output = parse_detail(
-                                        store_response, store
-                                    )
-                                    if store_number in found:
-                                        continue
-                                    found.append(store_number)
-                                    output_list.append(output)
-                        else:
-                            store_number, output = parse_detail(city_response, city)
-                            if store_number in found:
-                                continue
-                            found.append(store_number)
-                            output_list.append(output)
-            elif len(store_list) > 0:
-                for store in store_list:
-                    store = url + store[2:]
-                    store_response = etree.HTML(
-                        session.get(store, headers=headers).text
-                    )
-                    if store_response is not None:
-                        store_number, output = parse_detail(store_response, store)
-                        if store_number in found:
-                            continue
-                        found.append(store_number)
-                        output_list.append(output)
-            else:
-                store_number, output = parse_detail(state_response, state)
-                if store_number in found:
-                    continue
-                found.append(store_number)
-                output_list.append(output)
-    return output_list
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_locations = []
+    all_states = dom.xpath('//a[@class="Directory-listLink"]/@href')
+    for url in all_states:
+        if len(url.split("/")) == 3:
+            all_locations.append(url)
+            continue
+        state_url = urljoin(start_url, url)
+        response = session.get(state_url, headers=hdr)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//a[@class="Directory-listLink"]/@href')
+        for url in all_cities:
+            if len(url.split("/")) == 3:
+                all_locations.append(url)
+                continue
+            city_url = urljoin(start_url, url)
+            response = session.get(city_url, headers=hdr)
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@class="Teaser-title-link"]/@href')
+
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url, headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+
+        location_name = loc_dom.xpath('//h1[@itemprop="name"]/text()')[0]
+        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
+        city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]
+        state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        country_code = loc_dom.xpath("//@data-country")[0]
+        phone = loc_dom.xpath('//div[@id="phone-main"]/text()')[0]
+        geo = loc_dom.xpath('//meta[@name="geo.position"]/@content')[0].split(";")
+        hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation=hoo,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

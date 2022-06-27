@@ -122,6 +122,17 @@ def getLocsPage(session, country):
             "data-track": lambda x: x and "eader" in x,
         },
     )
+    if not locsPage:
+        locsPage = soup.find_all(
+            "a",
+            {
+                "href": True,
+                "class": True,
+                "target": True,
+                "data-cmp-data-layer": lambda x: x
+                and all(i in x for i in ["xdm:linkURL", "headeractionlink"]),
+            },
+        )[1]
     return locsPage["href"] if locsPage else locsPage
 
 
@@ -214,9 +225,10 @@ def strip_locale(country):
 
 def pull_map_poi(coord, url, session, locale, lang, country):
     lat, lng = coord
-
+    # https://www.mcdonalds.com/googleappsv2/geolocation?latitude=59.9138688&longitude=10.7522454&radius=5&maxResults=30&country=no&language=nb-no
     if lang == "en-nb-no":
-        lang = "en-no"
+        lang = "nb-no"
+
     headers = {}
     headers[
         "user-agent"
@@ -250,23 +262,41 @@ def pull_from_map(session, country):
     lang2 = "en-" + lang
 
     if search:
-        with SgRequests(proxy_country=locale) as session2:
+        with SgRequests() as session2:
             for coord in search:
                 try:
+                    foundNothing = True
                     for rec in pull_map_poi(
                         coord, url, session2, locale, lang, country
                     ):
+                        foundNothing = False
                         search.found_location_at(rec["latitude"], rec["longitude"])
                         yield rec
-                except Exception:
+                    if foundNothing:
+                        search.found_nothing()
+                        pass
+                except Exception as e:
+                    logzilla.error(
+                        f"pull_map_poi failed with {coord}  {url}  {session2}  {locale}  {lang}  {country}",
+                        exc_info=e,
+                    )
                     pass
                 try:
+                    foundNothing = True
                     for rec in pull_map_poi(
                         coord, url, session2, locale, lang2, country
                     ):
+                        foundNothing = False
                         search.found_location_at(rec["latitude"], rec["longitude"])
                         yield rec
-                except Exception:
+                    if foundNothing:
+                        search.found_nothing()
+                        pass
+                except Exception as e:
+                    logzilla.error(
+                        f"pull_map_poi failed with {coord}  {url}  {session2}  {locale}  {lang2}  {country}",
+                        exc_info=e,
+                    )
                     pass
 
 
@@ -278,10 +308,10 @@ def test_for_map(locationsPage, country, session, domain):
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     soup = session.get(domain + locationsPage, headers=headers).text
-    if "map-list-view" in soup:
+    if any(i in soup for i in ["/googleappsv2/geolocation", "map-list-view"]):
         return True
     else:
-        return None
+        return False
 
 
 def fetch_germany_ISH(country):
@@ -298,6 +328,7 @@ def fetch_germany_ISH(country):
                 yield rec
         elif locationsPage:
             isMap = test_for_map(locationsPage, country, session, domain)
+            logzilla.info(f"Is it a map? {isMap}")
             if isMap:
                 logzilla.info(f"Map test passed!")  # noqa
                 for rec in pull_from_map(session, country):

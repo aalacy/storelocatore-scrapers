@@ -4,24 +4,24 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=1000&locationType=BOTH&searchRadius=5&address={}"
+    start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=1000&locationType=BOTH&searchRadius=5000&lat={}&long={}"
     domain = "truist.com/at"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1
-    )
-    for code in all_codes:
-        data = session.get(start_url.format(code), headers=hdr).json()
+    all_codes = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
+    for lat, lng in all_codes:
+        data = session.get(start_url.format(lat, lng), headers=hdr).json()
         if not data.get("location"):
+            all_codes.found_nothing()
             continue
+
         for poi in data["location"]:
             street_address = poi["locationAddress"]["address1"]
             city = poi["locationAddress"]["city"]
@@ -38,6 +38,9 @@ def fetch_data():
                     if e["serviceDesc"] == "24 HOUR ACCESS"
                 ]
             hoo = "24 hrs" if h_check else ""
+            latitude = poi["locationAddress"]["lat"]
+            longitude = poi["locationAddress"]["long"]
+            all_codes.found_location_at(latitude, longitude)
 
             item = SgRecord(
                 locator_domain=domain,
@@ -51,8 +54,8 @@ def fetch_data():
                 store_number="",
                 phone=poi["phone"],
                 location_type=location_type,
-                latitude=poi["locationAddress"]["lat"],
-                longitude=poi["locationAddress"]["long"],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
             )
 

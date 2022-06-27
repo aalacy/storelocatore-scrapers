@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 from sglogging import SgLogSetup
 import dirtyjson as json
 
@@ -51,19 +52,24 @@ def fetch_data():
             addr = list(
                 sp1.select_one("div.LblueBox > div> div> div > div").stripped_strings
             )
+            addr_str = " ".join(addr)
+            adr = " ".join(addr).split("tel")[0].strip()
+            a = parse_address(International_Parser(), adr)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
+            )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            city = a.city or "<MISSING>"
+
             if "click here" in addr[-1]:
                 del addr[-1]
 
             if "mail" in addr[-1]:
                 del addr[-1]
 
-            phone = ""
-            if _p(addr[-1]):
-                phone = addr[-1]
-                del addr[-1]
-            if "tel" in addr[-1]:
-                del addr[-1]
-
+            phone = addr_str.split("tel:")[1].split("e-mail")[0].strip()
             hours = []
             temp = list(
                 sp1.select("div.LblueBox > div> div> div > div")[1].stripped_strings
@@ -143,24 +149,51 @@ def fetch_data():
                         .replace("Opening hours", "")
                         .replace("C L O S E D", "closed")
                     )
+            hours_of_operation = "; ".join(hours)
+            if phone.find("coming soon") != -1:
+                hours_of_operation = "coming soon"
+                phone = "<MISSING>"
+            if hours_of_operation.find("; *Sunday") != -1:
+                hours_of_operation = hours_of_operation.split("; *Sunday")[0].strip()
+            if hours_of_operation.find("; Email") != -1:
+                hours_of_operation = hours_of_operation.split("; Email")[0].strip()
+            hours_of_operation = (
+                hours_of_operation.replace(
+                    "; Thursday 2/6/22 11:00-16:00; Friday 3/6/22 11:00-16:00", ""
+                )
+                .replace("; WE ARE CLOSED ON BANK HOLIDAYS", "")
+                .replace("; BANK HOLIDAYS - CLOSED", "")
+                .strip()
+            )
+            if hours_of_operation.find("; Platinum") != -1:
+                hours_of_operation = hours_of_operation.split("; Platinum")[0].strip()
+            if hours_of_operation.find("; Thursday 2nd June") != -1:
+                hours_of_operation = hours_of_operation.split("; Thursday 2nd June")[
+                    0
+                ].strip()
+            if hours_of_operation.find("; Thursday 2/6/22") != -1:
+                hours_of_operation = hours_of_operation.split("; Thursday 2/6/22")[
+                    0
+                ].strip()
+            if hours_of_operation.find("; We are open") != -1:
+                hours_of_operation = hours_of_operation.split("; We are open")[
+                    0
+                ].strip()
 
-            state = ""
-            if len(addr) > 3:
-                state = addr[-2]
             yield SgRecord(
                 page_url=page_url,
                 location_name=info.strong.text.strip(),
-                street_address=addr[0],
-                city=addr[1].strip(),
+                street_address=street_address,
+                city=city,
                 state=state,
-                zip_postal=addr[-1].strip(),
+                zip_postal=postal,
                 country_code="UK",
                 phone=phone,
                 latitude=_[-3],
                 longitude=_[-2],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-                raw_address=" ".join(addr),
+                hours_of_operation=hours_of_operation,
+                raw_address=adr,
             )
 
 
