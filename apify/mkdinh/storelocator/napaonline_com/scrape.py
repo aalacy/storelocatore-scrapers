@@ -157,12 +157,10 @@ def fetch_data():
             SearchableCountries.NICARAGUA,
             SearchableCountries.VIRGIN_ISLANDS,
             SearchableCountries.NETHERLANDS,
-            SearchableCountries.BRITAIN
+            SearchableCountries.BRITAIN,
         ]
 
-        search = DynamicZipSearch(
-            country_codes=country_codes
-        )
+        search = DynamicZipSearch(country_codes=country_codes)
         for postal in search:
             fetch_locations(postal, search, driver, writer)
 
