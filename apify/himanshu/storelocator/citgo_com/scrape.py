@@ -50,7 +50,7 @@ def fetch_data():
             city = row["city"]
             state = row["state"]
             zip_postal = row["zip"]
-            country_code = row["country"]
+            country_code = row["country"].replace("null", "") or MISSING
             phone = row["phone"]
             hours_of_operation = build_hours(row)
             location_type = MISSING

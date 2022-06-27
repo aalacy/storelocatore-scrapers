@@ -24,21 +24,33 @@ def fetch_data():
         for link in links:
             page_url = base_url + "#" + link["id"]
             block = list(link.p.stripped_strings)
+            block_inf = " ".join(block)
+            location_type = ""
+            if "COMING SOON" in block_inf:
+                location_type = "COMING SOON"
             addr = block[0].split(",")
+            if len(block) > 2:
+                addr = block[1].split(",")
+            sub_addr = " ".join(addr[1:]).strip()
+            sub_addr = " ".join(sub_addr.split())
             phone = ""
             if len(block) > 1:
                 phone = block[1].split("at")[-1]
+            if len(block) > 2:
+                phone = block[2].split("at")[-1]
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.strong.text.strip(),
                 street_address=addr[0].replace("We are on", "").strip(),
-                city=addr[1].strip(),
-                state=addr[2].strip().split(" ")[0].strip(),
-                zip_postal=addr[2].strip().split(" ")[-1].strip(),
+                city=" ".join(sub_addr.split()[:-2]),
+                state=sub_addr.split()[-2].strip(),
+                zip_postal=sub_addr.split()[-1].strip(),
                 country_code="US",
                 phone=phone,
+                location_type=location_type,
                 locator_domain=locator_domain,
-                raw_address=block[0].replace("We are on", "").strip(),
+                raw_address=addr[0].replace("We are on", "").strip() + " " + sub_addr,
             )
 
 
