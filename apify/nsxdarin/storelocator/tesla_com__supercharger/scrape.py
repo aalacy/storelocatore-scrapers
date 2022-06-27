@@ -34,25 +34,6 @@ def fetch_data(sgw: SgWriter):
             location_name = "".join(d.xpath("./a[1]/text()"))
             if "coming soon" in location_name:
                 continue
-            ad = (
-                " ".join(d.xpath('.//span[@class="adr"]//text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            ad = " ".join(ad.split())
-
-            a = parse_address(International_Parser(), ad)
-            street_address = (
-                " ".join(d.xpath('.//span[@class="street-address"]//text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            street_address = " ".join(street_address.split()) or "<MISSING>"
-            if street_address == "<MISSING>":
-                continue
-            state = a.state or "<MISSING>"
-            postal = a.postcode or "<MISSING>"
-            city = a.city or "<MISSING>"
             phone_l = d.xpath('.//span[@class="value"]//text()')
             phone_l = list(filter(None, [b.strip() for b in phone_l]))
             phone = "<MISSING>"
@@ -72,6 +53,22 @@ def fetch_data(sgw: SgWriter):
             except:
                 store_number = "<MISSING>"
             location_type = "Supercharger"
+            ad = (
+                " ".join(tree.xpath('//span[@class="locality"]//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            ad = " ".join(ad.split())
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                " ".join(tree.xpath('//span[@class="street-address"]//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            street_address = " ".join(street_address.split()) or "<MISSING>"
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            city = a.city or "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -88,7 +85,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=SgRecord.MISSING,
-                raw_address=ad,
+                raw_address=f"{street_address} {ad}",
             )
 
             sgw.write_row(row)
