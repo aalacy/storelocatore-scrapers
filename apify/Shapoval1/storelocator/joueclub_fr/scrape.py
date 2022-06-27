@@ -29,9 +29,11 @@ def get_data(url, sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
-    r = session.get(page_url, headers=headers)
-
-    tree = html.fromstring(r.text)
+    try:
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+    except:
+        return
     js_block = "".join(tree.xpath('//script[@type="application/ld+json"]/text()'))
     js = json.loads(js_block)
     ad = (
@@ -56,7 +58,9 @@ def get_data(url, sgw: SgWriter):
     location_name = js.get("name") or "<MISSING>"
     phone = js.get("telephone")
     hours_of_operation = (
-        " ".join(tree.xpath('//div[@class="storeLocator__hoursWrapper"]//text()'))
+        " ".join(
+            tree.xpath('//div[@class="flex storeLocator__hoursBlock mb-15"]//text()')
+        )
         .replace("\n", "")
         .strip()
     )
