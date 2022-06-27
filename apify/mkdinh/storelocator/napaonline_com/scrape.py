@@ -131,7 +131,7 @@ def fetch_locations(postal, search, driver, writer):
 
 def fetch_data():
     options = ChromeOptions()
-    options.headless = True
+    options.headless = False
     with SgWriter(
         SgRecordDeduper(
             RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
@@ -141,9 +141,26 @@ def fetch_data():
     ) as driver:
         driver.set_script_timeout(600)
         load_initial_page(driver)
-        search = DynamicZipSearch(
-            country_codes=SearchableCountries.ALL, max_search_distance_miles=50
-        )
+
+        country_codes = [
+            SearchableCountries.USA,
+            SearchableCountries.AMERICAN_SAMOA,
+            SearchableCountries.ARUBA,
+            SearchableCountries.BAHAMAS,
+            SearchableCountries.BELIZE,
+            SearchableCountries.CAYMAN_ISLANDS,
+            SearchableCountries.DOMINICAN_RBP,
+            SearchableCountries.DOMINICA,
+            SearchableCountries.EL_SALVADOR,
+            SearchableCountries.GUAM,
+            SearchableCountries.HONDURAS,
+            SearchableCountries.NICARAGUA,
+            SearchableCountries.VIRGIN_ISLANDS,
+            SearchableCountries.NETHERLANDS,
+            SearchableCountries.BRITAIN,
+        ]
+
+        search = DynamicZipSearch(country_codes=country_codes)
         for postal in search:
             fetch_locations(postal, search, driver, writer)
 
