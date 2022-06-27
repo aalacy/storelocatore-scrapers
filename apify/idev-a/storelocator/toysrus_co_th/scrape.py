@@ -37,17 +37,19 @@ def fetch_data():
             ):
                 cols = hh.select("div.col-auto")
                 temp[cols[0].text.strip()] = " ".join(cols[1].stripped_strings)
+            city = _["data-store-city"] or "<MISSING>"
+            if city == "<MISSING>":
+                continue
             for day in days:
                 day = day.lower()
                 hours.append(f"{day}: {temp[day]}")
-
             coord = _coord(locs, _["data-store-name"])
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["data-store-id"],
                 location_name=_["data-store-name"],
                 street_address=street_address,
-                city=_["data-store-city"],
+                city=city,
                 zip_postal=_["data-store-postalcode"],
                 country_code="Thailand",
                 latitude=coord["latitude"],

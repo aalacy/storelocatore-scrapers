@@ -16,7 +16,7 @@ headers = {
 
 def fetch_data():
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=300
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
     )
 
     for code in search:
@@ -31,7 +31,12 @@ def fetch_data():
                 logger.info(f"PullingContentFrom: {url} | (zip, {code})")
                 r = session.get(url, headers=headers)
                 logger.info(f"(HTTPStatusCode: {r.status_code}, ZIP: {code})")
+                if r.status_code != 200:
+                    search.found_nothing()
+                    continue
                 js = r.json()
+                if not js:
+                    search.found_nothing()
                 if "Dealer" in js["Response"]:
                     dealers = (
                         js["Response"]["Dealer"]
@@ -42,7 +47,6 @@ def fetch_data():
                     for item in dealers:
                         lng = item["Longitude"]
                         lat = item["Latitude"]
-                        search.found_location_at(lat, lng)
                         name = item["Name"]
                         typ = item["dealerType"]
                         website = "ford.com"
@@ -87,6 +91,11 @@ def fetch_data():
                             purl = "<MISSING>"
                         if phone == "":
                             phone = "<MISSING>"
+                        if lng and lat:
+                            search.found_location_at(lat, lng)
+                        else:
+                            search.found_nothing()
+
                         yield SgRecord(
                             locator_domain=website,
                             page_url=purl,
@@ -103,6 +112,9 @@ def fetch_data():
                             longitude=lng,
                             hours_of_operation=hours,
                         )
+                else:
+                    search.found_nothing()
+                    continue
         except Exception as e:
             logger.info(f"FixFetchRecordError: << {e} >> (ZIP, {code})")
 
