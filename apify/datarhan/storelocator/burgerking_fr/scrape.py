@@ -6,8 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://webapi.burgerking.fr/blossom/api/v12/public/store-locator"
     domain = "burgerking.fr"
 
@@ -23,7 +22,10 @@ def fetch_data():
     all_locations = data["markers"]
     for poi in all_locations:
         url = f'https://webapi.burgerking.fr/blossom/api/v12/public/restaurant/{poi["id"]}'
-        poi = session.get(url, headers=hdr).json()
+        poi = session.get(url, headers=hdr)
+        if poi.status_code != 200:
+            continue
+        poi = poi.json()
         hoo = ""
         if poi.get("openingHour"):
             hoo = f'{poi["openingHour"]} - {poi["closingHour"]}'
@@ -34,12 +36,12 @@ def fetch_data():
             location_name=poi["name"],
             street_address=poi["addressFull"].split(" - ")[0],
             city=" ".join(poi["addressFull"].split(" - ")[-1].split()[1:]),
-            state=SgRecord.MISSING,
+            state="",
             zip_postal=poi["addressFull"].split(" - ")[-1].split()[0],
             country_code="FR",
             store_number=poi["id"],
-            phone=SgRecord.MISSING,
-            location_type=SgRecord.MISSING,
+            phone="",
+            location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
             hours_of_operation=hoo,
