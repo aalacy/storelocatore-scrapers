@@ -1,4 +1,3 @@
-import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -40,17 +39,24 @@ def fetch_data():
                         '<script id="JsonLdSelfStorageScript" type="application/ld+json">',
                         1,
                     )[1].split("</script>")[0]
-                    content = json.loads(content)
-                    city = content["address"]["addressLocality"]
-                    state = content["address"]["addressRegion"]
-                    zip_postal = content["address"]["postalCode"]
-                    street_address = content["address"]["streetAddress"].replace(
-                        "<br />", " "
+                    city = content.split('"addressLocality": "', 1)[1].split('"')[0]
+                    state = content.split('"addressRegion": "', 1)[1].split('"')[0]
+                    zip_postal = content.split('"postalCode": "', 1)[1].split('"')[0]
+                    street_address = (
+                        content.split('"streetAddress": "', 1)[1]
+                        .split('"')[0]
+                        .replace("<br />", " ")
                     )
-                    location_name = content["name"].replace("?", "")
-                    phone = content["telephone"].replace("+1-", "")
-                    latitude = content["geo"]["latitude"]
-                    longitude = content["geo"]["longitude"]
+                    location_name = (
+                        content.split('"name": "', 1)[1].split('"')[0].replace("?", "")
+                    )
+                    phone = (
+                        content.split('"telephone": "', 1)[1]
+                        .split('"')[0]
+                        .replace("+1-", "")
+                    )
+                    latitude = content.split('"latitude": "', 1)[1].split('"')[0]
+                    longitude = content.split('"longitude": "', 1)[1].split('"')[0]
                     store_number = page_url.split("/")[-2]
                     soup = BeautifulSoup(r.text, "html.parser")
                     hours_of_operation = (
