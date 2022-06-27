@@ -40,20 +40,17 @@ def strip_accents(text):
 def fetch_data():
     if True:
         url = "https://www.pizzanta.cl/locales"
-        log.info("Fetching Page and Website Id's....")
+        log.info("Fetching Id ....")
         r = session.get(url, headers=headers)
-        page_id = r.text.split('"path":"/"},{"_id":"')[1].split('"')[0]
-        website_id = r.text.split('{"website":{"_id":"')[1].split('"')[0]
-        payload = json.dumps(
-            {
-                "operationName": "getWebsitePage_cached",
-                "variables": {"pageId": page_id, "websiteId": website_id},
-                "query": "query getWebsitePage_cached($pageId: ID, $websiteId: ID) {\n  page(pageId: $pageId, websiteId: $websiteId) {\n    _id\n    path\n    activeComponents {\n      _id\n      options\n      componentTypeId\n      schedule {\n        isScheduled\n        latestScheduleStatus\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
-            }
+        buildId = r.text.split('"buildId":"')[1].split('"')[0]
+        api_url = (
+            "https://www.pizzanta.cl/_next/data/"
+            + buildId
+            + "/_sites/desktop/pizzanta.cl.json"
         )
-        loclist = session.post(api_url, headers=headers, data=payload).json()["data"][
-            "page"
-        ]["activeComponents"][1]["options"]["stores"]
+        r = session.get(api_url, headers=headers)
+        loclist = r.text.split('"stores":')[1].split("]}")[0] + "]"
+        loclist = json.loads(loclist)
         for loc in loclist:
             location_name = strip_accents(loc["name"])
             try:
