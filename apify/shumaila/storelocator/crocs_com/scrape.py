@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 import json
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
@@ -6,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import unidecode
 
 session = SgRequests()
 headers = {
@@ -14,6 +14,7 @@ headers = {
 
 
 def fetch_locations(lat, lng):
+
     headers = {
         "Connection": "keep-alive",
         "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
@@ -40,7 +41,7 @@ def fetch_locations(lat, lng):
                 "order": "tblstoretype DESC,_distance",
                 "limit": 100,
                 "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
-                "searchradius": "100",
+                "searchradius": "1000",
                 "radiusuom": "mile",
                 "where": {
                     "tblstorestatus": {"in": "Open,OPEN,open"},
@@ -54,6 +55,7 @@ def fetch_locations(lat, lng):
             },
         }
     }
+    locations = []
     try:
         loclist = session.post(
             "https://stores.crocs.com/rest/locatorsearch",
@@ -61,9 +63,9 @@ def fetch_locations(lat, lng):
             data=json.dumps(data),
         ).json()["response"]["collection"]
     except:
-        return []
+        return locations
     weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
-    locations = []
+
     for loc in loclist:
         title = loc["name"]
         store = loc["clientkey"]
@@ -106,11 +108,21 @@ def fetch_locations(lat, lng):
                     hours = hours + day + " " + loc[day] + " "
             except:
                 hours = "<MISSING>"
-        if len(phone) < 3:
+        try:
+            if len(phone) < 3:
+                phone = "<MISSING>"
+        except:
             phone = "<MISSING>"
         phone = phone.replace("t. ", "").replace("?", "").strip()
         try:
             phone = phone.split(",", 1)[0]
+        except:
+            pass
+        title = unidecode.unidecode(title)
+        street = unidecode.unidecode(street)
+        city = unidecode.unidecode(city)
+        try:
+            state = unidecode.unidecode(state)
         except:
             pass
         locations.append(
@@ -138,15 +150,13 @@ def fetch_data():
 
     mylist = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=5,
+        expected_search_radius_miles=10,
         max_search_distance_miles=1000,
     )
     search = list(mylist)
-
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
-        for future in as_completed(futures):
-            yield from future.result()
+    search = search + [(50.4501, 30.5234)]
+    for lat, lng in search:
+        fetch_locations(lat, lng)
 
 
 def scrape():

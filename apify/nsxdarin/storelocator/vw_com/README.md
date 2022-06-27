@@ -1,1 +1,1 @@
---ignore CountValidator --ignore StateLevelCountValidator (Expected 576 POI, but found 635)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore StateLevelCountValidator (Confirmed scraped correctly)

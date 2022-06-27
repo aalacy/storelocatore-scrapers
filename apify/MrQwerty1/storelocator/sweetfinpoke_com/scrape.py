@@ -1,98 +1,80 @@
-import csv
+import json
+import cloudscraper
 
 from lxml import html
-from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "http://www.sweetfin.com/"
-    page_url = "http://www.sweetfin.com/locations/"
-
-    session = SgRequests()
-    r = session.get(page_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.sweetfin.com/locations"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[@class='elementor-section-wrap']/section[.//i[@class='fas fa-mobile-alt' or @class='far fa-clock']]"
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'window.POPMENU_APOLLO_STATE =')]/text()")
     )
+    text = (
+        text.split("window.POPMENU_APOLLO_STATE =")[1]
+        .split("window.POPMENU")[0]
+        .strip()[:-1]
+        .replace('" + "', "")
+    )
+    js = json.loads(text)
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//h2/text()")).strip()
-        line = d.xpath(".//p/text()")
+    for key, j in js.items():
+        if "RestaurantLocation:" not in key:
+            continue
 
-        street_address = line[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        line = line[1].strip()
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
-        country_code = "US"
-        store_number = "<MISSING>"
+        raw_address = j.get("fullAddress")
+        street_address = j.get("streetAddress")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postalCode")
+        country_code = j.get("country")
+        store_number = j.get("id")
+        location_name = j.get("name")
+        slug = j.get("slug")
+        page_url = f"{locator_domain}{slug}"
+        phone = j.get("displayPhone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        hours_of_operation = ";".join(j.get("schemaHours") or [])
 
-        text = d.xpath(".//div[./p/i]//text()|.//div[./i]//text()")
-        text = list(filter(None, [t.strip() for t in text]))
-        phone = text.pop(0)
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = ";".join(text) or "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+            locator_domain=locator_domain,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.sweetfin.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:101.0) Gecko/20100101 Firefox/101.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+    }
+    session = cloudscraper.create_scraper()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

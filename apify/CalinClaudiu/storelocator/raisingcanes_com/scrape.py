@@ -3,8 +3,18 @@ from sglogging import SgLogSetup
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as b4
 import json
+import ssl
 
 logger = SgLogSetup().get_logger("raisingcanes_com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -13,7 +23,7 @@ headers = {
 
 def fetch_data():
     def from_sitemap(session):
-        url = "https://www.raisingcanes.com/sitemap.xml"
+        url = "http://www.raisingcanes.com/sitemap.xml"
         session.get(url)
         soup = b4(session.page_source, "lxml")
         links = soup.find_all("url")
@@ -24,7 +34,7 @@ def fetch_data():
     with SgChrome() as session:
         for index in from_sitemap(session):
             url = str(
-                f"https://www.raisingcanes.com/page-data/location/{index}/page-data.json"
+                f"http://www.raisingcanes.com/page-data/location/{index}/page-data.json"
             )
             session.get(url)
             data = json.loads(session.page_source)

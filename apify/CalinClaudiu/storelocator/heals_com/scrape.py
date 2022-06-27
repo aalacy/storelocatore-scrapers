@@ -47,7 +47,14 @@ def parse_store(k, session):
             if "day" in div.text:
                 if any(
                     i in div.text
-                    for i in ["open to our new", "car park", "We are proud"]
+                    for i in [
+                        "open to our new",
+                        "car park",
+                        "We are proud",
+                        "prosecco",
+                        "T&C",
+                        "eal",
+                    ]
                 ):
                     continue
                 hours.append(div.text)
@@ -55,6 +62,18 @@ def parse_store(k, session):
         k["hours"] = "; ".join(hours)
     except Exception:
         k["hours"] = "<MISSING>"
+
+    if not k["phone"] or k["phone"] == "<MISSING>" or len(str(k["phone"])) <= 4:
+        try:
+            h = soup.find_all("p")
+            i = 0
+            while i < len(h):
+                if "phone" in h[i].text.lower():
+                    k["phone"] = h[i + 1].text.strip()
+                    i = len(h)
+                i += 1
+        except Exception:
+            k["phone"] = "<MISSING>"
 
     return k
 
@@ -68,7 +87,7 @@ def fetch_data():
     }
 
     with SgRequests() as session:
-        url = "https://www.heals.com/stores"
+        url = "https://www.heals.com/stores/"
         page = session.get(url, headers=headers)
         soup = b4(page.text, "lxml")
         results = []
@@ -138,8 +157,7 @@ def scrape():
             mapping=["lon"], is_required=False, part_of_record_identity=True
         ),
         street_address=sp.MappingField(
-            mapping=["address"],
-            is_required=False,
+            mapping=["address"], is_required=False, part_of_record_identity=True
         ),
         city=sp.MappingField(
             mapping=["city"],
