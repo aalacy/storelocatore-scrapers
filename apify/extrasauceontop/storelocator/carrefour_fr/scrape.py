@@ -5,6 +5,7 @@ import json
 import ssl
 from sglogging import sglog
 from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 crawl_state = CrawlStateSingleton.get_instance()
@@ -94,6 +95,11 @@ def get_urls():
                     zipp = location["address"]["postalCode"]
                     location_type = location["banner"]
 
+                    if re.search(r"\d", zipp) is False:
+                        hold = city
+                        city = zipp
+                        zipp = hold
+
                     url_to_save = (
                         page_url
                         + "?location_name="
@@ -147,7 +153,7 @@ def get_data():
                     address = "<MISSING>"
 
                 state = "<MISSING>"
-                zipp = location_deets.split("location_name")[1].split("&==")[0]
+                zipp = location_deets.split("zipp=")[1].split("&==")[0]
 
                 log.info("page_url: " + page_url)
 
@@ -170,24 +176,23 @@ def get_data():
 
                 if page_url != "https://www.carrefour.fr/magasin/":
                     hours_parts = phone_soup.find_all(
-                        "div", attrs={"class": "store-meta__opening-range"}
+                        "li", attrs={"class": "store-page-hours__item"}
                     )
                     hours = ""
-                    for part in hours_parts:
-                        day = part.find(
-                            "div", attrs={"class": "store-meta__label"}
-                        ).text.strip()
-                        times = part.find_all(
-                            "div", attrs={"class": "store-meta__time-range"}
-                        )
 
-                        time_part = ""
-                        for time in times:
-                            time_part = time_part + time.text.strip() + " "
+                    try:
+                        for part in hours_parts:
+                            day = part.find(
+                                "div", attrs={"class": "store-page-hours__label"}
+                            ).text.strip()
+                            times = part.find(
+                                "div", attrs={"class": "store-page-hours__slice"}
+                            ).text.strip()
 
-                        time_part = time_part.strip()
+                            hours = hours + day + " " + times + ", "
 
-                        hours = hours + day + " " + time_part + ", "
+                    except Exception:
+                        hours = hours + day + " closed, "
 
                     hours = hours[:-2]
                     hours = hours.replace("à", "-")

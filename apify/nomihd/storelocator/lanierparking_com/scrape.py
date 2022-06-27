@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Tuple, Callable
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
@@ -7,9 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import SearchableCountries, Grain_8
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 import lxml.html
 
 website = "lanierparking.com"
@@ -30,49 +26,16 @@ headers = {
 }
 
 
-class _SearchIteration(SearchIteration):
-    """
-    Here, you define what happens with each iteration of the search.
-    The `do(...)` method is what you'd do inside of the `for location in search:` loop
-    It provides you with all the data you could get from the search instance, as well as
-    a method to register found locations.
-    """
+def fetch_data():
 
-    def __init__(self, http: SgRequests):
-        self.__http = http
-        self.__state = CrawlStateSingleton.get_instance()
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-        found_nothing,
-    ) -> Iterable[SgRecord]:
-
-        lat = coord[0]
-        lng = coord[1]
-        log.info(f"pulling data for coordinates: {lat},{lng}")
-        params = (
-            ("searchPlaceLat", lat),
-            ("searchPlaceLng", lng),
-            ("latNorthEast", lat),
-            ("lngNorthEast", lng),
-            ("latSouthWest", lat),
-            ("lngSouthWest", lng),
-        )
-
-        api_url = "https://manageparking.citizensparking.com/FindParking/FindParkers"
-        api_res = self.__http.get(api_url, headers=headers, params=params)
+    api_url = "https://manageparking.citizensparking.com/FindParking/FindParkers?searchPlaceLat=34.0522342&searchPlaceLng=-118.2436849&latNorthEast=70.91647331027256&lngNorthEast=-65.069856775&latSouthWest=-28.420842456987156&lngSouthWest=-171.417513025&_=1655267697899"
+    with SgRequests() as session:
+        api_res = session.get(api_url, headers=headers)
 
         try:
             stores_sel = lxml.html.fromstring(api_res.text)
             store_list = stores_sel.xpath('//input[@class="json-parker"]')
-
             for store in store_list:
-
                 page_url = "https://manageparking.citizensparking.com/FindParking/MainFindParkingResult"
                 store_json = json.loads(
                     "".join(store.xpath("@value"))
@@ -131,7 +94,6 @@ class _SearchIteration(SearchIteration):
                     store_json["Lat"],
                     store_json["Lng"],
                 )
-                found_location_at(latitude, longitude)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -149,32 +111,22 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
-            found_nothing()
             pass
 
 
 def scrape():
     log.info("Started")
-    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        expected_search_radius_miles=100,
-        granularity=Grain_8(),
-    )
-
+    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as http:
-            search_iter = _SearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=[SearchableCountries.USA],
-            )
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
