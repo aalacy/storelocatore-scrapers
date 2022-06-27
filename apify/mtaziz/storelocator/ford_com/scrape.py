@@ -16,7 +16,7 @@ headers = {
 
 def fetch_data():
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
 
     for code in search:
