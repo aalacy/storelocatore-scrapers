@@ -105,8 +105,32 @@ def parse_json(store):
     if data["state"] is None:
         data["state"] = MISSING
     countryjson = store["Country"]
-    data["zip_postal"] = store["PostalCode"]
-    data["phone"] = store["PhoneNumber"]
+    zip_postal = store["PostalCode"]
+    zip_postal = zip_postal.replace("´", "")
+    # known Issue:
+    if "KSA, KING FAHAD ROAD, Al Manar, 3543 8 A، Dammam 32274" in str(zip_postal):
+        zip_postal = "32274"
+    if (
+        str(zip_postal) == "0"
+        or str(zip_postal) == "00"
+        or str(zip_postal) == "000"
+        or str(zip_postal) == "0000"
+        or str(zip_postal) == "00000"
+        or str(zip_postal) == "000000"
+        or str(zip_postal) == "0000000"
+        or str(zip_postal).lower() == "na"
+        or str(zip_postal).lower() == "n/a"
+        or str(zip_postal).lower() == "nil"
+        or str(zip_postal) == "-"
+    ):
+        zip_postal = MISSING
+
+    data["zip_postal"] = zip_postal
+
+    data["phone"] = store["PhoneNumber"].replace("null", "").replace("NA", "")
+    if len(data["phone"]) > 15:
+        data["phone"] = store["PhoneNumber"][0:15]
+
     data["latitude"] = store["Lat"]
     data["longitude"] = store["Lng"]
 
