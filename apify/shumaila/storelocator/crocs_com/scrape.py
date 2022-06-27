@@ -55,6 +55,7 @@ def fetch_locations(lat, lng):
             },
         }
     }
+    locations = []
     try:
         loclist = session.post(
             "https://stores.crocs.com/rest/locatorsearch",
@@ -62,9 +63,9 @@ def fetch_locations(lat, lng):
             data=json.dumps(data),
         ).json()["response"]["collection"]
     except:
-        return []
+        return locations
     weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
-    locations = []
+
     for loc in loclist:
         title = loc["name"]
         store = loc["clientkey"]
