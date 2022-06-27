@@ -26,7 +26,6 @@ def fetch_data(sgw: SgWriter):
         "path": "/on/demandware.store/Sites-floor-decor-Site/default/Stores-GetStores?ajax=true",
         "scheme": "https",
         "accept": "*/*",
-        "content-length": "178",
         "accept-encoding": "gzip, deflate, br",
         "accept-language": "en-US,en;q=0.9",
         "content-type": "application/x-www-form-urlencoded",
@@ -74,9 +73,6 @@ def fetch_data(sgw: SgWriter):
 
         for store in stores:
             location_name = store["name"]
-            if store["isUpcomingStore"]:
-                search.found_nothing()
-                continue
             try:
                 street_address = (store["address1"] + " " + store["address2"]).strip()
             except:
