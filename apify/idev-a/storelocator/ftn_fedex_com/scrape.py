@@ -28,7 +28,7 @@ json_url = "https://local.fedex.com/en/search?entityId={}"
 locator = "https://local.fedex.com/"
 
 
-max_workers = 16
+max_workers = 32
 
 
 def fetchConcurrentSingle(loc, url):
