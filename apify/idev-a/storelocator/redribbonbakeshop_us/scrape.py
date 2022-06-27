@@ -1,79 +1,109 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
+from urllib.parse import urljoin
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("redribbonbakeshop")
 
 _headers = {
-    "Accept": "*/*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "Host": "redribbonbakeshop.us",
-    "Origin": "https://redribbonbakeshop.us",
-    "Referer": "https://redribbonbakeshop.us/store-locator/",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://redribbonbakeshop.us/"
+base_url = "https://locations.redribbonbakeshop.us/"
 
-data = {
-    "action": "csl_ajax_onload",
-    "address": "",
-    "formdata": "addressInput=",
-    "lat": "36.778261",
-    "lng": "-119.4179324",
-    "options[distance_unit]": "miles",
-    "options[dropdown_style]": "none",
-    "options[ignore_radius]": "0",
-    "options[immediately_show_locations]": "1",
-    "options[initial_radius]": "",
-    "options[label_directions]": "Directions",
-    "options[label_email]": "Email",
-    "options[label_fax]": "Fax",
-    "options[label_phone]": "Phone",
-    "options[label_website]": "Website",
-    "options[loading_indicator]": "",
-    "options[map_center]": "California, US",
-    "options[map_center_lat]": "36.778261",
-    "options[map_center_lng]": "-119.4179324",
-    "options[map_domain]": "maps.google.com",
-    "options[map_end_icon]": "/wp-content/plugins/store-locator-le/images/icons/bulb_red.png",
-    "options[map_home_icon]": "/wp-content/plugins/store-locator-le/images/icons/blank.png",
-    "options[map_region]": "us",
-    "options[map_type]": "roadmap",
-    "options[no_autozoom]": "0",
-    "options[use_sensor]": "false",
-    "options[zoom_level]": "12",
-    "options[zoom_tweak]": "0",
-}
+
+def _d(sp1, page_url):
+    street_address = sp1.select_one(
+        "address div.Address-line span.Address-line1"
+    ).text.strip()
+    raw_address = " ".join(
+        [" ".join(aa.stripped_strings) for aa in sp1.select("address div.Address-line")]
+    )
+    city = state = zip_postal = phone = ""
+    if sp1.select_one("span.Address-city"):
+        city = sp1.select_one("span.Address-city").text.strip()
+    if sp1.select_one("span.Address-region"):
+        state = sp1.select_one("span.Address-region").text.strip()
+    if sp1.select_one("span.Address-postalCode"):
+        zip_postal = sp1.select_one("span.Address-postalCode").text.strip()
+    hours = []
+    for hh in sp1.select("table tr.c-hours-details-row"):
+        td = hh.select("td")
+        hours.append(f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}")
+    if sp1.select_one("span.Phone-display"):
+        phone = sp1.select_one("span.Phone-display").text.strip()
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=sp1.h1.text.strip(),
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        latitude=sp1.select_one('meta[itemprop="latitude"]')["content"],
+        longitude=sp1.select_one('meta[itemprop="longitude"]')["content"],
+        country_code="US",
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+        raw_address=raw_address,
+    )
 
 
 def fetch_data():
-    locator_domain = "https://redribbonbakeshop.us/"
-    page_url = "https://redribbonbakeshop.us/store-locator/"
-    base_url = "https://redribbonbakeshop.us/wp-admin/admin-ajax.php"
     with SgRequests() as session:
-        locations = session.post(base_url, headers=_headers, data=data).json()
-        for _ in locations["response"]:
-            street_address = _["address"]
-            if _["address2"]:
-                street_address += " " + _["address2"]
-            yield SgRecord(
-                page_url=page_url,
-                store_number=_["id"],
-                location_name=_["name"],
-                street_address=street_address,
-                city=_["city"],
-                state=_["state"],
-                latitude=_["lat"],
-                longitude=_["lng"],
-                zip_postal=_["zip"],
-                country_code="US",
-                phone=_["phone"],
-                locator_domain=locator_domain,
-                hours_of_operation=_["hours"].strip(),
-            )
+        states = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+            "a.Directory-listLink"
+        )
+        for state in states:
+            state_url = base_url + state["href"]
+            sp0 = bs(session.get(state_url, headers=_headers).text, "lxml")
+            cities = sp0.select("div.Main-content a.Directory-listLink")
+            logger.info(f"[{state['href']}] {len(cities)} cities")
+            if cities:
+                for city in cities:
+                    page_url = base_url + city["href"]
+                    logger.info(page_url)
+                    sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                    teasers = sp1.select(
+                        "div.Main-content div.DirectoryPage div.Teaser-card"
+                    )
+                    logger.info(
+                        f"[{state['href']}] [{city['href']}] {len(teasers)} teasers"
+                    )
+                    if teasers:
+                        for teaser in teasers:
+                            url = urljoin(
+                                page_url, teaser.select_one("a.Teaser-cta")["href"]
+                            )
+                            logger.info(url)
+                            sp2 = bs(session.get(url, headers=_headers).text, "lxml")
+                            yield _d(sp2, url)
+                    else:
+                        yield _d(sp1, page_url)
+            else:
+                teasers = sp0.select(
+                    "div.Main-content div.DirectoryPage div.Teaser-card"
+                )
+                logger.info(f"[{state['href']}] {len(teasers)} teasers")
+                if teasers:
+                    for teaser in teasers:
+                        url1 = urljoin(
+                            state_url, teaser.select_one("a.Teaser-cta")["href"]
+                        )
+                        logger.info(url1)
+                        sp3 = bs(session.get(url, headers=_headers).text, "lxml")
+                        yield _d(sp3, url)
+                else:
+                    yield _d(sp0, state_url)
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

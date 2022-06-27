@@ -1,149 +1,85 @@
-import requests
 from bs4 import BeautifulSoup
-import csv
-import string
 import re
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('lewisdrug_com')
-
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    p = 1
-    url = 'https://www.lewisdrug.com/stores'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.findAll('div', {'class': 'store-content'})
-    cleanr = re.compile('<.*?>')
 
-    p = 0
-    for repo in repo_list:
-        links = repo.findAll('a')
-        for link in links:
-           if link.text == "Details ":
-                link = link['href']
-                #logger.info(link)
-                #logger.info(p)
-                page = requests.get(link)
-                soup = BeautifulSoup(page.text, "html.parser")
-                scriptlist = soup.findAll('script', {'type': 'application/ld+json'})
-                detail = str(scriptlist[3])
-                #logger.info(detail)
-                start = detail.find("name", 0)
-                start = detail.find(":", start) + 3
-                end = detail.find(",", start) - 1
-                title = detail[start:end]
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.lewisdrug.com/stores"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.findAll("div", {"class": "store-location"})
+    for div in divlist:
+        link = div.find("h3").find("a")["href"]
 
-                start = detail.find("streetAddress", end)
-                start = detail.find(":", start) + 3
-                end = detail.find(",", start) - 1
-                street = detail[start:end]
+        title = div.find("h3").text.strip()
+        address = div.find("div", {"class": "address"}).text
+        address = re.sub(pattern, "\n", str(address)).strip().splitlines()
 
-                start = detail.find("addressLocality", end)
-                start = detail.find(":", start) + 3
-                end = detail.find(",", start) - 1
-                city = detail[start:end]
+        street = address[0]
+        if len(address) == 2:
+            city, state = address[1].split(", ", 1)
+        elif len(address) == 3:
+            street = street + " " + address[1]
+            city, state = address[2].split(", ", 1)
+        state, pcode = state.split(" ", 1)
+        state = state.replace(",", "")
+        if state in pcode:
+            pcode = pcode.replace(state, "")
+        phone = div.select_one("a[href*=tel]").text
 
-                start = detail.find("addressRegion", end)
-                start = detail.find(":", start) + 3
-                end = detail.find(",", start) - 1
-                state = detail[start:end]
+        r = session.get(link, headers=headers)
 
-                start = detail.find("postalCode", end)
-                start = detail.find(":", start) + 3
-                end = detail.find(",", start) - 1
-                pcode = detail[start:end]
+        soup = BeautifulSoup(r.text, "html.parser")
+        lat = r.text.split('"latitude": "')[-1].split('"', 1)[0]
+        longt = r.text.split('"longitude": "')[-1].split('"', 1)[0]
 
-                start = detail.find("addressCountry", end)
-                start = detail.find(":", start) + 3
-                end = detail.find('"', start)
-                ccode = detail[start:end]
+        hours = soup.find("div", {"class": "hours"}).text
+        hours = (
+            re.sub(pattern, " ", str(hours))
+            .replace("\n", " ")
+            .split("Mon", 1)[1]
+            .strip()
+        )
+        hours = "Mon " + hours.encode("ascii", "ignore").decode("ascii")
 
-
-                start = detail.find("latitude", end)
-                start = detail.find(":", start) + 3
-                end = detail.find(",", start) - 1
-                lat = detail[start:end]
-
-                start = detail.find("longitude", end)
-                start = detail.find(":", start) + 3
-                end = detail.find('"', start)
-                longt = detail[start:end]
-
-                start = detail.find("telephone", end)
-                start = detail.find(":", start) + 3
-                end = detail.find('"', start)
-                phone = detail[start:end]
-
-                hours = ""
-                hourlist = soup.findAll('div', {'class': 'hour'})
-                for temph in hourlist:
-                    #logger.info("Hours = ",temph.text)
-                    hours = hours + temph.text +' '
-
-                hours = hours.replace('\u200b','')
-                #logger.info(hours)
-                
-
-                if len(street) < 4:
-                    address = "<MISSING>"
-                if len(title) < 3:
-                    title = "<MISSING>"
-                if len(city) < 3:
-                    city = "<MISSING>"
-                if len(state) < 2:
-                    state = "<MISSING>"
-                if len(pcode) < 5:
-                    pcode = "<MISSING>"
-                if len(phone) < 6:
-                    phone = "<MISSING>"
-                if len(hours) < 3:
-                    hours = "<MISSING>"
-                if len(lat) < 2 :
-                    lat = "<MISSING>"
-                if len(longt) < 2 :
-                    longt = "<MISSING>"
-
-                
-                data.append([
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                ])
-                logger.info(data[p])
-                p += 1
-
-    return data
-
+        yield SgRecord(
+            locator_domain="https://www.lewisdrug.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

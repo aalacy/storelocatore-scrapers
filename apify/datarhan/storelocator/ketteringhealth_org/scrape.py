@@ -1,162 +1,83 @@
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "ketteringhealth.org"
+    start_url = "https://ketteringhealth.org/locations/"
 
-    items = []
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    data = (
+        dom.xpath('//script[contains(text(), "FWP_JSON")]/text()')[0]
+        .split(";\nwindow")[0]
+        .split("FWP_JSON =")[-1]
+    )
+    data = json.loads(data)
 
-    DOMAIN = "ketteringhealth.org"
-    start_url = "https://ketteringhealth.org/wp-json/facetwp/v1/refresh"
-
-    hdr = {
-        "content-type": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-    }
-    page = 1
-    frm = {
-        "action": "facetwp_refresh",
-        "data": {
-            "facets": {
-                "count_locations": [],
-                "l_search": "",
-                "location_type": [],
-                "services": [],
-                "distance": [],
-                "load_more": [],
-                "locations_map": [],
-                "paged": page,
-            },
-            "frozen_facets": {"distance": "hard", "locations_map": "hard"},
-            "http_params": {"get": [], "uri": "locations", "url_vars": []},
-            "template": "locations",
-            "extras": {"sort": "default"},
-            "soft_refresh": 1,
-            "is_bfcache": 1,
-            "first_load": 0,
-            "paged": page,
-        },
-    }
-    response = session.post(start_url, json=frm, headers=hdr)
-    data = json.loads(response.text)
-    total_pages = data["settings"]["pager"]["total_pages"]
-
-    dom = etree.HTML(data["template"])
-    all_locations = dom.xpath('//a[@class="directory-card"]/@href')
-
-    for page in range(2, total_pages + 1):
-        frm["data"]["facets"]["paged"] = page
-        frm["data"]["paged"] = page
-        response = session.post(start_url, json=frm, headers=hdr)
-        data = json.loads(response.text)
-        dom = etree.HTML(data["template"])
-        all_locations += dom.xpath('//a[@class="directory-card"]/@href')
-
-    for store_url in list(set(all_locations)):
-        loc_response = session.get(store_url)
+    for poi in data["preload_data"]["settings"]["map"]["locations"]:
+        poi_html = etree.HTML(poi["content"])
+        page_url = poi_html.xpath(".//a/@href")[0]
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1[@class="heading-1"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath('//div[@class="profile-content"]/address//text()')
-        if not raw_address:
-            raw_address = loc_dom.xpath("//address//a/text()")[:2]
-        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        addr = parse_address_intl(" ".join(raw_address))
-
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
-        city = addr.city
-        city = city if city else "<MISSING>"
-        state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//div[@class="contact-info"]/p/a/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        geo = loc_dom.xpath('//address/p/a[contains(@href, "maps")]/@href')
-        if geo:
-            geo = geo[0].split("query=")[-1].split("&")[0].split(",")
-            latitude = geo[0]
-            longitude = geo[1]
-        hoo = loc_dom.xpath('//ul[@class="hours-list"]//text()')
-        if hoo:
-            hoo = [e.strip() for e in hoo if e.strip()]
-        if len(hoo) == 0:
-            hoo = loc_dom.xpath(
-                '//div[@class="profile-content"]//div[@class="hours-info"]//text()'
+        location_name = poi_html.xpath(".//strong/text()")[0]
+        if "Coming Soon" in location_name:
+            continue
+        raw_address = poi_html.xpath('.//div[@class="address"]/text()')
+        raw_address = [e.strip() for e in raw_address]
+        if len(raw_address) == 3:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+        phone = loc_dom.xpath('//span[@class="phone-number"]/text()')
+        if not phone:
+            phone = loc_dom.xpath(
+                '//div[@class="profile-content"]//a[contains(@href, "tel")]/@href'
             )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        phone = phone[0].split(":")[-1] if phone else ""
+        hoo = loc_dom.xpath(
+            '//div[@class="profile-content"]//ul[@class="hours-list"]/li/div/text()'
+        )
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@class="hours-info"]//span/text()')
+        hoo = " ".join(hoo) if hoo else ""
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
+            zip_postal=raw_address[1].split(", ")[-1].split()[-1],
+            country_code="",
+            store_number=poi["post_id"],
+            phone=phone,
+            location_type="",
+            latitude=poi["position"]["lat"],
+            longitude=poi["position"]["lng"],
+            hours_of_operation=hoo,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

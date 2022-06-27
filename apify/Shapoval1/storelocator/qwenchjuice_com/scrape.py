@@ -1,134 +1,94 @@
-import csv
-import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://qwenchjuice.com/"
     page_url = "https://qwenchjuice.com/locations"
-    session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
+
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    block = tree.xpath('//div[contains(@class,"grid4-12")]')
-    for i in block:
-        location_name = "".join(
-            i.xpath('.//div[@class="row location_heading"]/h4/text()')
-        )
-        line = " ".join(
-            i.xpath(
-                './/address/text() | .//div[@class="row location_address"]/p/text()'
-            )
-        )
-        if line.find("1915") != -1:
-            line = line.replace("L6H 0N1", "")
+    block = tree.xpath('//div[@class="location-block "]')
+    for b in block:
+        location_name = "".join(b.xpath(".//h3/text()"))
+        info = b.xpath(".//h3/following-sibling::p//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        adr = " ".join(info)
+        phone = "<MISSING>"
+        for i in info:
+            if "P:" in i:
+                phone = "".join(i).replace("P:", "").strip()
+        if phone == "TBD":
+            phone = "<MISSING>"
+        if adr.find(f"{phone}") != -1:
+            adr = adr.split(f"{phone}")[1].strip()
+        if adr.count("TBD") > 1:
+            adr = "<MISSING>"
+        if adr.find("TBD") != -1:
+            adr = adr.split("TBD")[1].strip()
 
-        a = usaddress.tag(line, tag_mapping=tag)[0]
-
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
-        phone = "".join(i.xpath('.//a[@class="contact_call"]/text()')) or "<MISSING>"
-        city = a.get("city")
-        state = a.get("state") or "<MISSING>"
-        if state.find("Canada") != -1:
-            state = state.split()[0].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        postal = a.get("postal")
-        if street_address.find("1915") != -1:
-            postal = "L6H 0N1"
+        street_address = "<MISSING>"
+        city = "<MISSING>"
+        postal = "<MISSING>"
+        state = "<MISSING>"
+        country_code = "CA"
+        if adr != "<MISSING>":
+            a = parse_address(International_Parser(), adr)
+            street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
             country_code = "CA"
-        if phone == "<MISSING>" and street_address.find("2210") == -1:
-            hours_of_operation = "Coming Soon"
+            city = a.city or "<MISSING>"
+        if postal.isdigit():
+            country_code = "US"
+        if location_name == "Brooklyn":
+            city = "Brooklyn"
+        location_type = "<MISSING>"
+        title = "".join(b.xpath(".//preceding::h2[1]//text()"))
+        if title.find("Temporarily Closed") != -1:
+            location_type = "Temporarily Closed"
+        if title.find("Coming Soon") != -1:
+            location_type = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://qwenchjuice.com/"
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

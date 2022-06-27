@@ -34,6 +34,7 @@ def fetch_data():
                 ).strip()
             yield SgRecord(
                 page_url=page_url,
+                store_number=_["id"],
                 location_name=_["name"],
                 street_address=street_address,
                 city=_["address"].get("city"),
@@ -49,7 +50,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

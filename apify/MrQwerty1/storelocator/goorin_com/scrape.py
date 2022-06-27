@@ -1,100 +1,123 @@
-import csv
+import usaddress
 
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.goorin.com/"
-    page_url = "https://www.goorin.com/pages/goorin-retail-locations"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
     }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='find-shop-item']")
 
-    for d in divs:
-        location_name = "".join(
-            d.xpath(".//div[@class='address-blog']/h4/text()")
-        ).strip()
-        line = d.xpath(".//div[@class='address-blog'][1]/p/text()")
-        line = list(filter(None, [l.strip() for l in line]))
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
-        phone = line[2]
-        street_address = line[0]
-        line = line[1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        postal = line.split()[-1]
-        state = line.replace(postal, "").strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            ";".join(d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()"))
-            or "<MISSING>"
-        )
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+    return street_address, city, state, postal
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def get_ids():
+    ids = []
+    api = "https://www.closeby.co/embed/49f236a73f3493bdaf88e7d524254274/locations"
+    r = session.get(api, headers=headers)
+    js = r.json()["locations"]
+
+    for j in js:
+        ids.append(j.get("id"))
+
+    return ids
+
+
+def get_data(store_number, sgw: SgWriter):
+    api = f"https://www.closeby.co/locations/{store_number}"
+    r = session.get(api, headers=headers)
+    j = r.json()["location"]
+
+    raw_address = j.get("address_full")
+    street_address, city, state, postal = get_address(raw_address)
+    country_code = "US"
+    location_name = j.get("title")
+    phone = j.get("phone_number")
+    latitude = j.get("latitude")
+    longitude = j.get("longitude")
+
+    _tmp = []
+    hours = j.get("location_hours") or []
+    for h in hours:
+        day = h.get("day_short_name")
+        start = h.get("time_open")
+        end = h.get("time_close")
+        _tmp.append(f"{day}: {start}-{end}")
+
+    hours_of_operation = ";".join(_tmp)
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        store_number=store_number,
+        raw_address=raw_address,
+        hours_of_operation=hours_of_operation,
+        locator_domain=locator_domain,
+    )
+
+    sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    ids = get_ids()
+
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.goorin.com/"
+    page_url = "https://www.goorin.com/pages/goorin-retail-locations"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    with SgRequests() as session:
+        with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+            fetch_data(writer)

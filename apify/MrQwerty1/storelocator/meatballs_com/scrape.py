@@ -1,37 +1,10 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_coords_from_embed(text):
@@ -39,31 +12,32 @@ def get_coords_from_embed(text):
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.meatballs.com")
+    urls = []
+    r = session.get(locator_domain, headers=headers)
     tree = html.fromstring(r.text)
+    slugs = tree.xpath("//a[text()='Locations']/following-sibling::ul//a/text()")
+    for s in slugs:
+        slug = s.lower().replace(", ", "-")
+        urls.append(f"https://www.meatballs.com/locations/{slug}/")
 
-    return tree.xpath("//a[text()='Locations']/following-sibling::ul//a/@href")
+    return urls
 
 
-def get_data(page_url):
-    locator_domain = "https://www.meatballs.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h2/text()")).strip()
     line = tree.xpath("//div[@class='address-info']/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
-    phone = "<MISSING>"
+    phone = SgRecord.MISSING
     cnt = 0
     for l in line:
         if "Tel" in l:
@@ -75,7 +49,7 @@ def get_data(page_url):
     hours = list(filter(None, [h.strip() for h in hours]))
     if not hours:
         hours = line[cnt + 1 :]
-    hours_of_operation = ";".join(hours) or "<MISSING>"
+    hours_of_operation = ";".join(hours)
 
     street_address = line[0]
     line = line[1]
@@ -84,49 +58,41 @@ def get_data(page_url):
     state = line.split()[0]
     postal = line.split()[1]
     country_code = "US"
-    store_number = "<MISSING>"
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
-    location_type = "<MISSING>"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.meatballs.com"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("villagepubvegas")
 
@@ -21,10 +23,14 @@ def fetch_data():
         logger.info(f"{len(locations)} found")
         for _ in locations:
             block = list(_.stripped_strings)
-            addr = parse_address_intl(block[1].split("\xa0 \xa0")[0])
+            if "NOW OPEN" in block[1]:
+                del block[1]
+            raw_address = " ".join(block[1:-1]).split("\xa0 \xa0")[0]
             phone = block[-1]
             if len(block) < 3:
                 phone = block[1].split("\xa0 \xa0")[-1]
+                raw_address = " ".join(block[1:]).split("\xa0 \xa0")[0]
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -44,11 +50,14 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,39 +1,12 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.medicalpharmacies.com/"
     api_url = "https://www.medicalpharmacies.com/wp-admin/admin-ajax.php?action=store_search&lat=48.40794&lng=-89.252564&max_results=500&search_radius=50000&autoload=1"
@@ -56,58 +29,40 @@ def fetch_data():
         postal = j.get("zip")
         country_code = "CA"
         city = "".join(j.get("city")).replace(",", "").strip()
-        id = j.get("id")
-        store_number = "<MISSING>"
         latitude = j.get("lat")
         longitude = j.get("lng")
         hours_of_operation = j.get("hours") or "<MISSING>"
         if hours_of_operation != "<MISSING>":
-            a = html.fromstring(hours_of_operation)
+            h = html.fromstring(hours_of_operation)
             hours_of_operation = (
-                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+                " ".join(h.xpath("//*//text()")).replace("\n", "").strip()
             )
 
-        session = SgRequests()
-        r = session.get(
-            "https://www.medicalpharmacies.com/about/locations/", headers=headers
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-        tree = html.fromstring(r.text)
 
-        location_type = (
-            "".join(
-                tree.xpath(
-                    f'//div[@class="loc-grid data-store-id-{id}"]//span[@class="location-type"]/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
+        fetch_data(writer)

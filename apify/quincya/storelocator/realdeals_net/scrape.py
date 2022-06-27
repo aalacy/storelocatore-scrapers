@@ -42,6 +42,9 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        latitude = ""
+        longitude = ""
+
         try:
             raw_data = (
                 base.find(id="front-address")
@@ -96,21 +99,28 @@ def fetch_data(sgw: SgWriter):
             longitude = store["map_start_lng"]
         except:
             try:
-                raw_data = base.find_all("h4")[1].text.replace("\xa0", "").split("\n")
+                raw_data = list(base.find_all("h4")[1].stripped_strings)
+                if "Kristen & Warren" not in raw_data[0]:
+                    map_link = base.find(
+                        class_="fusion-button button-flat fusion-button-round button-large button-default button-1"
+                    )["href"]
+                    at_pos = map_link.rfind("@")
+                    latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
+                    longitude = map_link[
+                        map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
+                    ].strip()
+                else:
+                    raw_data = (
+                        base.h4.text.replace("\xa0", "")
+                        .replace("St.Elko", "St.\nElko")
+                        .split("\n")
+                    )
                 location_name = base.h2.text.strip()
                 try:
                     phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", str(base))[0]
                 except:
                     phone = "<MISSING>"
                 hours_of_operation = base.h4.text.replace("\n", " ").strip()
-                map_link = base.find(
-                    class_="fusion-button button-flat fusion-button-round button-large button-default button-1"
-                )["href"]
-                at_pos = map_link.rfind("@")
-                latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
-                longitude = map_link[
-                    map_link.find(",", at_pos) + 1 : map_link.find(",", at_pos + 15)
-                ].strip()
             except:
                 try:
                     raw_data = (
@@ -161,17 +171,17 @@ def fetch_data(sgw: SgWriter):
                                 )[0]
                             except:
                                 phone = "<MISSING>"
-                        try:
-                            geo = re.findall(
-                                r'[0-9]{2}\.[0-9]+","longitude":"-[0-9]{2,3}\.[0-9]+',
-                                str(base),
-                            )[0]
-                            latitude = geo.split('"')[0]
-                            longitude = geo.split('"')[-1]
-                        except:
-                            latitude = longitude = "<MISSING>"
                     except:
                         raise
+        try:
+            geo = re.findall(
+                r'[0-9]{2}\.[0-9]+","longitude":"-[0-9]{2,3}\.[0-9]+',
+                str(base),
+            )[0]
+            latitude = geo.split('"')[0]
+            longitude = geo.split('"')[-1]
+        except:
+            pass
 
         if longitude == "240.594345":
             longitude = "-119.405655"
@@ -203,9 +213,20 @@ def fetch_data(sgw: SgWriter):
             zip_code = "22602"
         if "532 Main Street" in street_address:
             zip_code = "83467"
+        if "Chilliwack" in str(raw_data):
+            city = "Chilliwack"
         if "3479 N Hwy 126" in street_address:
             latitude = "41.3222502"
             longitude = "-112.03147530000001"
+        if not latitude:
+            latitude = re.findall(r'latitude":"[0-9]{2}\.[0-9]+', str(base))[0].split(
+                ":"
+            )[1][1:]
+            longitude = (
+                re.findall(r'longitude":".+[0-9]{2,3}\.[0-9]+', str(base))[0]
+                .split(":")[1][1:]
+                .strip()
+            )
         location_type = "<MISSING>"
         store_number = "<MISSING>"
         hours_of_operation = (

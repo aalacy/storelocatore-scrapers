@@ -1,142 +1,113 @@
-import csv
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.freshpoint.com/"
     api_url = "https://www.freshpoint.com/find-your-location/"
-
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./div/p[@class="address"]]')
+    div = tree.xpath("//div[./div/h4]")
     for d in div:
-        line = (
-            "".join(
-                d.xpath(
-                    './/p[@class="address"]/text() | .//p[@class="address"]/a/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if line.find("1718 Elm") != -1:
-            line = line.split("1718 Elm")[0].strip()
-        line = (
-            line.replace("Canada", "")
-            .replace("B.C.", "BC")
-            .replace("British Columbia,", "BC")
-        )
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        postal = "<MISSING>"
-        state = "<MISSING>"
 
-        if line.count(",") == 2:
-            street_address = line.split(",")[0]
-            city = line.split(",")[1].strip()
-            state = line.split(",")[2].split()[0].strip()
-            postal = " ".join(line.split(",")[2].split()[1:]).strip()
-        if line.count(",") == 3:
-            line = line.replace("  ", " ")
-
-            street_address = line.split(",")[0] + " " + line.split(",")[1]
-            city = line.split(",")[2].strip()
-            state = line.split(",")[3].split()[0].strip()
-            postal = " ".join(line.split(",")[3].split()[1:]).strip()
-
-        phone = "".join(d.xpath('.//p[contains(text(), "Phone")]/text()')).split(
-            "Phone"
-        )[0]
-        country_code = "US"
-        if postal.find(" ") != -1:
-            country_code = "CA"
-        store_number = "<MISSING>"
-        location_name = "".join(d.xpath('.//h3[@class="first"]//text()')).replace(
-            "-", " -"
-        )
-        if street_address.find("10710") != -1:
-            location_name = "".join(
-                d.xpath('.//h3[@class="first secondAddress"]//text()')
-            )
+        location_name = "".join(d.xpath(".//h4/text()"))
         page_url = (
-            "".join(d.xpath(".//h3/a/@href"))
+            "".join(d.xpath('.//a[contains(text(), "Visit location")]/@href'))
             or "https://www.freshpoint.com/find-your-location/"
         )
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        text = "".join(d.xpath('.//a[contains(@href, "maps")]/@href'))
+        phone = (
+            "".join(d.xpath('.//p[@class="address"]/following-sibling::p[1]/a//text()'))
+            or "<MISSING>"
+        )
+        if phone == "() –":
+            phone = "<MISSING>"
+        street_address = "".join(d.xpath('.//p[@class="address"]/text()[1]'))
+        ad = (
+            "".join(d.xpath('.//p[@class="address"]/text()[2]'))
+            .replace(".", "")
+            .replace("Canada", "")
+            .replace("B C", "BC")
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+        country_code = "CA"
+        if postal.isdigit():
+            country_code = "US"
+        city = ad.split(",")[0].strip()
+        latitude, longitude = "<MISSING>", "<MISSING>"
         try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
+            if page_url != "https://www.freshpoint.com/find-your-location/":
+                r = session.get(page_url, headers=headers)
+                tree = html.fromstring(r.text)
+                google_url = "".join(
+                    tree.xpath('//div[@class="wpb_wrapper"]/iframe/@src')
+                )
+                r = session.get(google_url, headers=headers)
+                cleaned = (
+                    r.text.replace("\\t", " ")
+                    .replace("\t", " ")
+                    .replace("\\n]", "]")
+                    .replace("\n]", "]")
+                    .replace("\\n,", ",")
+                    .replace("\\n", "#")
+                    .replace('\\"', '"')
+                    .replace("\\u003d", "=")
+                    .replace("\\u0026", "&")
+                    .replace("\\", "")
+                    .replace("\xa0", " ")
+                )
+
+                locations = json.loads(
+                    cleaned.split('var _pageData = "')[1].split('";</script>')[0]
+                )[1][6][0][12][0][13][0]
+                try:
+                    latitude = locations[0][1][0][0][0]
+                    longitude = locations[0][1][0][0][1]
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+        except:
             latitude, longitude = "<MISSING>", "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {ad}",
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

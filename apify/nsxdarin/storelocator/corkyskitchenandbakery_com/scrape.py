@@ -1,105 +1,114 @@
-import csv
-from sgselenium import SgChrome
+from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     url = "https://www.corkyskitchenandbakery.com/locations"
-    with SgChrome() as driver:
-        driver.get(url)
-        website = "corkyskitchenandbakery.com"
-        typ = "<MISSING>"
-        country = "US"
-        loc = "<MISSING>"
-        store = "<MISSING>"
-        hours = "<MISSING>"
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        text = driver.page_source
-        text = str(text).replace("\r", "").replace("\n", "").replace("\t", "")
-        if '"@type":"Restaurant","' in text:
-            items = text.split('"@type":"Restaurant","')
-            for item in items:
-                if '"streetAddress":"' in item:
-                    add = item.split('"streetAddress":"')[1].split('"')[0]
+
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+        "upgrade-insecure-requests": "1",
+    }
+
+    session = SgRequests()
+
+    req = session.get(url, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+    website = "corkyskitchenandbakery.com"
+    typ = "<MISSING>"
+    country = "US"
+    store = "<MISSING>"
+    hours = "<MISSING>"
+    text = str(base).replace("\r", "").replace("\n", "").replace("\t", "")
+    if '"@type":"Restaurant","' in text:
+        items = text.split('"@type":"Restaurant","')
+        links = text.split('"url":')
+        for item in items:
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            if '"streetAddress":"' in item:
+                add = item.split('"streetAddress":"')[1].split('"')[0]
+                if "19250 Bear" in add and "19250 Bear" in str(
+                    base.find(id="popmenu-apollo-state")
+                ):
+                    lat = "34.471352"
+                    lng = "-117.243407"
+                try:
+                    phone = item.split('"telephone":"')[1].split('"')[0]
+                except:
+                    phone = "<MISSING>"
+                try:
+                    city = item.split('"addressLocality":"')[1].split('"')[0]
+                except:
+                    city = "<MISSING>"
+                try:
+                    state = item.split('"addressRegion":"')[1].split('"')[0]
+                except:
+                    state = "<MISSING>"
+                try:
+                    hours = (
+                        item.split('"openingHours":["')[1]
+                        .split("]")[0]
+                        .replace('","', "; ")
+                        .replace('"', "")
+                    )
+                except:
+                    hours = "<MISSING>"
+                try:
+                    zc = item.split('"postalCode":"')[1].split('"')[0]
+                except:
+                    zc = "<MISSING>"
+                if "0" not in hours:
+                    hours = "<MISSING>"
+                name = city
+                if "0000" in phone:
+                    phone = "<MISSING>"
+
+                for link in links:
+                    url = (
+                        "https://www.corkyskitchenandbakery.com/"
+                        + link.split("/")[1].split('"')[0]
+                    )
                     try:
-                        phone = item.split('"telephone":"')[1].split('"')[0]
+                        if (
+                            url.split("/")[-1].split("-")[1]
+                            in name.replace(" ", "").lower()
+                        ):
+                            break
                     except:
-                        phone = "<MISSING>"
-                    try:
-                        city = item.split('"addressLocality":"')[1].split('"')[0]
-                    except:
-                        city = "<MISSING>"
-                    try:
-                        state = item.split('"addressRegion":"')[1].split('"')[0]
-                    except:
-                        state = "<MISSING>"
-                    try:
-                        hours = (
-                            item.split('"openingHours":["')[1]
-                            .split("]")[0]
-                            .replace('","', "; ")
-                            .replace('"', "")
+                        continue
+
+                store = url.split("/")[-1].split("-")[0]
+
+                if city != "<MISSING>":
+                    sgw.write_row(
+                        SgRecord(
+                            locator_domain=website,
+                            page_url=url,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            store_number=store,
+                            phone=phone,
+                            location_type=typ,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
                         )
-                    except:
-                        hours = "<MISSING>"
-                    try:
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                    except:
-                        zc = "<MISSING>"
-                    if "0" not in hours:
-                        hours = "<MISSING>"
-                    name = city
-                    if "0000" in phone:
-                        phone = "<MISSING>"
-                    if city != "<MISSING>":
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                    )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

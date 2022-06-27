@@ -1,127 +1,109 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('chopard_com')
-
-
-
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://www.chopard.com"
+    for country in SearchableCountries.ALL:
 
-def fetch_data():
-    return_main_object = []
-    addresses = []
+        search = DynamicGeoSearch(
+            country_codes=[f"{country}"],
+            max_search_distance_miles=100,
+            expected_search_radius_miles=100,
+            max_search_results=None,
+        )
+        for lat, long in search:
 
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+                "Origin": "https://www.chopard.com",
+                "Connection": "keep-alive",
+                "Referer": "https://www.chopard.com/en-intl/store-locator.html",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-origin",
+            }
 
+            data = {
+                "lat": f"{str(lat)}",
+                "lng": f"{str(long)}",
+                "zoom": "8",
+            }
 
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    }
+            r = session.post(
+                "https://www.chopard.com/on/demandware.store/Sites-chopard-Site/en/Stores-Reposition",
+                headers=headers,
+                data=data,
+            )
+            jss = r.json()["stores"]
+            try:
+                js = eval(jss)
+            except:
+                search.found_nothing()
+                continue
+            search.found_location_at(lat, long)
+            for j in js:
 
-    # it will used in store data.
-    locator_domain = "https://www.chopard.com/"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+                page_url = "https://www.chopard.com/en-intl/store-locator.html"
+                location_name = j.get("name") or "<MISSING>"
+                location_type = j.get("type") or "<MISSING>"
+                street_address = j.get("address") or "<MISSING>"
+                state = "<MISSING>"
+                postal = j.get("zip") or "<MISSING>"
+                country_code = j.get("country") or "<MISSING>"
+                city = j.get("city") or "<MISSING>"
+                latitude = j.get("position").get("lat")
+                longitude = j.get("position").get("lng")
 
+                phone = j.get("phone") or "<MISSING>"
+                hours_of_operation = j.get("openings") or "<MISSING>"
+                hours_of_operation = (
+                    str(hours_of_operation).replace("<br>", " ").strip()
+                )
 
-    get_data_url = 'https://www.chopard.com/intl/storelocator'
-    r = session.get(get_data_url, headers=headers)
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
-    soup = BeautifulSoup(r.text, "lxml")
-    json_data = json.loads(soup.find('select', {'class': 'country-field'}).find_previous('script').text.replace(
-        'var preloadedStoreList =', '').replace(';', '').strip())
-    for x in json_data['stores']:
-        try:
-            if x['country_id'] in ['US' ,'CA']:
-                page_url = x['details_url']
-                store_number =x['store_code']
-                location_name = x['name'].capitalize()
-                if x['address_2'] ==None and x['address_3'] == None:
-                    street_address = x['address_1']
-                elif x['address_2'] !=None and x['address_3'] == None:
-                    street_address = x['address_1'] +" "+ x['address_2']
-                elif x['address_1'] !=None and x['address_2'] !=None and x['address_3'] !=None :
-                    street_address = x['address_1'] +" "+ x['address_2'] +" "+ x['address_3']
-                city = x['city']
-                zipp = x['zipcode']
-                # logger.info(zipp)
-                latitude = x['lat']
-                longitude = x['lng']
-                if x['phone'] != None:
-                    phone = x['phone'].replace('\u200e','')
-                else:
-                    phone = "<MISSING>"
-                country_code = x['country_id']
-                page_url = x['details_url']
-                r_loc = session.get(page_url,headers = headers)
-                soup_loc = BeautifulSoup(r_loc.text,'lxml')
-                col = soup_loc.find('div',class_='columns').find('div',class_='info-column').find('div',class_='shop-details')
-                hours = col.find('p',class_ = 'opening')
-                if hours != None:
-                    h = hours.nextSibling.nextSibling
-                    h_list = list(h.stripped_strings)
-                    hours_of_operation = " ".join(h_list)
-                    # logger.info(hours_of_operation)
-
-                else:
-                    # logger.info(page_url)
-                    hours_of_operation = "<MISSING>"
-
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
-
-               # logger.info("data = " + str(store))
-               # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-                return_main_object.append(store)
-        except:
-            continue
+                sgw.write_row(row)
 
 
-
-
-    return return_main_object
-
-
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LATITUDE,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        fetch_data(writer)

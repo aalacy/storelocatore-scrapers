@@ -1,77 +1,53 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
-import time
-from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
-logger = SgLogSetup().get_logger("spiritofmath")
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-
-def _close(driver):
-    close_btn = driver.find_element_by_xpath("//div[@id='mapmaskBtn']")
-    if close_btn:
-        driver.execute_script("arguments[0].click();", close_btn)
-    time.sleep(1)
-
-
-def _street(addr):
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
-    return street_address
+locator_domain = "https://spiritofmath.com"
+base_url = "https://spiritofmath.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1650263718538"
 
 
 def fetch_data():
-    locator_domain = "https://spiritofmath.com/"
-    base_url = "https://spiritofmath.com/#locations"
-    with SgChrome() as driver:
-        driver.set_window_size(930, 660)
-        driver.get(base_url)
-        _close(driver)
-        time.sleep(1)
-        filterShowAll = driver.find_element_by_xpath('//a[@id="filterShowAll"]')
-        driver.execute_script("arguments[0].click();", filterShowAll)
-        time.sleep(2)
-        locations = bs(driver.page_source, "lxml").select(
-            "div.ssf-column div.store-locator__infobox"
-        )
-        logger.info(f"{len(locations)} found")
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        locations = soup.select("store item")
         for _ in locations:
-            if not _.select_one("div.store-website a"):
-                continue
-            phone = _.select_one("div.store-tel").text.split("x")[0].split("or")[0]
-            page_url = _.select_one("div.store-website a")["href"]
-            location_name = _.select_one("div.store-location").text
-            hours_of_operation = _.select_one("div.store-operating-hours").text
-            addr = parse_address_intl(_.select_one("div.store-address").text)
-            if not addr.postcode:
-                continue
-            coord = (
-                _.select_one("a.infobox__cta.ssflinks")["href"]
-                .split("daddr=")[1][1:-1]
-                .split(",")
-            )
+            raw_address = _.address.text.strip()
+            addr = parse_address_intl(raw_address + ", United Kingdom")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            page_url = locator_domain + bs(_.description.text, "lxml").a["href"]
+            phone = _.telephone.text.strip() if _.telephone else ""
+            if phone:
+                phone = phone.split("or")[0].split("x")[0].strip()
             yield SgRecord(
-                store_number=_["id"].replace("store", ""),
                 page_url=page_url,
-                location_name=location_name,
-                street_address=_street(addr),
+                store_number=_.storeid.text.strip(),
+                location_name=_.location.text.strip(),
+                street_address=street_address,
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="CA",
                 phone=phone,
-                latitude=coord[0],
-                longitude=coord[-1],
+                latitude=_.latitude.text.strip(),
+                longitude=_.longitude.text.strip(),
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="",
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

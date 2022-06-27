@@ -1,13 +1,15 @@
 import re
-import csv
 import ssl
 from lxml import etree
 from time import sleep
 from urllib.parse import urljoin
 
 from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_intl
-
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 from sglogging import SgLogSetup
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -15,40 +17,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 logger = SgLogSetup().get_logger("caraluzzis.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
-    items = []
-
     start_url = "https://caraluzzis.com/locations/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
@@ -72,9 +41,8 @@ def fetch_data():
             loc_dom = etree.HTML(driver.page_source)
             geo = (
                 loc_dom.xpath('//a[@class="navigate-link"]/@href')[0]
-                .split("ll=")[-1]
-                .split("&")[0]
-                .split(",")
+                .split("/@")[-1]
+                .split(",")[:2]
             )
             driver.switch_to.default_content()
             loc_dom = etree.HTML(driver.page_source)
@@ -114,24 +82,24 @@ def fetch_data():
                 .strip()
             )
 
-            item = [
-                domain,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-            items.append(item)
+            yield item
 
         wine_locations = dom.xpath(
             '//div[@class="fl-rich-text" and p[strong[contains(text(), "Wine & Spirits")]]]'
@@ -142,6 +110,8 @@ def fetch_data():
             raw_data = poi_html.xpath(".//p/text()")
             raw_data = [e.strip() for e in raw_data if e.strip()]
             raw_address = raw_data[:2]
+            if not raw_address:
+                continue
             street_address = raw_address[0]
             city = raw_address[1].split(", ")[0]
             state = raw_address[1].split(", ")[-1].split()[0]
@@ -157,31 +127,36 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-            item = [
-                domain,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

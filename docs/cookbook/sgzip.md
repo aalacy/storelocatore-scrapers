@@ -3,7 +3,7 @@
 #### Library version:
 
 ```
-sgzip>=0.8.0
+sgzip>=0.12.2
 ```
 
 ## Rationale (Why?)
@@ -31,6 +31,7 @@ sgzip>=0.8.0
 
 - `sgzip` automatically uses the [Persistence / Pause-Resume](./pause_resume.md) functionality.
 - Note that it will automatically write to, and pick up on any existing `state.json` file, and continue from there!
+- If you wish to __not__ use persistence, pass the `use_state=False` argument in any of the constructors.
 
 ## Implementation (How?)
 
@@ -48,6 +49,26 @@ from sgzip.dynamic import SearchableCountries
   - These you can find in `SearchableCountries.WITH_COORDS_ONLY`.
   - You can only use `DynamicGeoSearch` with these countries.
 - For a full dataset of countries, use: `SearchableCountries.ALL`.
+
+#### SovereigntyGroups
+
+- We're living in a post-colonial world, where several of the world's powers still hold dominion over other semi-independent nations.
+- For the cases where you need to fetch data from these territories, we have `SearchableCountries.SovereigntyGroups`
+- It is simply a `dict` of a list of countries under a particular dominion, which is keyed on the sovereign country name. The keys map to `SearchableCountries` entries.
+- Here it is, as it stands now:
+```python
+SovereigntyGroups = {
+    CHINA: [CHINA, HONG_KONG],
+    BRITAIN: [BRITAIN, GUERNSEY, ISLE_OF_MAN, JERSEY, FALKLAND_ISLANDS_MALVINAS, GIBRALTAR],
+    DENMARK: [DENMARK, FAROE_ISLANDS, GREENLAND],
+    FINLAND: [FINLAND, ALAND_ISLANDS],
+    FRANCE: [FRANCE, FRENCH_GUIANA, GUADELOUPE, MARTINIQUE, MAYOTTE, NEW_CALEDONIA, REUNION,
+               ST_PIERRE_AND_MICHELON, WALLIS_FUTUNA, FRENCH_POLYNESIA],
+    NORWAY: [NORWAY, SVALBARD_JAN_MAYEN],
+    USA: [USA, AMERICAN_SAMOA, GUAM, N_MARIANA_ISL, PUERTO_RICO, VIRGIN_ISLANDS],
+    AUSTRALIA: [AUSTRALIA, NORFOLK_ISLAND, CHRISTMAS_ISLAND],
+}
+```
 
 ### Dynamic Search
 
@@ -112,10 +133,17 @@ def __init__(self,
 
 - Public Methods:
   - ```python
-    def found_location_at(self, latitude: Union[float, str], longitude: Union[float, str]):
+    def found_location_at(self, latitude: Union[float, str], longitude: Union[float, str]) -> bool
         """
         Mark a location as found, iff it's no farther than `max_search_distance_miles`.
-        Will throw a ValueError if latitude or longitude are invalid.
+        Will return True if latitude or longitude are valid and within bounds; False otherwise.
+        """
+    ```
+  - ```python
+    def found_nothing() -> None
+        """
+        Signals that no coordinates were found during the current search iteration.
+        The logic here is forgiving - you can call it multiple times per iteration, and even intermixed with `found_location_at`. The most important thing is that the user of this library will not forget to call either `found_location_at` or `found_nothing`. Failure to do so will result in an exception being raised.
         """
     ```
   - ```python

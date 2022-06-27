@@ -1,58 +1,57 @@
-import csv
-import json
-import time
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     base_link = "https://www.tomthumbcstores.com/StoreData/GetStoreDataByLocation?location=27.6648274%2C-81.5157535&currentPageId=3036"
 
     session = SgRequests()
-    req = session.get(base_link, headers = HEADERS)
+    stores = session.get(base_link, headers=headers).json()
 
-    base = BeautifulSoup(req.text,"lxml")
-    stores = json.loads(base.text.strip())
-
-    data = []
-    found_poi = []
     locator_domain = "tomthumbcstores.com"
 
     for store in stores:
         location_name = "Tom Thumb - " + store["City"]
         street_address = store["Address"]
-        if street_address in found_poi:
-            continue
-        found_poi.append(street_address)
-        city = store['City']
+        city = store["City"]
         state = store["State"]
         zip_code = store["Zip"]
         country_code = "US"
         store_number = store["StoreId"]
         location_type = "<MISSING>"
-        phone = store['Phone']
+        phone = store["Phone"]
         hours_of_operation = "<MISSING>"
-        latitude = store['Latitude']
-        longitude = store['Longitude']
+        latitude = store["Latitude"]
+        longitude = store["Longitude"]
         link = "https://www.tomthumbcstores.com/store-locator/"
 
-        # Store data
-        data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-    
-    return data
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

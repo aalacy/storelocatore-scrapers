@@ -3,85 +3,65 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
-import re
-import json
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("razzoos")
 
 _headers = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9",
+    "client_type": "web",
+    "referer": "https://www.razzoos.com/locations/",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.razzoos.com"
-base_url = "https://www.razzoos.com/find-us"
-
-
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
+base_url = "https://www.razzoos.com/locations/"
+api_url = "https://www.razzoos.com/api"
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("main div.summary-item-list div.summary-item")
+        soup = bs(session.get(base_url).text, "lxml")
+        links = soup.select("div.location-accordian")
         logger.info(f"{len(links)} found")
         for link in links:
-            if "Coming" in link.text:
-                continue
-            page_url = locator_domain + link.a["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            ss = json.loads(
-                sp1.select_one("div.sqs-block-map")["data-block-json"]
-                .replace("&#123;", "{")
-                .replace("&#125;", "}")
-                .replace("&quot;", '"')
-            )
-            _addr = []
-            for aa in link.select_one("div.summary-excerpt p").stripped_strings:
-                if "Phone" in aa:
-                    break
-                if "(" in aa or ")" in aa:
-                    continue
-                _addr.append(aa)
-            addr = parse_address_intl(" ".join(_addr))
-            street_address = _addr[0]
-            if addr.postcode in street_address:
-                street_address = street_address.split(addr.city)[0].strip()
-
-            phone = ""
-            if link.find("a", href=re.compile(r"tel:")):
-                phone = link.find("a", href=re.compile(r"tel:")).text.strip()
-            if not phone and sp1.find("a", href=re.compile(r"tel:")):
-                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
+            store_number = link["data-loc"].split("-")[-1]
+            _headers["path"] = f"locations/{store_number}"
+            logger.info(store_number)
+            _ = session.get(api_url, headers=_headers).json()
+            page_url = base_url + _["path"]
+            hours = []
+            for hh in _.get("hours", []):
+                hours.append(f"{hh['day']}: {hh['open']} - {hh['close']}")
             yield SgRecord(
                 page_url=page_url,
-                location_name=link.select_one("div.summary-title").text.strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                country_code="US",
-                phone=phone,
+                store_number=store_number,
+                location_name=_["name"],
+                street_address=_["address"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zip"],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                country_code=_["country"],
+                phone=_["phone"],
                 locator_domain=locator_domain,
-                latitude=ss["location"]["mapLat"],
-                longitude=ss["location"]["mapLng"],
+                hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

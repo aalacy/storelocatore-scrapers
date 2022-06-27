@@ -1,108 +1,130 @@
-import csv
-
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def get_tree(url):
+    r = session.get(url, headers=headers)
+    return html.fromstring(r.content)
+
+
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
+
+    return street_address, city, state, postal
+
+
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+    return latitude, longitude
+
+
+def get_urls():
+    root = get_tree("https://maxbrenner.com/pages/branches")
+    return root.xpath("//div[@class='bo']/a/@href")
+
+
+def get_data(page_url, sgw: SgWriter):
+    tree = get_tree(page_url)
+
+    location_name = "".join(tree.xpath("//h1/text()")).replace("â", "").strip()
+    raw_address = "".join(
+        tree.xpath(
+            "//div[@class='page__content rte']//p[contains(text(), 'United States')]/text()"
         )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
+    ).strip()
+    street_address, city, state, postal = get_address(raw_address)
+    if "Between" in street_address:
+        street_address = street_address.split("Between")[0].strip()
+    phone = "".join(
+        tree.xpath(
+            "//section[@class='section section--page page']//a[contains(@href, 'tel:')]/text()"
         )
+    ).strip()
 
-        for row in data:
-            writer.writerow(row)
+    text = "".join(tree.xpath("//iframe/@src"))
+    latitude, longitude = get_coords_from_embed(text)
+    hours_of_operation = ";".join(
+        tree.xpath("//div[@class='hours']/li/text()")
+    ).replace("Â ", "")
 
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
 
-def fetch_data():
-    out = []
-    locator_domain = "https://maxbrenner.com/"
-    api_url = "https://maxbrenner.com/api/data/"
-
-    session = SgRequests()
-    r = session.get(api_url)
-    locations = r.json()["results"]["locationCollection"]
-
-    for loc in locations:
-        js = loc.get("locations") or []
-
-        for j in js:
-            street_address = (
-                j.get("address")
-                .replace("<br />", "")
-                .replace("&amp;", "&")
-                .replace("\r", "")
-                .replace("\n", " ")
-                .strip()
-                or "<MISSING>"
-            )
-            city = j.get("city") or "<MISSING>"
-            state = j.get("state") or "<MISSING>"
-            postal = j.get("code") or "<MISSING>"
-            country_code = j.get("country") or "<MISSING>"
-            store_number = "<MISSING>"
-            page_url = j["metadata"].get("url") or "<MISSING>"
-            location_name = f"{j.get('name')} {j.get('subtitle')}".strip()
-            phone = j.get("phone") or "<MISSING>"
-            latitude = j.get("latitude") or "<MISSING>"
-            longitude = j.get("longitude") or "<MISSING>"
-            location_type = "<MISSING>"
-
-            _tmp = []
-            text = j.get("hours") or "<html></html>"
-            tree = html.fromstring(text)
-            hours = tree.xpath("//text()")
-            for h in hours:
-                if not h.strip() or "Sep" in h or "NOV" in h:
-                    continue
-                _tmp.append(h.strip())
-
-            hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
-
-    return out
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = set(get_urls())
+
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://maxbrenner.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

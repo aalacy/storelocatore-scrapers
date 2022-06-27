@@ -1,5 +1,3 @@
-from bs4 import BeautifulSoup
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -10,47 +8,32 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.playabowls.com/locations/"
+    base_link = "https://www.playabowls.com/locations.json"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    stores = session.get(base_link, headers=headers).json()
 
-    items = base.find_all(class_="locations-box")
     locator_domain = "playabowls.com"
 
-    for i, item in enumerate(items):
-        location_name = item.h4.text.strip()
-
-        raw_address = list(item.find(class_="locations-address").stripped_strings)
-        street_address = raw_address[0].strip()
-        if street_address[-1:] == ",":
-            street_address = street_address[:-1]
-        city_line = raw_address[-1].strip().split(",")
-        city = city_line[0].strip()
-        state = city_line[-1].strip().split()[0].strip()
-        try:
-            zip_code = city_line[-1].strip().split()[1].strip()
-        except:
-            zip_code = "<MISSING>"
+    for store in stores:
+        location_name = store["name"]
+        street_address = (
+            store["address"].replace("Market Place at Garden State Park,", "").strip()
+        )
+        city = store["city"]
+        state = store["state"]
+        zip_code = store["zip_code"]
         country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        try:
-            phone = item.find(class_="store-number").text.strip()
-        except:
-            phone = "<MISSING>"
-        try:
-            hours_of_operation = item.find(class_="locations-timing").text.strip()
-        except:
-            hours_of_operation = "<MISSING>"
-        map_link = item.find(class_="store-directions")["href"]
-        latitude = map_link.split("=")[-1].split("%20")[0].replace(",", "")
-        longitude = map_link.split("=")[-1].split("%20")[1]
-        link = item.find(class_="store-profile")["href"]
+        store_number = store["id"]
+        location_type = ""
+        phone = store["contact_number"]
+        hours_of_operation = store["timing"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        link = store["link"]
 
         sgw.write_row(
             SgRecord(
