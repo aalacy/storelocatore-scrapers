@@ -44,7 +44,9 @@ def fetch_stores():
     body = html.fromstring(response.text, "lxml")
     mainDiv = body.xpath('//div[contains(@class, "PageContent")]')[0]
 
-    location_names = mainDiv.xpath('//div[contains(@class, "PageContent")]/h4/text()')
+    location_names = mainDiv.xpath(
+        '//div[contains(@class, "PageContent")]/h4/text() | //div[contains(@class, "PageContent")]/p/strong/text()'
+    )
     map_links = mainDiv.xpath('//div[contains(@class, "PageContent")]/p/a/@href')
     p1s = mainDiv.xpath(
         '//div[contains(@class, "PageContent")]/h4/span/text() | //div[contains(@class, "PageContent")]/p/a/text() | //div[contains(@class, "PageContent")]/p/text() | //div[contains(@class, "PageContent")]/p/span/text() | //div[contains(@class, "PageContent")]/div/text()'
