@@ -37,6 +37,8 @@ def fetch_data():
             "x-requested-with": "XMLHttpRequest",
         }
         data = session.post(url, json=frm, headers=hdr).json()
+        if not data["Items"]:
+            all_codes.found_nothing()
         for poi in data["Items"]:
             page_url = urljoin(start_url, poi["ItemUrl"])
             street_address = f'{poi["Address"]} {poi["AddressExtension"]}'
@@ -47,6 +49,7 @@ def fetch_data():
                 closes = e["EndTime"].split("T")[-1].replace("0:00", "0")
                 hoo.append(f"{day}: {opens} - {closes}")
             hoo = " ".join(hoo)
+            all_codes.found_location_at(poi["Latitude"], poi["Longitude"])
 
             item = SgRecord(
                 locator_domain=domain,
