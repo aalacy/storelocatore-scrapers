@@ -1,208 +1,206 @@
-from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
 from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-import pandas as pd
-import json
+from sgscrape import simple_scraper_pipeline as sp
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+crawl_state = CrawlStateSingleton.get_instance()
 
 
-def extract_json(html_string):
-    json_objects = []
-    count = 0
-
-    brace_count = 0
-    for element in html_string:
-
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
-
-
-def reset_sessions(data_url):
-
-    s = SgRequests()
-
-    driver = SgChrome().driver()
-    driver.get(base_url)
-
-    incap_str = "/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3"
-    incap_url = base_url + incap_str
-
-    s.get(incap_url)
-
-    for request in driver.requests:
-
-        headers = request.headers
+def get_driver(url, class_name):
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
         try:
-            response = s.get(data_url, headers=headers)
-            response_text = response.text
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
 
-            test_html = response_text.split("div")
-            if len(test_html) < 2:
-                continue
-            else:
-                return [s, driver, headers, response_text]
-
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
         except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
             continue
+    return driver
 
 
-base_url = "https://onemainfinancial.com"
+def get_urls():
+    url = "https://www.onemainfinancial.com/branches"
+    class_name = "state-list-column"
+    driver = get_driver(url, class_name)
+    response = driver.page_source
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+    state_soup = bs(response, "html.parser")
 
-state_grab_url = "https://www.onemainfinancial.com/branches"
+    state_list_columns = state_soup.find_all("ul", attrs={"class": "state-list-column"})
 
-new_sess = reset_sessions(state_grab_url)
+    for column in state_list_columns:
+        for state_tag in column.find_all("li"):
+            state_url = (
+                "https://www.onemainfinancial.com/api/v3/branches?state="
+                + state_tag.find("a")["href"].split("/")[-1]
+            )
+            crawl_state.push_request(SerializableRequest(url=state_url))
+    crawl_state.set_misc_value("got_urls", True)
+    return driver
 
-s = new_sess[0]
-driver = new_sess[1]
-headers = new_sess[2]
-response_text = new_sess[3]
 
-soup = bs(response_text, "html.parser")
-li_bits = soup.find_all("li", attrs={"class": "col-sm-4 col-md-2"})
-
-state_urls = [base_url + bit.find("a")["href"] for bit in li_bits]
-
-location_urls = []
-for url in state_urls:
-
-    response = s.get(url, headers=headers)
-    response_text = response.text
-    if len(response_text.split("div")) > 2:
-        pass
-    else:
-        new_sess = reset_sessions(state_grab_url)
-
-        s = new_sess[0]
-        driver = new_sess[1]
-        headers = new_sess[2]
-        response_text = new_sess[3]
-
-    soup = bs(response_text, "html.parser")
-    li_bits = soup.find_all("li", attrs={"class": "col-sm-4 col-md-2"})
-
-    for bit in li_bits:
-        location_url = base_url + bit.find("a")["href"]
-        location_urls.append(location_url)
-
-y = 0
-for loc_url in location_urls:
-    y = y + 1
-
-    response = s.get(loc_url, headers=headers)
-    response_text = response.text
-    if len(response_text.split("div")) > 2:
-        pass
-    else:
-        new_sess = reset_sessions(state_grab_url)
-
-        s = new_sess[0]
-        driver = new_sess[1]
-        headers = new_sess[2]
-        response_text = new_sess[3]
-
-    response_json = extract_json(response_text)
-
-    for location in response_json:
-        try:
-            location_name = location["name"]
-        except Exception:
-            continue
-
-        locator_domain = "onemainfinancial.com"
-        page_url = loc_url
-        location_name = location["name"]
-        address = location["address"]["streetAddress"]
-        city = location["address"]["addressLocality"]
-        state = location["address"]["addressRegion"]
-        zipp = location["address"]["postalCode"]
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = location["telephone"]
-        location_type = location["@type"]
-        latitude = location["geo"]["latitude"]
-        longitude = location["geo"]["longitude"]
-
-        hours = ""
-        for item in location["openingHours"]:
-            hours = hours + item + ", "
-        hours = hours[:-2]
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
-
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
+def get_data():
+    day_dict = {
+        "2": "Mon",
+        "3": "Tue",
+        "4": "Wed",
+        "5": "Thu",
+        "6": "Fri",
+        "7": "Sat",
+        "1": "Sun",
     }
-)
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+    if not crawl_state.get_misc_value("got_urls"):
+        driver = get_urls()
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+    else:
+        url = "https://www.onemainfinancial.com/branches"
+        class_name = "state-list-column"
+        driver = get_driver(url, class_name)
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
+    for data_url in crawl_state.request_stack_iter():
+        search_url = data_url.url
+        script = (
+            """
+            var done = arguments[0]
+            fetch("""
+            + '"'
+            + search_url
+            + '"'
+            + """, {
+                "headers": {
+                    "accept": "application/json, text/plain, */*",
+                    "accept-language": "en-US,en;q=0.9",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "Windows",
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-origin"
+                },
+                "referrer": "https://www.onemainfinancial.com/branches/al",
+                "referrerPolicy": "strict-origin-when-cross-origin",
+                "body": null,
+                "method": "GET",
+                "mode": "cors",
+                "credentials": "include"
+            })
+            .then(res => res.json())
+            .then(data => done(data))
+        """
+        )
+        data = driver.execute_async_script(script)
 
-df.to_csv("data.csv", index=True)
+        for location in data["branches"]:
+            locator_domain = "onemainfinancial.com"
+            page_url = (
+                "https://www.onemainfinancial.com/branches/"
+                + location["address"]["state"].lower()
+                + "/"
+                + location["address"]["city"].lower().replace(" ", "-")
+                + "/"
+                + location["address"]["zip"]
+                + "/"
+                + location["id"]
+            )
+            location_name = location["name"]
+            latitude = location["location"]["latitude"]
+            longitude = location["location"]["longitude"]
+            city = location["address"]["city"]
+            store_number = location["id"]
+            address = (
+                location["address"]["line_1"] + " " + location["address"]["line_2"]
+            )
+            zipp = location["address"]["zip"]
+            phone = location["phone_number"]
+            location_type = "branch"
+            country_code = "US"
+            state = location["address"]["state"]
+            hours = ""
+            try:
+                for day_hour in location["hours"].split(","):
+                    day = day_dict[day_hour.split(":")[0]]
+                    start = day_hour.split(":AM")[0][2:]
+                    end = day_hour.split("AM:")[1].split(":PM")[0]
+                    hours = hours + day + " " + start + "-" + end + ", "
+                hours = hours[:-2]
+
+            except Exception:
+                hours = "<MISSING>"
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

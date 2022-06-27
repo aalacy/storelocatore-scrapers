@@ -1,44 +1,18 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://www.mirror.co"
     page_url = "https://www.mirror.co/showroom"
     session = SgRequests()
-
     r = session.get(page_url)
 
     tree = html.fromstring(r.text)
@@ -50,41 +24,21 @@ def fetch_data():
     for j in js:
 
         ad = "".join(j.get("location")).split("\r\n")
-        street_address = (
-            " ".join(ad[:-1])
-            .replace("Northpark", "")
-            .replace("Soho Broadway", "")
-            .replace("Waterside Shops", "")
-            .replace("Georgetown", "")
-            .replace(",", "")
-            .strip()
-            or "<MISSING>"
-        )
-
-        adr = (
-            "".join(ad[-1])
-            .replace("Minneapolis, MN, US", "Minneapolis, MN")
-            .replace("United States", "")
-            .strip()
-        )
-        city = adr.split(",")[0] or "<MISSING>"
-        if city.find("900B") != -1:
-            city = city.replace("900B", "").strip()
-            street_address = street_address + " " + "900B"
-        postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
-        state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
-        if "323 Oakway Rd" in "".join(ad) or "17 Hillsdale Mall" in "".join(ad):
-            street_address = "".join(ad[0]).split(",")[0].strip()
-            city = "".join(ad[0]).split(",")[1].strip()
-            state = "".join(ad[0]).split(",")[2].split()[0].strip()
-            postal = "".join(ad[0]).split(",")[2].split()[1].strip()
+        adr = " ".join(ad).replace("United States", "").replace('"', "").strip()
+        a = parse_address(International_Parser(), adr)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        city = a.city or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        state = a.state or "<MISSING>"
         country_code = j.get("country") or "US"
-        store_number = "<MISSING>"
-        location_name = j.get("title")
+        location_name = "".join(j.get("title"))
+        if location_name.find("MIRROR at lululemon 29th St, Boulder") != -1:
+            street_address = "29th St"
+        if location_name.find("MIRROR at lululemon Tysons Corner") != -1:
+            street_address = "8066 Tysons Corner Center"
         phone = j.get("phone") or "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
         hours_of_operation = (
             "".join(j.get("hours")).replace("\n", "").replace("\r", " ").strip()
         )
@@ -95,31 +49,30 @@ def fetch_data():
         if hours_of_operation.find("COMING") != -1:
             hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.mirror.co"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("cavenders_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -51,7 +27,6 @@ def fetch_data():
     logger.info("Pulling Stores")
     lines = r.iter_lines()
     for line in lines:
-        line = str(line.decode("utf-8"))
         if '<span class="store-name"' in line:
             add = ""
             city = ""
@@ -68,21 +43,19 @@ def fetch_data():
                 .replace("&#40;", "(")
                 .replace("&#41;", ")")
             )
-        if "DAY</span></td>" in line and "</strong>" not in line:
-            day = line.split('">')[1].split("<")[0]
+        if "DAY </b>" in line and "</strong>" not in line:
+            day = line.split("<b>")[1].split("<")[0].strip()
             g = next(lines)
-            g = str(g.decode("utf-8"))
-            if ">CLOSE</td>" not in g:
-                day = day + ": " + g.split('11px;">')[1].split("<")[0]
+            if "CLOSED" not in g:
+                day = day + ": " + g.split("<td>")[1].split("<")[0].strip()
                 g = next(lines)
-                g = str(g.decode("utf-8"))
-                day = day + "-" + g.split('11px;">')[1].split("<")[0]
+                day = day + "-" + g.split("<td>")[1].split("<")[0].strip()
                 if hours == "":
                     hours = day
                 else:
                     hours = hours + "; " + day
             else:
-                day = day + " CLOSED"
+                day = day + ": CLOSED"
                 if hours == "":
                     hours = day
                 else:
@@ -113,27 +86,36 @@ def fetch_data():
                 zc = "<MISSING>"
             if state == "Texas":
                 state = "TX"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "." not in lat or "." not in lng:
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+            name = name.replace("&amp;", "&").replace("&rsquo;", "'")
+            hours = hours.replace("; SUNDAY: 11AM-6PMNM", "")
+            if "130 Tucker" in add:
+                hours = "SUNDAY: 12PM-6PM; MONDAY; 9AM-9PM; TUESDAY; 9AM-9PM; WEDNESDAY; 9AM-9PM; THURSDAY; 9AM-9PM; FRIDAY; 9AM-9PM; SATURDAY; 9AM-9PM"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

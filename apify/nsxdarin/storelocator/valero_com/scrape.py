@@ -1,10 +1,16 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("valero_com")
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
@@ -12,97 +18,30 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
     url = "https://locations.valero.com/en-us/Home/SearchForLocations"
-    coords = [
-        "-60,-65",
-        "-65,-70",
-        "-70,-75",
-        "-75,-80",
-        "-80,-85",
-        "-85,-90",
-        "-90,-95",
-        "-95,-100",
-        "-100,-105",
-        "-105,-110",
-        "-110,-115",
-        "-115,-120",
-        "-120,-125",
-        "-125,-130",
-        "-130,-135",
-        "-135,-140",
-        "-140,-145",
-        "-150,-155",
-        "-160,-165",
-        "-165,-170",
-    ]
-
-    latcoords = [
-        "70,65",
-        "65,60",
-        "60,55",
-        "55,50",
-        "50,45",
-        "45,40",
-        "40,35",
-        "35,30",
-        "30,25",
-        "25,20",
-        "20,15",
-        "15,10",
-    ]
-
-    for coord in coords:
-        for latcoord in latcoords:
+    for coord in range(-170, -60, 1):
+        for latcoord in range(10, 70, 1):
             logger.info(
-                coord.split(",")[0]
+                str(coord)
                 + "-"
-                + coord.split(",")[1]
+                + str(coord - 1)
                 + "; "
-                + latcoord.split(",")[0]
+                + str(latcoord)
                 + ","
-                + latcoord.split(",")[1]
+                + str(latcoord - 1)
             )
             payload = {
-                "NEBound_Lat": latcoord.split(",")[0],
-                "NEBound_Long": coord.split(",")[0],
-                "SWBound_Lat": latcoord.split(",")[1],
-                "SWBound_Long": coord.split(",")[1],
+                "NEBound_Lat": str(latcoord),
+                "NEBound_Long": str(coord),
+                "SWBound_Lat": str(latcoord - 1),
+                "SWBound_Long": str(coord - 1),
                 "center_Lat": "",
                 "center_Long": "",
             }
 
             r = session.post(url, headers=headers, data=payload)
             for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
                 if '"Name":"' in line:
                     items = line.split('"Name":"')
                     for item in items:
@@ -156,29 +95,31 @@ def fetch_data():
                                 and "9" not in phone
                             ):
                                 phone = "<MISSING>"
-                            if store not in locs:
-                                locs.append(store)
-                                yield [
-                                    website,
-                                    purl,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=purl,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

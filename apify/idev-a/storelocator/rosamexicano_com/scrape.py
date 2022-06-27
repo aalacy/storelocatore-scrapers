@@ -1,9 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from lxml import html
 import json
 from bs4 import BeautifulSoup as bs
-import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rosamexicano")
@@ -11,11 +13,11 @@ logger = SgLogSetup().get_logger("rosamexicano")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.rosamexicano.com/"
+base_url = "https://www.rosamexicano.com/locations/"
 
 
 def fetch_data():
-    locator_domain = "https://www.rosamexicano.com/"
-    base_url = "https://www.rosamexicano.com/locations/"
     with SgRequests() as session:
         locations = json.loads(
             bs(session.get(base_url, headers=_headers).text, "lxml")
@@ -24,22 +26,28 @@ def fetch_data():
         )
         for _ in locations["subOrganization"]:
             logger.info(_["url"])
-            sp1 = bs(session.get(_["url"], headers=_headers).text, "lxml")
-            _hr = sp1.find("u", string=re.compile(r"Hours of Operation"))
-            hours = []
-            temp = []
-            if _hr:
-                temp = list(_hr.find_parent().find_parent().stripped_strings)[1:]
-                for hh in temp:
-                    if "Indoor dining" in hh:
-                        break
-                    hours.append(hh)
-            coord = (
-                sp1.select_one("div.gmaps")["data-gmaps-static-url-mobile"]
-                .split("&center=")[1]
-                .split("&")[0]
-                .split("%2C")
+            r = session.get(_["url"], headers=_headers)
+            tree = html.fromstring(r.text)
+            ll = "".join(tree.xpath("//div/@data-gmaps-static-url-mobile"))
+            latitude = ll.split("center=")[1].split("%2C")[0].strip()
+            longitude = ll.split("center=")[1].split("%2C")[1].split("&")[0].strip()
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//p[./strong[text()="Hours of Operation"]]//text()')
+                )
+                .replace("\n", "")
+                .replace("Hours of Operation", "")
+                .strip()
             )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    " ".join(tree.xpath('//p[contains(text(), "0pm")]//text()'))
+                    .replace("\n", "")
+                    .strip()
+                )
+                hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+
             yield SgRecord(
                 page_url=_["url"],
                 location_name=_["name"],
@@ -48,17 +56,17 @@ def fetch_data():
                 city=_["address"]["addressLocality"],
                 state=_["address"]["addressRegion"],
                 zip_postal=_["address"]["postalCode"],
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=latitude,
+                longitude=longitude,
                 country_code="US",
                 phone=_["telephone"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation=hours_of_operation,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

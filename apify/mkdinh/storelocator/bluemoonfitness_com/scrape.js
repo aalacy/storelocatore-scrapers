@@ -52,7 +52,7 @@ async function fetchHoursOfOperation(link, $) {
 
   const details = $(data);
   const hoursDetails = details.find('h3:contains("Hours of Operation")').nextAll('p');
-  const hours_of_operations = hoursDetails
+  const hours_of_operation = hoursDetails
     .map(function () {
       const day = $(this).find('strong').text().trim();
       const hours = $(this).clone().children().remove().end().text().trim();
@@ -61,7 +61,7 @@ async function fetchHoursOfOperation(link, $) {
     .toArray()
     .filter((hour) => hour);
 
-  return JSON.stringify(hours_of_operations);
+  return JSON.stringify(hours_of_operation);
 }
 
 Apify.main(async () => {
@@ -94,7 +94,7 @@ Apify.main(async () => {
           } = extractDetails(pin);
 
           const storeLink = 'https://bluemoonfitness.com' + link;
-          const hours_of_operations = await fetchHoursOfOperation(storeLink, $);
+          const hours_of_operation = await fetchHoursOfOperation(storeLink, $);
 
           return {
             locator_domain: 'bluemoonfitness.com',
@@ -110,7 +110,7 @@ Apify.main(async () => {
             latitude: getOrDefault(latitude),
             longitude: getOrDefault(longitude),
             phone: getOrDefault(phone),
-            hours_of_operations: getOrDefault(hours_of_operations),
+            hours_of_operation: getOrDefault(hours_of_operation),
           };
         })
         .toArray();

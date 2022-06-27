@@ -1,52 +1,18 @@
-import csv
 import json
 
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "lepainquotidien.com"
-
-    all_locations = []
+    domain = "lepainquotidien.com"
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=100
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=100
     )
     for lat, lng in all_coords:
         start_url = (
@@ -56,66 +22,71 @@ def fetch_data():
         )
         response = session.get(start_url)
         data = json.loads(response.text)
-        all_locations += data["response"]["entities"]
+        all_locations = data["response"]["entities"]
 
-    for poi in all_locations:
-        location_name = poi.get("c_bIReference")
-        if not location_name:
-            location_name = poi["meta"]["id"].replace("-", " ")
-        street_address = poi["address"]["line1"]
-        store_url = poi["c_facebookWebsiteOverride"].split("?")[0]
-        city = poi["address"]["city"]
-        state = poi["address"].get("region")
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
-        country_code = poi["address"]["countryCode"]
-        if country_code != "GB":
-            continue
-        store_number = "<MISSING>"
-        phone = poi["mainPhone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = ", ".join(poi["meta"]["schemaTypes"])
-        latitude = poi["geocodedCoordinate"]["latitude"]
-        longitude = poi["geocodedCoordinate"]["longitude"]
-        hoo = []
-        for day, hours in poi["hours"].items():
-            if day in ["reopenDate", "holidayHours"]:
+        for poi in all_locations:
+            location_name = poi.get("c_bIReference")
+            if not location_name:
+                location_name = poi["meta"]["id"].replace("-", " ")
+            street_address = poi["address"]["line1"]
+            page_url = poi.get("c_facebookWebsiteOverride")
+            page_url = (
+                page_url.split("?")[0]
+                if page_url
+                else poi["googleWebsiteOverride"].split("?")[0]
+            )
+            city = poi["address"]["city"]
+            state = poi["address"].get("region")
+            zip_code = poi["address"]["postalCode"]
+            country_code = poi["address"]["countryCode"]
+            if country_code != "GB":
                 continue
-            if hours.get("isClosed"):
-                hoo.append(f"{day} closed")
-            else:
-                opens = hours["openIntervals"][0]["start"]
-                closes = hours["openIntervals"][0]["end"]
-                hoo.append(f"{day} {opens} - {closes}")
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            phone = poi["mainPhone"]
+            location_type = ", ".join(poi["meta"]["schemaTypes"])
+            latitude = poi["geocodedCoordinate"]["latitude"]
+            longitude = poi["geocodedCoordinate"]["longitude"]
+            hoo = []
+            for day, hours in poi["hours"].items():
+                if day in ["reopenDate", "holidayHours"]:
+                    continue
+                if hours.get("isClosed"):
+                    hoo.append(f"{day} closed")
+                else:
+                    opens = hours["openIntervals"][0]["start"]
+                    closes = hours["openIntervals"][0]["end"]
+                    hoo.append(f"{day} {opens} - {closes}")
+            hours_of_operation = " ".join(hoo) if hoo else ""
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number="",
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

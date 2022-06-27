@@ -1,132 +1,71 @@
-import csv
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://oldbootfactory.com/"
-    page_url = "https://oldbootfactory.com/pages/locations"
+    locator_domain = "https://theoldnoconabootfactory.com/"
+    api_url = "https://www.powr.io/map/u/01008607_1602195050#platform=shopify&url=https%3A%2F%2Ftheoldnoconabootfactory.com%2Fpages%2Flocations"
     session = SgRequests()
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="col-md-4 col-sm-6"]')
-    for d in div:
+    r = session.get(api_url, headers=headers)
+    js_block = r.text.split('"locations":')[1].split(',"map_display"')[0].strip()
+    js = json.loads(js_block)
+    for j in js:
 
-        location_type = "".join(d.xpath(".//h3/text()")) or "<MISSING>"
-        if location_type == "<MISSING>":
-            location_type = "".join(d.xpath(".//preceding-sibling::div[1]//h3/text()"))
-        store_number = "<MISSING>"
-        street_address = "".join(d.xpath(".//p/a/text()[1]")) or "<MISSING>"
-        if street_address == "<MISSING>":
-            continue
-        ad = (
-            "".join(d.xpath(".//p/a/text()[2]"))
-            .replace("Southlake", "Southlake,")
-            .strip()
-        ) or "<MISSING>"
-        if ad == "<MISSING>":
-            ad = (
-                "".join(d.xpath(".//following-sibling::div[1]//p/a/text()[2]"))
-                .replace("\n", "")
-                .strip()
-            )
-
-        city = ad.split(",")[0].strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[-1].strip()
-
-        if postal.find("-") != -1:
-            postal = postal.split("-")[0].strip()
-
+        ad = "".join(j.get("address"))
+        page_url = "https://theoldnoconabootfactory.com/pages/locations"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = ad.split(",")[0].strip()
+        street_address_slug = street_address.split()[0].strip()
+        state = ad.split(",")[2].split()[0].strip()
+        postal = ad.split(",")[2].split()[1].strip()
         country_code = "US"
-
+        city = ad.split(",")[1].strip()
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
         phone = (
-            "".join(d.xpath('.//p[contains(text(), "(")]//text()'))
-            .replace("\n", "")
-            .strip()
+            "".join(
+                tree.xpath(
+                    f'//p[./a[contains(text(), "{street_address_slug}")]]/following-sibling::p[1]//text()'
+                )
+            )
             or "<MISSING>"
         )
-        if phone.find("Store:") != -1:
-            phone = phone.split("Store:")[1].strip()
-        location_name = "".join(d.xpath(".//h5/text()"))
 
-        text = "".join(
-            d.xpath('.//a[contains(@href, "https://www.google.com/maps")]/@href')
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=ad,
         )
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
 
-        if city == "Fort Worth":
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        hours_of_operation = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

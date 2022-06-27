@@ -56,7 +56,7 @@ def request_with_retries(url):
 def _d(sp1, page_url):
     street_address = sp1.select_one("span.c-address-street-1").text.strip()
     if sp1.select_one("span.c-address-street-2"):
-        street_address += " " + sp1.select_one("span.c-address-street-1").text.strip()
+        street_address += " " + sp1.select_one("span.c-address-street-2").text.strip()
     hours = [hh["content"] for hh in sp1.select("table.c-hours-details tbody tr")]
     phone = ""
     if sp1.select_one("div#phone-main"):
@@ -66,11 +66,11 @@ def _d(sp1, page_url):
         state = sp1.select_one(".c-address-state").text.strip()
     zip_postal = ""
     if sp1.select_one(".c-address-postal-code"):
-        zip_postal = (sp1.select_one(".c-address-postal-code").text.strip(),)
+        zip_postal = sp1.select_one(".c-address-postal-code").text.strip()
     return SgRecord(
         page_url=page_url,
         location_name=sp1.select_one("h1#location-name a").text.strip(),
-        street_address=street_address,
+        street_address=street_address.split(",")[0].strip(),
         city=sp1.select_one(".c-address-city").text.strip(),
         state=state,
         zip_postal=zip_postal,
@@ -114,6 +114,8 @@ if __name__ == "__main__":
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.PHONE,
                     SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
                 }
             )
         )

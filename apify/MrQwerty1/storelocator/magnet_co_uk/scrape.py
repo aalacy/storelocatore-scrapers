@@ -1,63 +1,33 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line, postal):
+    adr = parse_address(International_Parser(), line, postcode=postal)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or SgRecord.MISSING
+    state = adr.state
+    postal = adr.postcode
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_params():
-    params = []
-    session = SgRequests()
-    r = session.get(
-        "https://www.magnet.co.uk/Views/Pages/StudioPages/Services/GoogleMapStores/Service.ashx?findPage=60&language=en"
-    )
-    js = r.json()["stores"]
-    for j in js:
-        params.append((j.get("store_url"), (j.get("lat"), j.get("lng"))))
-
-    return params
+    return street_address, city, state, postal
 
 
 def get_hours(page_url):
     _tmp = []
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     days = tree.xpath(
-        "//h2[./strong[contains(text(), 'Opening Hours')]]/following-sibling::dl/dt/text()"
+        "//h4[contains(text(), 'Opening hours')]/following-sibling::dl/dt/text()"
     )
     times = tree.xpath(
-        "//h2[./strong[contains(text(), 'Opening Hours')]]/following-sibling::dl/dd//text()"
+        "//h4[contains(text(), 'Opening hours')]/following-sibling::dl/dd//text()"
     )
 
     for d, t in zip(days, times):
@@ -81,120 +51,87 @@ def get_hours(page_url):
     return hoo
 
 
-def get_data(params):
-    page_url = params[0]
-    latitude, longitude = params[1]
-    if latitude == 0 and longitude == 0:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    locator_domain = "https://www.magnet.co.uk/"
+def fetch_data(sgw: SgWriter):
+    r = session.get(
+        "https://www.magnet.co.uk/stores/getcloseststores",
+        headers=headers,
+        params=params,
+    )
+    js = r.json()["stores"]
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    for j in js:
+        location_name = j.get("StoreName")
+        slug = j.get("StoreUrl") or ""
+        page_url = f"https://www.magnet.co.uk{slug}"
 
-    line = " ".join(
-        ", ".join(tree.xpath("//*[@itemprop='address']//text()")).split()
-    ).split(",")
-    line = list(filter(None, [l.strip() for l in line]))
-    line = ", ".join(line)
-
-    line = line.replace(" -", "").strip()
-    if line.find("Tel:") != -1:
-        line = line.split("Tel:")[0].strip()
-    if line.find("appointment") != -1:
-        line = line.split(".")[-1].strip()
-
-    if line == "<MISSING>":
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        postal = "<MISSING>"
-    else:
-        line = line.replace(", ,", ",").strip()
-        postal = " ".join(line.split()[-2:]).replace(",", "").strip()
-        line = line.replace(postal, "").strip()
+        line = j.get("Address") or ""
+        line = line.strip()
         if line.endswith(","):
-            line = line[:-1].replace(", ,", ", ")
-        adr = parse_address(International_Parser(), line, postcode=postal)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
+            line = line[:-1]
+        if "Tel:" in line:
+            line = line.split("Tel:")[0].strip()
+
+        postal = line.split("\n")[-1].strip()
+        if len(postal) > 8:
+            postal = " ".join(line.split()[-2:])
+        raw_address = line.replace("\r\n", " ").replace("\n", " ")
+        street_address, city, state, postal = get_international(raw_address, postal)
+        if city == SgRecord.MISSING and "Kitchen" in location_name:
+            city = location_name.replace("Kitchen Showrooms ", "")
+
+        store_number = j.get("PageId")
+        phone = j.get("PhoneNumber")
+        splits = ["Trade", "kitchen", "/"]
+        for s in splits:
+            if s in phone:
+                phone = phone.split(s)[0].strip()
+
+        phone = phone.lower()
+        replaces = [".", ",", "showroom", "retail", "only", "(", ")", "-"]
+        for rep in replaces:
+            phone = phone.replace(rep, "").strip()
+
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
+        hours_of_operation = get_hours(page_url)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="GB",
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
-        city = adr.city or "<MISSING>"
-        state = adr.state or "<MISSING>"
-        postal = adr.postcode or "<MISSING>"
-    country_code = "GB"
-    store_number = "<MISSING>"
-    location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
-
-    try:
-        phone = (
-            tree.xpath("//a[@itemprop='telephone']/@href")[0]
-            .replace("tel:", "")
-            .replace("Retail", "")
-            .strip()
-        )
-        if phone.find("Department") != -1:
-            phone = phone.split("Department")[-1].replace(".", "").strip()
-        elif phone.find("counter") != -1:
-            phone = phone.split("counter")[-1].strip()
-        elif phone.find("-") != -1:
-            phone = phone.split("-")[-1].strip()
-        elif phone.find("kitchen") != -1:
-            phone = phone.split("kitchen")[0].strip()
-        elif phone.find(")") != -1:
-            phone = phone.split(")")[-1].strip()
-        elif phone.find("find-a-showroom") != -1:
-            phone = "<MISSING>"
-        elif phone.find("/") != -1:
-            phone = phone.split("/")[0].strip()
-    except IndexError:
-        phone = "<MISSING>"
-
-    location_type = "<MISSING>"
-    hours_of_operation = get_hours(page_url)
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    params = get_params()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, param): param for param in params}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.magnet.co.uk/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+
+    params = (("limitedStoreTypes", ""),)
+    with SgRequests() as session:
+        with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+            fetch_data(writer)

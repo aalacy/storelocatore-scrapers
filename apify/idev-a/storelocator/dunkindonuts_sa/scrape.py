@@ -23,7 +23,7 @@ header1 = {
 }
 
 locator_domain = "http://www.dunkindonuts.sa"
-base_url = "http://www.dunkindonuts.sa/English/Branches/Pages/default.aspx?CustomID=4"
+base_url = "http://www.dunkindonuts.sa/English/Branches/Pages/default.aspx"
 
 
 def _f(name, soup):
@@ -33,15 +33,22 @@ def _f(name, soup):
 def _d(link, session):
     page_url = locator_domain + link.select_one(".branch-addess-val").a["href"]
     logger.info(page_url)
-    sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-    addr = list(sp1.select_one("div.AddressArea").stripped_strings)[1]
+    res = session.get(page_url, headers=_headers)
     try:
-        coord = (
-            sp1.select_one("div.MapInfo a")["href"]
-            .split("/@")[1]
-            .split("/data")[0]
-            .split(",")
+        sp1 = bs(res.text, "lxml")
+    except:
+        pass
+    try:
+        addr = list(sp1.select_one("div.AddressArea").stripped_strings)[1].replace(
+            "\n", ""
         )
+    except:
+        addr = ""
+    try:
+        coord = res.text.split("new google.maps.LatLng(")[1].split(");")[0].split(",")
+        if "." not in coord[0]:
+            coord[0] = coord[0][:2] + "." + coord[0][2:]
+            coord[1] = coord[1][:2] + "." + coord[1][2:]
     except:
         coord = ["", ""]
     return SgRecord(
@@ -61,12 +68,11 @@ def _d(link, session):
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.container")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            yield _d(link, session)
-
-        while True:
+        branches = soup.select("div.BranchesDropDown select option")
+        logger.info(f"{len(branches)} branches found")
+        for branch in branches:
+            if branch["value"] == "-1":
+                continue
             data = {
                 "_wpcmWpid": _f("_wpcmWpid", soup),
                 "wpcmVal": _f("wpcmVal", soup),
@@ -108,13 +114,13 @@ def fetch_data():
                 "__EVENTVALIDATION": _f("__EVENTVALIDATION", soup),
                 "ctl00$ctl35$g_d32be31b_e261_4dc7_a144_bd302585f5df$ddlRegions": "-1",
                 "ctl00$ctl35$g_d32be31b_e261_4dc7_a144_bd302585f5df$ddlCities": "-1",
-                "ctl00$ctl35$g_d32be31b_e261_4dc7_a144_bd302585f5df$ddlBranchVal": "-1",
+                "ctl00$ctl35$g_d32be31b_e261_4dc7_a144_bd302585f5df$ddlBranchVal": branch[
+                    "value"
+                ],
             }
             soup = bs(session.post(base_url, headers=header1, data=data).text, "lxml")
             links = soup.select("div.container")
-            if not links:
-                break
-            logger.info(f"{len(links)} found")
+            logger.info(f"[{branch['value']}] {len(links)} found")
             for link in links:
                 yield _d(link, session)
 
@@ -123,4 +129,5 @@ if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

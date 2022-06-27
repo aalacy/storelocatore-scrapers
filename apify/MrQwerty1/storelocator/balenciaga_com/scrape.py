@@ -1,44 +1,37 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line, city, state, postal):
+    adr = parse_address(
+        International_Parser(), line, city=city, state=state, postcode=postal
+    )
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or ""
+    state = adr.state
+    postal = adr.postcode
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.balenciaga.com/"
+def get_countries():
+    r = session.get(
+        "https://www.balenciaga.com/en-en/storelocator?showMap=true&horizontalView=true&isForm=true"
+    )
+    tree = html.fromstring(r.text)
 
-    session = SgRequests()
+    return tree.xpath("//select[@id='country']/option[@value!='']/@value")
 
-    countries = ["US", "CA"]
+
+def fetch_data(sgw: SgWriter):
+    countries = get_countries()
 
     for country in countries:
         api_url = f"https://www.balenciaga.com/on/demandware.store/Sites-BAL-INTL-Site/en_ZW/Stores-FindStoresData?countryCode={country}"
@@ -46,86 +39,69 @@ def fetch_data():
         js = r.json()["storesData"]["stores"]
 
         for j in js:
-            line = (
-                f"{j.get('address1')} {j.get('address2') or ''}".replace(
-                    "\n", ", "
-                ).strip()
-                or "<MISSING>"
+            line = f"{j.get('address1')} {j.get('address2') or ''}".replace(
+                "\n", ", "
+            ).strip()
+
+            city = j.get("city") or ""
+            city = city.replace("(S)", "").strip()
+            state = j.get("stateCode") or ""
+            postal = j.get("postalCode") or ""
+
+            street_address, city, state, postal = get_international(
+                line, city, state, postal
             )
 
-            city = j.get("city") or "<MISSING>"
-            state = j.get("stateCode") or "<MISSING>"
-            postal = j.get("postalCode") or "<MISSING>"
-
-            adr = parse_address(
-                International_Parser(), line, postcode=postal, city=city, state=state
-            )
-
-            street_address = (
-                f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                    "None", ""
-                ).strip()
-                or "<MISSING>"
-            )
-            if street_address.startswith("313 "):
-                street_address = line.split("Centre")[-1].strip()
-
-            city = adr.city or "<MISSING>"
-            state = adr.state or "<MISSING>"
-            postal = adr.postcode or "<MISSING>"
-            country_code = j.get("countryCode") or "<MISSING>"
-            store_number = j.get("ID") or "<MISSING>"
-            page_url = j.get("detailsUrl") or "<MISSING>"
+            if postal.count("0") == 5:
+                postal = SgRecord.MISSING
+            raw_address = " ".join(f"{line} {city} {state} {postal}".split())
+            country_code = j.get("countryCode")
+            store_number = j.get("ID")
+            page_url = j.get("detailsUrl")
             location_name = j.get("storeName")
-            phone = j.get("phone") or "<MISSING>"
-            latitude = j.get("latitude") or "<MISSING>"
-            longitude = j.get("longitude") or "<MISSING>"
-            location_type = "<MISSING>"
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+
+            if country_code == "JP":
+                street_address = line
 
             _tmp = []
-            days = [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-            ]
-            for d in days:
-                part = d[:3].lower()
-                time = j.get(f"{part}Hours")
-                if time.lower().find("no data") != -1:
-                    continue
-                _tmp.append(f"{d}: {time}")
+            hours = j.get("openingHours") or {}
+            for day, h in hours.items():
+                inter = h.get("openFromTo") or ""
+                if "DATA" in inter:
+                    inter = "Closed"
+                _tmp.append(f"{day}: {inter}")
+            hours_of_operation = ";".join(_tmp)
 
-            hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.balenciaga.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
