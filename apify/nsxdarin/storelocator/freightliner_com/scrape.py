@@ -168,7 +168,7 @@ def fetch_data():
 
                 yield SgRecord(
                     locator_domain=website,
-                    page_url=lurl,
+                    page_url="https://freightliner.com/dealer-search/countries",
                     location_name=name,
                     street_address=add,
                     city=city,
