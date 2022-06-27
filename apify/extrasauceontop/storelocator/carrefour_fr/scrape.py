@@ -179,15 +179,20 @@ def get_data():
                         "li", attrs={"class": "store-page-hours__item"}
                     )
                     hours = ""
-                    for part in hours_parts:
-                        day = part.find(
-                            "div", attrs={"class": "store-page-hours__label"}
-                        ).text.strip()
-                        times = part.find(
-                            "div", attrs={"class": "store-page-hours__slice"}
-                        ).text.strip()
 
-                        hours = hours + day + " " + times + ", "
+                    try:
+                        for part in hours_parts:
+                            day = part.find(
+                                "div", attrs={"class": "store-page-hours__label"}
+                            ).text.strip()
+                            times = part.find(
+                                "div", attrs={"class": "store-page-hours__slice"}
+                            ).text.strip()
+
+                            hours = hours + day + " " + times + ", "
+
+                    except Exception:
+                        hours = hours + day + " closed, "
 
                     hours = hours[:-2]
                     hours = hours.replace("à", "-")
