@@ -1,109 +1,71 @@
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgwriter import SgWriter
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-logger = SgLogSetup().get_logger("dominos_lu")
 
 
-def fetch_data():
-    locs = []
-    website = "dominos.lu"
-    typ = "<MISSING>"
-    country = "LU"
-    for x in range(1000, 10000, 500):
-        logger.info("Pulling Postal %s..." % str(x))
-        url = "https://www.dominos.lu/fr/magasins?SearchCriteria=" + str(x)
-        r = session.get(url, headers=headers)
-        for line in r.iter_lines():
-            if '<a id="store-details-' in line:
-                lurl = "https://www.dominos.lu/" + line.split('href="')[1].split('"')[0]
-                if lurl not in locs:
-                    locs.append(lurl)
-    for loc in locs:
-        logger.info(loc)
-        name = ""
-        add = ""
-        city = ""
-        state = "<MISSING>"
-        zc = ""
-        phone = ""
-        store = loc.rsplit("-", 1)[1]
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        hours = ""
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            if '<span class="store-name"><a href=' in line2:
-                name = (
-                    line2.split('<span class="store-name"><a href=')[1]
-                    .split('">')[1]
-                    .split("<")[0]
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.dominos.lu/"
+    api_url = "https://www.dominos.lu/fr/dynamicstoresearchapi/getlimitedstores/10/2000"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["Data"]
+    for j in js:
+
+        location_name = j.get("Name") or "<MISSING>"
+        a = j.get("Address")
+        street_address = a.get("StreetName") or "<MISSING>"
+        ad = a.get("FullAddress")
+        state = a.get("State") or "<MISSING>"
+        postal = a.get("PostalCode") or "<MISSING>"
+        country_code = "LU"
+        city = a.get("Suburb") or "<MISSING>"
+        latitude = j.get("GeoCoordinates").get("Latitude") or "<MISSING>"
+        longitude = j.get("GeoCoordinates").get("Longitude") or "<MISSING>"
+        phone = j.get("PhoneNo") or "<MISSING>"
+        store_number = j.get("StoreNo")
+        page_url = f"https://www.dominos.lu/fr/magasin/{str(state).lower()}-{str(location_name).replace(' ','').lower()}-{store_number}"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//div[@class="store-trading-hours"]/following-sibling::span/span[@class="visually-hidden"]//text()'
                 )
-            if 'href="http://maps.google.com/' in line2 and "open-map" not in line2:
-                g = next(lines)
-                add = g.split(",")[0].strip().replace("\t", "").replace(",", "")
-                city = g.split("<br/>")[1].split(" LU")[0]
-                zc = g.split("<br/>")[1].strip().rsplit(" ", 1)[1]
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-            if '<span class="trading-day" aria-hidden="true">' in line2:
-                g = next(lines)
-                day = g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
-            if '<span class="visually-hidden">' in line2:
-                g = next(lines)
-                hrs = (
-                    day
-                    + ": "
-                    + g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if 'name="store-lat" id="store-lat" value="' in line2:
-                lat = (
-                    line2.split('name="store-lat" id="store-lat" value="')[1]
-                    .split('"')[0]
-                    .replace(",", ".")
-                )
-            if 'name="store-lon" id="store-lon" value="' in line2:
-                lng = (
-                    line2.split('name="store-lon" id="store-lon" value="')[1]
-                    .split('"')[0]
-                    .replace(",", ".")
-                )
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
             city=city,
             state=state,
-            zip_postal=zc,
-            country_code=country,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
             phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
-
-def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
+        sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
