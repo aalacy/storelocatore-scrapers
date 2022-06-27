@@ -252,77 +252,84 @@ def get_level6_store_urls(urls_11digits_id):
 
 
 def fetch_records(idx, page_url, sgw: SgWriter):
-    with SgRequests() as session:
-        store_res = session.get(page_url, headers=headers)
-        store_sel = html.fromstring(store_res.text)
+    try:
 
-        location_name = " ".join(
-            store_sel.xpath('//h1[@class="title"]//text()')
-        ).strip()
+        with SgRequests() as session:
+            store_res = session.get(page_url, headers=headers)
+            store_sel = html.fromstring(store_res.text)
 
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store_sel.xpath("//table//tr[last()]/td//text()")],
+            location_name = " ".join(
+                store_sel.xpath('//h1[@class="title"]//text()')
+            ).strip()
+
+            store_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath("//table//tr[last()]/td//text()")
+                    ],
+                )
             )
-        )
-        raw_address = ", ".join(store_info)
-        logger.info(f"[{idx}] [RAWADDRESS: {raw_address}]")
-        formatted_addr = parse_address_intl(raw_address)
+            raw_address = ", ".join(store_info)
+            logger.info(f"[{idx}] [RAWADDRESS: {raw_address}]")
+            formatted_addr = parse_address_intl(raw_address)
 
-        # Street Address
-        sta1 = formatted_addr.street_address_1
-        sta2 = formatted_addr.street_address_2
-        sta = ""
-        if sta1 is not None and sta2 is not None:
-            sta = sta1 + ", " + sta2
-        elif sta1 is not None and sta2 is None:
-            sta = sta1
-        elif sta1 is None and sta2 is not None:
-            sta = sta2
-        else:
+            # Street Address
+            sta1 = formatted_addr.street_address_1
+            sta2 = formatted_addr.street_address_2
             sta = ""
+            if sta1 is not None and sta2 is not None:
+                sta = sta1 + ", " + sta2
+            elif sta1 is not None and sta2 is None:
+                sta = sta1
+            elif sta1 is None and sta2 is not None:
+                sta = sta2
+            else:
+                sta = ""
 
-        sta = sta.replace("Ste", "Suite")
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip_code = formatted_addr.postcode
-        country_code = "JP"
-        phone = "".join(store_sel.xpath("//table//tr[last()-1]/td//text()"))
+            sta = sta.replace("Ste", "Suite")
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip_code = formatted_addr.postcode
+            country_code = "JP"
+            phone = "".join(store_sel.xpath("//table//tr[last()-1]/td//text()"))
 
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath("//table//tr[last()-2]/td//text()")
-                ],
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath("//table//tr[last()-2]/td//text()")
+                    ],
+                )
             )
-        )
-        hours_of_operation = ""
-        if hours:
-            hours_of_operation = "; ".join(hours[:-1])
+            hours_of_operation = ""
+            if hours:
+                hours_of_operation = "; ".join(hours[:-1])
 
-        store_number = page_url.split("TS&C=")[-1].split("&B=M")[0]
-        item = SgRecord(
-            locator_domain="pizza-la.co.jp",
-            page_url=page_url,
-            location_name=location_name,
-            street_address=sta,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-        sgw.write_row(item)
-        logger.info(f"[{idx}] {item.as_dict()}")
+            store_number = page_url.split("TS&C=")[-1].split("&B=M")[0]
+            item = SgRecord(
+                locator_domain="pizza-la.co.jp",
+                page_url=page_url,
+                location_name=location_name,
+                street_address=sta,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            sgw.write_row(item)
+            logger.info(f"[{idx}] {item.as_dict()}")
+    except Exception as e:
+        logger.info(f"FixFetchRecordError << {e} >> at {idx} | {page_url} ")
 
 
 def fetch_data(sgw: SgWriter):
@@ -394,12 +401,11 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LONGITUDE,
-                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             )
         )

@@ -177,6 +177,8 @@ def fetch_data():
 
                 if "Confirmed" in hours_of_operation:
                     hours_of_operation = ""
+                if zc in city:
+                    city = ""
                 item = SgRecord(
                     locator_domain="chicken-now.com",
                     page_url=purl,
@@ -209,6 +211,8 @@ def fetch_data():
                         zc = state_zc[-1].strip()
                         lat, lng = get_latlng(purl)
                         ln = locname.split(",")[0].strip()
+                        if zc in city:
+                            city = ""
                         item = SgRecord(
                             locator_domain="chicken-now.com",
                             page_url=purl,
