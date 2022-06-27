@@ -126,7 +126,6 @@ def fetch_data():
                     store["address"].replace(store["province"], "").strip()
                 )
             phone = store["tel"].split()[0].split(",")[0] if store.get("tel") else ""
-            search.found_location_at(store["lat"], store["lng"])
             yield SgRecord(
                 page_url="https://www.7eleven.co.th/find-store",
                 store_number=store["id"],

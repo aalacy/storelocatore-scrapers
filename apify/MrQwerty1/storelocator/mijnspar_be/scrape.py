@@ -24,7 +24,7 @@ def get_data(store_number, sgw: SgWriter):
     r = session.get(api, headers=headers)
     j = r.json()
 
-    location_name = j.get("branchName")
+    location_name = j.get("commercialName")
     a = j.get("address") or {}
     name = a.get("streetName") or ""
     number = a.get("houseNumber") or ""

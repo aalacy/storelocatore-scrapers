@@ -30,6 +30,9 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
+            coords = soup.find("div", {"class": "store-map"})
+            latitude = coords["data-latitude"]
+            longitude = coords["data-longitude"]
             temp_hour = soup.find("table", {"class": "store-detail-hours"})
             day_list = temp_hour.findAll("td", {"class": "-day"})
             time_list = temp_hour.findAll("td", {"class": "-current-week"})
@@ -76,8 +79,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )

@@ -4,17 +4,16 @@ from lxml import etree
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
     session = SgRequests()
 
     start_urls = [
-        "https://www.steward.org/network/our-hospitals",
         "https://www.steward.org/network/hospitals/international",
+        "https://www.steward.org/network/our-hospitals",
     ]
     domain = "steward.org"
     hdr = {
@@ -37,15 +36,15 @@ def fetch_data():
             city = raw_address[1].split(", ")[0]
             state = raw_address[1].split(", ")[-1].split()[0]
             zip_code = raw_address[1].split(", ")[-1].split()[-1]
-            raw_address = " ".join(raw_address)
             if "international" in start_url:
-                addr = parse_address_intl(raw_address)
-                country_code = addr.country
-                city = addr.city
-                zip_code = addr.postcode
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += ", " + addr.street_address_2
+                street_address = raw_address[0]
+                city_line = raw_address[1]
+                city = city_line.split()[0]
+                state = ""
+                zip_code = " ".join(city_line.split()[1:3]).replace(",", "")
+            if "Malta" in poi_html.xpath("//text()"):
+                country_code = "Malta"
+            raw_address = " ".join(raw_address)
 
             item = SgRecord(
                 locator_domain=domain,
@@ -69,13 +68,7 @@ def fetch_data():
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         for item in fetch_data():
             writer.write_row(item)
 

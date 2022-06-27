@@ -34,6 +34,7 @@ def fetch_data():
 
         store = loc["id"].replace("li_store_id_", "")
         title = loc["data-hname"]
+
         try:
             facility = str(loc).split('data-yext-id="Facility-', 1)[1].split('"', 1)[0]
             loclink = (
@@ -115,9 +116,16 @@ def fetch_data():
             street, city = address.split("<br/>", 1)
             city, state = city.split(", ", 1)
             state, pcode = state.split(" ", 1)
-            phone = (
-                str(loc).split('<a href="tel:', 1)[1].split(">", 1)[1].split("<", 1)[0]
-            )
+            try:
+                phone = (
+                    str(loc)
+                    .split('<a href="tel:', 1)[1]
+                    .split(">", 1)[1]
+                    .split("<", 1)[0]
+                )
+            except:
+
+                phone = "<MISSING>"
         yield SgRecord(
             locator_domain="https://fastpacehealth.com/",
             page_url=link,

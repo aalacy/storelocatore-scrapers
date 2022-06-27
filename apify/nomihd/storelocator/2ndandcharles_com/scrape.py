@@ -56,6 +56,12 @@ def fetch_data():
             phone = "".join(
                 store_sel.xpath('//div[@class="store-info"]/div[3]/text()')
             ).strip()
+            if not phone:
+                phone = "".join(
+                    store_sel.xpath(
+                        '//div[@class="store-info"]/a[@class="phone"]/text()'
+                    )
+                ).strip()
 
             location_type = "<MISSING>"
             days = store_sel.xpath('//div[@class="hours"][1]/div')

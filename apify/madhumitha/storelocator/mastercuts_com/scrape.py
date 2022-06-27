@@ -89,27 +89,31 @@ def fetch_location(poi_html, driver, retry=0):
             return fetch_location(poi_html, driver, retry + 1)
 
 
-def get_state(url, session, retry=0):
+def get_state(url, driver, retry=0):
     try:
-        driver.get()
+        driver.get(url)
         dom = etree.HTML(driver.page_source)
         return dom.xpath("//td/a")
     except:
         if retry < 3:
-            return get_state(url, session, retry + 1)
+            return get_state(url, driver, retry + 1)
 
 
 def fetch_data():
+    locations = []
     with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_states = dom.xpath('//a[@class="btn btn-primary"]/@href')
         for url in all_states:
-            all_locations = urljoin(start_url, url)
+            state_url = urljoin(start_url, url)
+            all_locations = get_state(state_url, driver)
             for poi_html in all_locations:
                 poi = fetch_location(poi_html, driver)
                 if poi:
-                    yield poi
+                    locations.append(poi)
+
+    return locations
 
 
 def scrape():

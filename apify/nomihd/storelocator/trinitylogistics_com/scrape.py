@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "trinitylogistics.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -30,10 +32,10 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
-        '//div[@class="drybn-section__content"]//div[@class="wp-block-column"][1]/p'
+        '//div[@class="drybn-section__content"]//div[contains(@class,"wp-block-column")][1]/p'
     )
     names = stores_sel.xpath(
-        '//div[@class="drybn-section__content"]//div[@class="wp-block-column"][1]/h3/text()'
+        '//div[@class="drybn-section__content"]//div[contains(@class,"wp-block-column")][1]/h3/text()'
     )
 
     for index in range(0, len(names)):
@@ -101,7 +103,17 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

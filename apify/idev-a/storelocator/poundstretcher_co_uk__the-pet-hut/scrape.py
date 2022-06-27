@@ -61,6 +61,8 @@ def fetch_data():
             if _address[0] == location_name:
                 _address = _address[1:]
 
+            raw_address = " ".join(_address)
+
             zip = _address[-1]
             if len(zip.split(",")) > 1:
                 zip = zip.split(",")[1]
@@ -80,10 +82,33 @@ def fetch_data():
                 street_address = " ".join(_address[:-2])
                 if len(city.split("\\")) > 1:
                     city = city.split("\\")[1]
-                    street_address += " " + city.split("\\")[0]
+                    street_address += " " + city.split("\\")[0].strip()
+
+                street_address = (
+                    street_address.replace("Unit 3 Waterside Retail Park", "")
+                    .replace("Unit 1 Keighley Retail Park", "")
+                    .replace("Unit 1 Jerome Retail Park", "")
+                    .replace("Unit 1 Newport Retail Park", "")
+                    .replace("Unit 1 Stanway Retail Park", "")
+                    .replace("Unit 2 - 3 Rishworth Centre", "")
+                    .replace("Unit 2 North Valley Retail Park", "")
+                    .replace("Unit 2 St Margarets Retail Park", "")
+                    .replace("Unit 3 Ashton Retail Park", "")
+                    .replace("Unit 3 South Lakeland Retail Pk", "")
+                    .replace("Unit 4 Downpatrick Retail Park", "")
+                    .replace("Unit 44 Park Centre", "")
+                    .replace("Unit 5B Riverside Retail Park", "")
+                    .replace("Unit A The Carlton Centre", "")
+                    .replace("Kilmarnock Retail Park Unit 3 Glencairn Retail Park", "")
+                )
+                if street_address.endswith(","):
+                    street_address = street_address[:-1]
 
                 location_type = "<MISSING>"
-                soup1 = bs(session.get(page_url).text, "html.parser")
+                res = session.get(page_url)
+                if res.status_code != 200:
+                    continue
+                soup1 = bs(res.text, "html.parser")
                 if soup1.select("div#store-address"):
                     store = soup1.select("div#store-address")[-1]
                     if store:
@@ -118,6 +143,7 @@ def fetch_data():
                     country_code=item["country"],
                     locator_domain=locator_domain,
                     hours_of_operation=_valid("; ".join(hours)),
+                    raw_address=raw_address,
                 )
 
 

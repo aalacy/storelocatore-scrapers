@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -24,7 +23,7 @@ def fetch_data():
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath("//div[@class='home-map-card']")
+        stores = search_sel.xpath("//div[@class='container py-4 py-sm-5 py-md-7']")
 
         for no, store in enumerate(stores, 1):
 
@@ -33,38 +32,30 @@ def fetch_data():
 
             page_url = search_url
 
-            location_name = "".join(store.xpath("./h2//text()")).strip()
+            location_name = "".join(
+                store.xpath(".//h2[@class='h1 pb-2']//text()")
+            ).strip()
 
-            location_type = "".join(store.xpath("./h5//text()")).strip()
+            location_type = "".join(
+                store.xpath(".//h2[@class='display-1']//text()")
+            ).strip()
 
             store_info = list(
                 filter(
                     str,
-                    [x.strip() for x in store.xpath(".//p//text()")],
+                    [
+                        x.strip()
+                        for x in store.xpath(".//p/a[contains(@href,'http')]//text()")
+                    ],
                 )
             )
 
-            if "." in store_info[-2]:
-                phone = store_info[-2]
-                hours_of_operation = store_info[-3]
-
-            else:
-                phone = "<MISSING>"
-                hours_of_operation = store_info[-2]
-            raw_address = " ".join(store_info[:2])
-
-            formatted_addr = parser.parse_address_usa(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-
-            city = formatted_addr.city
-
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
+            phone = "".join(store.xpath('.//a[contains(@href,"tel:")]/text()')).strip()
+            hours_of_operation = "; ".join(store.xpath(".//p[not(a)]/text()")).strip()
+            street_address = store_info[0]
+            city = store_info[-1].strip().split(",")[0].strip()
+            state = store_info[-1].strip().split(",")[-1].strip().split(" ")[0].strip()
+            zip = store_info[-1].strip().split(",")[-1].strip().split(" ")[-1].strip()
 
             country_code = "US"
             latitude, longitude = "<MISSING>", "<MISSING>"
@@ -84,7 +75,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 
@@ -92,7 +82,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         results = fetch_data()
         for rec in results:

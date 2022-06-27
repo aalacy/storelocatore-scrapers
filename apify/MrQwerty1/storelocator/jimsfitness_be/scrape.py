@@ -26,7 +26,7 @@ def get_data(slug, sgw: SgWriter):
     city = "".join(
         tree.xpath("//i[@class='fa fa-map-marker']/following-sibling::span/text()")
     ).strip()
-    country_code = "NL"
+    country_code = "BE"
     phone = "".join(
         tree.xpath("//i[@class='fa fa-phone']/following-sibling::span/text()")
     ).strip()

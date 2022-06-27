@@ -6,9 +6,20 @@ from requests import exceptions  # noqa
 from urllib3 import exceptions as urllibException
 from bs4 import BeautifulSoup as b4
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
-import json
+from sgselenium import SgChrome
+import json  # noqa
+import ssl
+import time
 
 logger = SgLogSetup().get_logger("walmart_com")
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -57,52 +68,96 @@ def api_get(start_url, headers, attempts, maxRetries):
 def grab_json(soup):
     son = soup.find_all("script")
     for i in reversed(son):
-        if "REDUX" in i.text:
+        if "REDUX_INITIAL_STATE" in i.text:
             data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
             return json.loads(data)["store"]
 
 
-def other_source(session, state):
+def get_json(url, escalation):
+    data = None
+    try:
+        with SgChrome(proxy_provider_escalation_order=escalation) as driver:
+            driver.get(url)
+            time.sleep(5)
+            text = driver.page_source
+            soup = b4(text, "lxml")
+            son = soup.find_all("script")
+            for i in reversed(son):
+                if "REDUX_INITIAL_STATE" in i.text:
+                    data = i.text.split("TE__ = ", 1)[1].rsplit(";", 1)[0]
+            if data:
+                return json.loads(data)
+    except Exception as e:
+        logger.error("blocked", exc_info=e)
+    return None
+
+
+def other_source(state):
+    retries = 0
+    MaxRetries = 5
+    deesca = [
+        None,
+        "http://groups-SHADER+BUYPROXIES94952:{}@proxy.apify.com:8000/",
+        "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/",
+    ]
+    esca = [
+        "http://groups-RESIDENTIAL,country-{}:{}@proxy.apify.com:8000/",
+    ]
     url = "https://www.walmart.com/store/directory"
-    main = SgRequests.raise_on_err(session.get(url, headers=headers))
-    soup = b4(main.text, "lxml")
-    allstates = (
-        soup.find("div", {"class": "store-directory-container"})
-        .find("ul")
-        .find_all("a")
-    )
+    son = None
+    while not son and retries < MaxRetries:
+        son = get_json(url, deesca)
+        retries += 1
+    if not son:
+        son = get_json(url, esca)
+
+    allstates = son["directory"]["stateList"]
     for county in allstates:
-        sec = SgRequests.raise_on_err(
-            session.get("https://www.walmart.com" + county["href"], headers=headers)
+        retries = 0
+        url2 = str(
+            "https://www.walmart.com/store/directory/"
+            + str(county["code"]).lower().strip().replace(" ", "-")
         )
-        sec = b4(sec.text, "lxml")
-        allcities = (
-            sec.find("div", {"class": "store-directory-container"})
-            .find("ul")
-            .find_all("a")
-        )
+        sec = None
+        while not sec and retries < MaxRetries:
+            sec = get_json(url2, deesca)
+        if not sec:
+            sec = get_json(url2, esca)
+        allcities = sec["directory"]["cityData"]["cities"]
         for city in allcities:
-            if city["href"].count("/") > 2:
-                if (
-                    str("https://www.walmart.com" + city["href"])
-                    == "https://www.walmart.com/store/directory/mo/st.-peters"
-                ):
+            data = str(list(i for i in city.items()))
+            if "storeCount" in data:
+                if city["city"] == "St. Peters":
                     state.push_request(SerializableRequest(url="/store/5421"))
                     state.push_request(SerializableRequest(url="/store/5427"))
                     continue
-                tri = SgRequests.raise_on_err(
-                    session.get(
-                        "https://www.walmart.com" + city["href"], headers=headers
+                else:
+                    url3 = str(
+                        str(
+                            "https://www.walmart.com/store/directory/"
+                            + county["code"].lower()
+                            + "/"
+                            + city["city"].lower().strip().replace(" ", "-")
+                        )
                     )
+                    tri = None
+                    retries = 0
+                    while not tri and retries < MaxRetries:
+                        sec = get_json(url3, deesca)
+                    if not tri:
+                        tri = get_json(url3, esca)
+                    stores = tri["directory"]["storeData"]["stores"]
+                    for store in stores:
+                        state.push_request(
+                            SerializableRequest(
+                                url=str("/store/" + str(store["storeId"]))
+                            )
+                        )
+
+            elif "storeId" in data:
+                state.push_request(
+                    SerializableRequest(url=str("/store/" + str(city["storeId"])))
                 )
-                tri = b4(tri.text, "lxml")
-                recs = tri.find("ul", {"class": "store-list-ul"}).find_all(
-                    "a", {"class": "storeBanner"}
-                )
-                for rec in recs:
-                    state.push_request(SerializableRequest(url=rec["href"]))
-            else:
-                state.push_request(SerializableRequest(url=city["href"]))
     return True
 
 
@@ -214,6 +269,7 @@ def gen_hours(rec):
         for recz in newrec["horas"]:
             copyrec = newrec
             copyrec["horas"] = recz
+            copyrec["rawadd"] = recz.split(" - ", 1)[0]
             yield copyrec
 
     except Exception:
@@ -248,46 +304,51 @@ def please_write(what):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    session = SgRequests(dont_retry_status_codes=set([404, 520]))
-    # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    state.get_misc_value("init", default_factory=lambda: other_source(session, state))
-    for item in fetch_other(session, state):
-        for reccz in gen_hours(transform_types(item)):
-            yield reccz
-    maxZ = search.items_remaining()
-    total = 0
-    for item in fetch_other(session, state):
-        for recc in gen_hours(transform_types(item)):
-            yield recc
-    for code in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        found = 0
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
-            + code
-            + "&distance=100"
-        )
-        try:
-            r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
-        except Exception:
-            r2 = api_get(url, headers, 15, 0, 15).json()
-        if r2["payload"]["nbrOfStores"]:
-            if int(r2["payload"]["nbrOfStores"]) > 0:
-                for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"]:
-                        if store["geoPoint"]["latitude"]:
-                            if store["geoPoint"]["longitude"]:
-                                search.found_location_at(
-                                    store["geoPoint"]["latitude"],
-                                    store["geoPoint"]["longitude"],
-                                )
-                    for recc in gen_hours(transform_types(store)):
-                        yield recc
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        total += found
-        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
+    with SgRequests(dont_retry_status_codes=set([404, 520])) as session:
+        # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
+        state.get_misc_value("init", default_factory=lambda: other_source(state))
+        for item in fetch_other(session, state):
+            for reccz in gen_hours(transform_types(item)):
+                yield reccz
+        maxZ = search.items_remaining()
+        total = 0
+        foundNothing = True
+        for code in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            found = 0
+            logger.info(("Pulling Zip Code %s..." % code))
+            url = (
+                "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
+                + code
+                + "&distance=100"
+            )
+            try:
+                r2 = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
+            except Exception:
+                r2 = api_get(url, headers, 15, 0, 15).json()
+            if r2["payload"]["nbrOfStores"]:
+                if int(r2["payload"]["nbrOfStores"]) > 0:
+                    for store in r2["payload"]["storesData"]["stores"]:
+                        if store["geoPoint"]:
+                            if store["geoPoint"]["latitude"]:
+                                if store["geoPoint"]["longitude"]:
+                                    foundNothing = False
+                                    search.found_location_at(
+                                        store["geoPoint"]["latitude"],
+                                        store["geoPoint"]["longitude"],
+                                    )
+                        for recc in gen_hours(transform_types(store)):
+                            yield recc
+            if foundNothing:
+                search.found_nothing()
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+            )
+            total += found
+            logger.info(
+                f"{code} | found: {found} | total: {total} | progress: {progress}"
+            )
 
 
 def add_walmart(x):
@@ -308,6 +369,7 @@ def scrape():
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["geoPoint", "longitude"],
@@ -323,6 +385,7 @@ def scrape():
         ),
         zipcode=sp.MappingField(
             mapping=["address", "postalCode"],
+            value_transform=lambda x: x.replace(" ", "-"),
         ),
         country_code=sp.MappingField(
             mapping=["address", "country"],

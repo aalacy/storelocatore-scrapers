@@ -63,12 +63,27 @@ def fetch_data():
             store_info = json.loads(store_req.text)["data"]["storeInfo"]
             location_name = store_info["name"]
             log.info(location_name)
-            page_url = store_info["storeUrl"]
+            page_url = (
+                store_info["storeUrl"]
+                .replace("/stores/stores/", "/stores/store/")
+                .strip()
+            )
 
             street_address = store_info["streetAddress"]
+            if street_address:
+                raw_address = street_address
+
             city = store_info["city"]
+            if city:
+                raw_address = raw_address + ", " + city
+
             state = store_info["state"]
+            if state:
+                raw_address = raw_address + ", " + state
+
             zip = store_info["postalCode"]
+            if zip:
+                raw_address = raw_address + ", " + zip
 
             store_number = "<MISSING>"
             phone = store_info["phone"]
@@ -100,6 +115,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

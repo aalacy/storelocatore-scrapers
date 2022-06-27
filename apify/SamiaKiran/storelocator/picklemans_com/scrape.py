@@ -1,5 +1,5 @@
+import re
 import json
-import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -22,6 +22,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
+        pattern = re.compile(r"\s\s+")
         url = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/1554/stores.js?callback=SMcallback2"
         r = session.get(url, headers=headers)
         loclist = json.loads(r.text.split("SMcallback2(")[1].split("}]})")[0] + "}]}")[
@@ -51,7 +52,6 @@ def fetch_data():
                         soup.findAll("bd1")[-1]
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
-                        .replace("\n", " ")
                         .split("Hours:")[1]
                     )
                 except:
@@ -59,37 +59,20 @@ def fetch_data():
                         soup.findAll("bd1")[0]
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
-                        .replace("\n", " ")
                         .split("Hours:")[1]
                     )
-
-            address = address.get_text(separator="|", strip=True).replace("|", " ")
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
-            i = 0
-            street_address = ""
-            city = ""
-            state = ""
-            zip_postal = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street_address = street_address + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    zip_postal = zip_postal + " " + temp[0]
-                i += 1
+            hours_of_operation = re.sub(pattern, "\n", hours_of_operation)
+            hours_of_operation = hours_of_operation.replace("\n", " ")
+            street_address = soup.find("span", {"itemprop": "streetAddress"}).text
+            city = soup.find("span", {"itemprop": "addressLocality"}).text
+            try:
+                state = soup.find("span", {"itemprop": "addressRegion"}).text.replace(
+                    ",", ""
+                )
+            except:
+                if "Kansas" in city:
+                    state = "MO"
+            zip_postal = soup.find("span", {"itemprop": "postalCode"}).text
             country_code = "US"
             latitude = loc["latitude"]
             longitude = loc["longitude"]

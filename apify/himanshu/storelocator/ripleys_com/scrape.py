@@ -6,7 +6,7 @@ from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -262,11 +262,16 @@ def fetch_data(sgw: SgWriter):
                 full_address_list = list(loc.stripped_strings)
                 location_name = full_address_list[0]
                 street_address = full_address_list[1].split(",")[0]
-                city_line = full_address_list[2].split(",")
+                try:
+                    city_line = full_address_list[2].split(",")
+                except:
+                    continue
                 city = city_line[0]
                 state = city_line[1].split()[0]
                 zipp = city_line[1].split()[1]
                 phone = full_address_list[-1]
+                if "," in phone:
+                    phone = locs[-1].text.split("\n")[0]
 
                 sgw.write_row(
                     SgRecord(
@@ -445,13 +450,21 @@ def fetch_data(sgw: SgWriter):
             .split(" *Last ticket")[0]
             .strip()
         )
-        hours_of_operation = hours_of_operation.replace(
-            "HOURS NOW OPEN! *Hours are subject to change – Please call to verify hours before visiting: (865) 436-5096 Ripley’s Believe It or Not!",
-            "",
-        ).replace(
-            "Weather Permitting PRICES Buy discounted and combo tickets online! TICKETS & PRICING GROUPS We offer special rates for groups of 10 or more. To get in touch directly, please call (888) 240-1358, ext. 2156 or email our Groups Department . MORE GROUP INFO",
-            "",
+        hours_of_operation = (
+            hours_of_operation.replace(
+                "HOURS NOW OPEN! *Hours are subject to change – Please call to verify hours before visiting: (865) 436-5096 Ripley’s Believe It or Not!",
+                "",
+            )
+            .replace(
+                "Weather Permitting PRICES Buy discounted and combo tickets online! TICKETS & PRICING GROUPS We offer special rates for groups of 10 or more. To get in touch directly, please call (888) 240-1358, ext. 2156 or email our Groups Department . MORE GROUP INFO",
+                "",
+            )
+            .split("*last")[0]
+            .strip()
         )
+
+        if not hours_of_operation:
+            hours_of_operation = ""
 
         street_address = (
             street_address.replace("•", "")
@@ -485,5 +498,5 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)

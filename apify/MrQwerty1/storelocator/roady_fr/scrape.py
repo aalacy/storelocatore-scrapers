@@ -9,9 +9,21 @@ def fetch_data(sgw: SgWriter):
     api = "https://www.roady.fr/storelocator/index/loadstore/"
     r = session.post(api, headers=headers, data=data)
     js = r.json()["storesjson"]
+    black_list = {"Zone", "ZA", "La ", "("}
 
     for j in js:
-        street_address = j.get("address")
+        street_address = j.get("address") or ""
+        if "<br>" in street_address:
+            _tmp = []
+            line = street_address.split("<br>")
+            for li in line:
+                for b in black_list:
+                    if b in li:
+                        break
+                else:
+                    _tmp.append(li)
+            street_address = ", ".join(_tmp)
+
         city = j.get("city")
         postal = j.get("zipcode")
         country_code = "FR"

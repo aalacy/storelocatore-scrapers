@@ -14,7 +14,6 @@ def fetch_data(sgw: SgWriter):
     url = "https://www.corkyskitchenandbakery.com/locations"
 
     headers = {
-        "Content-Type": "application/json; charset=utf-8",
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
         "upgrade-insecure-requests": "1",
@@ -32,6 +31,7 @@ def fetch_data(sgw: SgWriter):
     text = str(base).replace("\r", "").replace("\n", "").replace("\t", "")
     if '"@type":"Restaurant","' in text:
         items = text.split('"@type":"Restaurant","')
+        links = text.split('"url":')
         for item in items:
             lat = "<MISSING>"
             lng = "<MISSING>"
@@ -72,6 +72,23 @@ def fetch_data(sgw: SgWriter):
                 name = city
                 if "0000" in phone:
                     phone = "<MISSING>"
+
+                for link in links:
+                    url = (
+                        "https://www.corkyskitchenandbakery.com/"
+                        + link.split("/")[1].split('"')[0]
+                    )
+                    try:
+                        if (
+                            url.split("/")[-1].split("-")[1]
+                            in name.replace(" ", "").lower()
+                        ):
+                            break
+                    except:
+                        continue
+
+                store = url.split("/")[-1].split("-")[0]
+
                 if city != "<MISSING>":
                     sgw.write_row(
                         SgRecord(

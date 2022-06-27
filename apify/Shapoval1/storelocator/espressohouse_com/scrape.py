@@ -29,6 +29,13 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("position").get("lat") or "<MISSING>"
         longitude = j.get("position").get("lng") or "<MISSING>"
         location_name = j.get("title") or "<MISSING>"
+        location_name = (
+            str(location_name)
+            .replace("&#8211;", "–")
+            .replace("&ouml;", "ö")
+            .replace("&Ouml;", "Ö")
+            .strip()
+        )
         info = j.get("infowindow")
         a = html.fromstring(info)
         ad = a.xpath("//*//text()")
@@ -59,7 +66,6 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
-        page_url = "<MISSING>"
 
         hours_of_operation = (
             " ".join(ad).split("Öppettider:")[1].replace("Läs mer", "").strip()

@@ -75,10 +75,11 @@ def fetch_data():
                         loc.find("div", {"class": "store-hours"})
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
-                        .replace("DRIVE THRU HOURS", "")
                     )
                 if "(Hours" in hours_of_operation:
                     hours_of_operation = hours_of_operation.split("(Hours")[0]
+                elif "DRIVE" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("DRIVE")[0]
                 hours_of_operation = "Mon" + hours_of_operation.split("Mon")[1]
                 latitude = loc["data-lat"]
                 longitude = loc["data-lng"]

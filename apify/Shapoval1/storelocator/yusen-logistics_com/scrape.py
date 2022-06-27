@@ -187,6 +187,17 @@ def fetch_data(sgw: SgWriter):
                             phone = "951-" + phone.split("951-")[1].strip()
                         if phone.count("(880)-") > 1:
                             phone = "(880)-" + phone.split("(880)-")[1].strip()
+                        if phone.find("(Yusen") != -1:
+                            phone = phone.split("(Yusen")[0].strip()
+                        if phone.find(" / ") != -1:
+                            phone = phone.split(" / ")[0].strip()
+                        phone = (
+                            phone.replace("(Sales)", "")
+                            .replace("(Logistics)", "")
+                            .replace("(Air Export)", "")
+                            .replace("~ 5", "")
+                            .strip()
+                        )
 
                         row = SgRecord(
                             locator_domain=locator_domain,

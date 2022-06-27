@@ -88,81 +88,80 @@ def fetch_data():
 
     logger.info(len(locs))
     for loc in locs:
-        try:
-            logger.info(loc)
-            r2 = session.get(loc, headers=headers)
-            website = "crowneplaza.com"
-            name = ""
-            city = ""
-            state = ""
-            country = ""
-            add = ""
-            zc = ""
-            typ = "Hotel"
-            phone = ""
-            hours = "<MISSING>"
-            lat = ""
-            lng = ""
-            store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
-            for line2 in r2.iter_lines():
-                if 'property="og:title" content="' in line2 and name == "":
-                    name = line2.split('property="og:title" content="')[1].split('"')[0]
-                if '"name" : "' in line2 and name == "":
-                    name = line2.split('"name" : "')[1].split('"')[0]
-                if '"streetAddress": "' in line2:
-                    add = line2.split('"streetAddress": "')[1].split('"')[0]
-                if '"addressRegion": "' in line2:
-                    state = line2.split('"addressRegion": "')[1].split('"')[0]
-                if '"addressLocality": "' in line2:
-                    city = line2.split('"addressLocality": "')[1].split('"')[0]
-                if '"postalCode": "' in line2:
-                    zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if 'place:location:latitude"' in line2:
-                lat = (
-                    line2.split('place:location:latitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if 'place:location:longitude"' in line2:
-                lng = (
-                    line2.split('place:location:longitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-            if "null" in phone:
-                phone = "<MISSING>"
-            if state == "":
-                state = "<MISSING>"
-            phone = phone.replace("++", "+")
-            state = state.replace("&nbsp;", "")
-            city = city.replace("&nbsp;", "")
-            if zc == "":
-                zc = "<MISSING>"
-            if "PO Box" in city:
-                add = add + " " + city
-                add = add.strip()
-                city = "<MISSING>"
-            if " Hotels" not in name and name != "":
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
-        except:
-            pass
+        logger.info(loc)
+        r2 = session.get(loc, headers=headers)
+        website = "crowneplaza.com"
+        name = ""
+        city = ""
+        state = ""
+        country = ""
+        add = ""
+        zc = ""
+        typ = "Hotel"
+        phone = ""
+        hours = "<MISSING>"
+        lat = ""
+        lng = ""
+        store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
+        for line2 in r2.iter_lines():
+            if '"telephone": "' in line2:
+                phone = line2.split('"telephone": "')[1].split('"')[0]
+            if 'property="og:title" content="' in line2 and name == "":
+                name = line2.split('property="og:title" content="')[1].split('"')[0]
+            if '"name" : "' in line2 and name == "":
+                name = line2.split('"name" : "')[1].split('"')[0]
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
+        if 'place:location:latitude"' in line2:
+            lat = (
+                line2.split('place:location:latitude"')[1]
+                .split('content="')[1]
+                .split('"')[0]
+            )
+        if 'place:location:longitude"' in line2:
+            lng = (
+                line2.split('place:location:longitude"')[1]
+                .split('content="')[1]
+                .split('"')[0]
+            )
+        if '<a href="tel:' in line2:
+            phone = line2.split('<a href="tel:')[1].split('"')[0]
+        if "null" in phone:
+            phone = "<MISSING>"
+        if state == "":
+            state = "<MISSING>"
+        phone = phone.replace("++", "+")
+        state = state.replace("&nbsp;", "")
+        city = city.replace("&nbsp;", "")
+        if zc == "":
+            zc = "<MISSING>"
+        if "PO Box" in city:
+            add = add + " " + city
+            add = add.strip()
+            city = "<MISSING>"
+        if name != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

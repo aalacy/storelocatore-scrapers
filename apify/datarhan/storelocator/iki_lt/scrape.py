@@ -32,7 +32,9 @@ def fetch_data():
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         geo = poi_html.xpath(".//a/@href")[-1].split("=")[-1].split(",")
-        hoo = poi_html.xpath('.//span[@class="workhour everyday"]/span/text()')
+        hoo = poi_html.xpath(
+            './/div[@class="store-list-item__working-hours"]//span/text()'
+        )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(

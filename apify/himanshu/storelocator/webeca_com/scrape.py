@@ -23,19 +23,36 @@ def fetch_data():
     all_locations = json.loads(all_locations)
 
     for poi in all_locations["props"]["pageProps"]["locations"]:
-        page_url = urljoin(start_url, poi["slug"])
+        page_url = urljoin("https://www.webeca.com/locations/", poi["slug"])
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
         street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += " " + poi["address2"]
-        if poi["address3"]:
-            street_address += " " + poi["address3"]
+        try:
+            if poi["address2"]:
+                street_address += " " + poi["address2"]
+        except:
+            pass
+        try:
+            if poi["address3"]:
+                street_address += " " + poi["address3"]
+        except:
+            pass
+        street_address = street_address.replace("  ", " ")
+
+        country_code = "US"
+
         hoo = loc_dom.xpath(
             '//h2[contains(text(), "Hours of Operation")]/following-sibling::div[1]//text()'
         )
-        hoo = " ".join(hoo).split("Open two")[0].strip()
+        hoo = (
+            " ".join(hoo)
+            .split("Open two")[0]
+            .split("This office")[0]
+            .split("Please")[0]
+            .split("The location")[0]
+            .strip()
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -45,7 +62,7 @@ def fetch_data():
             city=poi["city"],
             state=poi["state"],
             zip_postal=poi["zipCode"],
-            country_code="",
+            country_code=country_code,
             store_number="",
             phone=poi["phoneNumber"],
             location_type="",

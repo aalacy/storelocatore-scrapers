@@ -1,127 +1,82 @@
-from typing import Iterable, Tuple, Callable
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_2
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def record_transformer(poi):
+def fetch_data():
     domain = "zara.com"
-    street_address = poi["addressLines"][0]
-    location_name = poi.get("name")
-    if not location_name:
-        location_name = street_address
-    city = poi["city"]
-    city = city if city else ""
-    state = poi.get("state")
-    state = state if state else ""
-    if state == "--":
-        state = SgRecord.MISSING
-    if state.isdigit():
-        state = ""
-    zip_code = poi["zipCode"]
-    if zip_code and str(zip_code.strip()) == "0":
-        zip_code = ""
-    country_code = poi["countryCode"]
-    store_number = poi["id"]
-    phone = poi["phones"]
-    phone = phone[0] if phone else ""
-    if phone == "--":
-        phone = ""
-    location_type = poi["datatype"]
-    latitude = poi["latitude"]
-    longitude = poi["longitude"]
-
-    item = SgRecord(
-        locator_domain=domain,
-        page_url="https://www.zara.com/us/en/z-stores-st1404.html?v1=11108",
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_code,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=SgRecord.MISSING,
+    session = SgRequests()
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+    }
+    all_coords = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=10
     )
-    return (item, latitude, longitude)
+    for lat, lng in all_coords:
+        url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
+            all_coords.current_country(), lat, lng
+        )
+        all_locations = session.get(url, headers=hdr)
+        if all_locations.status_code != 200:
+            all_coords.found_nothing()
+            continue
+        all_locations = all_locations.json()
+        if not all_locations:
+            all_coords.found_nothing()
+        for poi in all_locations:
+            street_address = poi["addressLines"][0]
+            location_name = poi.get("name")
+            if not location_name:
+                location_name = street_address
+            state = poi.get("state")
+            if state == "--":
+                state = ""
+            if state and state.isdigit():
+                state = ""
+            zip_code = poi["zipCode"]
+            if zip_code and str(zip_code.strip()) == "0":
+                zip_code = ""
+            phone = poi["phones"]
+            phone = phone[0] if phone else ""
+            if phone == "--":
+                phone = ""
 
+            all_coords.found_location_at(poi["latitude"], poi["longitude"])
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self.__http = http  # noqa
-        self.__state = CrawlStateSingleton.get_instance()  # noqa
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,  # noqa
-        current_country: str,
-        items_remaining: int,  # noqa
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
-
-        hdr = {
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
-        }
-
-        def getPoint(session, hdr):
-            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
-                current_country, coord[0], coord[1]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://www.zara.com/us/en/z-stores-st1404.html?v1=11108",
+                location_name=location_name,
+                street_address=street_address,
+                city=poi["city"],
+                state=state,
+                zip_postal=zip_code,
+                country_code=poi["countryCode"],
+                store_number=poi["id"],
+                phone=phone,
+                location_type=poi["datatype"],
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
+                hours_of_operation="",
             )
-            data = session.get(url, headers=hdr)
+            yield item
 
-            x = 0
-            while True:
-                x = x + 1
-                if x == 100:
-                    raise Exception
-                if data.status_code == 200:
-                    try:
-                        return data.json()
-                    except Exception:
-                        return []
 
-                else:
-                    data = session.get(url, headers=hdr)
-
-        found = 0
-        for poi in getPoint(http, hdr):
-            record, foundLat, foundLng = record_transformer(poi)
-            found_location_at(foundLat, foundLng)
-            found += 1
-            yield record
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        granularity=Grain_2(),
-        expected_search_radius_miles=50,
-    )
-
-    with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
-        )
-    ) as writer:
-        with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
-
-            for rec in par_search.run():
-                writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
+    scrape()

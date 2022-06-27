@@ -18,9 +18,11 @@ def get_urls():
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()")
-    ).strip()
+    text = (
+        "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
+        .replace("&#039;", "'")
+        .strip()
+    )
     j = json.loads(text, strict=False)
 
     location_name = j.get("name")

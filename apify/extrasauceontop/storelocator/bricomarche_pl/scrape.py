@@ -45,6 +45,9 @@ def get_data():
         for part in hours_parts:
             hours = hours + part.text.strip() + ", "
         hours = hours[:-2]
+        hours = hours.replace("\n", " ")
+        while "  " in hours:
+            hours = hours.replace("  ", " ")
 
         yield {
             "locator_domain": locator_domain,

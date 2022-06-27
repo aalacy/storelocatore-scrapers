@@ -56,8 +56,8 @@ def fetch_data(sgw: SgWriter):
         store_number = "".join(d.xpath("./@id_store"))
         page_url = "".join(d.xpath("./@link"))
         phone = "".join(d.xpath("./@phone"))
-        latitude = "".join(d.xpath("./@lng"))
-        longitude = "".join(d.xpath("./@lat"))
+        latitude = "".join(d.xpath("./@lat"))
+        longitude = "".join(d.xpath("./@lng"))
 
         if phone:
             hours_of_operation = get_hoo(page_url)

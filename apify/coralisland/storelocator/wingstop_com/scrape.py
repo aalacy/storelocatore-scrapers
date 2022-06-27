@@ -19,9 +19,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
-        )
+        search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
         for lat, lng in search:
             log.info(
                 "Searching: %s, %s | Items remaining: %s"
@@ -32,7 +30,7 @@ def fetch_data():
                 + str(lat)
                 + "&long="
                 + str(lng)
-                + "&radius=100&limit=100"
+                + "&radius=100000000&limit=100"
             )
             loclist = session.get(url, headers=headers).json()["restaurants"]
             for loc in loclist:

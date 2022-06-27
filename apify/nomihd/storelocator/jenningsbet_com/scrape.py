@@ -9,6 +9,7 @@ from sgselenium import SgFirefox
 import time
 import ssl
 import json
+import lxml.html
 
 try:
     _create_unverified_https_context = (
@@ -21,20 +22,6 @@ else:
 
 website = "jenningsbet.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "authority": "www.jenningsbet.com",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
-}
 
 
 def fetch_data():
@@ -44,9 +31,12 @@ def fetch_data():
     with SgFirefox(block_third_parties=True) as driver:
         driver.get(api_url)
         time.sleep(10)
-        driver.get(
-            "https://www.jenningsbet.com/shop-locator-app.118b9ee-9a56dc3-38e30873a.js"
-        )
+        html_sel = lxml.html.fromstring(driver.page_source)
+        JS_URL = "".join(
+            html_sel.xpath('//script[contains(@src,"/shop-locator-app")]/@src')
+        ).strip()
+        log.info(JS_URL)
+        driver.get("https://www.jenningsbet.com" + JS_URL)
         time.sleep(20)
         storeLocations = json.loads(
             driver.page_source.split("JSON.parse('")[1].strip().split("');")[0].strip()
