@@ -19,7 +19,6 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
-        session = SgRequests()
         try:
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
@@ -47,8 +46,8 @@ def fetch_data(sgw: SgWriter):
             tree.xpath('//div[@class="location-hero__top-bar"]/div/a/@href')
         ).strip()
         if state == "<MISSING>" and goo_link.find("google") != -1:
-            state = goo_link.split("%2C+")[1].split("+")[0].strip()
-            postal = goo_link.split("+")[-1].strip()
+            state = goo_link.split("/@")[0].split("+")[-2].strip()
+            postal = goo_link.split("/@")[0].split("+")[-1].strip()
         if city == "<MISSING>":
             city = location_name
         if city.find("Dallas") != -1:

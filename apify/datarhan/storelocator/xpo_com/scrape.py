@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 from lxml import etree
 
@@ -11,44 +12,38 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    domain = "xpo.com"
     start_url = "https://www.xpo.com/global-locations/"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
-    }
+    domain = "xpo.com"
 
-    response = session.get(start_url, headers=headers)
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
+    data = (
+        str(etree.tostring(dom.xpath("//google-maps")[0]))
+        .split(':locations-data="')[1]
+        .split('" :map-config')[0]
+    )
 
-    all_locations = dom.xpath('//data[@id="globalLocations"]/@value')[0]
-    all_locations = json.loads(all_locations)
+    all_locations = json.loads(data.replace("&quot;", '"').replace("\\", ""))
     for poi in all_locations:
-        store_url = start_url
-        location_name = poi["office_name"]
         street_address = poi["street"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["postal_code"]
-        country_code = poi["country"]
-        phone = poi["telephone"]
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
+        if poi["address_line_2"]:
+            street_address += ", " + poi["address_line_2"]
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
+            page_url=start_url,
+            location_name=poi["office_name"],
             street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["postal_code"],
+            country_code=poi["country"],
+            store_number="",
+            phone=poi["telephone"],
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation="",
         )
 
         yield item

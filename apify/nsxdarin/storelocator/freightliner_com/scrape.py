@@ -1,10 +1,11 @@
+from lxml import html
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("freightliner_com")
 
@@ -27,7 +28,6 @@ def fetch_data():
                 locs.append(line.split('href="')[1].split('"')[0])
     website = "freightliner.com"
     typ = "<MISSING>"
-    store = "<MISSING>"
     lat = "<MISSING>"
     hours = "<MISSING>"
     lng = "<MISSING>"
@@ -77,6 +77,10 @@ def fetch_data():
                 zc = formatted_addr.postcode if formatted_addr.postcode else "<MISSING>"
                 if lurl != "<MISSING>":
                     r2 = session.get(lurl, headers=headers)
+                    tree = html.fromstring(r2.text)
+                    typs = tree.xpath("//h4//text()")
+                    typs = list(filter(None, [c.strip() for c in typs]))
+                    typ = ", ".join(typs) or "<MISSING>"
                     days = 0
                     hours = ""
                     lines = r2.iter_lines()
@@ -157,9 +161,14 @@ def fetch_data():
                     .replace("&#225;", "a")
                     .replace("&#233;", "e")
                 )
+                try:
+                    store = str(lurl).split("code=")[1].split("&")[0].strip()
+                except:
+                    store = "<MISSING>"
+
                 yield SgRecord(
                     locator_domain=website,
-                    page_url=lurl,
+                    page_url="https://freightliner.com/dealer-search/countries",
                     location_name=name,
                     street_address=add,
                     city=city,

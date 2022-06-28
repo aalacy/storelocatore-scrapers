@@ -3,7 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -41,7 +41,7 @@ def get_page_urls():
     base_url = "https://www.weismarkets.com/"
     class_name_main_nav = "main-navigation"
     timeout3 = 40
-    with SgChrome(driver_wait_timeout=180) as driver:
+    with SgFirefox(driver_wait_timeout=180) as driver:
         driver.get(base_url)
         WebDriverWait(driver, timeout3).until(
             EC.presence_of_element_located((By.CLASS_NAME, class_name_main_nav))
@@ -82,7 +82,7 @@ def fetch_data():
         page_urls = store_urls
 
     logger.info(f"Store URLs Scraping Finished: {page_urls[0:5]}")  # noqa
-    with SgChrome(block_third_parties=True, driver_wait_timeout=180) as driver:
+    with SgFirefox(block_third_parties=True, driver_wait_timeout=180) as driver:
         for idx, ln_sn_purl in enumerate(page_urls[0:]):
             location_name, store_number, page_url = ln_sn_purl
             driver.get(page_url)

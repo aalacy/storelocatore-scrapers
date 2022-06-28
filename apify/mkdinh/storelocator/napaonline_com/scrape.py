@@ -14,7 +14,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries
 from tenacity import retry, stop_after_attempt
 from sgzip.dynamic import DynamicZipSearch
-from sgscrape.sgpostal import parse_address, USA_Best_Parser
+from sgscrape.sgpostal import parse_address, USA_Best_Parser, International_Parser
 
 logger = SgLogSetup().get_logger("napaonline_com")
 user_agent = (
@@ -23,7 +23,7 @@ user_agent = (
 base_url = "https://www.napaonline.com/stores"
 
 
-def fetch(postal, driver, retry=0):
+def fetch_html(postal, driver, retry=0):
     try:
         sleep(randint(2, 5))
         html = driver.execute_async_script(
@@ -38,7 +38,7 @@ def fetch(postal, driver, retry=0):
     except Exception as e:
         logger.error(e)
         if retry < 5:
-            return fetch(postal, driver, retry + 1)
+            return fetch_html(postal, driver, retry + 1)
 
         return None
 
@@ -67,8 +67,8 @@ def load_initial_page(driver):
     sleep(20)
 
 
-def fetch_locations(postal, search, driver, writer):
-    soup = fetch(postal, driver)
+def fetch_parts_locations(postal, search, driver, writer):
+    soup = fetch_html(postal, driver)
 
     if not soup:
         search.found_nothing()
@@ -129,23 +129,115 @@ def fetch_locations(postal, search, driver, writer):
         )
 
 
+def fetch_api(postal, locations, driver, page=1, retry=0):
+    try:
+        data = driver.execute_async_script(
+            f"""
+            fetch('https://www.napaonline.com/api/storelocator/nearby-stores?location={postal}&language=en&distanceSearch=1000&page={page}')
+                .then(res => res.json())
+                .then(arguments[0])
+        """
+        )
+
+        locs = data.get("DetailResponse")
+        if not locs:
+            return []
+
+        page_info = data["PageInfo"]
+
+        locations.extend(loc["Basic"] for loc in locs)
+        if page_info.get("nextPage"):
+            return fetch_api(postal, locations, driver, page_info["nextPage"])
+        else:
+            return locations
+
+    except:
+        if retry < 3:
+            return fetch_api(postal, locations, driver, page, retry + 1)
+
+
+def fetch_repairs_locations(postal, search, driver, writer):
+    locator_domain = "napaonline.com"
+    locations = fetch_api(postal, [], driver)
+
+    if not len(locations):
+        search.found_nothing()
+        return
+
+    for location in locations:
+        store_number = location["facilityId"]
+        location_name = location["facilityName"]
+        phone = location.get("facilityPhoneNumber")
+        address = location.get("address", "")
+        parsed = parse_address(International_Parser(), address)
+        street_address = parsed.street_address_1
+        city = parsed.city
+        state = parsed.state
+        postal = parsed.postcode
+
+        geo = location["StoreGeoLocation"]
+        latitude = geo["latitude"]
+        longitude = geo["longitude"]
+
+        hours = location["StoreHours"]["hours"]
+        hours_of_operation = ",".join(re.sub(r"|", ":", hour) for hour in hours)
+        page_url = f"https://www.napaonline.com/en/autocare/?facilityId={store_number}&sdref=modal"
+
+        search.found_location_at(latitude, longitude)
+
+        writer.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                store_number=store_number,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
 def fetch_data():
     options = ChromeOptions()
     options.headless = True
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
         )
     ) as writer, Chrome(
         options=options, driver_executable_path=ChromeDriverManager().install()
     ) as driver:
         driver.set_script_timeout(600)
         load_initial_page(driver)
-        search = DynamicZipSearch(
-            country_codes=SearchableCountries.ALL, max_search_distance_miles=50
-        )
+
+        country_codes = [
+            SearchableCountries.USA,
+            SearchableCountries.AMERICAN_SAMOA,
+            SearchableCountries.ARUBA,
+            SearchableCountries.BAHAMAS,
+            SearchableCountries.BELIZE,
+            SearchableCountries.CAYMAN_ISLANDS,
+            SearchableCountries.DOMINICAN_RBP,
+            SearchableCountries.DOMINICA,
+            SearchableCountries.EL_SALVADOR,
+            SearchableCountries.GUAM,
+            SearchableCountries.HONDURAS,
+            SearchableCountries.NICARAGUA,
+            SearchableCountries.VIRGIN_ISLANDS,
+            SearchableCountries.NETHERLANDS,
+            SearchableCountries.BRITAIN,
+        ]
+
+        search = DynamicZipSearch(country_codes=country_codes)
         for postal in search:
-            fetch_locations(postal, search, driver, writer)
+            fetch_parts_locations(postal, search, driver, writer)
+            fetch_repairs_locations(postal, search, driver, writer)
 
 
 def scrape():

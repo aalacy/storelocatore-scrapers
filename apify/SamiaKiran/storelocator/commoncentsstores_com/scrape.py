@@ -46,10 +46,15 @@ def fetch_data():
                 soup = BeautifulSoup(r.text, "html.parser")
                 location_name = soup.find("h1").text
                 phone = (
-                    soup.select("a[href*=tel]")[-1]
+                    soup.select("a[href*=tel]")[1]
                     .get_text(separator="|", strip=True)
                     .replace("|", "")
                 )
+                location_type = ""
+                location_type_list = soup.findAll("h4", {"class": "child-title"})
+                for loc_type in location_type_list:
+                    location_type = location_type + loc_type.text + ", "
+                location_type = location_type.strip().rstrip(",")
                 address = soup.find("h4").get_text(separator="|", strip=True).split("|")
                 if len(address) > 2:
                     address = address[1:]
@@ -71,7 +76,7 @@ def fetch_data():
                     country_code=country_code,
                     store_number=MISSING,
                     phone=phone.strip(),
-                    location_type=MISSING,
+                    location_type=location_type,
                     latitude=MISSING,
                     hours_of_operation=MISSING,
                 )

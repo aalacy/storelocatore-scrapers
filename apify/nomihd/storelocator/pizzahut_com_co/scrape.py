@@ -46,10 +46,18 @@ def fetch_data():
             )
 
             street_address = store["address"]["formatted"]
-            city = "<MISSING>"
+            if "," in street_address:
+                city = street_address.split(",")[-2].strip()
+                street_address = ", ".join(street_address.split(",")[:-2]).strip()
+
+            else:
+                city = "<MISSING>"
+
             state = "<MISSING>"
             zip = "<MISSING>"
             country_code = store["address"]["countryCode"]
+            if country_code == "US":
+                continue
 
             phone = store["contact"]["phone"]
             store_number = store["id"]
