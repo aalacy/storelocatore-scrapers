@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sgselenium import SgChrome
 import json
+import re
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -28,6 +29,11 @@ map_url = "https://www.google.com/maps/dir//{},{}/@{},{}z"
 def fetch_data():
     with SgChrome() as driver:
         with SgRequests() as session:
+            sp0 = bs(session.get(locator_domain, headers=_headers).text, "lxml")
+            _hr = sp0.find("", string=re.compile(r"^Hours of Operation"))
+            hours = []
+            if _hr:
+                hours = list(_hr.find_parent("p").stripped_strings)[1:]
             res = session.get(base_url, headers=_headers)
             cleaned = (
                 res.text.replace("\\\\u003d", "=")
@@ -74,6 +80,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
                     raw_address=raw_address,
                 )
 
