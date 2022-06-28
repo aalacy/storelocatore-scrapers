@@ -33,7 +33,10 @@ def fetch_data():
         locations = soup.select("main div.main-page-ioz div.pagebuilder-column")
         for _ in locations:
             p = _.select("p")
-            coord = p[3].a["href"].split("/@")[1].split("/data")[0].split(",")
+            try:
+                coord = p[-2].a["href"].split("/@")[1].split("/data")[0].split(",")
+            except:
+                coord = ["", ""]
             location_name = p[0].text.strip()
             city = location_name.split("-")[0].split("–")[0].strip()
             if (
@@ -43,15 +46,18 @@ def fetch_data():
                 or "Alto Las Condes" in city
             ):
                 city = ""
+            street_address = []
+            for pp in p[1:-3]:
+                street_address.append(pp.text.strip())
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,
-                street_address=p[1].text.strip(),
+                street_address=" ".join(street_address),
                 city=city,
                 country_code="CL",
                 latitude=coord[0],
                 longitude=coord[1],
-                hours_of_operation=p[2].text.strip(),
+                hours_of_operation=p[-3].text.strip(),
                 locator_domain=locator_domain,
             )
 
