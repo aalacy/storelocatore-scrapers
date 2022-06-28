@@ -7,7 +7,7 @@ from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 website = "https://www.drmartens.com"
 page_url = f"{website}/uk/en_gb/store-finder"
@@ -113,7 +113,7 @@ def fetch_data():
         phone = get_phone(get_JSON_object_variable(store, "phone"))
 
         if latitude == "0.0":
-            continue
+            latitude, longitude = MISSING, MISSING
 
         street_address = (
             get_JSON_object_variable(store, "line1")
@@ -177,7 +177,16 @@ def fetch_data():
 def scrape():
     log.info(f"Start Crawl {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()

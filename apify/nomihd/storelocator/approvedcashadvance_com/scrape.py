@@ -85,6 +85,8 @@ def fetch_data():
             except:
                 pass
             if len(check_url) > 0:
+                if "http" not in page_url:
+                    page_url = "https://approvedcashadvance.com" + page_url
                 log.info(page_url)
                 store_resp = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_resp.text)

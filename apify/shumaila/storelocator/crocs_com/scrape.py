@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 import json
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
@@ -56,6 +55,7 @@ def fetch_locations(lat, lng):
             },
         }
     }
+    locations = []
     try:
         loclist = session.post(
             "https://stores.crocs.com/rest/locatorsearch",
@@ -63,9 +63,9 @@ def fetch_locations(lat, lng):
             data=json.dumps(data),
         ).json()["response"]["collection"]
     except:
-        return []
+        return locations
     weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
-    locations = []
+
     for loc in loclist:
         title = loc["name"]
         store = loc["clientkey"]
@@ -150,16 +150,13 @@ def fetch_data():
 
     mylist = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=10,
         max_search_distance_miles=1000,
     )
     search = list(mylist)
     search = search + [(50.4501, 30.5234)]
-
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
-        for future in as_completed(futures):
-            yield from future.result()
+    for lat, lng in search:
+        fetch_locations(lat, lng)
 
 
 def scrape():
