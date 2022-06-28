@@ -44,7 +44,7 @@ def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
         search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
         )
         for zipcode in search:
             search_url = "https://www.hobbylobby.com/stores/search?q=" + zipcode
