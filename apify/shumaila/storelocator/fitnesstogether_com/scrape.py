@@ -15,7 +15,7 @@ headers = {
 
 def fetch_data():
 
-    mylist = static_coordinate_list(10, SearchableCountries.USA)
+    mylist = static_coordinate_list(100, SearchableCountries.USA)
 
     mylist = mylist + [
         ("38.895", "-77.03667"),

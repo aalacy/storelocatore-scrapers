@@ -10,7 +10,7 @@ _headers = {
 }
 
 locator_domain = "https://www.gloriajeansnc.com"
-base_url = "https://www.gloriajeansnc.com/wp-admin/admin-ajax.php?action=store_search&lat=35.18735&lng=33.35061&max_results=25&search_radius=10&autoload=1"
+base_url = "https://www.gloriajeansnc.com/wp-admin/admin-ajax.php?action=store_search&lat=35.18735&lng=33.35061&max_results=100&search_radius=500&autoload=1"
 
 
 def fetch_data():

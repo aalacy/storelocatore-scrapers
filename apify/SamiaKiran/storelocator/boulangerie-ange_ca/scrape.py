@@ -22,7 +22,7 @@ def fetch_data():
     if True:
         r = session.get(DOMAIN, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "inner"})[1].findAll("li")
+        loclist = soup.find("div", {"class": "second"}).findAll("li")
         for loc in loclist:
             location_name = loc.text
             page_url = loc.find("a")["href"]

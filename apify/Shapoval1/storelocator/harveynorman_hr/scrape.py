@@ -71,7 +71,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.harveynorman.si/"
     page_url = "https://www.harveynorman.si/poslovalnice"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -99,7 +99,11 @@ def fetch_data(sgw: SgWriter):
         country_code = "SI"
         city = "".join(ad.split()[1:])
         phone = (
-            "".join(d.xpath('.//p[contains(text(), "Tel:")]/text()[1]'))
+            "".join(
+                d.xpath(
+                    './/p[contains(text(), "Tel:")]/text()[1] | .//p[contains(text(), "Tel")]/a/text()'
+                )
+            )
             .replace("Tel:", "")
             .strip()
         )

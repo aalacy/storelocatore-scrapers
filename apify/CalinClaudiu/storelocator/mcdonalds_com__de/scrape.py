@@ -44,7 +44,7 @@ def fetch_data():
                 yield i
         except Exception as e:
             logerilla.error(f"OOPSIE:\n\n{e}")  # noqa
-            pass  # lul
+            pass
 
 
 def fix_comma(x):

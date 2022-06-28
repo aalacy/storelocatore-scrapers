@@ -2,7 +2,7 @@ import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgselenium import SgChrome, SgSelenium
-from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium import SgFirefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -72,7 +72,7 @@ def get_hours(url, driver):
 
 
 def get_headers_for(url: str) -> dict:
-    with SgChrome(executable_path=ChromeDriverManager().install()) as chrome:
+    with SgChrome() as chrome:
         headers = SgSelenium.get_default_headers_for(chrome, url)
     return headers  # type: ignore
 
@@ -87,9 +87,7 @@ def fetch_records(headers_):
     d1 = "".join(d)
     d2 = d1.split("var locations_meta = ")[-1]
     d3 = json.loads(d2)
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgFirefox() as driver:
         for idx1, i in enumerate(d3[0:]):
             j = i["map_pin"]
 

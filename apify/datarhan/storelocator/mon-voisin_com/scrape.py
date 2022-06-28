@@ -33,7 +33,8 @@ def fetch_data():
         city = poi_html.xpath('.//span[@class="city"]/text()')[0]
         state = poi_html.xpath('.//span[@class="province"]/text()')[0]
         zip_code = poi_html.xpath('.//span[@class="postal_code"]/text()')[0]
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else ""
         store_number = poi_html.xpath("@data-id")[0]
         latitude = poi_html.xpath("@data-lat")[0]
         longitude = poi_html.xpath("@data-lng")[0]

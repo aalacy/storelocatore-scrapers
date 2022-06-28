@@ -42,7 +42,6 @@ calendar_url = "https://api.dineengine.io/mrbeastburger/custom/dineengine/vendor
 today = datetime.today()
 mon = (today + timedelta(days=-today.weekday())).strftime("%Y%m%d")
 next_mon = (today + timedelta(days=-today.weekday(), weeks=1)).strftime("%Y%m%d")
-
 max_workers = 32
 
 
@@ -94,7 +93,7 @@ def fetch_data():
         for _, page_url, ca in fetchConcurrentList(locations):
             hours = []
             if ca:
-                for hr in ca:
+                for hr in ca["calendar"]:
                     if not hr["label"]:
                         for hh in hr["ranges"]:
                             temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"

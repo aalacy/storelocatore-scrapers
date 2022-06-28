@@ -1,7 +1,7 @@
 import time
 import json
 from sgrequests import SgRequests
-from sglogging import sglog
+from sglogging import sglog  # noqa
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -66,19 +66,20 @@ def fetch_single_co_ord(coord, retry=1):
 
 def fetch_data():
     coords = fetch_all_coord([-89, -179, 89, 179])
-    log.info(f"Total co ordinates = {len(coords)}")
+    log.info(f"Total co-ordinates = {len(coords)}")
 
     count = 0
     store_added = 0
-    store_skipped = 0
     for coord in coords:
         coord, stores = fetch_single_co_ord(coord)
         count = count + 1
         log.debug(f"{count}. stores = {len(stores)}")
 
         for store in stores:
+
             location_name = store.get("name")
-            store_number = store.get("id")
+            store_number = store.get("id").strip()
+            location_type = store.get("site_brand") + ", " + store.get("open_status")
             street_address = store.get("address")
             city = store.get("city")
             state = store.get("state")
@@ -90,9 +91,6 @@ def fetch_data():
             latitude = store.get("lat")
             longitude = store.get("lng")
 
-            if country_code in ["US", "MX"]:
-                store_skipped = store_skipped + 1
-                continue
             _tmp = []
             hours = store.get("opening_hours") or []
             for h in hours:
@@ -110,7 +108,7 @@ def fetch_data():
                 locator_domain=website,
                 page_url=page_url,
                 store_number=store_number,
-                location_type=MISSING,
+                location_type=location_type,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -122,7 +120,7 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
-    log.info(f"Total stores added {store_added}; skipped={store_skipped}")
+    log.info(f"Total stores added {store_added}")
 
 
 def scrape():
@@ -132,7 +130,7 @@ def scrape():
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+    log.info(f"Scrape took {(end-start)/60} minutes.")
 
 
 if __name__ == "__main__":
