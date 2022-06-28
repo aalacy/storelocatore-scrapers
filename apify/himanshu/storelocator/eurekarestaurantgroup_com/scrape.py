@@ -59,15 +59,24 @@ def fetch_data():
         state = store["state"]
         zip_postal = store["zip"]
         country_code = "US"
-        phone = store["phone"]
         store_number = ""
 
+        try:
+            phone = store["phone"].strip()
+        except:
+            continue
+
         hours_of_operation = ""
-        raw_hours = store["hours"]
-        for row in raw_hours:
-            day = row["day"]
-            hours = row["store_hours"]
-            hours_of_operation = (hours_of_operation + " " + day + " " + hours).strip()
+        try:
+            raw_hours = store["hours"]
+            for row in raw_hours:
+                day = row["day"]
+                hours = row["store_hours"]
+                hours_of_operation = (
+                    hours_of_operation + " " + day + " " + hours
+                ).strip()
+        except:
+            hours_of_operation = ""
 
         latitude = store["latitude"]
         longitude = store["longitude"]
@@ -82,7 +91,7 @@ def fetch_data():
             zip_postal=zip_postal.strip(),
             country_code=country_code,
             store_number=store_number,
-            phone=phone.strip(),
+            phone=phone,
             location_type=MISSING,
             latitude=latitude,
             longitude=longitude,
