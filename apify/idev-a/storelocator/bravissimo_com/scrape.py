@@ -1,69 +1,84 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from typing import Iterable
-from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
-from sglogging import SgLogSetup
 import json
-
-logger = SgLogSetup().get_logger("bravissimo")
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-locator_domain = "https://www.bravissimo.com"
-base_url = "https://www.bravissimo.com/shops/all/"
-
-
-def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
-    locs = bs(http.get(base_url, headers=_headers).text, "lxml").select(
-        "div.c-shops-section a.u-block-link"
-    )
-    for loc in locs:
-        url = locator_domain + loc["href"]
-        state.push_request(SerializableRequest(url=url))
-
-    return True
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgFirefox
 
 
-def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
-    for next_r in state.request_stack_iter():
-        logger.info(next_r.url)
-        sp1 = bs(http.get(next_r.url, headers=_headers).text, "lxml")
-        _ = json.loads(sp1.find("script", type="application/ld+json").string)
-        addr = _["address"]
-        zip_postal = state = ""
-        if addr["addressCountry"] == "USA":
-            zip_postal = addr["postalCode"].split()[-1]
-            state = addr["postalCode"].split()[0]
-        else:
-            zip_postal = addr["postalCode"]
-            state = addr["addressRegion"]
-        yield SgRecord(
-            page_url=next_r.url,
-            location_name=sp1.select_one("h1.c-bandeau__title").text.strip(),
-            street_address=addr["streetAddress"],
-            city=addr["addressLocality"],
-            state=state,
-            zip_postal=zip_postal,
-            country_code=addr["addressCountry"],
-            latitude=_["geo"]["latitude"],
-            longitude=_["geo"]["longitude"],
-            phone=_.get("telephone"),
-            locator_domain=locator_domain,
-            hours_of_operation=_.get("openingHours"),
-        )
+session = SgRequests()
+
+
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.bravissimo.com/"
+    api_url = "https://www.bravissimo.com/shops/all/"
+    with SgFirefox() as driver:
+        driver.get(api_url)
+        a = driver.page_source
+        tree = html.fromstring(a)
+        div = tree.xpath('//a[@class="c-section-nav__label u-block-link"]')
+        for d in div:
+            slug = "".join(d.xpath(".//@href"))
+            page_url = f"https://www.bravissimo.com{slug}"
+            with SgFirefox() as driver:
+                driver.get(page_url)
+                a = driver.page_source
+                tree = html.fromstring(a)
+                js_block = "".join(
+                    tree.xpath('//script[@type="application/ld+json"]/text()')
+                )
+                js = json.loads(js_block)
+                location_name = (
+                    "".join(
+                        tree.xpath('//h1[contains(@class, "c-bandeau__title")]//text()')
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                location_type = js.get("@type") or "<MISSING>"
+                b = js.get("address")
+                street_address = b.get("streetAddress") or "<MISSING>"
+                state = b.get("addressRegion") or "<MISSING>"
+                postal = b.get("postalCode") or "<MISSING>"
+                if postal == "NY 10012":
+                    state = str(postal).split()[0].strip()
+                    postal = str(postal).split()[1].strip()
+                country_code = b.get("addressCountry") or "<MISSING>"
+                city = b.get("addressLocality") or "<MISSING>"
+                latitude = js.get("geo").get("latitude") or "<MISSING>"
+                longitude = js.get("geo").get("longitude") or "<MISSING>"
+                phone = js.get("telephone") or "<MISSING>"
+                hours_of_operation = js.get("openingHours") or "<MISSING>"
+                tmpcls = "".join(
+                    tree.xpath('//*[contains(text(), "Temporarily")]/text()')
+                )
+                if tmpcls:
+                    hours_of_operation = "Temporarily Closed"
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    state = CrawlStateSingleton.get_instance()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        with SgRequests() as http:
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records(http, state):
-                writer.write_row(rec)
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

@@ -1,6 +1,5 @@
 from sgselenium.sgselenium import SgChrome
 import ssl
-from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape import simple_scraper_pipeline as sp
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -21,7 +20,7 @@ def clean_phone(text):
 
 def get_data():
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
+        block_third_parties=False,
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
     ) as driver:
@@ -64,13 +63,19 @@ def get_data():
             longitude = location["LONGITUDE"]
             city = location["CITY"]
             address = location["ADDRESS"]
-            state = location["REGION"]
+            state = "<MISSING>"
             zipp = location["ZIP_OR_POSTAL"]
             phone = clean_phone(location["PHONE1"])
             location_type = location["STORE_TYPE"]
-            hours = location["STORE_HOURS"]
-            country_code = location["COUNTRY"]
+            hours = "<MISSING>"
 
+            country_code = location["COUNTRY"].lower().replace("Taiwan, ", "")
+
+            if zipp.strip() == "-":
+                zipp = "<MISSING>"
+
+            phone = phone.split("\n")[0].split("\r")[0]
+            address = address.replace("\n", " ").replace("\r", " ").replace("  ", " ")
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
@@ -120,4 +125,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

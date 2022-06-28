@@ -1,3 +1,4 @@
+import html
 import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -25,7 +26,7 @@ def fetch_data():
         url = "https://www.weldricks.co.uk/branches"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "sitemap"}).findAll("li")
+        loclist = soup.findAll("div", {"class": "mb-gap"})[-1].findAll("li")
         for loc in loclist:
             page_url = loc.find("a")["href"]
             log.info(page_url)
@@ -36,7 +37,7 @@ def fetch_data():
             temp = json.loads(temp)
             location_name = temp["name"]
             address = temp["address"]
-            street_address = address["streetAddress"]
+            street_address = html.unescape(address["streetAddress"])
             city = address["addressLocality"]
             state = address["addressRegion"]
             zip_postal = address["postalCode"]
@@ -48,20 +49,22 @@ def fetch_data():
             location_name = soup.find("h1").text
             temp = soup.findAll("div", {"class": "large-third"})
             location_type = MISSING
+            soup = BeautifulSoup(r.text, "html.parser")
             hours_of_operation = (
-                temp[1]
+                soup.find("div", {"class": "mb-gap"})
+                .findAll("p")[-2]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .replace("Opening Times", "")
                 .replace("Bank Holidays CLOSED", "")
-                .replace("|", "")
-                .replace("|", "")
             )
             if "branch is now closed" in hours_of_operation:
                 continue
             elif "branch is closed" in hours_of_operation:
                 continue
             elif "NA" in hours_of_operation:
+                hours_of_operation = MISSING
+            elif "Telephone" in hours_of_operation:
                 hours_of_operation = MISSING
             elif "temporarily closed" in hours_of_operation:
                 location_type = "Temporarily Closed"

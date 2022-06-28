@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
 
     for postcode in search:
         base_link = (
-            "https://stores.barnesandnoble.com/_next/data/ljiqyYqTybLw6ZMrfqsEX/index.json?searchText=%s"
+            "https://stores.barnesandnoble.com/_next/data/GU0uLM20zip8fspKfdu2K/index.json?searchText=%s"
             % postcode
         )
         try:
@@ -33,6 +33,7 @@ def fetch_data(sgw: SgWriter):
                 "stores"
             ]["content"]
         except:
+            search.found_nothing()
             continue
 
         for loc in stores:

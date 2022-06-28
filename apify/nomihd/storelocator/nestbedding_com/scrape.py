@@ -79,7 +79,8 @@ def fetch_data():
 
         latitude = "".join(store.xpath('.//div[@class="map"]/@data-lat')).strip()
         longitude = "".join(store.xpath('.//div[@class="map"]/@data-long')).strip()
-
+        if len(latitude) <= 0 and len(longitude) <= 0:
+            continue
         raw_address = "<MISSING>"
 
         yield SgRecord(

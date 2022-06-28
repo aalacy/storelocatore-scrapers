@@ -21,7 +21,13 @@ def fetch_data():
         locations = soup.select("div.w-item.lanza-direccion")
         for _ in locations:
             coord = _["data-coor"].split(",")
-            raw_address = " ".join(list(_.select_one("div.w-text1").stripped_strings))
+            bb = list(_.select_one("div.w-text1").stripped_strings)
+            raw_address = bb[0]
+            last_zip = bb[0].split()[-1].strip()
+            if len(bb) > 1 and (
+                not last_zip.isdigit() or (last_zip.isdigit() and len(last_zip) < 4)
+            ):
+                raw_address += " " + bb[1]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:

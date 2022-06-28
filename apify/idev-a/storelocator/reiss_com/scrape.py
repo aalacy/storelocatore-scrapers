@@ -35,6 +35,7 @@ def fetch_data():
             raw_address = " ".join(
                 sp1.select_one("p.slm-info-address").stripped_strings
             )
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["BR"],
@@ -111,15 +112,21 @@ def fetch_global():
                 state = addr.state
                 zip_postal = addr.postcode
                 country_code = country_name
+                if "Italy" in country_code:
+                    country_code = "Italy"
+                if "Spain" in country_code:
+                    country_code = "Spain"
+                if "Ukraine" in country_code:
+                    country_code = "Ukraine"
 
-                if country_name == "USA":
+                if country_code == "USA":
                     if not city:
                         city = location_name.split(",")[0].strip()
                     if not state:
                         state = location_name.split(",")[-1].strip()
-                if country_name == "Netherlands":
+                if country_code == "Netherlands":
                     city = location_name
-                if country_name in [
+                if country_code in [
                     "Hong Kong",
                     "Argentina",
                     "Brazil",
@@ -131,10 +138,16 @@ def fetch_global():
                     if len(c_n) > 1:
                         city = c_n[0]
                 if not city:
-                    if country_name in ["Germany"]:
+                    if country_code in ["Germany"]:
                         city = location_name.split(",")[-1].strip()
-                    if country_name in ["Ireland"]:
+                    if country_code in ["Ireland"]:
                         city = location_name.split("-")[0].strip()
+
+                location_type = " "
+                if "Bloomingdale" in raw_address:
+                    location_type = "Bloomingdale's"
+                if "Nordstrom" in raw_address:
+                    location_type = "Nordstrom's"
                 yield SgRecord(
                     page_url=locator_url,
                     location_name=location_name,
@@ -145,6 +158,7 @@ def fetch_global():
                     country_code=country_code,
                     phone=phone,
                     locator_domain=locator_domain,
+                    location_type=location_type,
                     hours_of_operation="; ".join(hours),
                     raw_address=raw_address,
                 )

@@ -52,29 +52,21 @@ def fix_comma(x):
 
 
 def ret_record(record):
+
     page_url = SgRecord.MISSING
     location_name = SgRecord.MISSING
-
     street_address = SgRecord.MISSING
-
     city = SgRecord.MISSING
-
     state = SgRecord.MISSING
-
     zip_postal = SgRecord.MISSING
-
     country_code = SgRecord.MISSING
-
     store_number = SgRecord.MISSING
-
     phone = SgRecord.MISSING
-
     location_type = SgRecord.MISSING
-
     latitude = SgRecord.MISSING
-
     longitude = SgRecord.MISSING
     hours_of_operation = SgRecord.MISSING
+    raw_address = SgRecord.MISSING
 
     try:
         page_url = "https://www.starbucks.com/store-locator/store/{}/{}".format(
@@ -86,15 +78,21 @@ def ret_record(record):
         location_name = str(record["name"])
     except Exception:
         pass
+
     try:
         street_address = fix_comma(
             str(
                 str(record["address"]["streetAddressLine1"])
                 + ","
                 + str(record["address"]["streetAddressLine2"])
-                + ","
-                + str(record["address"]["streetAddressLine3"])
             )
+        )
+    except Exception:
+        pass
+
+    try:
+        raw_address = fix_comma(
+            street_address + ", " + str(record["address"]["streetAddressLine3"])
         )
     except Exception:
         pass
@@ -150,8 +148,6 @@ def ret_record(record):
         hours_of_operation = format_hours(record["schedule"])
     except Exception:
         pass
-
-    raw_address = SgRecord.MISSING
 
     return SgRecord(
         page_url=page_url,

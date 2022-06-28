@@ -1,144 +1,62 @@
-import csv
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
 
-from util import Util  # noqa: I900
+logger = SgLogSetup().get_logger("")
 
-myutil = Util()
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-session = SgRequests()
+locator_domain = "https://www.danielsjewelers.com"
+base_url = "https://admin.danielsjewelers.com/storelocator/index/stores/?type=all"
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
-    base_url = "https://www.danielsjewelers.com"
-    r = session.get(
-        "https://www.danielsjewelers.com/storelocator/index/stores?type=all"
-    )
-    store_list = json.loads(r.text)["storesjson"]
-    data = []
-    for store in store_list:
-        page_url = (
-            "https://www.danielsjewelers.com/storelocator/index/details?locatorId="
-            + store["storelocator_id"]
-        )
-        detail_url = (
-            "https://www.danielsjewelers.com/storelocator/index/Storedetail?locatorId="
-            + store["storelocator_id"]
-        )
-        r1 = session.get(detail_url)
-        store_detail = json.loads(r1.text)["storesjson"][0]
+    with SgRequests() as session:
+        locations = session.get(base_url, headers=_headers).json()["storesjson"]
+        for _ in locations:
+            page_url = (
+                f"https://www.danielsjewelers.com/stores/{_['rewrite_request_path']}"
+            )
+            detail_url = f"https://admin.danielsjewelers.com/storelocator/index/Storedetail/?locatorId={_['rewrite_request_path']}&type=store"
+            logger.info(detail_url)
+            _ = session.get(detail_url, headers=_headers).json()["storesjson"][0]
+            hours = []
+            for day in days:
+                day = day.lower()
+                if _.get(f"{day}_open"):
+                    start = _.get(f"{day}_open")
+                    end = _.get(f"{day}_close")
+                    hours.append(f"{day}: {start} - {end}")
 
-        hours_of_operation = (
-            "Sun: "
-            + myutil.parseHour(store_detail["sunday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["sunday_close"])
-        )
-        hours_of_operation += (
-            " Mon: "
-            + myutil.parseHour(store_detail["monday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["monday_close"])
-        )
-        hours_of_operation += (
-            " Tue: "
-            + myutil.parseHour(store_detail["tuesday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["tuesday_close"])
-        )
-        hours_of_operation += (
-            " Wed: "
-            + myutil.parseHour(store_detail["wednesday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["wednesday_close"])
-        )
-        hours_of_operation += (
-            " Thu: "
-            + myutil.parseHour(store_detail["thursday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["thursday_close"])
-        )
-        hours_of_operation += (
-            " Fri: "
-            + myutil.parseHour(store_detail["friday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["friday_close"])
-        )
-        hours_of_operation += (
-            " Sat: "
-            + myutil.parseHour(store_detail["saturday_open"])
-            + " - "
-            + myutil.parseHour(store_detail["saturday_close"])
-        )
-
-        store_number = store["store_code"]
-        location_name = store["store_name"]
-        street_address = store["address"]
-        city = store["city"]
-        state = store["state"]
-        zip = store["zipcode"]
-        country_code = store["country_id"]
-        phone = store["phone"]
-        location_type = "<MISSING>"
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            street_address = _["address"]
+            if "USA" in street_address:
+                street_address = " ".join(street_address.split(",")[:-3])
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["locator_id"],
+                location_name=_["store_name"],
+                street_address=street_address,
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zipcode"],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                country_code=_["country_id"],
+                phone=_["phone"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

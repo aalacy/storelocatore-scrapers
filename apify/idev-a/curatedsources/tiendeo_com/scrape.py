@@ -12,7 +12,14 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
 import random
-from webdriver_manager.chrome import ChromeDriverManager
+import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 logger = SgLogSetup().get_logger("")
 
@@ -25,7 +32,47 @@ _headers = {
 
 locator_domain = "https://tiendeo.com/"
 urls = {
+    "Australia": "https://www.tiendeo.com.au/catalogues-sale",
+    "Spain": "https://www.tiendeo.com/Folletos-Catalogos",
+    "Italy": "https://www.tiendeo.it/Volantino-Catalogo",
+    "Mexico": "https://www.tiendeo.mx/Folletos-Catalogos",
+    "Brazil": "https://www.tiendeo.com.br/Encartes-Catalogos",
+    "Colombia": "https://www.tiendeo.com.co/Folletos-Catalogos",
+    "Argentia": "https://www.tiendeo.com.ar/Folletos-Catalogos",
+    "India": "https://www.tiendeo.in/Leaflets-Catalogues",
+    "France": "https://www.tiendeo.fr/Prospectus-Catalogues",
+    "The Netherlands": "https://www.tiendeo.nl/Folders-Catalogi",
     "Germany": "https://www.tiendeo.de/Prospekte-Kataloge",
+    "Peru": "https://www.tiendeo.pe/Folletos-Catalogos",
+    "Chile": "https://www.tiendeo.cl/Folletos-Catalogos",
+    "Portugal": "https://www.tiendeo.pt/Encartes-Catalogos",
+    "Russia": "https://www.tiendeo.ru/katalogi-predlojenija",
+    "Turkey": "https://www.tiendeo.com.tr/Brosurler-Kataloglar",
+    "Polish": "https://www.tiendeo.pl/katalogi-ulotki",
+    "Norway": "https://www.tiendeo.no/brosjyrer",
+    "Austria": "https://www.tiendeo.at/Prospekte-Kataloge",
+    "Sweden": "https://www.tiendeo.se/broschyrer",
+    "Ecuador": "https://www.tiendeo.com.ec/folletos-catalogos",
+    "Singapore": "https://www.tiendeo.sg/Leaflets-Catalogues",
+    "Indonesia": "https://www.tiendeo.co.id/leaflets-catalogues",
+    "Malaysia": "https://www.tiendeo.my/leaflets-catalogues",
+    "South Africa": "https://www.tiendeo.co.za/leaflets-catalogues",
+    "Denmark": "https://www.tiendeo.dk/brochurer-kataloger",
+    "Finland": "https://www.tiendeo.fi/esitteet-luettelot",
+    "New Zealand": "https://www.tiendeo.co.nz/brochures-catalogues",
+    "Japan": "https://www.tiendeo.jp/%E3%83%91%E3%83%B3%E3%83%95%E3%83%AC%E3%83%83%E3%83%88%E2%80%90%E3%82%AB%E3%82%BF%E3%83%AD%E3%82%B0",
+    "Greece": "https://www.tiendeo.gr/%CF%86%CF%85%CE%BB%CE%BB%CE%AC%CE%B4%CE%B9%CE%B1-%CE%BA%CE%B1%CF%84%CE%AC%CE%BB%CE%BF%CE%B3%CE%BF%CE%B9",
+    "South Korea": "https://www.tiendeo.co.kr/,%EB%B8%8C%EB%A1%9C%EC%8A%88%EC%96%B4-%EC%B9%B4%ED%83%88%EB%A1%9C%EA%B7%B8",
+    "Belgium": "https://www.tiendeo.be/fr/prospectus-catalogues",
+    "Switzerland": "https://www.tiendeo.ch/prospekte-kataloge",
+    "UAE": "https://www.tiendeo.ae/offers-promotions",
+    "Ukraine": "https://www.tiendeo.com.ua/aktsii-katalohy",
+    "Romania": "https://www.tiendeo.ro/cataloage-oferte",
+    "Maroku": "https://www.tiendeo.ma/prospectus-catalogues",
+    "Czech Republic": "https://www.tiendeo.cz/letaky-katalogy",
+    "Slovakia": "https://www.tiendeo.sk/letaky-katalogy",
+    "Hungary": "https://www.tiendeo.hu/akciosujsag-katalogusok",
+    "Bulgaria": "https://www.tiendeo.bg/katalog-broshura",
 }
 
 
@@ -217,6 +264,8 @@ def request_with_retries(page_url):
     ) as session:
         _headers["User-Agent"] = random.choice(user_agents)
         sp1 = session.get(page_url, headers=_headers)
+        if sp1.status_code != 200:
+            return None
         if not sp1.text.strip():
             raise Exception
         return sp1
@@ -230,13 +279,15 @@ def _d(loc, domain, country):
 
     logger.info(page_url)
     try:
-        _ = json.loads(
-            bs(request_with_retries(page_url).text, "lxml")
-            .select_one("script#__NEXT_DATA__")
-            .text
-        )["props"]["pageProps"]["queryResult"]["Store"]
+        res = request_with_retries(page_url)
+        if not res:
+            return None
+        _ = json.loads(bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text)[
+            "props"
+        ]["pageProps"]["queryResult"]["Store"]
     except Exception as err:
         logger.info(str(err))
+        return None
     raw_address = f"{_['address']}, {_['city']}"
     if _["postalCode"]:
         raw_address += f", {_['postalCode']}"
@@ -258,7 +309,7 @@ def _d(loc, domain, country):
     return SgRecord(
         page_url=page_url,
         store_number=_["id"],
-        location_name=_["name"],
+        location_name=_["name"].split("-")[0],
         street_address=_["address"],
         city=city,
         state=state,
@@ -267,92 +318,98 @@ def _d(loc, domain, country):
         phone=_["phone"],
         latitude=_["lat"],
         longitude=_["lon"],
-        location_type="store",
+        location_type=_["retailer"]["category"]["shortName"],
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours),
         raw_address=raw_address,
     )
 
 
-def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
+def fetch_data():
+    with SgChrome(
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
-    ).driver()
-
-
-def fetch_data():
-    driver = get_driver()
-    with SgRequests(proxy_country="us") as session:
-        for country, base_url in urls.items():
-            logger.info(f"[{country}] {base_url}")
-            domain = "/".join(base_url.split("/")[:-1])
-            res_sd = json.loads(
-                bs(session.get(base_url, headers=_headers).text, "lxml")
-                .select_one("script#__NEXT_DATA__")
-                .text
-            )["props"]["pageProps"]["queryResult"]["Retailers"]
-            if not res_sd.get("nodes"):
-                continue
-            store_indices = [ss for ss in res_sd["nodes"] if ss]
-            for store_index in store_indices:
-                if not store_index.get("link") or not store_index["link"].get("url"):
-                    continue
-                store_index_url = domain + store_index["link"]["url"]
-                try:
-                    driver.get(store_index_url)
-                    navs = json.loads(
-                        bs(driver.page_source, "lxml")
-                        .select_one("script#__NEXT_DATA__")
-                        .text
-                    )["props"]["pageProps"]["queryResult"]["Breadcrumb"][
-                        "navigationLinks"
-                    ]
-                    if not navs:
-                        continue
-                    store_url = domain + navs[0]["url"]
-                except Exception as err:
-                    logger.info(str(err))
-                res_ss = json.loads(
-                    bs(request_with_retries(store_url).text, "lxml")
+    ) as driver:
+        with SgRequests(proxy_country="us") as session:
+            for country, base_url in urls.items():
+                logger.info(f"[{country}] {base_url}")
+                domain = "/".join(base_url.split("/")[:-1])
+                res_sd = json.loads(
+                    bs(session.get(base_url, headers=_headers).text, "lxml")
                     .select_one("script#__NEXT_DATA__")
                     .text
-                )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
-                if not res_ss["links"]:
+                )["props"]["pageProps"]["queryResult"]["Retailers"]
+                if not res_sd.get("nodes"):
                     continue
-                stores = [ss for ss in res_ss["links"] if ss]
-                for store in stores:
-                    if not store.get("url"):
+                store_indices = [ss for ss in res_sd["nodes"] if ss]
+                for store_index in store_indices:
+                    if not store_index.get("link") or not store_index["link"].get(
+                        "url"
+                    ):
                         continue
-                    store_location_url = domain + store["url"]
-                    logger.info(store_location_url)
+                    store_index_url = domain + store_index["link"]["url"]
                     try:
-                        results = json.loads(
-                            bs(
-                                request_with_retries(store_location_url).text,
-                                "lxml",
-                            )
+                        driver.get(store_index_url)
+                        navs = json.loads(
+                            bs(driver.page_source, "lxml")
                             .select_one("script#__NEXT_DATA__")
                             .text
-                        )["props"]["pageProps"]["queryResult"]
+                        )["props"]["pageProps"]["queryResult"]["Breadcrumb"][
+                            "navigationLinks"
+                        ]
+                        if not navs:
+                            continue
+                        store_url = domain + navs[0]["url"]
                     except Exception as err:
                         logger.info(str(err))
-
-                    if results.get("StoresByCity"):
-                        locations = [
-                            ll for ll in results["StoresByCity"]["nodes"] if ll
-                        ]
-                        if not locations:
+                    res = request_with_retries(store_url)
+                    if not res:
+                        continue
+                    res_ss = json.loads(
+                        bs(res.text, "lxml").select_one("script#__NEXT_DATA__").text
+                    )["props"]["pageProps"]["queryResult"]["HighLightedCities"]
+                    if not res_ss["links"]:
+                        continue
+                    stores = [ss for ss in res_ss["links"] if ss]
+                    for store in stores:
+                        if not store.get("url"):
                             continue
-                        for loc in locations:
-                            yield _d(loc, domain, country)
-                    else:
-                        yield _d(store, domain, country)
+                        store_location_url = domain + store["url"]
+                        logger.info(store_location_url)
+                        try:
+                            res = request_with_retries(store_url)
+                            if not res:
+                                continue
+                            results = json.loads(
+                                bs(
+                                    res.text,
+                                    "lxml",
+                                )
+                                .select_one("script#__NEXT_DATA__")
+                                .text
+                            )["props"]["pageProps"]["queryResult"]
+                        except Exception as err:
+                            logger.info(str(err))
+
+                        if results.get("StoresByCity"):
+                            locations = [
+                                ll for ll in results["StoresByCity"]["nodes"] if ll
+                            ]
+                            if not locations:
+                                continue
+                            for loc in locations:
+                                yield _d(loc, domain, country)
+                        else:
+                            yield _d(store, domain, country)
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

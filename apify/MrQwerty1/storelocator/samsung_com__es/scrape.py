@@ -65,10 +65,26 @@ def fetch_data(sgw: SgWriter):
             if c == "CA":
                 state = postal.split()[0]
                 postal = postal.replace(state, "").strip()
+
+            if "," in postal:
+                postal = postal.replace(",", "").strip()
             store_number = j.get("id")
             location_name = j.get("name")
             location_type = j.get("brandType")
-            phone = j.get("phone")
+            phone = j.get("phone") or ""
+            phone = phone.replace("T:", "").strip()
+            if phone == "0":
+                phone = SgRecord.MISSING
+
+            black_list = ["/", "     ", "ext", "–", "Dahili", ",", "|", "-", "l"]
+            for b in black_list:
+                if b in phone:
+                    t = phone.split(b)
+                    if len(t[0].strip()) < 6:
+                        phone = " ".join(phone.replace(b, "").split())
+                    else:
+                        phone = t[0].strip()
+
             latitude = j.get("latitude")
             longitude = j.get("longitude")
 
@@ -96,5 +112,5 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

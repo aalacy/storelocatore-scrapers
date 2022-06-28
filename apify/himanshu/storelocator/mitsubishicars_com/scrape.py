@@ -1,3 +1,4 @@
+import json
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -7,53 +8,53 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-
 session = SgRequests()
 
 
 def fetch_data(sgw: SgWriter):
+
+    base_link = "https://www.mitsubishicars.com/car-dealerships-near-me"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests(verify_ssl=False)
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
     base_url = "https://www.mitsubishicars.com/"
     addressess = []
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=50,
-        expected_search_radius_miles=50,
-    )
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
-    }
-    for zip_code in search:
-        try:
-            link = (
-                "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="
-                + str(zip_code)
-                + "&idealer=false&ecommerce=false"
-            )
-            json_data = session.get(link, headers=headers).json()
-        except:
-            continue
-        for loc in json_data:
-            address = loc["address1"].strip()
-            if loc["address2"]:
-                address += " " + loc["address2"].strip()
-            name = loc["dealerName"].strip()
-            city = loc["city"].strip().capitalize()
+
+    fin_script = ""
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        if 'addressLine1":' in str(script):
+            fin_script = str(script)
+            break
+    js = fin_script.split("__ =")[2].split("; window")[0]
+    store_data = json.loads(js)
+
+    for i in store_data:
+        if i[:7] == "Dealer_":
+            store = store_data[i]
+            phone_det = store_data["$" + i + ".phone"]
+            add_det = store_data["$" + i + ".address"]
+
+            name = store["name"]
+            address = add_det["addressLine1"]
+            city = add_det["addressLine2"]
             try:
-                state = loc["state"].strip()
+                state = add_det["addressLine3"]
             except:
                 state = ""
-            zipp = loc["zipcode"]
-            phone = loc["phone"].strip()
-            country = loc["country"].replace("United States", "US").strip()
-            lat = loc["latitude"]
-            lng = loc["longitude"]
-            search.found_location_at(lat, lng)
-            link = loc["dealerUrl"]
-            storeno = loc["bizId"]
-            page_url = ""
-            if link:
-                page_url = "http://" + link.lower()
+            zipp = add_det["postalArea"]
+            phone = phone_det["phoneNumber"]
+            country = "US"
+            lat = add_det["latitude"]
+            lng = add_det["longitude"]
+            page_url = store["url"]
+            storeno = store["id"]
+            if page_url:
                 if (
                     "http://www.verneidemitsubishi.com" in page_url
                     or "http://www.kingautomitsubishi.com" in page_url
@@ -119,12 +120,7 @@ def fetch_data(sgw: SgWriter):
                             hours_of_operation = "<INACCESSIBLE>"
                     else:
                         hours_of_operation = "<INACCESSIBLE>"
-            else:
-                hours_of_operation = "<MISSING>"
-                page_url = ""
 
-            if city == "Little rock" or city == "Charlottesville":
-                page_url = "<MISSING>"
             store = []
             store.append(base_url)
             store.append(name)
@@ -139,7 +135,7 @@ def fetch_data(sgw: SgWriter):
             store.append(lat)
             store.append(lng)
             try:
-                store.append(hours_of_operation.split("} Sales Hours ")[1])
+                store.append(hours_of_operation.split("Sales Hours")[1].strip())
             except:
                 store.append(hours_of_operation)
             store.append(page_url if page_url else "<MISSING>")

@@ -33,39 +33,52 @@ def fetch_data():
 
             locator_domain = website
             location_name = "".join(
-                store_sel.xpath("//div[@class='section-header']/h1/text()")
+                store_sel.xpath("//h1[@class='single-cafe__title']/span[1]/text()")
             ).strip()
-            raw_address = "".join(
-                store_sel.xpath("//div[@class='section-header'][./h1]/p/text()")
-            ).strip()
-
-            street_address = ", ".join(raw_address.split(",")[:-1]).strip()
-            city = raw_address.split(",")[-1].strip()
-            state = "<MISSING>"
-            zip = (
-                "".join(
+            raw_address = list(
+                filter(
+                    str,
                     store_sel.xpath(
-                        '//div[@class="cafe-information-row"][./h2[contains(text(),"Address")]]/p[1]/text()'
-                    )
+                        '//div[@class="single-cafe__content"][./p/strong[contains(text(),"Address")]]/p/text()'
+                    ),
                 )
-                .strip()
-                .replace("\t\t\t\t\t\t\t\t", " ")
-                .strip()
-                .rsplit(" ")[-2]
-                .strip()
             )
+
+            street_address = raw_address[0]
+            city = raw_address[-1].split(" ", 1)[-1].strip()
+            state = "<MISSING>"
+            zip = raw_address[-1].split(" ", 1)[0].strip()
 
             country_code = "CY"
 
-            store_number = "<MISSING>"
-            phone = "".join(store_sel.xpath('//a[@class="link_phone"]/text()')).strip()
+            store_number = "".join(
+                store_sel.xpath('//ul[@id="cafe-opening-hours-list"]/@data-storeid')
+            ).strip()
+            phone = (
+                "".join(store_sel.xpath('//a[@class="link_phone"]/text()'))
+                .strip()
+                .replace("Contact:", "")
+                .strip()
+            )
 
             location_type = "<MISSING>"
-            hours = store_sel.xpath("//ul[@class='cafe-opening-hours-list']/li")
+            hours_req = session.get(
+                f"https://www.waynescoffee.jo/theme/ajax.php?action=cafe_opening&storeid={store_number}",
+                headers=headers,
+            )
+            hours_sel = lxml.html.fromstring(hours_req.json()["data"])
+            hours = hours_sel.xpath("//li")
             hours_list = []
             for hour in hours:
-                day = "".join(hour.xpath("text()")).strip()
-                time = "".join(hour.xpath("span/text()")).strip()
+                day = "".join(
+                    hour.xpath('.//span[@class="opening-hours__day"]/text()')
+                ).strip()
+                time = "".join(
+                    hour.xpath('.//span[@class="opening-hours__time"]/text()')
+                ).strip()
+                if not time:
+                    time = "".join(hour.xpath("p[2]/text()")).strip()
+
                 hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
@@ -91,7 +104,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
+                raw_address=", ".join(raw_address).strip(),
             )
 
 

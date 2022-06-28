@@ -44,6 +44,7 @@ def fetch_data():
         title = loc["communityName"]
         street = loc["streetAddress"]
         link = "https://atriaseniorliving.com" + loc["url"].replace("//", "/")
+
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
 
@@ -53,11 +54,13 @@ def fetch_data():
         pcode = address[-1]
         city = address[-3]
         state = address[-2]
-
-        if len(longt) < 3:
-            longt = r.text.split(',"ListItem","' + str(lat) + '","', 1)[1].split(
-                '"', 1
-            )[0]
+        try:
+            if len(longt) < 3:
+                longt = r.text.split(',"ListItem","' + str(lat) + '","', 1)[1].split(
+                    '"', 1
+                )[0]
+        except:
+            lat = longt = "<MISSING>"
         if len(str(store)) < 3:
             store = "<MISSING>"
         yield SgRecord(

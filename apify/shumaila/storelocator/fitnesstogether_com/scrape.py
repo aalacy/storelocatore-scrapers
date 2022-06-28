@@ -1,7 +1,11 @@
-from bs4 import BeautifulSoup
-import csv
 import json
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,70 +13,30 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    url = "https://fitnesstogether.com/personal-trainers-near-me"
-    p = 0
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("li", {"class": "list-title"})
-    for div in divlist:
-        search = div.text
-        gurl = (
-            "https://maps.googleapis.com/maps/api/geocode/json?address="
-            + search
-            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
-        )
-        r = session.get(gurl, headers=headers, verify=False).json()
-        if r["status"] == "REQUEST_DENIED":
-            pass
-        else:
-            coord = r["results"][0]["geometry"]["location"]
-            latnow = coord["lat"]
-            lngnow = coord["lng"]
+
+    mylist = static_coordinate_list(100, SearchableCountries.USA)
+
+    mylist = mylist + [
+        ("38.895", "-77.03667"),
+        ("-117.2119253", "32.737944"),
+        ("-117.691168", "33.465728"),
+    ]
+
+    linklist = []
+    for latnow, lngnow in mylist:
         url = (
-            "https://fitnesstogether.com/locator?q="
-            + search
-            + "%2C%20United%20States&lat="
+            "https://fitnesstogether.com/locator?q=United%20States&lat="
             + str(latnow)
             + "&lng="
             + str(lngnow)
+            + "&limit=25"
         )
 
-        if "Columbia" in search:
-            url = "https://fitnesstogether.com/locator?q=District%20of%20Columbia%2C%20United%20States&lat=38.895&lng=-77.03667&limit=5"
-        loclist = session.get(url, headers=headers, verify=False).json()["locations"]
-
+        try:
+            loclist = session.get(url, headers=headers).json()["locations"]
+        except:
+            continue
         for loc in loclist:
 
             if loc["status"] == "soon":
@@ -80,6 +44,9 @@ def fetch_data():
             title = loc["name"]
             store = loc["id"]
             link = "https://fitnesstogether.com/" + loc["slug"]
+            if link in linklist:
+                continue
+            linklist.append(link)
             street = loc["address"] + " " + loc["address_2"]
             city = loc["city"]
             state = loc["state"]
@@ -110,32 +77,33 @@ def fetch_data():
                     + end[1]
                     + " PM "
                 )
-            data.append(
-                [
-                    "https://fitnesstogether.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            yield SgRecord(
+                locator_domain="https://fitnesstogether.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
             )
-
-            p += 1
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

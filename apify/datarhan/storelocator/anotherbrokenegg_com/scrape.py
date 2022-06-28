@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -11,94 +12,52 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "anotherbrokenegg.com"
-    start_url = "https://anotherbrokenegg.com/list-indexed-business"
-
+    start_url = "http://anotherbrokenegg.com/findcafe?view_by=all"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@class="field-tile"]/a/@href')
-    next_page = dom.xpath('//a[@title="Go to next page"]/@href')
-    while next_page:
-        response = session.get(urljoin(start_url, next_page[0]))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="field-tile"]/a/@href')
-        next_page = dom.xpath('//a[@title="Go to next page"]/@href')
+    data = dom.xpath('//script[@data-drupal-selector="drupal-settings-json"]/text()')[0]
+    data = json.loads(data)
 
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url)
+    for poi in data["leaflet"]["custom_search_location_map"]["features"]:
+        poi_html = etree.HTML(poi["popup"])
+        location_name = poi_html.xpath('.//div[@class="name"]/text()')[0]
+        page_url = poi_html.xpath(".//a/@href")[0]
+        page_url = urljoin(start_url, page_url)
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h2[@class="shorter business-name"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        address_raw = loc_dom.xpath(
-            '//div[@class="views-field views-field-field-postaladdress-postal-code"]/div/text()'
-        )
-        if not address_raw:
-            continue
-        street_address = address_raw[0]
-        street_address = street_address if street_address else "<MISSING>"
-        city = address_raw[1].split(" - ")[0]
-        city = city if city else "<MISSING>"
-        state = address_raw[1].split(" - ")[1]
-        state = state if state else "<MISSING>"
-        zip_code = address_raw[1].split(" - ")[2]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        street_address = loc_dom.xpath('//span[@class="address-line1"]/text()')[0]
+        street_address_2 = loc_dom.xpath('//span[@class="address-line2"]/text()')
+        if street_address_2:
+            street_address += ", " + street_address_2[0]
+        city = loc_dom.xpath('//span[@class="locality"]/text()')[0]
+        state = loc_dom.xpath('//span[@class="administrative-area"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@class="postal-code"]/text()')[0]
+        country_code = loc_dom.xpath('//span[@class="country"]/text()')[0]
         phone = loc_dom.xpath(
-            '//div[@class="views-field views-field-field-phone"]/div/a/text()'
+            '//div[contains(text(), "Contact Phone")]/following-sibling::div/text()'
         )
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        if "Coming Soon" in location_name:
-            location_type = "coming soon"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        geo = loc_dom.xpath('//a[@class="googlepluss"]/@href')
-        if geo:
-            geo = geo[0].split("@")[-1].split(",")[:2]
-        if len(geo) == 1:
-            geo = loc_dom.xpath(
-                '//div[@class="field field-name-field-googletour field-type-link-field field-label-hidden connect-icons-field"]//a/@href'
-            )
-            geo = geo[0].split("@")[-1].split(",")[:2] if geo else ""
-        if geo:
-            latitude = geo[0]
-            longitude = geo[1]
-        hours_of_operation = loc_dom.xpath('//div[contains(@class,"-time")]//text()')
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ][1:]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        phone = phone[0] if phone else ""
+        hoo = loc_dom.xpath(
+            '//div[contains(text(), "Hours")]/following-sibling::div/text()'
         )
-        if location_type == "coming soon":
-            hours_of_operation = "<MISSING>"
-        hours_of_operation = hours_of_operation.replace(
-            "Open For To-Go & Limited Dine-in ", ""
-        )
-        hours_of_operation = hours_of_operation.replace(
-            " Closed: Christmas, Thanksgiving", ""
-        )
-        hours_of_operation = hours_of_operation.replace(
-            " Closed: Christmas Day, Thanksgiving Day", ""
-        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=store_number,
+            store_number=poi["entity_id"],
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            location_type="",
+            latitude=poi["lat"],
+            longitude=poi["lon"],
+            hours_of_operation=hoo,
         )
 
         yield item

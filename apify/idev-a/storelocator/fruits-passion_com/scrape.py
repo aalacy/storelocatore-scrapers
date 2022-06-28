@@ -14,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://fruits-passion.com"
-base_url = "https://fruits-passion.com/en-ca/amlocator/"
+base_url = "https://fruits-passion.com/en_ca/amlocator/"
 
 
 def _p(val):
@@ -61,7 +61,11 @@ def fetch_data():
                 for hh in _.select("div.amlocator-week div.amlocator-row")
             ]
             location_type = ""
-            if "Temporarily closed" in _.select_one("div.amlocator-description").text:
+            try:
+                tmp_cls = str(_.select_one("div.amlocator-description").text)
+            except:
+                tmp_cls = ""
+            if "Temporarily closed" in tmp_cls:
                 location_type = "Temporarily closed"
             page_url = _.a["href"]
             logger.info(page_url)

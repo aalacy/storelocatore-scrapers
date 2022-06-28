@@ -1,113 +1,110 @@
-import csv
-import os
-from sgselenium import SgSelenium
+from bs4 import BeautifulSoup
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
 
-def fetch_data():
-    locator_domain = 'https://www.terroni.com/'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
+def fetch_data(sgw: SgWriter):
+    locator_domain = "https://www.terroni.com/"
 
-    tor_locs = driver.find_element_by_css_selector('nav#nav-footer-left').find_elements_by_css_selector('a')
-    ny_locs = driver.find_element_by_css_selector('nav#nav-footer-middle').find_elements_by_css_selector('a')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    all_locs = tor_locs + ny_locs
+    session = SgRequests()
+    req = session.get(locator_domain, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    all_locs = base.find(id="nav-footer-left").find_all("li")
 
     link_list = []
     for loc in all_locs:
-        link = loc.get_attribute('href')
-        if '#' in link:
-            break
-        link_list.append(link)
+        link = loc.a["href"]
+        if "terroni" in link:
+            link_list.append(link)
 
-    all_store_data = []
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(15)
-        addy = driver.find_elements_by_css_selector('address.location-reservation-address')
-        if len(addy) == 1:
-            idx = link[:-1].rfind('/')
-            location_name = link[idx:][:-1].replace('-', ' ').replace('/', '')
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-            phone_number = driver.find_element_by_xpath("//a[contains(@href, 'tel:')]").get_attribute('href').replace(
-                'tel:', '')
-            addy_href = addy[0].find_element_by_css_selector('a').get_attribute('href')
-            street_addy_idx = addy_href.find('place/') + 6
-            coord_start_idx = addy_href.find('/@')
-
-            address = addy_href[street_addy_idx:coord_start_idx].split(',')
-            street_address = address[0].replace('+', ' ').strip()
-            city = address[1].replace('+', ' ').strip()
-            if 'USA' in addy_href:
-                addy_split = address[2].replace('+', ' ').strip().split(' ')
-                state = addy_split[0]
-                zip_code = addy_split[1].strip()
-                country_code = 'US'
-            else:
-                addy_split = address[2].replace('+', ' ').strip().split(' ')
-                country_code = 'CA'
-                if len(addy_split) == 2:
-                    state = addy_split[0]
-                    zip_code = '<MISSING>'
-                else:
-                    state = addy_split[0]
-                    zip_code = addy_split[1] + ' ' + addy_split[2]
-
-            coords = addy_href[coord_start_idx + 2:].split(',')
-            lat = coords[0]
-            longit = coords[1]
-
-            content = driver.find_element_by_xpath('//div[@data-section="content"]')
-            p_hours = content.find_element_by_xpath('//div[@data-align="right"]').find_elements_by_css_selector('p')
-            hours = ''
-            for p in p_hours:
-                hours += p.text + ' '
-
-            hours = hours.replace('HOURS', '').replace(':', '').replace('SEE MENU & ORDER ONLINE', '').strip()
+        addy = base.find(class_="location-reservation-address")
+        location_name = (
+            base.find(class_="location-header-name")
+            .text.replace("\n", " ")
+            .replace("  ", " ")
+            .strip()
+        )
+        phone_number = base.find(class_="location-reservation-telephone").text
+        addy_href = addy.a["href"]
+        street_addy_idx = addy_href.find("place/") + 6
+        coord_start_idx = addy_href.find("/@")
+        address = addy_href[street_addy_idx:coord_start_idx].split(",")
+        street_address = address[0].replace("+", " ").strip()
+        city = address[1].replace("+", " ").strip()
+        if "USA" in addy_href:
+            addy_split = address[2].replace("+", " ").strip().split(" ")
+            state = addy_split[0]
+            zip_code = addy_split[1].strip()
+            country_code = "US"
         else:
-            footer = driver.find_elements_by_css_selector('footer.site-footer')
-            if len(footer) == 1:
-                location_name = 'DOPOLAVORO'
-                cont = footer[0].find_element_by_css_selector('div.grid')
-                cont_p = cont.find_elements_by_css_selector('p')
-                address = cont_p[0].text.split(',')
-
-                street_address = address[0]
-                city = address[1].strip()
-                state_zip = address[2].strip().split(' ')
-                state = state_zip[0]
-                zip_code = state_zip[1]
-                country_code = 'US'
-
-                hours_phone = cont_p[1].text.split('-')
-                hours = hours_phone[0] + '-' + hours_phone[1]
-                phone_number = hours_phone[2] + '-' + hours_phone[3]
-
+            addy_split = address[2].replace("+", " ").strip().split(" ")
+            country_code = "CA"
+            if len(addy_split) == 2:
+                state = addy_split[0]
+                zip_code = "<MISSING>"
             else:
-                continue
+                state = addy_split[0]
+                zip_code = addy_split[1] + " " + addy_split[2]
+        if "132 Yonge" in street_address:
+            zip_code = "M5C 1X3"
 
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+        coords = addy_href[coord_start_idx + 2 :].split(",")
+        lat = coords[0]
+        longit = coords[1]
+        hours = ""
 
-        all_store_data.append(store_data)
+        try:
+            p_hours = base.find("div", attrs={"data-align": "right"}).find_all("p")[1:]
+            for p in p_hours:
+                if "day:" in p.text or "HOURS" in p.text:
+                    hours = (hours + " " + p.text.replace("\xa0", " ")).strip()
+            hours = (
+                hours.replace("Wine List", "")
+                .replace("HOURS & INFO", "")
+                .replace("\n", "")
+                .strip()
+            )
 
-    driver.quit()
-    return all_store_data
+            if "HOURS" in hours[:5]:
+                hours = hours.split("HOURS")[1].strip()
+        except:
+            pass
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-scrape()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone_number,
+                location_type=location_type,
+                latitude=lat,
+                longitude=longit,
+                hours_of_operation=hours,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

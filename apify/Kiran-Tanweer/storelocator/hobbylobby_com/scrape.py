@@ -43,10 +43,15 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        )
         for zipcode in search:
             search_url = "https://www.hobbylobby.com/stores/search?q=" + zipcode
             stores_req = session.get(search_url, headers=headers2)
+            if stores_req.status_code != 200:
+                search.found_nothing()
+                continue
             try:
                 soup = BeautifulSoup(stores_req.text, "html.parser")
             except AttributeError:
@@ -55,10 +60,15 @@ def fetch_data():
             locations = soup.find("div", {"class": "map-canvas"})
             if str(locations).find("map-canvas anime") == -1:
                 locations = locations["data-stores"]
+                if not locations:
+                    search.found_nothing()
+                    continue
                 locations = json.loads(locations)
                 for loc in locations:
                     lat = loc["latitude"]
                     lng = loc["longitude"]
+                    if lat and lng:
+                        search.found_location_at(lat, lng)
                     add1 = loc["address1"]
                     add2 = loc["address2"]
                     street = add1 + " " + add2
@@ -66,6 +76,8 @@ def fetch_data():
                     state = loc["stateProvinceCode"]
                     pcode = loc["zipcode"]
                     phone = loc["phone"]
+                    if lat and lng:
+                        search.found_location_at(lat, lng)
                     loc_link = "https://www.hobbylobby.com" + loc["linkUrl"]
                     req = session.get(loc_link, headers=headers)
                     try:

@@ -14,51 +14,43 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    ad = (
-        "".join(
-            tree.xpath("//a[contains(@href, 'google')]/preceding-sibling::p[1]/text()")
-        )
-        .split(",")[0]
-        .strip()
-    )
-
     divs = tree.xpath("//div[@class='panel-body tabs-section']")
 
     for d in divs:
         location_name = "".join(
             d.xpath(".//div[@class='row']/h3[not(@class)]/text()")
         ).strip()
-        part = ", ".join(
-            d.xpath(
-                ".//div[@class='row']/h3[not(@class)]/following-sibling::p[1]/text()"
-            )
-        ).strip()
-        if "(" in part:
-            part = part.split("(")[0].strip()
-
-        street_address = f"{ad} ({part})"
-        text = "".join(
-            tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
+        line = d.xpath(
+            ".//div[@class='row']/h3[not(@class)]/following-sibling::p[1]/text()"
         )
-        latitude, longitude = (
-            text.split("google.maps.LatLng(")[1].split("),")[0].split(",")
-        )
+        phone = line.pop()
 
-        _tmp = []
-        li = d.xpath(".//h3[@class='opening-title']/following-sibling::p")
-        for l in li:
-            _tmp.append(" ".join("".join(l.xpath("./text()")).split()))
-        hours_of_operation = ";".join(_tmp)
+        raw_address = ", ".join(line)
+        if "(" in raw_address:
+            raw_address = raw_address.split("(")[0] + raw_address.split(")")[1].strip()
+
+        zc = line.pop()
+        postal = zc.split()[0]
+        city = zc.replace(postal, "").split(",")[0].split("-")[0].strip()
+        street_address = raw_address.split(f", {postal}")[0].replace(" ,", ",").strip()
+        text = "".join(d.xpath(".//div/@data-position"))
+        latitude, longitude = text.split(", ")
+        hours_of_operation = d.xpath(".//h3/following-sibling::p[last()]/text()")[
+            0
+        ].strip()
 
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city="Zurich",
+            city=city,
+            zip_postal=postal,
             country_code="CH",
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
+            raw_address=raw_address,
+            phone=phone,
             hours_of_operation=hours_of_operation,
         )
 

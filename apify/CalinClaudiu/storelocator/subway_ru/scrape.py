@@ -3,7 +3,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests import SgRequests
-from sgzip.dynamic import Grain_8
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 from sgscrape.sgrecord_id import SgRecordID
@@ -13,30 +12,21 @@ from bs4 import BeautifulSoup as b4
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def strip_para(x):
-    copy = []
-    inside = False
-    for i in x:
-        if i == "<" or inside:
-            inside = True
-            continue
-        elif i == ">":
-            inside = False
-            continue
-        else:
-            copy.append(i)
-    return "".join(copy)
-
-
 def fix_comma(x):
     h = []
+    x = x.replace("None", "")
     try:
-        for i in x.split(","):
-            if len(i.strip()) >= 1:
-                h.append(i)
-        return ", ".join(h)
-    except Exception:
-        return x
+        x = x.split(",")
+        for i in x:
+            if len(i.strip()) > 1:
+                h.append(i.strip())
+        h = ", ".join(h)
+    except:
+        h = x
+    if len(h) < 2:
+        h = "<MISSING>"
+
+    return h.replace("<br>", "")
 
 
 def replac(x):
@@ -49,6 +39,7 @@ def replac(x):
 
 class ExampleSearchIteration:
     def do(search, coord, http):
+        foundNothing = None
         # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
         lat, lng = coord
 
@@ -134,7 +125,9 @@ class ExampleSearchIteration:
                 current = {
                     "page_url": page_url if page_url else MISSING,
                     "location_name": MISSING,
-                    "street_address": street_address if street_address else MISSING,
+                    "street_address": fix_comma(street_address)
+                    if street_address
+                    else MISSING,
                     "city": city if city else MISSING,
                     "state": state if state else MISSING,
                     "zip_postal": zip_postal if zip_postal else MISSING,
@@ -173,7 +166,7 @@ class ExampleSearchIteration:
                 yield SgRecord(
                     page_url=foundstuff[storeno]["page_url"],
                     location_name=foundstuff[storeno]["location_name"],
-                    street_address=foundstuff[storeno]["street_address"],
+                    street_address=fix_comma(foundstuff[storeno]["street_address"]),
                     city=foundstuff[storeno]["city"],
                     state=foundstuff[storeno]["state"],
                     zip_postal=foundstuff[storeno]["zip_postal"],
@@ -184,18 +177,18 @@ class ExampleSearchIteration:
                     latitude=foundstuff[storeno]["latitude"],
                     longitude=foundstuff[storeno]["longitude"],
                     locator_domain=foundstuff[storeno]["locator_domain"],
-                    hours_of_operation=foundstuff[storeno][
-                        "hours_of_operation"
-                    ].replace(
-                        "Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed",
-                        "<MISSING>",
-                    ),
+                    hours_of_operation=foundstuff[storeno]["hours_of_operation"],
                     raw_address=foundstuff[storeno]["raw_address"],
                 )
+        else:
+            foundNothing = True
         this = []
         this = list(firstfound.symmetric_difference(secondfound))
         if len(this) > 0:
             for storenum in this:
+                search.found_location_at(
+                    foundstuff[storenum]["latitude"], foundstuff[storenum]["longitude"]
+                )
                 yield SgRecord(
                     page_url=foundstuff[storenum]["page_url"],
                     location_name=foundstuff[storenum]["location_name"],
@@ -210,196 +203,12 @@ class ExampleSearchIteration:
                     latitude=foundstuff[storenum]["latitude"],
                     longitude=foundstuff[storenum]["longitude"],
                     locator_domain=foundstuff[storenum]["locator_domain"],
-                    hours_of_operation=foundstuff[storenum][
-                        "hours_of_operation"
-                    ].replace(
-                        "Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed",
-                        "<MISSING>",
-                    ),
+                    hours_of_operation=foundstuff[storenum]["hours_of_operation"],
                     raw_address=foundstuff[storenum]["raw_address"],
                 )
-
-
-def get_links(url, http):
-    try:
-        if url["count"] == "(1)":
-            return (False, [url])
-        urlB = "https://restaurants.subway.com/"
-        headers = {}
-        headers[
-            "user-agent"
-        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        logzilla.info(f"{url} <- in get-links")
-        index = SgRequests.raise_on_err(
-            http.get(urlB + url["link"], headers=headers)
-        ).text
-        data = b4(index, "lxml")
-        data = data.find(
-            "ul", {"class": lambda x: x and "Directory-list" in x}
-        ).find_all("li")
-        index = []
-        for link in data:
-            z = link.find("a", {"href": True, "data-count": True})
-            if z:
-                index.append(
-                    {
-                        "link": link.find("a", {"href": True})["href"],
-                        "count": z["data-count"],
-                    }
-                )
-            else:
-                index.append(
-                    {"link": link.find("a", {"href": True})["href"], "count": "idk"}
-                )
-        if url["count"] != "idk":
-            return (False, index)
         else:
-            return (True, index)
-    except Exception:
-        return (False, [])
-
-
-final = []
-
-
-def recu(index, http):
-    global final
-    for i in index:
-        data = get_links(i, http)
-        if data[0]:
-            recu(data[1], http)
-        else:
-            for j in data[1]:
-                if j["count"] != "idk" and j["count"] != "(1)":
-                    recu([j], http)
-                else:
-                    final.append(j)
-
-
-def grab_initial(http, state):
-    global final
-    index = get_links({"link": "", "count": "idk"}, http)
-    recu(index[1], http)
-    return final
-
-
-def parse_loc(soup, url):
-    try:
-        page_url = url
-    except Exception:
-        page_url = "<MISSING>"
-
-    try:
-        street_address = soup.find("meta", {"itemprop": "streetAddress"})["content"]
-    except Exception:
-        street_address = "<MISSING>"
-
-    try:
-        city = soup.find("meta", {"itemprop": "addressLocality"})["content"]
-    except Exception:
-        city = "<MISSING>"
-
-    try:
-        state = soup.find(
-            "abbr", {"class": lambda x: x and "state" in x, "itemprop": "addressRegion"}
-        ).text.strip()
-    except Exception:
-        state = "<MISSING>"
-
-    try:
-        country_code = soup.find(
-            "abbr",
-            {"class": lambda x: x and "country" in x, "itemprop": "addressCountry"},
-        ).text.strip()
-    except Exception:
-        country_code = "<MISSING>"
-
-    try:
-        zip_postal = soup.find(
-            "span", {"class": "c-address-postal-code", "itemprop": "postalCode"}
-        ).text.strip()
-    except Exception:
-        zip_postal = "<MISSING>"
-
-    try:
-        scripts = soup.find_all("script", {"type": "text/javascript"})
-        thescript = None
-        for i in scripts:
-            if "storeID" in i.text:
-                thescript = i.text
-        store_number = thescript.split('storeID"')[1]
-        store_number = store_number.split('"', 1)[1]
-        store_number = store_number.split('"', 1)[0]
-    except Exception:
-        store_number = "<MISSING>"
-
-    try:
-        longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
-    except Exception:
-        longitude = "<MISSING>"
-
-    try:
-        latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
-    except Exception:
-        latitude = "<MISSING>"
-
-    try:
-        hours = soup.find("table", {"class": "c-hours-details"}).find_all(
-            "tr", {"itemprop": "openingHours", "content": True}
-        )
-        li = []
-        for i in hours:
-            li.append(i["content"])
-        hours = "; ".join(li)
-    except Exception:
-        hours = "<MISSING>"
-
-    try:
-        phone = soup.find(
-            "div", {"class": lambda x: x and "hone" in x, "itemprop": "telephone"}
-        ).text.strip()
-    except Exception:
-        phone = "<MISSING>"
-
-    return SgRecord(
-        page_url=page_url,
-        location_name="<MISSING>",
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type="<MISSING>",
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain="https://restaurants.subway.com/",
-        hours_of_operation=hours,
-        raw_address="<MISSING>",
-    )
-
-
-def fetch_main(state, http):
-    urlB = "https://restaurants.subway.com/"
-    headers = {}
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-
-    for next_r in state.request_stack_iter():
-        logzilla.info(f"{urlB + next_r.url} <- INDEX!")
-        try:
-            index = SgRequests.raise_on_err(
-                http.get(urlB + next_r.url, headers=headers)
-            ).text
-        except Exception as e:
-            if "404" in str(e) or "503" in str(e):
-                continue
-            else:
-                raise str(e)
-        data = b4(index, "lxml")
-        yield parse_loc(data, str(urlB + next_r.url))
+            if foundNothing:
+                search.found_nothing()
 
 
 def dattafetch(search, http1):
@@ -409,10 +218,11 @@ def dattafetch(search, http1):
 
 
 if __name__ == "__main__":
-
     state = CrawlStateSingleton.get_instance()
-
     tocrawl = [
+        "kz",
+        "ir",
+        "sa",
         "bb",
         "bd",
         "bf",
@@ -449,7 +259,6 @@ if __name__ == "__main__":
         "fm",
         "fo",
         "ga",
-        "gb",
         "gd",
         "gf",
         "gg",
@@ -540,8 +349,7 @@ if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search = DynamicGeoSearch(
         country_codes=tocrawl,
-        granularity=Grain_8(),
-        expected_search_radius_miles=8,
+        expected_search_radius_miles=None,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
@@ -554,6 +362,12 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        with SgRequests() as http1:
+        with SgRequests(
+            proxy_escalation_order=[
+                None,
+                None,
+                "http://groups-SHADER+BUYPROXIES94952:{}@proxy.apify.com:8000/",
+            ]
+        ) as http1:
             for rec in dattafetch(search, http1):
                 writer.write_row(rec)

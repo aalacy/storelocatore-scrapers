@@ -41,10 +41,7 @@ def fetch_data():
         location_name = row.find("h6").text.replace("\u200b", "").strip()
         addr = row.find("a", {"href": re.compile(r"\/maps\/place.*")})
         street_address = addr.text.strip()
-        if "city" in location_name:
-            city = location_name.replace("city", "")
-        else:
-            city = MISSING
+        city = location_name.title().replace("City", "")
         state = MISSING
         zip_postal = MISSING
         phone = row.find("a", {"href": re.compile(r"tel.*")}).text.strip()

@@ -15,7 +15,7 @@ headers = {
 
 locator_domain = "https://www.officedepot.com/"
 base_url = 'https://storelocator.officedepot.com/ajax?&xml_request=<request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>500</limit><geolocs><geoloc><addressline>'
-days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+days = ["Mon", "Tues", "Wed", "Thur", "Fri", "Sat", "Sun"]
 
 
 def fetch_data(search):

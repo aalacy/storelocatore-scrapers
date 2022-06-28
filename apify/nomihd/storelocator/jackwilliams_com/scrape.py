@@ -6,97 +6,97 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 
 website = "jackwilliams.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "authority": "jackwilliams.com",
-    "sec-ch-ua": '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"',
-    "x-newrelic-id": "VgEBU1FSCBAFU1NbBQICX1U=",
-    "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     "accept": "*/*",
-    "x-requested-with": "XMLHttpRequest",
-    "sec-ch-ua-platform": '"Windows"',
-    "origin": "https://jackwilliams.com",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-dest": "empty",
-    "referer": "https://jackwilliams.com/default/location",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "origin": "https://jackwilliams.com",
+    "referer": "https://jackwilliams.com/",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
+    "x-newrelic-id": "VgEBU1FSCBAFU1NbBQICX1U=",
+    "x-requested-with": "XMLHttpRequest",
+}
+
+data = {
+    "currentUrl": "https://jackwilliams.com/",
 }
 
 
 def fetch_data():
     # Your scraper here
     with SgRequests() as session:
-        search_res = session.get(
-            "https://jackwilliams.com/default/location", headers=headers
+        search_res = session.post(
+            "https://jackwilliams.com/default/iwd_sa/ajax/addressSearch",
+            headers=headers,
+            data=data,
         )
         search_sel = lxml.html.fromstring(search_res.text)
 
-        store_list = search_sel.xpath(
-            '//a[contains(@href,"https://jackwilliams.com/default/location/")]/@href'
-        )
+        stores = search_sel.xpath('//div[@class="amlocator-store-information"]')[1:]
 
-        for store_url in store_list:
+        for store in stores:
 
-            page_url = store_url
+            page_url = "".join(store.xpath(".//a[1]/@href")[0]).strip()
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
-            store_json = json.loads(
-                "".join(
-                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                ).strip()
-            )
-
             locator_domain = website
-            location_name = "".join(
-                store_sel.xpath('//div[@class="amlocator-block"]/h2/text()')
+            location_name = "".join(store.xpath(".//a[1]/text()")).strip()
+
+            street_address = "".join(
+                store_sel.xpath(
+                    '//div[@class="store-address"]/span[@itemprop="streetAddress"]/text()'
+                )
             ).strip()
-
-            street_address = store_json["address"]["streetAddress"]
-
-            city = store_json["address"]["addressLocality"]
-            raw_address = store_sel.xpath('//p[@class="amlocator-text -bold"]/text()')
-            state = (
-                raw_address[-1]
-                .split(",")[-1]
-                .strip()
-                .encode("ascii", "replace")
-                .decode("utf-8")
-                .replace("?", " ")
-                .strip()
-                .split(" ")[0]
-                .strip()
-            )
-            store_number = store_json["address"]["addressRegion"]
-            zip = store_json["address"]["postalCode"]
+            city = "".join(
+                store_sel.xpath(
+                    '//div[@class="store-address"]/span[@itemprop="addressLocality"]/text()'
+                )
+            ).strip()
+            state = "".join(
+                store_sel.xpath(
+                    '//div[@class="store-address"]/span[@itemprop="addressRegion"]/text()'
+                )
+            ).strip()
+            zip = "".join(
+                store_sel.xpath(
+                    '//div[@class="store-address"]/span[@itemprop="postalCode"]/text()'
+                )
+            ).strip()
+            store_number = "<MISSING>"
             country_code = "US"
 
-            phone = store_json["telephone"]
+            phone = "".join(
+                store_sel.xpath('//div[@class="location-phone-container"]//text()')
+            ).strip()
 
             location_type = "<MISSING>"
-            hours = store_json["openingHoursSpecification"]
-            hours_list = []
-            for hour in hours:
-                opens = hour["opens"]
-                closes = hour["closes"]
-                if isinstance(hour["dayOfWeek"], list):
-                    days_list = hour["dayOfWeek"]
-                    for day in days_list:
-                        hours_list.append(day + ": " + opens + " - " + closes)
-                else:
-                    day = hour["dayOfWeek"]
-                    hours_list.append(day + ": " + opens + " - " + closes)
-
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = "; ".join(
+                list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[@class="store-hours"]/div[1]/text()'
+                            )
+                        ],
+                    )
+                )
+            ).strip()
             latitude, longitude = (
-                store_json["geo"]["latitude"],
-                store_json["geo"]["longitude"],
+                store_req.text.split("Lat:")[1].strip().split(",")[0].strip(),
+                store_req.text.split("Lng:")[1].strip().split(",")[0].strip(),
             )
 
             yield SgRecord(

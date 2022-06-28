@@ -1,8 +1,9 @@
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup
 
 session = SgRequests()
 headers = {
@@ -20,7 +21,7 @@ def fetch_data():
 
         store = loc["ID"]
         title = loc["na"]
-        link = loc["gu"]
+
         lat = loc["lat"]
         longt = loc["lng"]
         street = loc["st"]
@@ -35,6 +36,55 @@ def fetch_data():
             phone = loc["te"].strip()
         except:
             phone = "<MISSING>"
+        hours = "<MISSING>"
+        try:
+            link = loc["we"]
+            if "search" not in link:
+                chk = ""
+                try:
+                    chk = link.split("://www.", 1)[1].split(".", 1)[0]
+                except:
+                    chk = link.split("://", 1)[1].split(".", 1)[0]
+                if "earthwisepet" in chk:
+                    pass
+                else:
+                    link = link + chk
+                link = link.replace(".com", ".com/").replace(".com//", ".com/").lower()
+            else:
+
+                link = "https://shop.petstuff.com/" + city.replace(" ", "-")
+            link = link.replace("earthwisepet", "@earthwisepet")
+            link = link.replace(".@earthwisepet", ".earthwisepet")
+            link = link.replace("@earthwisepet", "")
+            if ".earthwisepet.com" not in link.lower().replace(
+                "https://www.earthwisepet", ""
+            ):
+                link = link.replace(
+                    "https://www.earthwisepet",
+                    "https://" + link.split("/")[-1] + ".earthwisepet",
+                )
+            link = link.lower()
+
+            try:
+
+                r = session.get(link, headers=headers)
+
+                soup = BeautifulSoup(r.text, "html.parser")
+                hours = (
+                    soup.find("div", {"class": "store-info-body"})
+                    .text.replace("The Store is open on :", "")
+                    .replace("\n", " ")
+                    .strip()
+                )
+
+                try:
+                    hours = hours.split(street.split(" ", 1)[0], 1)[0]
+                except:
+                    pass
+            except:
+                hours = "<MISSING>"
+        except:
+            link = "<MISSING>"
         yield SgRecord(
             locator_domain="https://earthwisepet.com/",
             page_url=link,
@@ -49,14 +99,14 @@ def fetch_data():
             location_type="<MISSING>",
             latitude=str(lat),
             longitude=str(longt),
-            hours_of_operation="<MISSING>",
+            hours_of_operation=hours,
         )
 
 
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
 
         results = fetch_data()

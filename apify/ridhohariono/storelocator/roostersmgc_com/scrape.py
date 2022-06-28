@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 DOMAIN = "roostersmgc.net"
 BASE_URL = "https://roostersmgc.com"
@@ -63,7 +63,11 @@ def fetch_data():
             if not url["href"]:
                 continue
             store = pull_content(page_url)
-            location_name = store.find("h1", {"class": "sub-brand"}).text.strip()
+
+            try:
+                location_name = store.find("h1", {"class": "sub-brand"}).text.strip()
+            except:
+                continue
             raw_address = (
                 store.find("span", {"class": "store-address"})
                 .get_text(strip=True, separator=" ")
@@ -87,7 +91,10 @@ def fetch_data():
                 .rstrip(",")
             )
             location_type = MISSING
-            store_number = store.find("div", id="book-online").find("a")["data-id"]
+            try:
+                store_number = store.find("div", id="book-online").find("a")["data-id"]
+            except AttributeError:
+                store_number = "".join(page_url).split("-")[-1].split(".")[0].strip()
             latitude = MISSING
             longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))

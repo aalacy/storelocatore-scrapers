@@ -1,27 +1,28 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
     session = SgRequests()
     r = session.get("https://www.morningsunhealthfoods.ca/locations")
     tree = html.fromstring(r.text)
-    for i in range(1, 35):
-        key = (
-            f"{i}."
-            + "".join(tree.xpath('//script[contains(text(), "static/js/")]/text()'))
-            .split(f'{i}:"')[2]
-            .split('"')[0]
-            .strip()
-        )
-        api_url = f"https://www.morningsunhealthfoods.ca/static/js/{key}.chunk.js"
-        session = SgRequests()
+    block_key = (
+        "".join(tree.xpath('//script[contains(text(), "static/js")]/text()'))
+        .split("static/js/")[1]
+        .split("+{")[1]
+        .split("}")[0]
+        .strip()
+    )
+    keys = block_key.split(",")
+    for k in keys:
 
+        key = str(k).replace(":", ".").replace('"', "").strip()
+        api_url = f"https://www.morningsunhealthfoods.ca/static/js/{key}.chunk.js"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
         }
@@ -35,6 +36,7 @@ def fetch_data(sgw: SgWriter):
             )
         except:
             continue
+
         js = jsblock.split("{geometry:")
         for j in js:
             if j == "[":
