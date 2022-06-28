@@ -45,6 +45,18 @@ def fetch_data():
             street_address = street_address.replace("Tunisia", "").strip()
             if street_address and street_address.isdigit():
                 street_address = _v(_["address"])
+
+            zip_postal = addr.postcode
+            if street_address:
+                if "2111" in street_address:
+                    street_address = street_address.replace("2111", "").strip()
+                    zip_postal = "2111"
+                elif "4116" in street_address:
+                    street_address = street_address.replace("4116", "").strip()
+                    zip_postal = "4116"
+                elif "4060" in street_address:
+                    street_address = street_address.replace("4060", "").strip()
+                    zip_postal = "4060"
             city = addr.city
             if city and city.isdigit():
                 city = ""
@@ -57,12 +69,13 @@ def fetch_data():
                 + _["closinghour"]
             )
             yield SgRecord(
+                store_number=_["classement"],
                 page_url=base_url,
                 location_name=_["name"],
                 street_address=street_address,
                 city=city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 latitude=_["lat"],
                 longitude=_["lang"],
                 country_code="Tunisia",
