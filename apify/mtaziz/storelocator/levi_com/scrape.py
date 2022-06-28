@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -87,9 +86,7 @@ def get_loc_urls():
 
 
 def get_list_of_countries_global():
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgChrome(is_headless=True) as driver:
         driver.get(GLOBAL_LOCATION_URL)
         driver.implicitly_wait(20)
         time.sleep(10)

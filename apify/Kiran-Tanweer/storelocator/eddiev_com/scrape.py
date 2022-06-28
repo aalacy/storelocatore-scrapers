@@ -1,14 +1,16 @@
 from bs4 import BeautifulSoup
-import csv
-import time
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from datetime import datetime as dt
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import lxml.html
 
 logger = SgLogSetup().get_logger("eddiev_com")
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 headers = {
     "authority": "www.eddiev.com",
@@ -30,64 +32,21 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
-    data = []
-    linklist = []
     url = "https://www.eddiev.com/locations/all-locations"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    storelist = soup.find("div", {"class": "cols"})
-    more_link = storelist.findAll("div", {"class", "more_links"})
-    for link_div in more_link:
-        link = link_div.find("a", {"id": "locDetailsId"})["href"]
-        linklist.append(link)
-    linklist.append("/locations/fl/fort-lauderdale/fort-lauderdale/8528")
+    r = session.get(url, headers=headers)
+    stores_sel = lxml.html.fromstring(r.text)
+    linklist = stores_sel.xpath('//input[@id="redirectLocationUrl"]/@value')
     for link in linklist:
         link = "https://www.eddiev.com" + link
-        p = session.get(link, headers=headers, verify=False)
+        logger.info(link)
+        p = session.get(link, headers=headers)
         bs = BeautifulSoup(p.text, "html.parser")
+        comingsoon = bs.find("div", {"class": "loc_span opendt"})
+        if comingsoon:
+            if "OPENING" in comingsoon.text.strip().upper():
+                continue
+
         left_bar = bs.find("div", {"class": "left-bar"})
         title = left_bar.find("h1", {"class": "style_h1"}).text.strip()
         addr_div = left_bar.find("p")
@@ -124,32 +83,38 @@ def fetch_data():
         lng = script.split('"longitude":"')[1].split('"')[0]
         storeid = link.split("/")[-1]
 
-        data.append(
-            [
-                "https://www.eddiev.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                storeid,
-                phone,
-                "<MISSING>",
-                lat,
-                lng,
-                hrs,
-            ]
+        yield SgRecord(
+            locator_domain="https://www.eddiev.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street,
+            city=city,
+            state=state,
+            zip_postal=pcode,
+            country_code="US",
+            store_number=storeid,
+            phone=phone,
+            location_type="<MISSING>",
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hrs,
         )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

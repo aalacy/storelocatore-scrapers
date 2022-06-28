@@ -1,82 +1,29 @@
-import csv
-import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://tonysaccos.com"
-    api_url = "https://tonysaccos.com/locations"
+    page_url = "https://tonysaccos.com/locations"
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-    r = session.get(api_url)
+
+    r = session.get(page_url)
     tree = html.fromstring(r.text)
     block = tree.xpath(
-        "//div[./div[contains(@class, 'wpb_column vc_column_container vc_col-sm-6 vc_col-has-fill')]]"
+        "//div[./div[contains(@class, 'wpb_column vc_column_container vc_col-sm-6')]]"
     )
     for b in block:
 
         ad = b.xpath(".//h3/span//text()")
-
+        ad = list(filter(None, [b.strip() for b in ad]))
         phone = "".join(ad[-1]).replace("Phone:", "").strip()
-        ad = (
+        adr = (
             " ".join(ad)
             .split("Tony Sacco’s")[1]
             .split("Phone")[0]
@@ -84,48 +31,43 @@ def fetch_data():
             .strip()
         )
 
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        a = parse_address(International_Parser(), adr)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
-        city = a.get("city")
-        state = a.get("state")
-        location_name = "".join(b.xpath(".//h2/span/text()"))
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
+        city = a.city or "<MISSING>"
+        location_name = "".join(b.xpath(".//h2/span/text()"))
         text = "".join(b.xpath(".//iframe/@src"))
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-        location_type = "<MISSING>"
         hours_of_operation = " ".join(b.xpath(".//span[contains(text(), 'pm')]/text()"))
-        postal = a.get("postal")
-        page_url = "https://tonysaccos.com/locations"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=adr,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

@@ -10,7 +10,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     start_url = "https://www.teamwireless.com/locations/"
     domain = "teamwireless.com"
     hdr = {

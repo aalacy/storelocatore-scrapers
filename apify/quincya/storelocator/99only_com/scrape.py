@@ -1,135 +1,88 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import time
-import re
-import json
 
-from random import randint
+from sgrequests import SgRequests
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('99only_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def fetch_data(sgw: SgWriter):
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    base_link = "https://99only.com/store-locator/%7B%22lat%22:34.895045,%22lng%22:-117.007349%7D/%7B%22lat%22:34.9592083,%22lng%22:-116.419389%7D/%7B%22south%22:23.17077877484582,%22west%22:-167.896020875,%22north%22:45.15888890484582,%22east%22:-66.118677125%7D?_format=json"
+    locator_domain = "https://99only.com"
+
+    with SgRequests() as http:
+        stores = http.get(base_link, headers=headers).json()
+
+        for store in stores:
+            location_name = store["name"]
+            latitude = store["lat"]
+            longitude = store["lng"]
+            store_number = store["num"]
+
+            item = BeautifulSoup(store["rendered"], "lxml")
+            link = locator_domain + item.find(class_="overlay-link")["href"]
+
+            raw_address = list(item.find(class_="field").stripped_strings)
+            street_address = (
+                " ".join(raw_address[:-1])
+                .replace("Suite 3 Suite 3 Suite 3", "Suite 3")
+                .replace("Suite 108 Suite 108", "Suite 108")
+            )
+            if street_address == "undefined":
+                street_address = location_name.split("at")[1].strip()
+
+            city_line = raw_address[-1].strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[-1].strip().split()[0].strip()
+            zip_code = city_line[-1].strip().split()[1].strip()
+            country_code = "US"
+            phone = ""
+            location_type = ""
+            req = http.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+
+            try:
+                hours_of_operation = (
+                    " ".join(
+                        list(
+                            base.find(class_="store-hours-list").table.stripped_strings
+                        )[1:]
+                    )
+                    .replace("Hours", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = (
+                    " ".join(list(base.find(class_="hours").stripped_strings))
+                    .replace("Hours", "")
+                    .strip()
+                )
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-
-
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
-
-def fetch_data():
-	
-	base_link = "https://99only.com/stores/near-me"
-
-	driver = get_driver()
-	time.sleep(2)
-
-	driver.get(base_link)
-	time.sleep(randint(8,10))
-
-	all_links = []
-
-	for i in range(8):
-		# Try to zoom out to load all results
-		try:
-			zoom_out = driver.find_element_by_xpath("//button[(@aria-label='Zoom out')]")
-			driver.execute_script('arguments[0].click();', zoom_out)
-			time.sleep(randint(i+3,i+5))
-		except:
-			pass
-
-	time.sleep(randint(5,8))
-	results = driver.find_elements_by_css_selector('.overlay-link.view-store-store-tile')
-
-	for result in results:
-		link = result.get_attribute('href')
-
-		if link not in all_links:
-			all_links.append(link)
-
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
-
-	session = SgRequests()
-
-	data = []
-	total_links = len(all_links)
-	for i, link in enumerate(all_links):
-		logger.info("Link %s of %s" %(i+1,total_links))
-		time.sleep(randint(1,2))
-		req = session.get(link, headers = HEADERS)
-
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(link)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-
-		script_str = str(item.find('script', attrs={'type': 'application/ld+json'}))
-		script = script_str[script_str.find("["):script_str.rfind("]")+1]
-		js = json.loads(script)[0]
-
-		locator_domain = "99only.com"
-		location_name = item.find('h1').text.strip()
-		# logger.info(location_name)
-
-		street_address = js['address']['streetAddress']
-		city = js['address']['addressLocality']
-		state = js['address']['addressRegion']
-		zip_code = js['address']['postalCode']
-
-		country_code = "US"
-		store_number = item.find(class_="store-number").text.replace("#","").strip()
-		phone = "<MISSING>"
-
-		location_type = "<MISSING>"
-
-		raw_hours = item.find(class_="store-hours-list").find_all('tr')[1:]
-		hours = ""
-		hours_of_operation = ""
-
-		try:
-			for hour in raw_hours:
-				hours = hours + " " + hour.text.replace("\t","").replace("\n"," ").strip()
-			hours_of_operation = (re.sub(' +', ' ', hours)).strip()
-		except:
-			pass
-		if not hours_of_operation:
-			hours_of_operation = "<MISSING>"
-
-		latitude = js['geo']['latitude']
-		longitude = js['geo']['longitude']
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	
-	try:
-		driver.close()
-	except:
-		pass
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
