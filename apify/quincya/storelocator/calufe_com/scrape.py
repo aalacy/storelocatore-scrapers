@@ -4,7 +4,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
 
         raw_data = list(item.find_all("p")[-1].stripped_strings)
         raw_address = " ".join(raw_data[:-3])
+        if not raw_address:
+            raw_address = raw_data[0]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         city = addr.city
@@ -48,17 +50,27 @@ def fetch_data(sgw: SgWriter):
             city = "Veracruz"
         if "Carmen" in location_name:
             city = location_name
-        if "Obregón" in street_address:
-            city = "Obregón"
+        try:
+            if "Obregón" in street_address:
+                city = "Obregón"
+        except:
+            pass
         if not city:
-            city = raw_data[2].split(",")[0]
+            try:
+                city = raw_data[2].split(",")[0]
+            except:
+                city = ""
         if "Novillero" in city:
             city = "Veracruz"
+        if state:
+            state = state.replace(".", "")
 
         country_code = ""
         store_number = ""
         location_type = ""
         phone = raw_data[-2].replace("Tel.", "").strip()
+        if "," in phone:
+            phone = ""
         hours_of_operation = raw_data[-1]
         if ":0" in raw_data[-2]:
             hours_of_operation = " ".join(raw_data[-2:])
@@ -93,5 +105,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
     fetch_data(writer)
