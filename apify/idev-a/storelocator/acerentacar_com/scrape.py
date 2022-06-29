@@ -29,21 +29,22 @@ def fetch_data():
                 continue
             hours = []
             hr = _.get("locationHours", {})
-            for day in days:
-                day = day.lower()
-                times = None
-                if hr.get(f"{day}TwentyFour"):
-                    hours.append(f"{day}: 24 Hours")
-                else:
-                    if hr.get(f"{day}Closed"):
-                        times = "closed"
+            if hr:
+                for day in days:
+                    day = day.lower()
+                    times = None
+                    if hr.get(f"{day}TwentyFour"):
+                        hours.append(f"{day}: 24 Hours")
                     else:
-                        start = hr.get(f"{day}Open")
-                        end = hr.get(f"{day}Close")
-                        if start:
-                            times = f"{_t(start)} - {_t(end)}"
-                    if times:
-                        hours.append(f"{day}: {times}")
+                        if hr.get(f"{day}Closed"):
+                            times = "closed"
+                        else:
+                            start = hr.get(f"{day}Open")
+                            end = hr.get(f"{day}Close")
+                            if start:
+                                times = f"{_t(start)} - {_t(end)}"
+                        if times:
+                            hours.append(f"{day}: {times}")
 
             zip_postal = _["postalCode"]
             if zip_postal == "0000" or zip_postal == "000000" or zip_postal == "00000":
@@ -66,7 +67,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
