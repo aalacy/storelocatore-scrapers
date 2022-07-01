@@ -31,7 +31,7 @@ locator = "https://local.fedex.com/"
 max_workers = 32
 
 
-def fetchConcurrentSingle(loc, url):
+def fetchConcurrentSingle(loc, url, http):
     page_url = urljoin(url, loc.a["href"])
     logger.info(page_url)
     if loc.select_one("div.js-hours-today-teaser-placeholder"):
@@ -40,7 +40,7 @@ def fetchConcurrentSingle(loc, url):
         ]
     else:
         entity_id = page_url.split("/")[-1]
-    rr_url = request_with_retries(json_url.format(entity_id))
+    rr_url = request_with_retries(http, json_url.format(entity_id))
     if rr_url.status_code != 200:
         return None
     res = rr_url.json()
@@ -50,7 +50,7 @@ def fetchConcurrentSingle(loc, url):
     return store, page_url
 
 
-def fetchConcurrentList(list, url, occurrence=max_workers):
+def fetchConcurrentList(list, url, http, occurrence=max_workers):
     output = []
     total = len(list)
     reminder = math.floor(total / 50)
@@ -61,7 +61,7 @@ def fetchConcurrentList(list, url, occurrence=max_workers):
     with ThreadPoolExecutor(
         max_workers=occurrence, thread_name_prefix="fetcher"
     ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list, len(list) * [url]):
+        for result in executor.map(fetchConcurrentSingle, list, len(list) * [url], len(list) * [http]):
             if result:
                 count = count + 1
                 if count % reminder == 0:
@@ -70,16 +70,16 @@ def fetchConcurrentList(list, url, occurrence=max_workers):
     return output
 
 
-def fetchConcurrentItem(loc, url):
+def fetchConcurrentItem(loc, url, http):
     dir_url = urljoin(url, loc["href"])
     logger.info(f"{dir_url}")
-    rr_dir = request_with_retries(dir_url)
+    rr_dir = request_with_retries(http, dir_url)
     if rr_dir.status_code != 200:
         return None
     return bs(rr_dir.text, "lxml"), dir_url, loc
 
 
-def fetchConcurrentItems(list, url, occurrence=max_workers):
+def fetchConcurrentItems(list, url, http, occurrence=max_workers):
     output = []
     total = len(list)
     reminder = math.floor(total / 50)
@@ -90,7 +90,7 @@ def fetchConcurrentItems(list, url, occurrence=max_workers):
     with ThreadPoolExecutor(
         max_workers=occurrence, thread_name_prefix="fetcher"
     ) as executor:
-        for result in executor.map(fetchConcurrentItem, list, len(list) * [url]):
+        for result in executor.map(fetchConcurrentItem, list, len(list) * [url], len(list) * [http]):
             if result:
                 count = count + 1
                 if count % reminder == 0:
@@ -99,9 +99,8 @@ def fetchConcurrentItems(list, url, occurrence=max_workers):
     return output
 
 
-def request_with_retries(url):
-    with SgRequests() as session:
-        return session.get(url, headers=header1)
+def request_with_retries(session, url):
+    return session.get(url, headers=header1)
 
 
 def _time(val):
@@ -189,31 +188,31 @@ def fetch_data():
         for country_block in country_blocks:
             country_links = country_block.select("a")
             for country_bs, country_url, country_link in fetchConcurrentItems(
-                country_links, locator
+                country_links, locator, http
             ):
                 dir_items = country_bs.select("ul.Directory-listLinks li a")
                 for rr_bs, dir_url, dir_link in fetchConcurrentItems(
-                    dir_items, country_url
+                    dir_items, country_url, http
                 ):
                     sec_dir_items = rr_bs.select("ul.Directory-listLinks li a")
                     if not sec_dir_items:
                         # look for location items
                         locations = rr_bs.select("ul.Directory-listTeasers li")
                         logger.info(f"[{country_link.text}] found: {len(locations)}")
-                        for store, page_url in fetchConcurrentList(locations, dir_url):
+                        for store, page_url in fetchConcurrentList(locations, dir_url, http):
                             yield _d(store, page_url)
                     else:
                         for (
                             sec_rr_bs,
                             sec_dir_url,
                             sec_dir_link,
-                        ) in fetchConcurrentItems(sec_dir_items, country_url):
+                        ) in fetchConcurrentItems(sec_dir_items, country_url, http):
                             locations = sec_rr_bs.select("ul.Directory-listTeasers li")
                             logger.info(
                                 f"[{country_link.text}] found: {len(locations)}"
                             )
                             for store, page_url in fetchConcurrentList(
-                                locations, sec_dir_url
+                                locations, sec_dir_url, http
                             ):
                                 yield _d(store, page_url)
 
