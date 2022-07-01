@@ -61,7 +61,9 @@ def fetchConcurrentList(list, url, http, occurrence=max_workers):
     with ThreadPoolExecutor(
         max_workers=occurrence, thread_name_prefix="fetcher"
     ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list, len(list) * [url], len(list) * [http]):
+        for result in executor.map(
+            fetchConcurrentSingle, list, len(list) * [url], len(list) * [http]
+        ):
             if result:
                 count = count + 1
                 if count % reminder == 0:
@@ -90,7 +92,9 @@ def fetchConcurrentItems(list, url, http, occurrence=max_workers):
     with ThreadPoolExecutor(
         max_workers=occurrence, thread_name_prefix="fetcher"
     ) as executor:
-        for result in executor.map(fetchConcurrentItem, list, len(list) * [url], len(list) * [http]):
+        for result in executor.map(
+            fetchConcurrentItem, list, len(list) * [url], len(list) * [http]
+        ):
             if result:
                 count = count + 1
                 if count % reminder == 0:
@@ -199,7 +203,9 @@ def fetch_data():
                         # look for location items
                         locations = rr_bs.select("ul.Directory-listTeasers li")
                         logger.info(f"[{country_link.text}] found: {len(locations)}")
-                        for store, page_url in fetchConcurrentList(locations, dir_url, http):
+                        for store, page_url in fetchConcurrentList(
+                            locations, dir_url, http
+                        ):
                             yield _d(store, page_url)
                     else:
                         for (
