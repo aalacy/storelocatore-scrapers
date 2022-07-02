@@ -1,4 +1,4 @@
-import dirtyjson as json
+import json
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -81,7 +81,8 @@ def _d(page_url, res, soup, location_type, session):
             if soup.select_one("div.store p"):
                 addr = list(soup.select_one("div.store p").stripped_strings)
             else:
-                soup = get_url(page_url, session)
+                response = session.get(page_url)
+                soup = bs(response.text, "lxml")
                 addr = list(soup.select_one("div.store p").stripped_strings)
 
             raw_address = " ".join(addr).replace("\n", "").replace("\r", "")
