@@ -7,16 +7,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import dirtyjson as json
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("specsavers")
 
@@ -31,21 +21,19 @@ base_url = "https://www.specsavers.se/hitta-till-din-butik/alla-butiker"
 
 
 def fetch_data():
-    with SgChrome(
-        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
-    ) as driver:
-        with SgRequests() as session:
+    with SgChrome() as driver:
+        with SgRequests(proxy_country="us") as session:
             driver.get(base_url)
             cookies = []
             for cookie in driver.get_cookies():
                 cookies.append(f"{cookie['name']}={cookie['value']}")
             _headers["cookie"] = "; ".join(cookies)
             soup = bs(driver.page_source, "lxml")
-            locations = soup.select("div.item-list ul a")
-            for link in locations:
-                page_url = (
-                    "https://www.specsavers.se/hitta-till-din-butik/" + link["href"]
-                )
+            locations = [
+                "https://www.specsavers.se/hitta-till-din-butik/" + link["href"]
+                for link in soup.select("div.item-list ul a")
+            ]
+            for page_url in locations:
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers).text
                 try:
