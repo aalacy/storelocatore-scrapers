@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup as bs
 from sgselenium import SgChrome
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 locator_domain = "https://telekom.me"
 base_url = "https://telekom.me/privatni-korisnici/korisnicka-zona/clanak/kako-do-nas"
