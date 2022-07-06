@@ -2,6 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgselenium import SgChrome
+from sgscrape.simple_utils import parallelize
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -30,6 +31,14 @@ locator_domain = "https://www.specsavers.nl"
 base_url = "https://www.specsavers.nl/winkelzoeker/winkeloverzicht"
 
 
+def reqs(link, http):
+    page_url = "https://www.specsavers.nl/winkelzoeker/" + link["href"]
+    logger.info(page_url)
+    res = http.get(page_url, headers=_headers).text
+
+    return res, page_url, link
+
+
 def fetch_data():
     with SgChrome() as driver:
         driver.get(base_url)
@@ -39,11 +48,15 @@ def fetch_data():
         _headers["cookie"] = "; ".join(cookies)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.item-list ul a")
-        for link in locations:
-            with SgRequests(proxy_country="us") as session:
-                page_url = "https://www.specsavers.nl/winkelzoeker/" + link["href"]
-                logger.info(page_url)
-                res = session.get(page_url, headers=_headers).text
+        with SgRequests(proxy_country="us") as session:
+            results = list(
+                parallelize(
+                    search_space=locations,
+                    fetch_results_for_rec=lambda r: reqs(r, session),
+                    max_threads=1,
+                )
+            )
+            for res, page_url, link in results:
                 sp1 = bs(res, "lxml")
                 if (
                     sp1.select_one("h1#page-title")
@@ -95,7 +108,7 @@ def fetch_data():
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
                     street_address=_addr[0].replace("\n", "").replace(",", " ").strip(),
-                    city=addr.city or sp1.h1.text.strip(),
+                    city=(addr.city or sp1.h1.text.strip()).replace("Me ", ""),
                     zip_postal=_addr[-2],
                     country_code="Netherlands",
                     phone=phone,
