@@ -1,2 +1,0 @@
---ignore GeoConsistencyValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 191 POI, but api has 298)

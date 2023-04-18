@@ -1,3 +1,0 @@
---ignore LatLngDuplicationValidator (Multiple POI same address)
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator (confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 145 POI, but found 444)

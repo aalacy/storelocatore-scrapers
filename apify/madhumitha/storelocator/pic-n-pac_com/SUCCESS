@@ -1,3 +1,0 @@
-VALIDATOR_VERSION: 0.0.68
-COMMAND: D:\odetta.ai\Safegraph\validate.py D:\Odetta.ai\Safegraph\My_work\pic-n-pac.com\data.csv
-PYTHON_VERSION: sys.version_info(major=3, minor=7, micro=1, releaselevel='final', serial=0)

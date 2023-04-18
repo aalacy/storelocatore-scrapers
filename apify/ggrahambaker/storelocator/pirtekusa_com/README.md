@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber --ignore GeoConsistencyValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 85 POI, but website has 104 POI)

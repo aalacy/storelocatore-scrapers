@@ -1,1 +1,0 @@
---ignore CountValidator (Filtered for only Edwards theaters)

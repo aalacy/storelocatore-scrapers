@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Validation expected 2989 POI, but your website has 3505)

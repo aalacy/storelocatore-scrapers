@@ -1,3 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore StoreNumberColumnValidator (Few missing store #)
---ignore StateLevelCountValidator --ignore LatLngDuplicationValidator (Confirmed on website)

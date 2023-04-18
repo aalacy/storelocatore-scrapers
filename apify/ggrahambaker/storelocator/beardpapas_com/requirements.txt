@@ -1,4 +1,0 @@
-sgselenium
-lxml==4.3.4
-usaddress==0.5.10
-sglogging

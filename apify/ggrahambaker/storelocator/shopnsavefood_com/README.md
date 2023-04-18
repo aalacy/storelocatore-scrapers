@@ -1,2 +1,0 @@
---ignore CountValidator --ignore StateLevelCountValidator (Expected 46 POI, but website has 75)
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator (Confirmed on website)

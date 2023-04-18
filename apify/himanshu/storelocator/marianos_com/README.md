@@ -1,1 +1,0 @@
---ignore CountValidator (Expected 129.5 POI, but website 45 POI)

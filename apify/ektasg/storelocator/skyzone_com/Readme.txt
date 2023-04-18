@@ -1,2 +1,0 @@
-python validate.py data.csv --ignore StreetAddressHasNumber --ignore GeoConsistencyValidator
-since for one psot code 96910    GU  ZIPCODE_NOT_IN_STATE this error was coming but it is present in the site and is valid postal code of the state GU.

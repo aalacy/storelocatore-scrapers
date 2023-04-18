@@ -1,5 +1,0 @@
-Not passing validation due to:
-1. bad zip code data on the website
-2. Number of POI not matching- validator has incorrect data
-3. Two addresses have no street number (data is like this on website)
-4. One zipcode is apparently not consistent with the state- bad data on website

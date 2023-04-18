@@ -1,3 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore GeoConsistencyValidator (Few state/zipcodes not matching)
---ignore CountValidator (Filtered for mfaoil locations only)

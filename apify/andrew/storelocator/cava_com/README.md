@@ -1,3 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore StoreNumberColumnValidator (Few store numbers missing)
---ignore CountValidator --ignore StateLevelCountValidator (validation expected 84 POI, but website has 104 POI)

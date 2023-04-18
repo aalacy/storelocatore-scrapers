@@ -1,1 +1,0 @@
---ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator --ignore StateLevelCountValidator --ignore LatLngDuplicationValidator --ignore CountValidator (Data confirmed from api)

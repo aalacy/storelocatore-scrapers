@@ -1,2 +1,0 @@
---ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore LatLngDuplicationValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Validation expected 3661 POI, but sgzip found 3265)

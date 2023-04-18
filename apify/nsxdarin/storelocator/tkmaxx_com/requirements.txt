@@ -1,4 +1,0 @@
-tenacity
-sgzip
-sglogging
-sgrequests

@@ -1,4 +1,0 @@
-sgrequests
-html5lib
-sgselenium
-bs4

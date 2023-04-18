@@ -1,2 +1,0 @@
---ignore CountValidator --ignore StateLevelCountValidator (Expected 20 POI, but website has 9 POI)
---ignore LatLngDuplicationValidator (Confirmed scraped correctly)

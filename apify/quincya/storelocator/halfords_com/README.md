@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator (Confirmed in API)
---ignore CountryCodeFillRateChecker --ignore GeoConsistencyValidator --ignore CountryValidator (UK)

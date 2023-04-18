@@ -1,4 +1,0 @@
-bs4
-beautifulsoup4==4.7.1
-sgrequests
-sgscrape

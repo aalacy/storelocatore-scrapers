@@ -1,1 +1,0 @@
---ignore CountValidator --ignore StateLevelCountValidator (Website says over 300 POI but on found 20)

@@ -1,1 +1,0 @@
---ignore StoreNumberColumnValidator --ignore CountryCodeFillRateChecker (Confirmed on website)

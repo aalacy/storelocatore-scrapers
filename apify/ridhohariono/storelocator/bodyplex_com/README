@@ -1,4 +1,0 @@
---ignore CountryValidator  (Puerto Rico address)
---ignore StreetAddressHasNumber (Puerto Rico address)
-
-Confirmed Scrape Correctly

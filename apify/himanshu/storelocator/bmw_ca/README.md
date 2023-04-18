@@ -1,1 +1,0 @@
---ignore StoreNumberColumnValidator (underscore in id)

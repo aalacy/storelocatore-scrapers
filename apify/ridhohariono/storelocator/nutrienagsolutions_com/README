@@ -1,3 +1,0 @@
---ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator 
-
-Confirmed scrape correctly

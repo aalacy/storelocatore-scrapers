@@ -1,4 +1,0 @@
-Not passing validation because of
-
-(1) some malformed postal codes in the source data, e.g.: https://bumpertobumper.ca/en//find-a-shop-by-city/manitoba/winnipeg postal_code is R2C which is invalid
-(2) validation script doesn't recognize some valid province names, e.g. Québec with accent

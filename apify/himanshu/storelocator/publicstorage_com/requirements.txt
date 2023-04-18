@@ -1,6 +1,0 @@
-lxml
-sgrequests
-bs4
-html5lib
-sglogging
-sgzip==0.0.55

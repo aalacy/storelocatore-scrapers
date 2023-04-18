@@ -1,2 +1,0 @@
---ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Validation expected 34 POI, but website has 52 POI)

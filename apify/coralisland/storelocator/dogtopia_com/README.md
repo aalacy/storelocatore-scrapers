@@ -1,2 +1,0 @@
--ignore CountValidator (Validation expected 96 POI, but api has 129 POI)
---ignore StoreNumberColumnValidator (Website data error)

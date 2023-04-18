@@ -1,5 +1,0 @@
-sgrequests
-beautifulsoup4==4.7.1
-sglogging
-sgselenium
-sgzip==0.0.55

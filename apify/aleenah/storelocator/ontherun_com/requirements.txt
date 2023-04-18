@@ -1,4 +1,0 @@
-sgrequests
-sgselenium
-bs4
-sglogging

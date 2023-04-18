@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber (MISSING adress in some pages)
---ignore CountryValidator (Worldwide)

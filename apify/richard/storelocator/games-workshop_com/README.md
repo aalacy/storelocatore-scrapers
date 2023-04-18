@@ -1,2 +1,0 @@
---ignore LatLngDuplicationValidator --ignore CountryCodeFillRateChecker (Confirmed scraper worked correctly)
---ignore CountValidator --ignore StateLevelCountValidator (Filtered out independentRetailer)

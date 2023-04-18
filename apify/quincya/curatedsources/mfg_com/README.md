@@ -1,3 +1,0 @@
---ignore StreetAddressHasNumber (Many missing street address)
---ignore StreetAddressHasStateName (Scraped as is on website)
---ignore GeoConsistencyValidator (Website has a few bad zip_codes)

@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed scraper worked correctly)
---ignore CountValidator --ignore StateLevelCountValidator (Filtered duplicates)

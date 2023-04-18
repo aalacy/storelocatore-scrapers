@@ -1,1 +1,0 @@
-This scraper may take additional time (approximately 4-7 minutes). To take a shorter time, you may bump the minimum/maximum concurrency setting near the bottom the scraper.js file. It is currently set to 3 / 5 respectively, and may be bumped to 5 / 10.

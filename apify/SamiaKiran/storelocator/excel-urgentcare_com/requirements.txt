@@ -1,4 +1,0 @@
-sgrequests
-sglogging 
-usaddress
-bs4

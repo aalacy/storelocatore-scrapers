@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator (Confirmed scraper worked correctly)

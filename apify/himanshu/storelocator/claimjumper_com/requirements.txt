@@ -1,6 +1,0 @@
-lxml==4.6.2
-beautifulsoup4==4.7.1
-sgrequests
-sgselenium
-selenium==3.141.0
-sglogging

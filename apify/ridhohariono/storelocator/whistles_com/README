@@ -1,6 +1,0 @@
---ignore CountryCodeFillRateChecker (Global)
-
---ignore StreetAddressHasNumber (confirmed on website)
-
-
---ignore LatLngDuplicationValidator (confirmed on  website)

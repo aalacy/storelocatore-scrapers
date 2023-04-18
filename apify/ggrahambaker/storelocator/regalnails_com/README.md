@@ -1,3 +1,0 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (PR street names)
---ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 801 POI, but found 749)

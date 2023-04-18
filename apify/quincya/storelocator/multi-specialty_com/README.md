@@ -1,2 +1,0 @@
---ignore StateLevelCountValidator (Confirmed on website)
---ignore LatLngDuplicationValidator (Confirmed multiple POI at same location on website)

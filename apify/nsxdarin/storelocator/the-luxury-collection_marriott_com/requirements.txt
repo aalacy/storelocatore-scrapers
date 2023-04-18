@@ -1,3 +1,0 @@
-sgrequests
-lxml
-bs4

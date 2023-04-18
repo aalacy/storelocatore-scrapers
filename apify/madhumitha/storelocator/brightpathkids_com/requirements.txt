@@ -1,4 +1,0 @@
-bs4==0.0.1
-requests==2.21.0
-unicodecsv==0.14.1
-sglogging

@@ -1,2 +1,0 @@
---ignore CountValidator --ignore StateLevelCountValidator (Expected 412 POI, but found 360 on website)
---ignore GeoConsistencyValidator --ignore LatLngDuplicationValidator (Confirmed on website)

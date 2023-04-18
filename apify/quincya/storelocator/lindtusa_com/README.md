@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore StoreNumberColumnValidator --ignore StateLevelCountValidator (Confirmed correctly scraped)

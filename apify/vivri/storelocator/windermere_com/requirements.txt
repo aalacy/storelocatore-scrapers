@@ -1,3 +1,0 @@
-sgcrawler==0.0.2
-sgscrape>=0.0.1
-sglogging

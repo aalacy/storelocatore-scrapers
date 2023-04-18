@@ -1,2 +1,0 @@
-I ignored geolocation test, as one record has invalid zip code, this was invalid data on webiste.
-that was reason to skip this check

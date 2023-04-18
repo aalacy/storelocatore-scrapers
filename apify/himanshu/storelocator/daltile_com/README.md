@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator --ignore GeoConsistencyValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Filtered out none store locations)

@@ -1,4 +1,0 @@
-sgscrape
-sgzip
-sglogging
-sgrequests

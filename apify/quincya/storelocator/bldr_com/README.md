@@ -1,1 +1,0 @@
---ignore StreetAddressHasStateName --ignore StoreNumberColumnValidator --ignore CountValidator --ignore StateLevelCountValidator --ignore CentroidValidator (Confirmed on website)

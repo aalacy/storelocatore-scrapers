@@ -1,4 +1,0 @@
-selenium==3.141.0
-requests
-sglogging
-sgzip==0.0.55

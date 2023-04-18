@@ -1,4 +1,0 @@
-lxml==4.3.4
-sgselenium
-fuzzywuzzy==0.18.0
-sglogging

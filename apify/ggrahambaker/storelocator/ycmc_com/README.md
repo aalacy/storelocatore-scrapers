@@ -1,1 +1,0 @@
---ignore LatLngDuplicationValidator (1 address has 2 poi)

@@ -1,1 +1,0 @@
---ignore GeoConsistencyValidator --ignore CountryValidator --ignore LatLngDuplicationValidator (Confirmed in API)

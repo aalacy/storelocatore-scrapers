@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Bad street name on website)

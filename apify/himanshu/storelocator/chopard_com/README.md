@@ -1,1 +1,0 @@
---ignore CountryCodeFillRateChecker --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator (Confirmed on website)

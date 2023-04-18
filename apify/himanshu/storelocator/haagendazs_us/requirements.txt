@@ -1,5 +1,0 @@
-sgrequests
-lxml
-bs4
-sgzip
-sglogging

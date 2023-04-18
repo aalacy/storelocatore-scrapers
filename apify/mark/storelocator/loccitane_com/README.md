@@ -1,1 +1,0 @@
-The site no longer appears to work with the old scraper. They have changed the URLS and the setup.

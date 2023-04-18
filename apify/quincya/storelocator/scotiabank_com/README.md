@@ -1,2 +1,0 @@
---ignore CountryValidator (Confirmed on websit)
---ignore CountValidator (Expected 1516 POI, but website has 955)

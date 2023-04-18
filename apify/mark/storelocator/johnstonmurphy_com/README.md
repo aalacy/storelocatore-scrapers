@@ -1,3 +1,0 @@
-The scraper runs perfectly locally. However, due to possibly memory or javascript, the US johnston Murphy page will throw an error. On the next retry of the error, it then successfully loads everything. 
-
-Also due to have 1600+ data points, the scraper may appear not to have finished after the requests are done, and the dataset might not appear, but the scraper is processing all of them and just needs a bit of time to finish.

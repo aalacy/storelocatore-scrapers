@@ -1,1 +1,0 @@
---ignore StateLevelCountValidator (All locations in TX)

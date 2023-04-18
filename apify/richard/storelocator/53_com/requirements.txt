@@ -1,6 +1,0 @@
-selenium==3.141.0
-uszipcode
-asyncio
-aiohttp
-sglogging
-sgzip==0.0.55

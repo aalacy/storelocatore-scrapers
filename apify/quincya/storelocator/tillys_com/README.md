@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed scraper worked correctly)

@@ -1,1 +1,0 @@
---ignore LatLngDuplicationValidator (Scraped correctly. Duplicated map error on website)

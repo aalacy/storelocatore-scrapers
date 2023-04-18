@@ -1,5 +1,0 @@
-selenium==3.141.0
-usaddress
-beautifulsoup4
-requests
-sglogging

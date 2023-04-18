@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator --ignore CountValidator --ignore StateLevelCountValidator --ignore LatLngDuplicationValidator (Confirmed scraped correctly)

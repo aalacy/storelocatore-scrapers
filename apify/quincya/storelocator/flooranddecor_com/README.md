@@ -1,2 +1,0 @@
---ignore CountValidator validation expected 107 POI, but your website has 147 POI
---ignore StateLevelCountValidator (Confirmed ['SC' 'MI' 'NH' 'CT'] on website )

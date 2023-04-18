@@ -1,1 +1,0 @@
-There are over 1700 locations so the scraper may take time. Note: this is a good candidate to migrate to Cheerio crawler, but will require additional time.

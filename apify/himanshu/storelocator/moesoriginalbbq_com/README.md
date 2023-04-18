@@ -1,1 +1,0 @@
---ignore StoreNumberColumnValidator (store number missing from 1 poi)

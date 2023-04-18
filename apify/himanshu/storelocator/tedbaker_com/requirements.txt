@@ -1,6 +1,0 @@
-sgrequests
-sglogging
-bs4
-lxml
-uszipcode
-usaddress

@@ -1,6 +1,0 @@
-sgrequests
-requests_random_user_agent
-sglogging
-bs4
-sgzip
-numpy

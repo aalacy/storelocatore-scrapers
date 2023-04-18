@@ -1,2 +1,0 @@
-VALIDATOR_VERSION: 0.0.62COMMAND: validate.py apify_docker_storage
-PYTHON_VERSION: sys.version_info(major=3, minor=7, micro=4, releaselevel='final', serial=0)

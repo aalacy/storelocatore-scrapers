@@ -1,1 +1,0 @@
---ignore CountValidator (Confirmed scraper correct)

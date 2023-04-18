@@ -1,4 +1,0 @@
-bs4==0.0.1
-sglogging
-lxml==4.5.2
-sgscrape==0.0.4

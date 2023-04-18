@@ -1,2 +1,0 @@
---ignore CentroidValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (validation expected 438 POI, but api has 507 POI)

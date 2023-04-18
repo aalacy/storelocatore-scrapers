@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore StateLevelCountValidator (Validation didnt expect PR state)

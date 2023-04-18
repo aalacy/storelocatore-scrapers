@@ -1,2 +1,0 @@
---ignore CentroidValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expected 564 POI, but website has 669)

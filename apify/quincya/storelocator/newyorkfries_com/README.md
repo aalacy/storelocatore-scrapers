@@ -1,1 +1,0 @@
---ignore CountryValidator --ignore StoreNumberColumnValidator (Confirmed on website)

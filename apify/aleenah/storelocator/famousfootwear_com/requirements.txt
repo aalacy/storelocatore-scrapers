@@ -1,4 +1,0 @@
-lxml==4.3.4
-sgrequests
-sglogging
-sgzip==0.0.55

@@ -1,3 +1,0 @@
-rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/mark/storelocator/marinelayer_com/scrape.js
-
---ignore StreetAddressHasNumber

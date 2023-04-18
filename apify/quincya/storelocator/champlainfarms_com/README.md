@@ -1,1 +1,0 @@
---ignore StoreNumberColumnValidator (Store numbers have -)

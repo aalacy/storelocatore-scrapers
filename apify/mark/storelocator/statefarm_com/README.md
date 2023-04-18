@@ -1,1 +1,0 @@
-This scraper requires a proxy due to rate limiting by State Farm. This scraper may take additional time due to this as there is a rate limiting enforced.

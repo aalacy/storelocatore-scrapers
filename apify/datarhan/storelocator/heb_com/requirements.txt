@@ -1,4 +1,0 @@
-sgzip
-tenacity
-sgrequests==0.0.15
-sgvalidator==0.0.71

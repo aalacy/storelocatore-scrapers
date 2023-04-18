@@ -1,1 +1,0 @@
-ignored DuplicationValidator:validateLatLngsWithMultipleAddresses because website has same coordinates for 2 locations.

@@ -1,2 +1,0 @@
---ignore CountryCodeFillRateChecker (UK)
---ignore CentroidValidator (Confirmed on website)

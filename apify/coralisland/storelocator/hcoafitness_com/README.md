@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore StoreNumberColumnValidator (1 Missing store number)

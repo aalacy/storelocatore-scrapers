@@ -1,2 +1,0 @@
---ignore GeoConsistencyValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Filtered for only Food Giant)

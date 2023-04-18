@@ -1,5 +1,0 @@
-sglogging
-sgzip
-sgrequests
-tenacity
-phonenumbers

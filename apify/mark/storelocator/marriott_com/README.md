@@ -1,1 +1,0 @@
-Scraper is somewhat slow because it will loop through each state's hotel listings and through each page. However, it can pull 30-40 hotels per page and hopefully help against any rate limiting or anti scrape software.

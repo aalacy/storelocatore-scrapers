@@ -1,1 +1,0 @@
---ignore StoreNumberColumnValidator --ignore StateLevelCountValidator (Confirmed on website)

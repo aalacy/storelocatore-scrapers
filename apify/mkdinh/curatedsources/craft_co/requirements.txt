@@ -1,2 +1,0 @@
-sglogging==0.0.4
-sgselenium==0.0.15

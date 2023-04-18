@@ -1,6 +1,0 @@
-sglogging
-sgrequests
-shapely
-sgselenium
-bs4
-lxml

@@ -1,6 +1,0 @@
-This website have a lot of in-consistent data, specially contact_numbers. And street address.
-I have skipped Street_address validation,(python3 validate.py data.csv --ignore StreetAddressHasNumber StreetAddressHasStateName
-) but contact number validation is not ignore-able.
-
-due to data in-consistency i am not able to pick right format for these two values, thats why i have put "raw_address" field, with street address+
-city+contact_number.

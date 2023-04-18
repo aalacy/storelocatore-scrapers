@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator (Missing street address)

@@ -1,1 +1,0 @@
-# Generate like so: https://github.com/SafeGraphCrawl/crawl-service/blob/master/docs/cookbook/reqfile.md

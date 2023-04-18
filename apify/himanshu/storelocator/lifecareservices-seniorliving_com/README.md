@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore LatLngDuplicationValidator (Confirmed on website)

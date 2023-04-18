@@ -1,1 +1,0 @@
---ignore GeoConsistencyValidator (GUAM zipcodes)

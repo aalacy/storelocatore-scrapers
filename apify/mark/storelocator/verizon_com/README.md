@@ -1,1 +1,0 @@
-Verizon now throwing status code 413. It appears like rate limiting or ip detection is enabled. A proxy is a good option. It is possible to do a slow version with Puppeteer, but that would require a complete rework. Proxy is probably the way to go or request allowance from verizon.

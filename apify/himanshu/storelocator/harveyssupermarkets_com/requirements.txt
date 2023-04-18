@@ -1,6 +1,0 @@
-lxml
-sgrequests
-bs4
-sglogging
-unicodedata
-datetime

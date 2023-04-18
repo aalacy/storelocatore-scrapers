@@ -1,1 +1,0 @@
---ignore StreetAddressHasNumber (One poi is a food truck and doesn't have fixed street address)

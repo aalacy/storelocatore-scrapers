@@ -1,4 +1,0 @@
-beautifulsoup4==4.8.0
-sgrequests
-pyzipcode3==2.2
-sglogging

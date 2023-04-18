@@ -1,5 +1,0 @@
-sglogging
-sgzip
-sgrequests
-bs4
-html5lib

@@ -1,7 +1,0 @@
-phonenumbers==8.10.13
-zipcodes==1.0.5
-requests==2.11.1
-us==1.0.0
-beautifulsoup4==4.8.0
-xlsxwriter==1.1.8
-sglogging

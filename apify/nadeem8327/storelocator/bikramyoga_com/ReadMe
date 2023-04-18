@@ -1,3 +1,0 @@
-I am ignoring two checks while validation, one is street address and other one is country code validator. This is because
-data is inconsistent on the website. 
-Beacuse of this reason i also have encorporated RAW_ADDRESS field in data file.

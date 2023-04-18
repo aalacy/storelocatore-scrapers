@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Expeccted 18237 POI, but sgzip found 6681)

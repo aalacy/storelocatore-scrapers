@@ -1,1 +1,0 @@
---ignore CentroidValidator --ignore StreetAddressHasNumber (Confirmed scraped correctly)

@@ -1,3 +1,0 @@
---ignore StoreNumberColumnValidator (1 Missing store number)
---ignore CountValidator (Confirmed correct)
---ignore LatLngDuplicationValidator (Multiple POI at same location)

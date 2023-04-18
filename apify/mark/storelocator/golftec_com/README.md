@@ -1,1 +1,0 @@
-The scraper inserts Canadian provinces into the state field, but the validator returns an error. 

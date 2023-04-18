@@ -1,2 +1,0 @@
---ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Some locations permanently closed)

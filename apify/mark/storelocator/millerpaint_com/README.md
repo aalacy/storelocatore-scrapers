@@ -1,1 +1,0 @@
-There is a checkbox for stores and dealers on the page which is for the location_type field. There a mini timer followed by waiting for selectors to load with no network processes and should work. However, if issues arise, please contact back. Some adjustment might be required for the timer. 

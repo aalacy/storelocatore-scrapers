@@ -1,1 +1,0 @@
---ignore LatLngDuplicationValidator (Multiple poi same location)

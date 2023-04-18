@@ -1,2 +1,0 @@
---ignore CountValidator (Expected 182 POI, but website has 156)
---ignore LatLngDuplicationValidator (Confirmed on website)
